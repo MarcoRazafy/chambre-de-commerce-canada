@@ -6,8 +6,10 @@ import { GROUP_ICON, NAV, type NavItem } from '@/lib/resources';
 import Icon from './Icon';
 import NotificationsPopup from './NotificationsPopup';
 import Toaster from './Toaster';
+import Avatar from './Avatar';
+import MessagingDock from './chat/MessagingDock';
 
-type Me = { user: { nom: string; email: string; role: string; fonction: string | null }; notifs: number; messages: number; demandes: number };
+type Me = { user: { id: number; nom: string; email: string; role: string; fonction: string | null }; notifs: number; messages: number; demandes: number };
 
 function Badge({ badge, demandes }: { badge: NavItem['badge']; demandes: number }) {
   return badge === 'demandes' && demandes ? <span className="badge-n" title={`${demandes} demande(s) d’adhésion à examiner`}>{demandes}</span> : null;
@@ -165,8 +167,10 @@ export default function Shell({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     window.addEventListener('cc:refresh', refresh);
-    return () => window.removeEventListener('cc:refresh', refresh);
-  }, [refresh]);
+    window.addEventListener('cc:chat', loadMe);   // une conversation a changé : compteurs à jour
+    const t = setInterval(() => { if (document.visibilityState === 'visible') loadMe(); }, 20000);
+    return () => { window.removeEventListener('cc:refresh', refresh); window.removeEventListener('cc:chat', loadMe); clearInterval(t); };
+  }, [refresh, loadMe]);
 
   async function logout() {
     await fetch('/api/auth/logout', { method: 'POST' });
@@ -217,7 +221,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             </form>
             <div className="top-r">
               <Link className="tb-btn" href="/messagerie" title="Messagerie"
-                aria-label={me?.messages ? `Messagerie, ${me.messages} conversation(s) en attente de réponse` : 'Messagerie'}>
+                aria-label={me?.messages ? `Messagerie, ${me.messages} conversation(s) non lue(s)` : 'Messagerie'}>
                 <Icon name="chat" size={20} />
                 {!!me?.messages && <span className="bell-dot">{me.messages}</span>}
               </Link>
@@ -226,7 +230,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 {!!me?.notifs && <span className="bell-dot">{me.notifs}</span>}
               </button>
               <button className="me" style={{ cursor: 'pointer' }} aria-expanded={pop === 'compte'} onClick={() => setPop(p => (p === 'compte' ? null : 'compte'))} title={me?.user.nom} aria-label="Mon compte">
-                {(me?.user.nom ?? '?').slice(0, 1).toUpperCase()}
+                {me ? <Avatar kind="user" id={me.user.id} size={34} /> : '?'}
               </button>
             </div>
           </header>
@@ -238,10 +242,13 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       {pop === 'notifs' && <NotificationsPopup onChange={loadMe} onClose={() => setPop(null)} />}
       {pop === 'compte' && me && (
         <div className="npanel pop" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div><b>{me.user.nom}</b><div className="small muted">{me.user.email}</div><div className="small muted">{me.user.role}{me.user.fonction ? ' · ' + me.user.fonction : ''}</div></div>
-          <button className="btn" onClick={logout}>Se déconnecter</button>
+          <div className="row" style={{ flexWrap: 'nowrap' }}><Avatar kind="user" id={me.user.id} size={44} />
+            <div><b>{me.user.nom}</b><div className="small muted">{me.user.email}</div><div className="small muted">{me.user.role}{me.user.fonction ? ' · ' + me.user.fonction : ''}</div></div></div>
+          <Link className="btn" href="/profil">Mon profil</Link>
+          <button className="btn" onClick={logout}><Icon name="logout" size={16} /> Se déconnecter</button>
         </div>
       )}
+      {me && !mobile && <Suspense fallback={null}><MessagingDock me={me.user} unread={me.messages} /></Suspense>}
       <Toaster />
     </div>
   );

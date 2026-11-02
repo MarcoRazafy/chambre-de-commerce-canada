@@ -150,19 +150,68 @@ create table if not exists services (
 );
 
 /* ===== Communication ===== */
+-- Conversations : 'membre' (boîte de support partagée par toute l'équipe), 'groupe' (titre + participants),
+-- 'equipe' (direct entre deux personnes de l'équipe)
 create table if not exists threads (
   id         serial primary key,
-  member_id  int not null references members(id) on delete cascade,
-  sujet      text not null,
+  type       text not null default 'membre' check (type in ('membre', 'groupe', 'equipe')),
+  member_id  int references members(id) on delete cascade,   -- conversation avec un membre
+  sujet      text not null default '',
+  created_by int references team_users(id) on delete set null,
   created_at timestamptz not null default now()
 );
 
+-- Participants des groupes et conversations d'équipe : une personne de l'équipe OU un membre
+create table if not exists thread_participants (
+  id        serial primary key,
+  thread_id int not null references threads(id) on delete cascade,
+  user_id   int references team_users(id) on delete cascade,
+  member_id int references members(id) on delete cascade,
+  added_at  timestamptz not null default now(),
+  check (num_nonnulls(user_id, member_id) = 1)
+);
+create unique index if not exists thread_participants_user on thread_participants (thread_id, user_id) where user_id is not null;
+create unique index if not exists thread_participants_member on thread_participants (thread_id, member_id) where member_id is not null;
+
+-- État de chaque conversation pour chaque personne de l'équipe
+create table if not exists thread_state (
+  thread_id    int not null references threads(id) on delete cascade,
+  user_id      int not null references team_users(id) on delete cascade,
+  last_read_at timestamptz,
+  important    boolean not null default false,
+  archived     boolean not null default false,
+  primary key (thread_id, user_id)
+);
+
 create table if not exists messages (
+  id               serial primary key,
+  thread_id        int not null references threads(id) on delete cascade,
+  de_nous          boolean not null default false,  -- true = écrit par l'équipe
+  author_user_id   int references team_users(id) on delete set null,
+  author_member_id int references members(id) on delete set null,   -- réponse d'un membre notée par l'équipe
+  texte            text not null default '',
+  edited_at        timestamptz,
+  deleted_at       timestamptz,
+  created_at       timestamptz not null default now()
+);
+
+create table if not exists message_files (
   id         serial primary key,
-  thread_id  int not null references threads(id) on delete cascade,
-  de_nous    boolean not null default false,  -- true = réponse de la chambre
-  texte      text not null,
-  created_at timestamptz not null default now()
+  message_id int not null references messages(id) on delete cascade,
+  nom        text not null,
+  type       text not null,
+  taille     int not null,
+  contenu    bytea not null
+);
+
+-- Photos de profil (équipe) et logos (membres)
+create table if not exists avatars (
+  kind       text not null check (kind in ('user', 'member')),
+  ref_id     int not null,
+  type       text not null,
+  contenu    bytea not null,
+  updated_at timestamptz not null default now(),
+  primary key (kind, ref_id)
 );
 create index if not exists messages_thread_idx on messages (thread_id, created_at);
 
@@ -293,3 +342,10 @@ create unique index if not exists subscribers_jeton_key on subscribers (jeton);
 alter table invoices add column if not exists objet text not null default 'autre';
 alter table notifications add column if not exists lien text;
 alter table team_users add column if not exists password_hash text, add column if not exists derniere_connexion timestamptz;
+alter table threads add column if not exists type text not null default 'membre', add column if not exists created_by int references team_users(id) on delete set null;
+alter table threads alter column member_id drop not null;
+alter table threads alter column sujet set default '';
+alter table messages add column if not exists author_user_id int references team_users(id) on delete set null,
+  add column if not exists author_member_id int references members(id) on delete set null,
+  add column if not exists edited_at timestamptz, add column if not exists deleted_at timestamptz;
+alter table messages alter column texte set default '';

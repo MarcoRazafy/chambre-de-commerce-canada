@@ -9,7 +9,9 @@ const SOURCES: [type: string, sql: string, href: (id: number) => string][] = [
   ['Facture', `select i.id, i.numero as titre, m.nom as detail from invoices i join members m on m.id = i.member_id where i.numero ilike $1 or m.nom ilike $1`, id => `/paiements/${id}`],
   ['Actualité', `select id, titre, coalesce(categorie, '') as detail from news where titre ilike $1 or contenu ilike $1`, () => `/actualites`],
   ['Abonné', `select id, email as titre, coalesce(nom, '') as detail from subscribers where email ilike $1 or nom ilike $1`, () => `/lettre`],
-  ['Conversation', `select t.id, t.sujet as titre, m.nom as detail from threads t join members m on m.id = t.member_id where t.sujet ilike $1`, () => `/messagerie`],
+  ['Conversation', `select t.id, coalesce(nullif(t.sujet, ''), m.nom, 'Conversation') as titre, coalesce(m.nom, 'Groupe') as detail from threads t left join members m on m.id = t.member_id
+                    where (t.type = 'membre' or exists (select 1 from thread_participants p where p.thread_id = t.id and p.member_id is not null))
+                      and (t.sujet ilike $1 or m.nom ilike $1)`, id => `/messagerie?c=${id}`],
 ];
 
 export async function GET(req: Request) {

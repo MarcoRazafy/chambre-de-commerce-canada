@@ -104,6 +104,7 @@ async function run() {
              news, dossiers, fichiers, services, threads, messages, outbox, campaigns, subscribers, invoices, reglements,
              platform_invoices, notifications, journal restart identity cascade`);
     await q('delete from team_users where password_hash is null');
+    await q(`delete from avatars where kind = 'member' or (kind = 'user' and ref_id not in (select id from team_users))`);
     await q(`select setval('invoice_seq', 1, false)`);
   } else if ((await q('select count(*)::int n from members'))[0].n > 0) {
     throw new Error('La base contient déjà des membres. Relancez avec « npm run db:seed -- --reset » pour tout remplacer.');
@@ -201,6 +202,17 @@ async function run() {
 
   for (const [nom, email, role, fonction, actif] of TEAM)
     await q('insert into team_users (nom, email, role, fonction, actif) values ($1, $2, $3, $4, $5) on conflict (email) do nothing', [nom, email, role, fonction, actif]);
+
+  // Groupe de discussion : deux collègues et deux membres (visible par toute l'équipe, puisqu'il inclut des membres)
+  const team = Object.fromEntries((await q('select id, email from team_users')).map(r => [r.email, r.id]));
+  const g = await ins('threads', { type: 'groupe', sujet: 'Préparation de la restitution MECC 9', created_by: team['direction@exemple.test'], created_at: '2026-10-27T10:00:00+03:00' });
+  for (const uid of [team['direction@exemple.test'], team['communication@exemple.test']]) await ins('thread_participants', { thread_id: g.id, user_id: uid });
+  for (const k of ['m1', 'm6']) await ins('thread_participants', { thread_id: g.id, member_id: member[k].id });
+  for (const [who, texte, created_at] of [
+    [{ author_user_id: team['direction@exemple.test'], de_nous: true }, 'Bonjour à tous, la restitution aura lieu le 20 novembre à 15 h. Pouvez-vous chacun préparer 3 diapositives sur vos rencontres au Canada ?', '2026-10-27T10:05:00+03:00'],
+    [{ author_member_id: member.m6.id, de_nous: false }, 'Avec plaisir. Je parlerai du partenariat avec Nordik Solaire. (réponse reçue par courriel)', '2026-10-27T15:40:00+03:00'],
+    [{ author_user_id: team['communication@exemple.test'], de_nous: true }, 'Merci ! Je m’occupe de l’affiche et des photos de la mission.', '2026-10-28T09:12:00+03:00']])
+    await ins('messages', { thread_id: g.id, texte, created_at, ...who });
   for (const [numero, date_facture, nb_utilisateurs] of [['PLT-2026-10', '2026-10-01', 7], ['PLT-2026-09', '2026-09-01', 7], ['PLT-2026-08', '2026-08-01', 6]])
     await ins('platform_invoices', { numero, date_facture, nb_utilisateurs, montant: Math.round((150 + nb_utilisateurs * 15) * 1.14975 * 100) / 100 });
 

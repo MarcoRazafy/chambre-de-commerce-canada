@@ -5,6 +5,8 @@ import { RESOURCES } from '@/lib/resources';
 import { api, display, type Row } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import StatusBadge from '../StatusBadge';
+import PhotoUpload from '../PhotoUpload';
+import Icon from '../Icon';
 import { ROW_ACTIONS, runAction } from '@/lib/ui-actions';
 import ResourcePage, { EditModal } from '../ResourcePage';
 import IntroModal from '../IntroModal';
@@ -26,10 +28,10 @@ export default function MemberDetail({ id }: { id: number }) {
   const load = useCallback(async () => {
     try {
       const [mm, sect, form, th, sg] = await Promise.all([
-        api<Row>(`/api/members/${id}`), api<Row[]>('/api/secteurs'), api<Row[]>('/api/formules'), api<Row[]>('/api/messagerie'), api<Sugg[]>(`/api/suggestions?member=${id}`)]);
+        api<Row>(`/api/members/${id}`), api<Row[]>('/api/secteurs'), api<Row[]>('/api/formules'), api<Row[]>(`/api/messagerie?member_id=${id}`), api<Sugg[]>(`/api/suggestions?member=${id}`)]);
       setM(mm);
       setRefs({ secteurs: sect, formules: form });
-      setThreads(th.filter(t => t.member_id === id));
+      setThreads(th);
       setSugg(sg);
       setV(x => x + 1);
     } catch (e) { setError((e as Error).message); }
@@ -49,6 +51,7 @@ export default function MemberDetail({ id }: { id: number }) {
         <div><div className="eyebrow"><Link href="/membres">Membres</Link></div><h1><em>{m.nom}</em></h1>
           <p className="muted">{[m.ville, f('pays'), f('secteur_id')].filter(x => x && x !== '—').join(' · ')}</p></div>
         <div className="actions">
+          <Link className="btn" href={`/messagerie?a=member:${id}&nom=${encodeURIComponent(m.nom)}`}><Icon name="chat" size={16} /> Écrire</Link>
           {ROW_ACTIONS.members.filter(a => a.show(m)).map(a => <button key={a.action} className="btn" onClick={() => act(a.action, a.confirm)}>{a.label}</button>)}
           <button className="btn cta" onClick={() => setEditing(true)}>Modifier</button>
         </div>
@@ -56,7 +59,7 @@ export default function MemberDetail({ id }: { id: number }) {
       {error && <div className="err">{error}</div>}
       <div className="grid g21">
         <div className="card">
-          <h2>Informations</h2>
+          <div className="row between"><h2>Informations</h2><PhotoUpload kind="member" id={id} size={56} label="Changer le logo" /></div>
           <dl className="kv">
             {R.fields.filter(x => !['nom', 'ville', 'pays', 'secteur_id'].includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{x.name === 'statut' ? <StatusBadge value={m.statut} label={display(x, m, refs, t => RESOURCES[t].label)} /> : display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
           </dl>
@@ -65,8 +68,8 @@ export default function MemberDetail({ id }: { id: number }) {
           <h2>Conversations</h2>
           {threads.length === 0 ? <p className="small muted">Aucune conversation.</p> : (
             <div className="list">{threads.map(t => (
-              <Link key={t.id} href="/messagerie" className="it" style={{ textDecoration: 'none' }}>
-                <div className="grow small"><b>{t.sujet}</b><div className="muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.dernier ?? ''}</div></div>
+              <Link key={t.id} href={`/messagerie?c=${t.id}`} className="it" style={{ textDecoration: 'none' }}>
+                <div className="grow small"><b>{t.sujet || t.titre}</b><div className="muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.dernier ?? ''}</div></div>
               </Link>))}</div>
           )}
           <h2>Rapprochements suggérés</h2>

@@ -1,33 +1,42 @@
-import { q, fail } from '@/lib/db';
-import { notFound, validId } from '@/lib/crud';
-import { guard } from '@/lib/auth';
+import { notFound } from '@/lib/crud';
+import { num, uploads, withUser } from '@/lib/api-helpers';
+import { deleteThread, getThread, renameThread, sendMessage, setState } from '@/lib/messaging';
 
 type Ctx = { params: Promise<{ id: string }> };
 
+// Conversation complète (participants, messages, fiche du membre) ; la marque comme lue
 export async function GET(_req: Request, { params }: Ctx) {
-  const { id } = await params;
-  if (!validId(id)) return notFound();
-  const u = await guard();
-  if (u instanceof Response) return u;
-  try {
-    return Response.json(await q('select * from messages where thread_id = $1 order by created_at', [Number(id)]));
-  } catch (e) {
-    return fail(e);
-  }
+  const id = num((await params).id);
+  if (Number.isNaN(id)) return notFound();
+  return withUser(async u => Response.json(await getThread(u, id)));
 }
 
-// Ajoute un message : { texte, de_nous? } — de_nous vaut true par défaut (réponse de la chambre)
+// Envoi d'un message : formulaire multipart avec « texte », des « files » et, pour noter une réponse reçue, « entrant » = id du membre
 export async function POST(req: Request, { params }: Ctx) {
-  const { id } = await params;
-  if (!validId(id)) return notFound();
-  const u = await guard();
-  if (u instanceof Response) return u;
-  const { texte, de_nous = true } = await req.json();
-  if (!texte?.trim()) return Response.json({ error: 'Message vide' }, { status: 400 });
-  try {
-    const [row] = await q('insert into messages (thread_id, de_nous, texte) values ($1, $2, $3) returning *', [Number(id), !!de_nous, texte.trim()]);
-    return Response.json(row, { status: 201 });
-  } catch (e) {
-    return fail(e);
-  }
+  const id = num((await params).id);
+  if (Number.isNaN(id)) return notFound();
+  return withUser(async u => {
+    const form = await req.formData();
+    const entrant = Number(form.get('entrant')) || null;
+    const msg = await sendMessage(u, id, String(form.get('texte') ?? ''), await uploads(form), entrant);
+    return Response.json(msg, { status: 201 });
+  });
+}
+
+// { sujet } renomme ; { important }, { archived }, { non_lu: true } changent l'état pour l'utilisateur
+export async function PATCH(req: Request, { params }: Ctx) {
+  const id = num((await params).id);
+  if (Number.isNaN(id)) return notFound();
+  return withUser(async u => {
+    const b = await req.json();
+    if (typeof b.sujet === 'string') await renameThread(u, id, b.sujet);
+    await setState(u, id, b);
+    return Response.json({ ok: true });
+  });
+}
+
+export async function DELETE(_req: Request, { params }: Ctx) {
+  const id = num((await params).id);
+  if (Number.isNaN(id)) return notFound();
+  return withUser(async u => { await deleteThread(u, id); return new Response(null, { status: 204 }); });
 }

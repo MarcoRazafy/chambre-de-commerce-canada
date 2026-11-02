@@ -1,128 +1,97 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
-import { api, type Row } from '@/lib/format';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useState } from 'react';
+import type { Row } from '@/lib/format';
+import { FILTRES, chat, type Person, type Thread } from '@/lib/chat';
+import Icon from './Icon';
+import ConversationList from './chat/ConversationList';
+import ConversationView from './chat/ConversationView';
+import InfoPanel from './chat/InfoPanel';
+import NewConversation from './chat/NewConversation';
 
-const fDT = (d: string) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
-const fD = (d: string) => new Date(d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-const ini = (s: string) => s.split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase();
+type Me = { id: number; role: string };
 
-export default function Messagerie() {
-  const [threads, setThreads] = useState<Row[] | null>(null);
-  const [cur, setCur] = useState<number | null>(null);
-  const [msgs, setMsgs] = useState<Row[]>([]);
-  const [text, setText] = useState('');
-  const [creating, setCreating] = useState(false);
+// Page Messagerie façon LinkedIn : liste filtrable à gauche, conversation au centre, informations à droite
+function Inbox() {
+  const router = useRouter();
+  const sp = useSearchParams();
+  const [me, setMe] = useState<Me | null>(null);
+  const [filtre, setFiltre] = useState('tous');
+  const [term, setTerm] = useState('');
+  const [threads, setThreads] = useState<Thread[] | null>(null);
+  const [cur, setCur] = useState<number | null>(Number(sp.get('c')) || null);
+  const [nouveau, setNouveau] = useState<Person[] | null>(null);
+  const [info, setInfo] = useState(false);
+  const [data, setData] = useState<Row | null>(null);
   const [error, setError] = useState('');
 
-  const loadThreads = useCallback(async () => {
-    try {
-      const t = await api<Row[]>('/api/messagerie');
-      setThreads(t);
-      setCur(c => c ?? t[0]?.id ?? null);
-    } catch (e) { setError((e as Error).message); }
-  }, []);
-  useEffect(() => { loadThreads(); }, [loadThreads]);
+  useEffect(() => { fetch('/api/auth/me').then(r => r.json()).then(d => d.user && setMe(d.user)); }, []);
+  // Liens « écrire à » : /messagerie?a=member:12 ou ?a=user:3, et ?c=<conversation>
   useEffect(() => {
-    if (cur) api<Row[]>(`/api/messagerie/${cur}`).then(setMsgs).catch(e => setError(e.message));
-  }, [cur]);
+    const c = Number(sp.get('c'));
+    if (c) { setCur(c); setNouveau(null); }
+    const a = sp.get('a');
+    if (a) {
+      const [kind, id] = a.split(':');
+      setNouveau([{ kind: kind as Person['kind'], id: Number(id), nom: sp.get('nom') ?? '' }]);
+    }
+  }, [sp]);
 
-  async function send(e: React.FormEvent) {
-    e.preventDefault();
-    if (!cur || !text.trim()) return;
-    try {
-      const m = await api<Row>(`/api/messagerie/${cur}`, 'POST', { texte: text });
-      setMsgs(x => [...x, m]);
-      setText('');
-      loadThreads();
-      window.dispatchEvent(new Event('cc:refresh'));   // met à jour le compteur de la barre du haut
-    } catch (err) { setError((err as Error).message); }
-  }
+  const load = useCallback(() => {
+    chat.list(filtre, term).then(l => { setThreads(l); setError(''); }).catch(e => setError(e.message));
+  }, [filtre, term]);
+  useEffect(() => {
+    const t = setTimeout(load, term ? 250 : 0);
+    const iv = setInterval(() => { if (document.visibilityState === 'visible') load(); }, 6000);
+    window.addEventListener('cc:chat', load);
+    return () => { clearTimeout(t); clearInterval(iv); window.removeEventListener('cc:chat', load); };
+  }, [load, term]);
 
-  const th = threads?.find(t => t.id === cur);
+  const select = (id: number | null) => {
+    setCur(id);
+    setNouveau(null);
+    setData(null);
+    router.replace(id ? `/messagerie?c=${id}` : '/messagerie', { scroll: false });
+  };
+
+  if (!me) return <div className="empty">Chargement…</div>;
+  const open = cur !== null || nouveau !== null;
   return (
-    <>
-      <div className="head">
-        <div><div className="eyebrow">Communication</div><h1><em>Messagerie</em></h1>
-          <p className="muted">Les échanges avec les membres dans le chat du support.</p></div>
-        <div className="actions"><button className="btn cta" onClick={() => setCreating(true)}>+ Nouvelle conversation</button></div>
+    <div className="inbox">
+      <div className="inbox-top">
+        <h1>Messagerie</h1>
+        <label className="inbox-search"><Icon name="search" size={16} />
+          <input placeholder="Rechercher dans les messages" aria-label="Rechercher dans les messages" value={term} onChange={e => setTerm(e.target.value)} />
+        </label>
+        <button className="tb-btn" title="Nouveau message" aria-label="Nouveau message" onClick={() => { setCur(null); setNouveau([]); }}><Icon name="compose" size={22} /></button>
+      </div>
+      <div className="inbox-filters" role="tablist" aria-label="Filtrer les conversations">
+        {FILTRES.map(([k, l]) => <button key={k} role="tab" aria-selected={filtre === k} className={`fchip${filtre === k ? ' on' : ''}`} onClick={() => setFiltre(k)}>{l}</button>)}
       </div>
       {error && <div className="err">{error}</div>}
-      <div className="msg">
-        <div className="msg-l">
-          {threads?.length === 0 && <div className="empty">Aucune conversation pour l’instant.</div>}
-          {threads?.map(t => {
-            const who = t.contact || t.membre;
-            return (
-              <div key={t.id} className={`c${t.id === cur ? ' on' : ''}`} onClick={() => setCur(t.id)}>
-                <div className="av" style={{ width: 36, height: 36, background: '#1A2A40' }}>{ini(who)}</div>
-                <div className="grow small">
-                  <div className="row between" style={{ flexWrap: 'nowrap' }}><b>{who}</b><span className="muted">{fD(t.maj)}</span></div>
-                  <div className="muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {t.dernier_de_nous ? 'Vous : ' : ''}{t.dernier ?? t.sujet}
-                  </div>
-                </div>
+      <div className={`inbox-body${info && data ? ' with-info' : ''}${open ? ' has-open' : ''}`}>
+        <aside className="inbox-list" aria-label="Conversations">
+          <ConversationList threads={threads} active={cur} meId={me.id} onSelect={select} />
+        </aside>
+        <section className="inbox-main">
+          {open && <button className="btn ghost sm inbox-back" onClick={() => select(null)}><Icon name="back" size={16} /> Conversations</button>}
+          {nouveau !== null ? <NewConversation key={nouveau.map(p => p.kind + p.id).join()} initial={nouveau} onCreated={id => select(id)} onClose={() => setNouveau(null)} />
+            : cur !== null ? <ConversationView key={cur} id={cur} meId={me.id} infoOpen={info} onToggleInfo={() => setInfo(v => !v)} onData={setData} />
+            : (
+              <div className="inbox-empty">
+                <Icon name="chat" size={40} />
+                <b>Choisissez une conversation</b>
+                <p className="small muted">ou écrivez à un collègue, à un membre ou à plusieurs personnes à la fois.</p>
+                <button className="btn cta" onClick={() => setNouveau([])}><Icon name="compose" size={16} /> Nouveau message</button>
               </div>
-            );
-          })}
-        </div>
-        <div className="msg-r">
-          {th ? (
-            <>
-              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--line)' }}>
-                <b>{th.contact || th.membre}</b> <span className="small muted">· {th.membre} · {th.sujet}</span>
-              </div>
-              <div className="bubbles">
-                {msgs.map(m => (
-                  <div key={m.id} className={`bub${m.de_nous ? ' me' : ''}`}>
-                    {m.texte}<div className="small" style={{ opacity: .65, marginTop: 3 }}>{fDT(m.created_at)}</div>
-                  </div>
-                ))}
-              </div>
-              <form className="composer" onSubmit={send}>
-                <input className="inp" placeholder="Votre réponse…" aria-label="Réponse" value={text} onChange={e => setText(e.target.value)} />
-                <button className="btn cta">Envoyer</button>
-              </form>
-            </>
-          ) : <div className="empty">Sélectionnez ou créez une conversation.</div>}
-        </div>
+            )}
+        </section>
+        {info && data && cur !== null && <aside className="inbox-info"><InfoPanel d={data} me={me} onSwitch={select} onClose={() => setInfo(false)} /></aside>}
       </div>
-      {creating && <NewThread onClose={() => setCreating(false)} onCreated={id => { setCreating(false); setCur(id); loadThreads(); window.dispatchEvent(new Event('cc:refresh')); }} />}
-    </>
+    </div>
   );
 }
 
-function NewThread({ onClose, onCreated }: { onClose: () => void; onCreated: (id: number) => void }) {
-  const [members, setMembers] = useState<Row[]>([]);
-  const [v, setV] = useState({ member_id: '', sujet: '', texte: '' });
-  const [error, setError] = useState('');
-  useEffect(() => { api<Row[]>('/api/members').then(setMembers).catch(e => setError(e.message)); }, []);
-
-  async function submit(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      const t = await api<Row>('/api/messagerie', 'POST', { ...v, member_id: Number(v.member_id) });
-      onCreated(t.id);
-    } catch (err) { setError((err as Error).message); }
-  }
-
-  return (
-    <div className="modal-bg" onClick={e => e.target === e.currentTarget && onClose()}>
-      <form className="modal" onSubmit={submit}>
-        <div className="modal-h"><h2>Nouvelle conversation</h2><button type="button" className="btn sm ghost" onClick={onClose} aria-label="Fermer">✕</button></div>
-        <div className="modal-b">
-          {error && <div className="err">{error}</div>}
-          {members.length === 0 && <p className="hint">Ajoutez d’abord un membre dans « Membres ».</p>}
-          <div className="field"><label htmlFor="nt-m">Membre *</label>
-            <select id="nt-m" className="inp" required value={v.member_id} onChange={e => setV({ ...v, member_id: e.target.value })}>
-              <option value="">—</option>{members.map(m => <option key={m.id} value={m.id}>{m.nom}</option>)}
-            </select></div>
-          <div className="field"><label htmlFor="nt-s">Sujet *</label>
-            <input id="nt-s" className="inp" required value={v.sujet} onChange={e => setV({ ...v, sujet: e.target.value })} /></div>
-          <div className="field"><label htmlFor="nt-t">Message *</label>
-            <textarea id="nt-t" className="inp" required value={v.texte} onChange={e => setV({ ...v, texte: e.target.value })} /></div>
-        </div>
-        <div className="modal-f"><button type="button" className="btn" onClick={onClose}>Annuler</button><button className="btn cta">Envoyer</button></div>
-      </form>
-    </div>
-  );
+export default function Messagerie() {
+  return <Suspense fallback={<div className="empty">Chargement…</div>}><Inbox /></Suspense>;
 }

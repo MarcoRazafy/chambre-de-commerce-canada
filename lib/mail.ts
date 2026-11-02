@@ -19,13 +19,15 @@ export const cleanEmails = (list: (string | null | undefined)[]) =>
 type Text = string | ((email: string) => string);
 
 // Un courriel par destinataire (pas d'adresses visibles entre membres)
-export async function deliver(to: string[], subject: string, text: Text) {
+export type Attachment = { filename: string; content: Buffer; contentType: string };
+
+export async function deliver(to: string[], subject: string, text: Text, attachments: Attachment[] = []) {
   if (!process.env.SMTP_HOST) return { sent: 0, error: 'Envoi de courriels non configuré (SMTP_HOST manquant)' };
   let sent = 0;
   const errors: string[] = [];
   for (const email of to) {
     try {
-      await transport().sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to: email, subject, text: typeof text === 'function' ? text(email) : text });
+      await transport().sendMail({ from: process.env.MAIL_FROM || process.env.SMTP_USER, to: email, subject, text: typeof text === 'function' ? text(email) : text, attachments });
       sent++;
     } catch (e) {
       errors.push(`${email} : ${(e as Error).message}`);

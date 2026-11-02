@@ -1,6 +1,6 @@
 // Icônes Phosphor (trait fin), utilisables côté serveur comme côté client
 import {
-  AddressBook, Bell, Briefcase, CheckCircle, MinusCircle, PlusCircle, X, CaretDown, CaretUp, SidebarSimple, Storefront, CalendarBlank, CalendarCheck, ChatCircle, ClockCounterClockwise, Clock, Coins,
+  AddressBook, Archive, ArrowBendDownLeft, ArrowLeft, ArrowsOut, Bell, Briefcase, DotsThree, DownloadSimple, FileText, Image as ImageIcon, Info, Minus, NotePencil, Paperclip, PencilSimple, SignOut, Smiley, Star, Trash, UsersThree, VideoCamera, CheckCircle, MinusCircle, PlusCircle, X, CaretDown, CaretUp, SidebarSimple, Storefront, CalendarBlank, CalendarCheck, ChatCircle, ClockCounterClockwise, Clock, Coins,
   CreditCard, EnvelopeSimple, Folder, GearSix, Handshake, IdentificationCard, List, MagnifyingGlass, Newspaper,
   PaperPlaneTilt, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
@@ -13,6 +13,9 @@ const ICONS: Record<string, PhosphorIcon> = {
   star: CreditCard, spark: Handshake, send: PaperPlaneTilt, bell: Bell, plus: Plus, userplus: UserPlus,
   alert: WarningCircle, card: IdentificationCard, tag: Tag, menu: List, search: MagnifyingGlass,
   ok: CheckCircle, new: PlusCircle, minus: MinusCircle, close: X,
+  compose: NotePencil, fav: Star, info: Info, image: ImageIcon, video: VideoCamera, attach: Paperclip, smile: Smiley, more: DotsThree,
+  minimize: Minus, open: ArrowsOut, back: ArrowLeft, archive: Archive, trash: Trash, doc: FileText, download: DownloadSimple,
+  inbound: ArrowBendDownLeft, group: UsersThree, edit: PencilSimple, logout: SignOut,
   down: CaretDown, up: CaretUp, sidebar: SidebarSimple, store: Storefront,
 };
 
@@ -28,8 +31,8 @@ function PanelIcon({ dir, size }: { dir: 'left' | 'right'; size: number }) {
   );
 }
 
-export default function Icon({ name, size = 18 }: { name: string; size?: number }) {
+export default function Icon({ name, size = 18, fill }: { name: string; size?: number; fill?: boolean }) {
   if (name === 'collapse' || name === 'expand') return <PanelIcon dir={name === 'collapse' ? 'left' : 'right'} size={size} />;
   const C = ICONS[name] ?? SquaresFour;
-  return <C size={size} weight="regular" aria-hidden="true" />;
+  return <C size={size} weight={fill ? 'fill' : 'regular'} aria-hidden="true" />;
 }
