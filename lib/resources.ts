@@ -189,18 +189,51 @@ const list: Resource[] = [
 
 export const RESOURCES: Record<string, Resource> = Object.fromEntries(list.map(r => [r.table, r]));
 
-// Menu : [adresse de la page, libellé, table affichée (vide = page dédiée)]
-export const NAV: [string, [slug: string, label: string, table?: string][]][] = [
-  ['Pilotage', [['', 'Tableau de bord'], ['journal', 'Journal d’activité', 'journal'], ['equipe', 'Équipe & accès', 'team_users'], ['notifications', 'Notifications', 'notifications']]],
-  ['Adhérents', [['membres', 'Membres', 'members'], ['contacts', 'Contacts', 'contacts'], ['annuaire', 'Annuaire & suggestions IA'], ['mises-en-relation', 'Mises en relation', 'connections']]],
-  ['Programme', [['evenements', 'Événements', 'events'], ['agenda', 'Agenda', 'agenda_rappels'], ['rendez-vous', 'Rendez-vous', 'rendez_vous'], ['types-rendez-vous', 'Types de rendez-vous', 'rdv_types'], ['actualites', 'Actualités', 'news'], ['ressources', 'Ressources', 'dossiers'], ['services', 'Services CanCham', 'services']]],
-  ['Communication', [['messagerie', 'Messagerie'], ['newsletter', 'Newsletter', 'campaigns'], ['lettre', 'Abonnés à la lettre', 'subscribers'], ['envois', 'Envois programmés', 'outbox']]],
-  ['Finances', [['paiements', 'Paiements & factures', 'invoices'], ['reglements', 'Règlements annoncés', 'reglements'], ['facturation', 'Réglages de facturation']]],
-  ['Réglages', [['formules', 'Formules d’adhésion', 'formules'], ['secteurs', 'Secteurs d’activité', 'secteurs'], ['abonnement', 'Abonnement & utilisateurs']]],
+// Menu. table vide = page dédiée ; icon = clé de lib/icons.ts ;
+// badge : 'new' (Nouveau), 'up' (Amélioré), 'demandes' (nombre de demandes d'adhésion)
+export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'new' | 'up' | 'demandes' };
+export const NAV: [string, NavItem[]][] = [
+  ['Pilotage', [
+    { slug: '', label: 'Tableau de bord', icon: 'dash' },
+    { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal' },
+    { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users', badge: 'up' },
+    { slug: 'notifications', label: 'Notifications', icon: 'bell', table: 'notifications' },
+  ]],
+  ['Adhérents', [
+    { slug: 'membres', label: 'Membres', icon: 'users', table: 'members', badge: 'demandes' },
+    { slug: 'contacts', label: 'Contacts', icon: 'userplus', table: 'contacts' },
+    { slug: 'annuaire', label: 'Annuaire', icon: 'book', badge: 'up' },
+    { slug: 'mises-en-relation', label: 'Mises en relation', icon: 'spark', table: 'connections' },
+  ]],
+  ['Programme', [
+    { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events', badge: 'up' },
+    { slug: 'agenda', label: 'Agenda', icon: 'agenda', table: 'agenda_rappels' },
+    { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
+    { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types' },
+    { slug: 'actualites', label: 'Actualités', icon: 'news', table: 'news' },
+    { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'dossiers' },
+    { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
+  ]],
+  ['Communication', [
+    { slug: 'messagerie', label: 'Messagerie', icon: 'chat' },
+    { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns', badge: 'new' },
+    { slug: 'lettre', label: 'Abonnés à la lettre', icon: 'list', table: 'subscribers', badge: 'new' },
+    { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox' },
+  ]],
+  ['Finances', [
+    { slug: 'paiements', label: 'Paiements & factures', icon: 'file', table: 'invoices', badge: 'up' },
+    { slug: 'reglements', label: 'Règlements annoncés', icon: 'coin', table: 'reglements', badge: 'up' },
+    { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear', badge: 'new' },
+    { slug: 'formules', label: 'Formules d’adhésion', icon: 'card', table: 'formules' },
+    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'book', table: 'secteurs' },
+  ]],
+  ['Plateforme', [
+    { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star', badge: 'new' },
+  ]],
 ];
 
 export const PAGES: Record<string, { group: string; table: string }> = Object.fromEntries(
-  NAV.flatMap(([group, items]) => items.filter(i => i[2]).map(([slug, , table]) => [slug, { group, table: table! }]))
+  NAV.flatMap(([group, items]) => items.filter(i => i.table).map(i => [i.slug, { group, table: i.table! }]))
 );
 
 // Champs des réglages (table settings, une ligne par clé)
