@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "node scripts/db-init.mjs && next start",
     "db:init": "node --env-file=.env.local scripts/db-init.mjs"
   },
   "dependencies": {
