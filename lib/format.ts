@@ -1,0 +1,48 @@
+import type { Field, Opt } from './resources';
+
+export type Row = Record<string, any>;
+export type Ligne = { des: string; mt: number };
+
+export const optValue = (o: Opt) => (Array.isArray(o) ? o[0] : o);
+export const optLabel = (o: Opt) => (Array.isArray(o) ? o[1] : o);
+
+export const total = (lignes: Ligne[] | null) => (lignes ?? []).reduce((a, l) => a + (Number(l.mt) || 0), 0);
+
+export function money(n: number | null, cur = 'MGA') {
+  if (n == null) return 'Sur devis';
+  return cur === 'CAD'
+    ? new Intl.NumberFormat('fr-CA', { style: 'currency', currency: 'CAD' }).format(n)
+    : new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 }).format(n) + ' Ar';
+}
+
+// Valeur ISO → valeur d'un <input type="datetime-local"> à l'heure locale
+export function isoLocal(v: string) {
+  const x = new Date(v);
+  x.setMinutes(x.getMinutes() - x.getTimezoneOffset());
+  return x.toISOString().slice(0, 16);
+}
+
+// refs : table → lignes, pour afficher le libellé d'une clé étrangère
+export function display(f: Field, row: Row, refs: Record<string, Row[]>, labelOf: (table: string) => string) {
+  const v = row[f.name];
+  if (f.type === 'lignes') return money(total(v), row.devise);
+  if (v == null || v === '') return '—';
+  switch (f.type) {
+    case 'bool': return v ? 'Oui' : 'Non';
+    case 'date': return new Date(v + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+    case 'datetime': return new Date(v).toLocaleString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+    case 'number': return Number(v).toLocaleString('fr-FR');
+    case 'tags': return v.length ? v.join(', ') : '—';
+    case 'select': { const o = f.options?.find(o => optValue(o) === v); return o ? optLabel(o) : v; }
+    case 'ref': { const r = refs[f.ref!]?.find(x => x.id === v); return r ? String(r[labelOf(f.ref!)]) : '#' + v; }
+    default: return String(v);
+  }
+}
+
+export async function api<T = any>(url: string, method = 'GET', body?: unknown): Promise<T> {
+  const res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 204) return null as T;
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
+  return data;
+}
