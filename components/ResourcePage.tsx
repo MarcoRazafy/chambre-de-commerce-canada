@@ -79,7 +79,6 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
   const tools = (
     <>
       {!bare && RELATED[table]?.map(([href, label]) => <Link key={href} className="btn" href={href}>{label}</Link>)}
-      {table === 'notifications' && <button className="btn" onClick={() => act('notifications-read', {})}>Tout marquer comme lu</button>}
       {table === 'subscribers' && <>
         <a className="btn" href="/inscription" target="_blank">Formulaire public</a>
         <button className="btn" onClick={() => fileRef.current?.click()}>Importer un CSV</button>

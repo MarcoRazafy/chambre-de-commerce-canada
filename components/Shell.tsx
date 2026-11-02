@@ -4,6 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
 import { GROUP_ICON, NAV, type NavItem } from '@/lib/resources';
 import Icon from './Icon';
+import NotificationsPopup from './NotificationsPopup';
 
 type Me = { user: { nom: string; email: string; role: string; fonction: string | null }; notifs: number; demandes: number };
 
@@ -66,7 +67,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [open, setOpen] = useState(false);            // menu ouvert sur mobile
   const [collapsed, setCollapsed] = useState(false);  // menu replié sur ordinateur
-  const [panel, setPanel] = useState(false);
+  const [pop, setPop] = useState<'notifs' | 'compte' | null>(null);   // fenêtre ouverte depuis la barre du haut
   const [me, setMe] = useState<Me | null>(null);
   const [term, setTerm] = useState('');
 
@@ -78,13 +79,24 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     try { localStorage.setItem('cc:menu', v ? 'replie' : 'ouvert'); } catch {}
   }
 
-  const refresh = useCallback(() => {
-    setOpen(false);
-    setPanel(false);
+  const loadMe = useCallback(() => {
     fetch('/api/auth/me').then(r => {
       if (r.status === 401) window.location.href = '/connexion';
       return r.ok ? r.json() : null;
     }).then(d => d && setMe(d)).catch(() => {});
+  }, []);
+
+  // À chaque navigation : on referme tout et on met les compteurs à jour
+  const refresh = useCallback(() => {
+    setOpen(false);
+    setPop(null);
+    loadMe();
+  }, [loadMe]);
+
+  useEffect(() => {
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && setPop(null);
+    window.addEventListener('keydown', esc);
+    return () => window.removeEventListener('keydown', esc);
   }, []);
 
   useEffect(() => {
@@ -109,16 +121,18 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           <input placeholder="Rechercher" aria-label="Recherche" value={term} onChange={e => setTerm(e.target.value)} />
         </form>
         <div className="sp" />
-        <Link className="tb-btn" href="/notifications" aria-label="Notifications">
+        <button className="tb-btn" aria-label="Notifications" aria-expanded={pop === 'notifs'} onClick={() => setPop(p => (p === 'notifs' ? null : 'notifs'))}>
           <Icon name="bell" size={20} />
           {!!me?.notifs && <span className="bell-dot">{me.notifs}</span>}
-        </Link>
-        <button className="me" style={{ cursor: 'pointer' }} onClick={() => setPanel(p => !p)} title={me?.user.nom} aria-label="Mon compte">
+        </button>
+        <button className="me" style={{ cursor: 'pointer' }} aria-expanded={pop === 'compte'} onClick={() => setPop(p => (p === 'compte' ? null : 'compte'))} title={me?.user.nom} aria-label="Mon compte">
           {(me?.user.nom ?? '?').slice(0, 1).toUpperCase()}
         </button>
       </header>
-      {panel && me && (
-        <div className="npanel" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+      {pop && <div className="pop-bg" onClick={() => setPop(null)} />}
+      {pop === 'notifs' && <NotificationsPopup onChange={loadMe} />}
+      {pop === 'compte' && me && (
+        <div className="npanel pop" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div><b>{me.user.nom}</b><div className="small muted">{me.user.email}</div><div className="small muted">{me.user.role}{me.user.fonction ? ' · ' + me.user.fonction : ''}</div></div>
           <button className="btn" onClick={logout}>Se déconnecter</button>
         </div>

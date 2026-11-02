@@ -218,7 +218,6 @@ export const NAV: [string, NavItem[]][] = [
     { slug: '', label: 'Tableau de bord', icon: 'dash' },
     { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal' },
     { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users' },
-    { slug: 'notifications', label: 'Notifications', icon: 'bell', table: 'notifications', parent: '' },
   ]],
   ['Adhérents', [
     { slug: 'membres', label: 'Membres', icon: 'users', table: 'members', badge: 'demandes' },
