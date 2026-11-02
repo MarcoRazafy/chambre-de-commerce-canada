@@ -4,8 +4,8 @@ export default function PublicCard({ title, children }: { title: React.ReactNode
     <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: 16, background: 'var(--surface-2)' }}>
       <div className="card" style={{ width: 'min(100%, 420px)', gap: 16 }}>
         <div className="brand" style={{ padding: 0 }}>
-          <div className="brand-mark">CC</div>
-          <div><b>CanCham Connect</b><span>Chambre de Commerce Canada–Madagascar</span></div>
+          <img className="logo" src="/logo-app.png" alt="" width={36} height={36} />
+          <div><b>L’Alliée Virtuelle</b><span>Back-office de la CanCham</span></div>
         </div>
         <h1 style={{ fontSize: '1.4rem' }}>{title}</h1>
         {children}

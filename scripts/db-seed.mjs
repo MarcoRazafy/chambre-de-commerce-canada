@@ -1,4 +1,4 @@
-// Données de test (fictives, reprises de la maquette CanCham Connect v2).
+// Données de test (fictives, reprises de la maquette CanCham Connect v2, devenue L’Alliée Virtuelle).
 // Usage : npm run db:seed            → remplit une base vide
 //         npm run db:seed -- --reset → vide d'abord les données (garde les comptes qui ont un mot de passe)
 // Toutes les adresses se terminent par « .test » (domaine réservé) : aucun courriel ne peut atteindre une vraie personne.
@@ -113,7 +113,7 @@ async function run() {
   const settings = {
     org: { nom: 'Chambre de Commerce et de Coopération Canada–Madagascar', court: 'CanCham Madagascar', adresse: 'Lot II A 118 Soavimbahoaka', ville: 'Antananarivo 101, Madagascar', courriel: 'info@cancham.test', tel: '+261 34 00 000 00', site: 'https://cancham.mg/', nif: '000 000 000 0', stat: '00000 00 0000 000000', tpsRate: 5, tvqRate: 9.975, taxesCAD: false, modalites: 'Règlement à l’ordre de la chambre, en espèces, par virement ou par Mobile Money. Rappelez le numéro de facture avec votre paiement.' },
     relances: { avant30: true, avant7: true, apres1: true, apres7: true, apres15: false, apres30: false, notif: true, courriel: true, autoRetard: true },
-    saas: { plan: 'CanCham Connect — Chambre', base: 150, parUser: 15, prochaine: '2026-12-01', moyen: 'Carte bancaire •••• 8810', tpsRate: 5, tvqRate: 9.975 },
+    saas: { plan: 'L’Alliée Virtuelle, formule Chambre', base: 150, parUser: 15, prochaine: '2026-12-01', moyen: 'Carte bancaire •••• 8810', tpsRate: 5, tvqRate: 9.975 },
   };
   for (const [cle, valeur] of Object.entries(settings))
     await q('insert into settings (cle, valeur) values ($1, $2) on conflict (cle) do nothing', [cle, JSON.stringify(valeur)]);

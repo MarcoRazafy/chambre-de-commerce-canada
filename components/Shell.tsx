@@ -129,7 +129,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <button type="button" className="tb-btn side-toggle" aria-label="Replier le menu" title="Replier le menu" onClick={() => collapse(true)}>
               <Icon name="sidebar" size={20} />
             </button>
-            <div className="brand"><div className="brand-mark">CC</div><b>CanCham Connect</b></div>
+            <div className="brand"><img className="logo" src="/logo-app.png" alt="" width={30} height={30} /><b>L’Alliée Virtuelle</b></div>
           </div>
           <nav className="nav">
             <Suspense fallback={<NavTree path={null} demandes={demandes} />}><NavLinks demandes={demandes} onNavigate={refresh} /></Suspense>

@@ -1,4 +1,4 @@
-# CanCham Connect — back-office (Next.js + PostgreSQL)
+# L’Alliée Virtuelle : back-office de la CanCham (Next.js + PostgreSQL)
 
 ## Installation locale
 

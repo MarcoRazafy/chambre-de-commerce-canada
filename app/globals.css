@@ -1,30 +1,30 @@
-/* CanCham Connect : mise en page inspirée du tableau de bord Stripe.
-   Fond clair, gris neutres, bordures fines, accent rouge CanCham (--accent, une seule ligne à changer). */
+/* L’Alliée Virtuelle : palette et police de la charte (frontend/src/styles/tokens.css),
+   mise en page sobre façon Stripe, menu façon GoDaddy. L'accent se change avec --accent. */
 :root{
   color-scheme:light;
-  --accent:#B5202B; --accent-hover:#971A23; --accent-soft:#FCEEEF; --on-accent:#FFFFFF;
-  --bg:#FFFFFF; --side:#F5F7F8; --surface:#FFFFFF; --surface-2:#F6F8FA; --hover:#EEF1F4;
-  --ink:#1A1F36; --ink-2:#414552; --muted:#687385; --line:#E3E8EE; --line-strong:#D5DBE1;
-  --green:#0E7C4A; --green-soft:#E6F4EC; --amber:#94590A; --amber-soft:#FFF3DC;
-  --red:#C0262D; --red-soft:#FDECEC; --blue:#2556C8; --blue-soft:#EAF0FD; --violet:#5B3FA8; --violet-soft:#F0ECFA;
-  --focus:#2556C8;
-  --nav-hover:#E9ECEF; --nav-active:#D5F0EE; --nav-dot:#13A3A3;
-  --f:var(--font-inter), "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --accent:#256BFF; --accent-hover:#1A56D6; --accent-soft:#E8EFFF; --on-accent:#FFFFFF;
+  --bg:#FFFFFF; --side:#F4F7FC; --surface:#FFFFFF; --surface-2:#F4F7FC; --hover:#E8EEFB;
+  --ink:#0B1B33; --ink-2:#4A5568; --muted:#5F6D84; --line:#DCE3F0; --line-strong:#C9D3E5;
+  --green:#13733A; --green-soft:#E7F6EC; --amber:#B45309; --amber-soft:#FEF3E2;
+  --red:#B91C1C; --red-soft:#FDECEC; --blue:#1F56D1; --blue-soft:#E8EFFF; --violet:#5B3FA8; --violet-soft:#F0ECFA;
+  --focus:#256BFF;
+  --nav-hover:#E8EEFB; --nav-active:#DCE7FF; --nav-dot:#256BFF;
+  --f:var(--font-brand), "Montserrat", system-ui, -apple-system, "Segoe UI", sans-serif;
   --mono:var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
   --r:8px; --r-sm:6px;
-  --shadow:0 1px 2px rgba(26,31,54,.06);
-  --shadow-lg:0 12px 32px rgba(26,31,54,.14), 0 2px 6px rgba(26,31,54,.06);
+  --shadow:0 1px 2px rgba(23,43,77,.06);
+  --shadow-lg:0 22px 48px rgba(23,43,77,.13), 0 2px 6px rgba(23,43,77,.06);
 }
-/* Thème sombre prêt, mais pas activé automatiquement (fond clair d'abord) */
+/* Thème sombre de la charte : prêt, mais pas activé automatiquement (fond clair d'abord) */
 :root[data-theme="dark"]{
   color-scheme:dark;
-  --accent:#E25763; --accent-hover:#EC7680; --accent-soft:#3A1A1F;
-  --bg:#0E1420; --side:#121A28; --surface:#151E2D; --surface-2:#1A2434; --hover:#202B3D;
-  --ink:#E8EDF3; --ink-2:#C5CDD8; --muted:#98A3B3; --line:#263347; --line-strong:#34445C;
-  --green:#5CB87E; --green-soft:#15301F; --amber:#E3A84F; --amber-soft:#36291A;
-  --red:#F07178; --red-soft:#3A1A1F; --blue:#7FB0E8; --blue-soft:#172A40; --violet:#A891F0; --violet-soft:#241D3D;
-  --focus:#7FB0E8;
-  --nav-hover:#202B3D; --nav-active:#163A3A; --nav-dot:#3CC6C6;
+  --accent:#3D8BFF; --accent-hover:#4DA3FF; --accent-soft:#132B52;
+  --bg:#07162D; --side:#0B1B33; --surface:#0E2342; --surface-2:#0B1B33; --hover:#163156;
+  --ink:#F7FAFF; --ink-2:#B8C4D9; --muted:#7F8DA3; --line:#163156; --line-strong:#21416B;
+  --green:#22C55E; --green-soft:#0F2E1E; --amber:#F59E0B; --amber-soft:#33250E;
+  --red:#EF4444; --red-soft:#3A1A1F; --blue:#3B82F6; --blue-soft:#132B52; --violet:#A891F0; --violet-soft:#241D3D;
+  --focus:#4DA3FF;
+  --nav-hover:#163156; --nav-active:#1A3A6B; --nav-dot:#4DA3FF;
 }
 
 *{box-sizing:border-box}
@@ -81,6 +81,7 @@ button,input,select,textarea{font:inherit;color:inherit}
 .side-toggle{align-self:flex-end}
 .brand{display:flex;gap:10px;align-items:center;padding:0 8px}
 .brand-mark{width:28px;height:28px;border-radius:var(--r-sm);background:linear-gradient(135deg,#B5202B 0 50%,#2E7247 50%);color:#fff;display:grid;place-items:center;font-weight:700;font-size:.72rem;flex:none}
+.brand .logo{width:30px;height:30px;border-radius:7px;flex:none;display:block}
 .brand b{display:block;font-weight:600;font-size:1.05rem;line-height:1.2;color:var(--ink)}
 .brand span{display:block;font-size:.72rem;color:var(--muted);line-height:1.3}
 .nav{display:flex;flex-direction:column;gap:2px}
