@@ -1,11 +1,14 @@
 import { q, fail } from '@/lib/db';
 import { notFound, validId } from '@/lib/crud';
+import { guard } from '@/lib/auth';
 
 type Ctx = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, { params }: Ctx) {
   const { id } = await params;
   if (!validId(id)) return notFound();
+  const u = await guard();
+  if (u instanceof Response) return u;
   try {
     return Response.json(await q('select * from messages where thread_id = $1 order by created_at', [Number(id)]));
   } catch (e) {
@@ -17,6 +20,8 @@ export async function GET(_req: Request, { params }: Ctx) {
 export async function POST(req: Request, { params }: Ctx) {
   const { id } = await params;
   if (!validId(id)) return notFound();
+  const u = await guard();
+  if (u instanceof Response) return u;
   const { texte, de_nous = true } = await req.json();
   if (!texte?.trim()) return Response.json({ error: 'Message vide' }, { status: 400 });
   try {

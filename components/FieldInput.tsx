@@ -17,6 +17,8 @@ export default function FieldInput({ f, value, onChange, refs, labelOf }: Props)
       case 'date':
       case 'datetime':
         return <input id={id} type={f.type === 'date' ? 'date' : 'datetime-local'} className="inp" value={value ?? ''} onChange={e => onChange(e.target.value)} required={f.required} />;
+      case 'password':
+        return <input id={id} type="password" autoComplete="new-password" minLength={8} className="inp" value={value ?? ''} onChange={e => onChange(e.target.value)} />;
       case 'tags':
         return <input id={id} className="inp" value={value ?? ''} onChange={e => onChange(e.target.value)} />;
       case 'select':

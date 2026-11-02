@@ -227,3 +227,13 @@ body{margin:0}
 .form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 .form-grid .full{grid-column:1/-1}
 @media (max-width:600px){.form-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Impression (aperçu de facture) */
+@media print{
+  .top,.side,.no-print,body::before{display:none!important}
+  .app{display:block}
+  body{background:#fff;color:#000}
+  .content{padding:0}
+  .invoice{border:0;padding:0}
+}
+.kv dd a{color:var(--blue)}

@@ -1,4 +1,5 @@
 import { q, fail } from '@/lib/db';
+import { guard } from '@/lib/auth';
 
 type Member = { id: number; nom: string; pays: string; besoins: string[]; offres: string[]; interets: string[] };
 
@@ -19,6 +20,8 @@ function match(a: Member, b: Member) {
 
 // GET /api/suggestions?member=12 pour limiter à un membre
 export async function GET(req: Request) {
+  const u = await guard();
+  if (u instanceof Response) return u;
   const only = Number(new URL(req.url).searchParams.get('member')) || null;
   try {
     const ms = await q<Member>(`select id, nom, pays, besoins, offres, interets from members where statut in ('a_jour', 'attente', 'retard') order by id`);

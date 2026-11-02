@@ -72,8 +72,6 @@ create table if not exists events (
   format        text not null default 'Présentiel' check (format in ('Présentiel', 'Hybride', 'Webinaire')),
   lieu          text,
   capacite      int,
-  inscrits      int not null default 0,
-  presents      int not null default 0,
   diffusion     text not null default 'Plateforme uniquement',
   tarif_membre  numeric(14,2),
   tarif_public  numeric(14,2),
@@ -81,6 +79,16 @@ create table if not exists events (
   rappel_j1     boolean not null default false,
   rappel_h2     boolean not null default false,
   created_at    timestamptz not null default now()
+);
+
+create table if not exists event_registrations (
+  id         serial primary key,
+  event_id   int not null references events(id) on delete cascade,
+  member_id  int references members(id) on delete set null,
+  nom        text not null,
+  email      text,
+  present    boolean not null default false,
+  created_at timestamptz not null default now()
 );
 
 create table if not exists agenda_rappels (
@@ -120,9 +128,18 @@ create table if not exists news (
 create table if not exists dossiers (
   id          serial primary key,
   nom         text not null,
-  nb_fichiers int not null default 0,
   acces       text,
   payant      boolean not null default false
+);
+
+create table if not exists fichiers (
+  id         serial primary key,
+  dossier_id int not null references dossiers(id) on delete cascade,
+  nom        text not null,
+  type       text,
+  taille     int not null,
+  contenu    bytea not null,
+  created_at timestamptz not null default now()
 );
 
 create table if not exists services (
@@ -149,15 +166,19 @@ create table if not exists messages (
 );
 create index if not exists messages_thread_idx on messages (thread_id, created_at);
 
+-- File d'envoi : courriels composés à la main (programmés) et courriels automatiques (relances, rappels…)
 create table if not exists outbox (
   id            serial primary key,
   type          text not null default 'courriel' check (type in ('courriel', 'newsletter', 'notification')),
   sujet         text not null,
-  destinataires text,
+  audience      text,                       -- groupe de destinataires, résolu à l'envoi
+  destinataires text,                       -- adresses libres, séparées par des virgules
   nb            int,
   date_envoi    timestamptz,
-  statut        text not null default 'programmé' check (statut in ('programmé', 'envoyé', 'annulé')),
-  contenu       text
+  statut        text not null default 'programmé' check (statut in ('programmé', 'envoyé', 'annulé', 'échec')),
+  contenu       text,
+  erreur        text,
+  ref           text unique                 -- évite d'envoyer deux fois la même relance automatique
 );
 
 create table if not exists campaigns (
@@ -177,7 +198,8 @@ create table if not exists subscribers (
   nom              text,
   source           text,
   date_inscription date not null default current_date,
-  statut           text not null default 'Abonné' check (statut in ('Abonné', 'Désabonné', 'Rebond'))
+  statut           text not null default 'Abonné' check (statut in ('Abonné', 'Désabonné', 'Rebond')),
+  jeton            text not null unique default md5(random()::text || clock_timestamp()::text)  -- lien de désabonnement
 );
 
 /* ===== Finances ===== */
@@ -187,6 +209,7 @@ create table if not exists invoices (
   id            serial primary key,
   numero        text not null unique default ('CC-' || extract(year from now())::int || '-' || lpad(nextval('invoice_seq')::text, 4, '0')),
   member_id     int not null references members(id) on delete restrict,
+  objet         text not null default 'autre' check (objet in ('cotisation', 'evenement', 'service', 'autre')),
   lignes        jsonb not null default '[]',  -- [{ "des": "...", "mt": 500000 }]
   devise        char(3) not null default 'MGA' check (devise in ('MGA', 'CAD')),
   date_emission date not null default current_date,
@@ -222,7 +245,15 @@ create table if not exists team_users (
   email    text not null unique,
   role     text not null default 'Manager' check (role in ('Administrateur', 'Manager')),
   fonction text,
-  actif    boolean not null default true
+  actif    boolean not null default true,
+  password_hash      text,
+  derniere_connexion timestamptz
+);
+
+create table if not exists sessions (
+  id         text primary key,              -- empreinte SHA-256 du jeton du cookie
+  user_id    int not null references team_users(id) on delete cascade,
+  expires_at timestamptz not null
 );
 
 create table if not exists platform_invoices (
@@ -248,3 +279,15 @@ create table if not exists journal (
   par        text,
   created_at timestamptz not null default now()
 );
+
+/* ===== Mises à jour des bases créées avec une version précédente ===== */
+alter table events drop column if exists inscrits, drop column if exists presents;
+alter table dossiers drop column if exists nb_fichiers;
+alter table outbox add column if not exists audience text, add column if not exists erreur text, add column if not exists ref text;
+create unique index if not exists outbox_ref_key on outbox (ref);
+alter table outbox drop constraint if exists outbox_statut_check;
+alter table outbox add constraint outbox_statut_check check (statut in ('programmé', 'envoyé', 'annulé', 'échec'));
+alter table subscribers add column if not exists jeton text not null default md5(random()::text || clock_timestamp()::text);
+create unique index if not exists subscribers_jeton_key on subscribers (jeton);
+alter table invoices add column if not exists objet text not null default 'autre';
+alter table team_users add column if not exists password_hash text, add column if not exists derniere_connexion timestamptz;

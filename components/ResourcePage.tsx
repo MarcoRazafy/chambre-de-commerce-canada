@@ -1,22 +1,36 @@
 'use client';
-import { useCallback, useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
-import { api, display, isoLocal, type Row } from '@/lib/format';
+import { api, display, isoLocal, optLabel, optValue, type Row } from '@/lib/format';
+import { DETAIL, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
 import FieldInput from './FieldInput';
 
 const labelOf = (table: string) => RESOURCES[table].label;
 
-// Tableau + formulaire d'ajout/modification pour n'importe quelle table de lib/resources.ts
-export default function ResourcePage({ table, group, bare }: { table: string; group?: string; bare?: boolean }) {
+type Props = {
+  table: string;
+  group?: string;
+  bare?: boolean;                      // sans grand titre (dans une autre page)
+  preset?: Record<string, unknown>;    // filtre fixe + valeurs par défaut du formulaire (ex. { member_id: 5 })
+};
+
+// Tableau + recherche, filtres, export, actions et formulaire pour n'importe quelle table de lib/resources.ts
+export default function ResourcePage({ table, group, bare, preset }: Props) {
   const r = RESOURCES[table];
   const [rows, setRows] = useState<Row[] | null>(null);
   const [refs, setRefs] = useState<Record<string, Row[]>>({});
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState('');
+  const [msg, setMsg] = useState('');
+  const [term, setTerm] = useState('');
+  const [sel, setSel] = useState<Record<string, string>>({});
+  const fileRef = useRef<HTMLInputElement>(null);
+  const qs = preset ? '?' + new URLSearchParams(Object.entries(preset).map(([k, v]) => [k, String(v)])) : '';
 
   const load = useCallback(async () => {
     try {
-      setRows(await api(`/api/${table}`));
+      setRows(await api(`/api/${table}${qs}`));
       const tables = [...new Set(r.fields.filter(f => f.ref).map(f => f.ref!))];
       const lists = await Promise.all(tables.map(t => api<Row[]>(`/api/${t}`)));
       setRefs(Object.fromEntries(tables.map((t, i) => [t, lists[i]])));
@@ -24,7 +38,7 @@ export default function ResourcePage({ table, group, bare }: { table: string; gr
     } catch (e) {
       setError((e as Error).message);
     }
-  }, [table, r]);
+  }, [table, r, qs]);
   useEffect(() => { load(); }, [load]);
 
   async function remove(row: Row) {
@@ -32,7 +46,50 @@ export default function ResourcePage({ table, group, bare }: { table: string; gr
     try { await api(`/api/${table}/${row.id}`, 'DELETE'); load(); } catch (e) { setError((e as Error).message); }
   }
 
-  const cols = r.fields.filter(f => f.list);
+  async function act(action: string, body: Record<string, unknown>, question?: string, ask?: string) {
+    if (question && !confirm(question)) return;
+    let extra = {};
+    if (ask) {
+      const mode = prompt(ask);
+      if (mode === null) return;
+      extra = { mode: mode.trim() };
+    }
+    setMsg('');
+    try { setMsg(await runAction(action, { ...body, ...extra })); setError(''); load(); }
+    catch (e) { setError((e as Error).message); }
+  }
+
+  async function importCsv(file: File) {
+    const rows = parseCsv(await file.text());
+    if (!rows.length) return setError('Fichier vide');
+    await act('subscribers-import', { rows });
+    if (fileRef.current) fileRef.current.value = '';
+  }
+
+  const cols = r.fields.filter(f => f.list && !(preset && f.name in preset));
+  const filterFields = r.fields.filter(f => f.filter && !(preset && f.name in preset));
+  const shown = useMemo(() => (rows ?? []).filter(row =>
+    filterFields.every(f => !sel[f.name] || String(row[f.name]) === sel[f.name]) &&
+    (!term || cols.some(f => display(f, row, refs, labelOf).toLowerCase().includes(term.toLowerCase())))
+  ), [rows, sel, term, refs, cols, filterFields]);
+
+  const exportCsv = () => downloadCsv(r.title, cols.map(f => f.label), shown.map(row => cols.map(f => display(f, row, refs, labelOf))));
+  const actions = ROW_ACTIONS[table] ?? [];
+  const add = <button className={bare ? 'btn sm' : 'btn cta'} onClick={() => setEditing({ ...preset })}>+ Ajouter</button>;
+  const tools = (
+    <>
+      {table === 'notifications' && <button className="btn" onClick={() => act('notifications-read', {})}>Tout marquer comme lu</button>}
+      {table === 'subscribers' && <>
+        <a className="btn" href="/inscription" target="_blank">Formulaire public</a>
+        <button className="btn" onClick={() => fileRef.current?.click()}>Importer un CSV</button>
+        <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={e => e.target.files?.[0] && importCsv(e.target.files[0])} />
+      </>}
+      {table === 'outbox' && <button className="btn" onClick={() => act('run-jobs', {})}>Lancer les envois maintenant</button>}
+      <button className="btn" onClick={exportCsv} disabled={!shown.length}>Exporter</button>
+      {add}
+    </>
+  );
+
   return (
     <>
       {!bare && (
@@ -42,25 +99,44 @@ export default function ResourcePage({ table, group, bare }: { table: string; gr
             <h1><em>{r.title}</em></h1>
             {r.desc && <p className="muted">{r.desc}</p>}
           </div>
-          <div className="actions"><button className="btn cta" onClick={() => setEditing({})}>+ Ajouter</button></div>
+          <div className="actions">{tools}</div>
         </div>
       )}
       {error && <div className="err">{error}</div>}
+      {msg && <div className="chip c-green" style={{ alignSelf: 'flex-start', whiteSpace: 'normal' }}>{msg}</div>}
       <div className="card">
-        {bare && (
-          <div className="card-h"><h2>{r.title}</h2><button className="btn sm" onClick={() => setEditing({})}>+ Ajouter</button></div>
+        {bare && <div className="card-h"><h2>{r.title}</h2><div className="actions">{tools}</div></div>}
+        {(rows?.length ?? 0) > 0 && (
+          <div className="filters">
+            <input className="inp" placeholder="Rechercher…" aria-label="Rechercher dans le tableau" value={term} onChange={e => setTerm(e.target.value)} />
+            {filterFields.map(f => (
+              <select key={f.name} className="inp" style={{ flex: '0 1 200px' }} aria-label={f.label} value={sel[f.name] ?? ''} onChange={e => setSel({ ...sel, [f.name]: e.target.value })}>
+                <option value="">{f.label} : tous</option>
+                {f.type === 'ref'
+                  ? (refs[f.ref!] ?? []).map(o => <option key={o.id} value={String(o.id)}>{String(o[labelOf(f.ref!)])}</option>)
+                  : f.options!.map(o => <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>)}
+              </select>
+            ))}
+          </div>
         )}
-        {rows === null ? <div className="empty">Chargement…</div> : rows.length === 0 ? (
-          <div className="empty">Aucune donnée pour l’instant.</div>
+        {rows === null ? <div className="empty">Chargement…</div> : shown.length === 0 ? (
+          <div className="empty">{rows.length ? 'Aucun résultat.' : 'Aucune donnée pour l’instant.'}</div>
         ) : (
           <div className="tbl">
             <table>
               <thead><tr>{cols.map(f => <th key={f.name}>{f.label}</th>)}<th /></tr></thead>
               <tbody>
-                {rows.map(row => (
+                {shown.map(row => (
                   <tr key={row.id}>
-                    {cols.map(f => <td key={f.name} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>{display(f, row, refs, labelOf)}</td>)}
+                    {cols.map((f, i) => (
+                      <td key={f.name} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>
+                        {i === 0 && DETAIL[table] ? <Link href={`/${DETAIL[table]}/${row.id}`}><b>{display(f, row, refs, labelOf)}</b></Link> : display(f, row, refs, labelOf)}
+                      </td>
+                    ))}
                     <td className="r" style={{ whiteSpace: 'nowrap' }}>
+                      {actions.filter(a => a.show(row)).map(a => (
+                        <button key={a.action} className="btn sm" style={{ marginRight: 4 }} onClick={() => act(a.action, { id: row.id }, a.confirm, a.ask)}>{a.label}</button>
+                      ))}
                       <button className="btn sm ghost" onClick={() => setEditing(row)}>Modifier</button>
                       <button className="btn sm ghost" onClick={() => remove(row)}>Supprimer</button>
                     </td>
@@ -71,12 +147,12 @@ export default function ResourcePage({ table, group, bare }: { table: string; gr
           </div>
         )}
       </div>
-      {editing && <EditModal table={table} row={editing} refs={refs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {editing && <EditModal table={table} row={editing} refs={refs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); window.dispatchEvent(new Event('cc:refresh')); }} />}
     </>
   );
 }
 
-function EditModal({ table, row, refs, onClose, onSaved }: { table: string; row: Row; refs: Record<string, Row[]>; onClose: () => void; onSaved: () => void }) {
+export function EditModal({ table, row, refs, onClose, onSaved }: { table: string; row: Row; refs: Record<string, Row[]>; onClose: () => void; onSaved: () => void }) {
   const r = RESOURCES[table];
   const fields = r.fields.filter(f => !f.readonly);
   const [vals, setVals] = useState<Row>(() => Object.fromEntries(fields.map(f => {

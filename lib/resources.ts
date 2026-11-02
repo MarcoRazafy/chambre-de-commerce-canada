@@ -1,7 +1,7 @@
 // Description des modules : sert à la fois à l'API (colonnes autorisées)
 // et à l'interface (tableaux et formulaires).
 
-export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'bool' | 'select' | 'tags' | 'ref' | 'lignes';
+export type FieldType = 'text' | 'textarea' | 'number' | 'date' | 'datetime' | 'bool' | 'select' | 'tags' | 'ref' | 'lignes' | 'password';
 export type Opt = string | [value: string, label: string];
 export type Field = {
   name: string;
@@ -12,9 +12,14 @@ export type Field = {
   required?: boolean;
   list?: boolean;        // affiché dans le tableau
   readonly?: boolean;    // rempli par la base, jamais envoyé
+  filter?: boolean;      // filtre proposé au-dessus du tableau (select)
   hint?: string;
 };
-export type Resource = { table: string; title: string; label: string; fields: Field[]; orderBy: string; desc?: string };
+export type Resource = {
+  table: string; title: string; label: string; fields: Field[]; orderBy: string; desc?: string;
+  select?: string;       // requête de lecture si elle diffère de « select * » (colonnes calculées)
+  admin?: boolean;       // écriture réservée aux administrateurs
+};
 
 const STATUTS_MEMBRE: Opt[] = [['demande', 'Demande'], ['attente', 'En attente de paiement'], ['a_jour', 'À jour'], ['retard', 'En retard'], ['refusee', 'Refusée']];
 const MOYENS = ['MVola', 'Orange Money', 'Airtel Money', 'Virement', 'Espèces', 'Carte bancaire'];
@@ -24,10 +29,10 @@ const list: Resource[] = [
   { table: 'members', title: 'Membres', label: 'nom', orderBy: 'nom', desc: 'Les entreprises adhérentes et les demandes d’adhésion.', fields: [
     { name: 'nom', label: 'Entreprise', required: true, list: true },
     { name: 'secteur_id', label: 'Secteur', type: 'ref', ref: 'secteurs', list: true },
-    { name: 'pays', label: 'Pays', type: 'select', options: [['MG', 'Madagascar'], ['CA', 'Canada']], list: true },
+    { name: 'pays', label: 'Pays', type: 'select', options: [['MG', 'Madagascar'], ['CA', 'Canada']], list: true, filter: true },
     { name: 'ville', label: 'Ville', list: true },
     { name: 'formule_id', label: 'Formule', type: 'ref', ref: 'formules' },
-    { name: 'statut', label: 'Statut', type: 'select', options: STATUTS_MEMBRE, list: true },
+    { name: 'statut', label: 'Statut', type: 'select', options: STATUTS_MEMBRE, list: true, filter: true },
     { name: 'membre_depuis', label: 'Membre depuis', type: 'date' },
     { name: 'renouvellement', label: 'Renouvellement', type: 'date', list: true },
     { name: 'acces', label: 'Accès plateforme', type: 'select', options: [['aucun', 'Aucun'], ['lien', 'Lien envoyé'], ['actif', 'Actif']] },
@@ -62,14 +67,16 @@ const list: Resource[] = [
   { table: 'secteurs', title: 'Secteurs d’activité', label: 'nom', orderBy: 'nom', fields: [
     { name: 'nom', label: 'Secteur', required: true, list: true },
   ] },
-  { table: 'events', title: 'Événements', label: 'titre', orderBy: 'date_debut desc', fields: [
+  { table: 'events', title: 'Événements', label: 'titre', orderBy: 'date_debut desc',
+    select: `select e.*, (select count(*) from event_registrations r where r.event_id = e.id)::int as inscrits,
+                    (select count(*) from event_registrations r where r.event_id = e.id and r.present)::int as presents from events e`, fields: [
     { name: 'titre', label: 'Titre', required: true, list: true },
     { name: 'date_debut', label: 'Date', type: 'datetime', required: true, list: true },
     { name: 'format', label: 'Format', type: 'select', options: ['Présentiel', 'Hybride', 'Webinaire'], list: true },
     { name: 'lieu', label: 'Lieu' },
     { name: 'capacite', label: 'Capacité', type: 'number', list: true },
-    { name: 'inscrits', label: 'Inscrits', type: 'number', list: true },
-    { name: 'presents', label: 'Présents', type: 'number' },
+    { name: 'inscrits', label: 'Inscrits', type: 'number', list: true, readonly: true },
+    { name: 'presents', label: 'Présents', type: 'number', list: true, readonly: true },
     { name: 'diffusion', label: 'Diffusion', type: 'select', options: ['Plateforme uniquement', 'Plateforme et page publique'] },
     { name: 'tarif_membre', label: 'Tarif membre (Ar)', type: 'number', hint: 'Vide = gratuit.' },
     { name: 'tarif_public', label: 'Tarif public (Ar)', type: 'number', hint: 'Vide = gratuit.' },
@@ -77,7 +84,14 @@ const list: Resource[] = [
     { name: 'rappel_j1', label: 'Rappel la veille', type: 'bool' },
     { name: 'rappel_h2', label: 'Rappel 2 heures avant', type: 'bool' },
   ] },
-  { table: 'agenda_rappels', title: 'Agenda', label: 'titre', orderBy: 'date_debut', desc: 'Rappels internes de l’équipe.', fields: [
+  { table: 'event_registrations', title: 'Inscriptions aux événements', label: 'nom', orderBy: 'created_at desc', desc: 'Les inscrits reçoivent les rappels automatiques de l’événement.', fields: [
+    { name: 'event_id', label: 'Événement', type: 'ref', ref: 'events', required: true, list: true, filter: true },
+    { name: 'member_id', label: 'Membre', type: 'ref', ref: 'members', list: true },
+    { name: 'nom', label: 'Nom', required: true, list: true },
+    { name: 'email', label: 'Courriel', list: true },
+    { name: 'present', label: 'Présent', type: 'bool', list: true },
+  ] },
+  { table: 'agenda_rappels', title: 'Rappels de l’équipe', label: 'titre', orderBy: 'date_debut', desc: 'Rappels internes de l’équipe.', fields: [
     { name: 'titre', label: 'Titre', required: true, list: true },
     { name: 'date_debut', label: 'Date', type: 'datetime', required: true, list: true },
     { name: 'note', label: 'Note', type: 'textarea', list: true },
@@ -101,9 +115,10 @@ const list: Resource[] = [
     { name: 'publie', label: 'Publié', type: 'bool', list: true },
     { name: 'contenu', label: 'Contenu', type: 'textarea' },
   ] },
-  { table: 'dossiers', title: 'Ressources', label: 'nom', orderBy: 'nom', desc: 'Dossiers de documents partagés avec les membres.', fields: [
+  { table: 'dossiers', title: 'Ressources', label: 'nom', orderBy: 'nom', desc: 'Dossiers de documents partagés avec les membres. Ouvrez un dossier pour y déposer des fichiers.',
+    select: 'select d.*, (select count(*) from fichiers f where f.dossier_id = d.id)::int as nb_fichiers from dossiers d', fields: [
     { name: 'nom', label: 'Dossier', required: true, list: true },
-    { name: 'nb_fichiers', label: 'Fichiers', type: 'number', list: true },
+    { name: 'nb_fichiers', label: 'Fichiers', type: 'number', list: true, readonly: true },
     { name: 'acces', label: 'Accès', list: true, hint: 'Ex. : Tous les membres' },
     { name: 'payant', label: 'Payant', type: 'bool', list: true },
   ] },
@@ -119,37 +134,40 @@ const list: Resource[] = [
   ] },
   { table: 'campaigns', title: 'Newsletter', label: 'titre', orderBy: 'date_envoi desc nulls first', desc: 'La lettre d’information envoyée aux adhérents et aux abonnés.', fields: [
     { name: 'titre', label: 'Lettre', required: true, list: true },
-    { name: 'statut', label: 'Statut', type: 'select', options: ['Brouillon', 'Programmée', 'Envoyée'], list: true },
+    { name: 'statut', label: 'Statut', type: 'select', options: ['Brouillon', 'Programmée', 'Envoyée'], list: true, filter: true, hint: 'Programmée : envoi automatique à la date indiquée, aux adhérents et aux abonnés.' },
     { name: 'date_envoi', label: 'Envoi', type: 'datetime', list: true },
     { name: 'destinataires', label: 'Destinataires', type: 'number', list: true },
     { name: 'taux_ouverture', label: 'Ouverture (%)', type: 'number', list: true },
     { name: 'taux_clic', label: 'Clics (%)', type: 'number', list: true },
-    { name: 'contenu', label: 'Contenu', type: 'textarea' },
+    { name: 'contenu', label: 'Contenu', type: 'textarea', hint: 'Texte de la lettre. Un lien de désabonnement est ajouté automatiquement pour les abonnés.' },
   ] },
   { table: 'subscribers', title: 'Abonnés à la lettre', label: 'email', orderBy: 'date_inscription desc', fields: [
     { name: 'email', label: 'Courriel', required: true, list: true },
     { name: 'nom', label: 'Nom', list: true },
     { name: 'source', label: 'Source', list: true },
     { name: 'date_inscription', label: 'Inscription', type: 'date', list: true },
-    { name: 'statut', label: 'Statut', type: 'select', options: ['Abonné', 'Désabonné', 'Rebond'], list: true },
+    { name: 'statut', label: 'Statut', type: 'select', options: ['Abonné', 'Désabonné', 'Rebond'], list: true, filter: true },
   ] },
-  { table: 'outbox', title: 'Envois programmés', label: 'sujet', orderBy: 'date_envoi desc nulls first', fields: [
-    { name: 'type', label: 'Type', type: 'select', options: ['courriel', 'newsletter', 'notification'], list: true },
+  { table: 'outbox', title: 'Envois programmés', label: 'sujet', orderBy: 'date_envoi desc nulls first, id desc', desc: 'Composez un courriel et programmez-le, ou retrouvez tous les envois automatiques (factures, relances, rappels).', fields: [
     { name: 'sujet', label: 'Sujet', required: true, list: true },
-    { name: 'destinataires', label: 'Destinataires', list: true },
-    { name: 'nb', label: 'Nombre', type: 'number', list: true },
-    { name: 'date_envoi', label: 'Envoi', type: 'datetime', list: true },
-    { name: 'statut', label: 'Statut', type: 'select', options: ['programmé', 'envoyé', 'annulé'], list: true },
-    { name: 'contenu', label: 'Contenu', type: 'textarea' },
+    { name: 'audience', label: 'Destinataires', type: 'select', options: ['Adhérents', 'Membres à jour', 'Abonnés à la lettre', 'Adhérents + abonnés', 'Adresses libres'], list: true },
+    { name: 'destinataires', label: 'Adresses', hint: 'Adresses supplémentaires, séparées par des virgules.' },
+    { name: 'date_envoi', label: 'Envoi', type: 'datetime', list: true, hint: 'Vide = envoi dans les 10 minutes.' },
+    { name: 'contenu', label: 'Message', type: 'textarea' },
+    { name: 'type', label: 'Type', type: 'select', options: ['courriel', 'newsletter', 'notification'], list: true, filter: true },
+    { name: 'nb', label: 'Nombre', type: 'number', list: true, readonly: true },
+    { name: 'statut', label: 'Statut', type: 'select', options: ['programmé', 'envoyé', 'annulé', 'échec'], list: true, filter: true },
+    { name: 'erreur', label: 'Erreur', list: true, readonly: true },
   ] },
   { table: 'invoices', title: 'Paiements & factures', label: 'numero', orderBy: 'date_emission desc, numero desc', fields: [
     { name: 'numero', label: 'Numéro', list: true, hint: 'Vide = attribué automatiquement (CC-AAAA-0001).' },
     { name: 'member_id', label: 'Membre', type: 'ref', ref: 'members', required: true, list: true },
+    { name: 'objet', label: 'Objet', type: 'select', options: [['cotisation', 'Cotisation'], ['evenement', 'Événement'], ['service', 'Service'], ['autre', 'Autre']], hint: 'Une cotisation payée met le membre à jour pour un an.' },
     { name: 'lignes', label: 'Montant', type: 'lignes', list: true },
     { name: 'devise', label: 'Devise', type: 'select', options: ['MGA', 'CAD'], list: true },
     { name: 'date_emission', label: 'Émise le', type: 'date', list: true },
     { name: 'echeance', label: 'Échéance', type: 'date', list: true, hint: 'Vide = 30 jours après l’émission.' },
-    { name: 'statut', label: 'Statut', type: 'select', options: [['envoyee', 'Envoyée'], ['payee', 'Payée'], ['retard', 'En retard'], ['annulee', 'Annulée']], list: true },
+    { name: 'statut', label: 'Statut', type: 'select', options: [['envoyee', 'Envoyée'], ['payee', 'Payée'], ['retard', 'En retard'], ['annulee', 'Annulée']], list: true, filter: true },
     { name: 'mode_paiement', label: 'Mode de paiement', type: 'select', options: MOYENS },
     { name: 'nb_relances', label: 'Relances envoyées', type: 'number' },
   ] },
@@ -158,16 +176,18 @@ const list: Resource[] = [
     { name: 'invoice_id', label: 'Facture', type: 'ref', ref: 'invoices', list: true },
     { name: 'moyen', label: 'Moyen', type: 'select', options: MOYENS, list: true },
     { name: 'annonce_le', label: 'Annoncé le', type: 'datetime', list: true },
-    { name: 'statut', label: 'Statut', type: 'select', options: ['annoncé', 'confirmé', 'rejeté'], list: true },
+    { name: 'statut', label: 'Statut', type: 'select', options: ['annoncé', 'confirmé', 'rejeté'], list: true, filter: true },
   ] },
-  { table: 'team_users', title: 'Équipe & accès', label: 'nom', orderBy: 'nom', fields: [
+  { table: 'team_users', title: 'Équipe & accès', label: 'nom', orderBy: 'nom', admin: true, desc: 'Les comptes qui peuvent se connecter au back-office. Les managers ne peuvent pas gérer l’équipe, l’abonnement ni les réglages.', fields: [
     { name: 'nom', label: 'Nom', required: true, list: true },
     { name: 'email', label: 'Courriel', required: true, list: true },
     { name: 'role', label: 'Rôle', type: 'select', options: ['Administrateur', 'Manager'], list: true },
     { name: 'fonction', label: 'Fonction', list: true },
     { name: 'actif', label: 'Actif', type: 'bool', list: true },
+    { name: 'password', label: 'Mot de passe', type: 'password', hint: '8 caractères minimum. Laisser vide pour ne pas le changer.' },
+    { name: 'derniere_connexion', label: 'Dernière connexion', type: 'datetime', list: true, readonly: true },
   ] },
-  { table: 'platform_invoices', title: 'Factures de la plateforme', label: 'numero', orderBy: 'date_facture desc', fields: [
+  { table: 'platform_invoices', title: 'Factures de la plateforme', label: 'numero', orderBy: 'date_facture desc', admin: true, fields: [
     { name: 'numero', label: 'Numéro', required: true, list: true },
     { name: 'date_facture', label: 'Date', type: 'date', list: true },
     { name: 'nb_utilisateurs', label: 'Utilisateurs', type: 'number', list: true },
@@ -179,7 +199,7 @@ const list: Resource[] = [
     created,
   ] },
   { table: 'journal', title: 'Journal d’activité', label: 'titre', orderBy: 'created_at desc', fields: [
-    { name: 'categorie', label: 'Catégorie', type: 'select', options: ['Adhésions', 'Paiements', 'Contenus', 'Événements', 'Équipe'], list: true },
+    { name: 'categorie', label: 'Catégorie', type: 'select', options: ['Adhésions', 'Paiements', 'Contenus', 'Événements', 'Communication', 'Équipe', 'Système'], list: true, filter: true },
     { name: 'titre', label: 'Action', required: true, list: true },
     { name: 'detail', label: 'Détail', type: 'textarea', list: true },
     { name: 'par', label: 'Par', list: true },
@@ -207,7 +227,8 @@ export const NAV: [string, NavItem[]][] = [
   ]],
   ['Programme', [
     { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events', badge: 'up' },
-    { slug: 'agenda', label: 'Agenda', icon: 'agenda', table: 'agenda_rappels' },
+    { slug: 'inscriptions', label: 'Inscriptions', icon: 'userplus', table: 'event_registrations' },
+    { slug: 'agenda', label: 'Agenda', icon: 'agenda' },
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types' },
     { slug: 'actualites', label: 'Actualités', icon: 'news', table: 'news' },
@@ -258,6 +279,7 @@ export const SETTINGS: Record<string, { title: string; fields: Field[] }> = {
   saas: { title: 'Abonnement à la plateforme', fields: [
     { name: 'plan', label: 'Formule' }, { name: 'base', label: 'Prix de base ($ CA / mois)', type: 'number' },
     { name: 'parUser', label: 'Prix par utilisateur ($ CA / mois)', type: 'number' },
+    { name: 'tpsRate', label: 'TPS sur l’abonnement (%)', type: 'number' }, { name: 'tvqRate', label: 'TVQ sur l’abonnement (%)', type: 'number' },
     { name: 'prochaine', label: 'Prochaine facture', type: 'date' }, { name: 'moyen', label: 'Moyen de paiement' },
   ] },
 };

@@ -8,6 +8,14 @@ export const optLabel = (o: Opt) => (Array.isArray(o) ? o[1] : o);
 
 export const total = (lignes: Ligne[] | null) => (lignes ?? []).reduce((a, l) => a + (Number(l.mt) || 0), 0);
 
+// Sous-total, TPS/TVQ (factures en $ CA si activé dans les réglages) et total
+export function invoiceTotals(inv: { lignes: Ligne[] | null; devise: string }, org: Row) {
+  const sub = total(inv.lignes), tax = inv.devise === 'CAD' && !!org.taxesCAD;
+  const tps = tax ? Math.round(sub * (Number(org.tpsRate) || 0)) / 100 : 0;
+  const tvq = tax ? Math.round(sub * (Number(org.tvqRate) || 0)) / 100 : 0;
+  return { sub, tps, tvq, total: sub + tps + tvq };
+}
+
 export function money(n: number | null, cur = 'MGA') {
   if (n == null) return 'Sur devis';
   return cur === 'CAD'
@@ -41,6 +49,7 @@ export function display(f: Field, row: Row, refs: Record<string, Row[]>, labelOf
 
 export async function api<T = any>(url: string, method = 'GET', body?: unknown): Promise<T> {
   const res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });
+  if (res.status === 401 && typeof window !== 'undefined') window.location.href = '/connexion';
   if (res.status === 204) return null as T;
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);

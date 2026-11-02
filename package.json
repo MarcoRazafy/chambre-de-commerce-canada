@@ -6,16 +6,19 @@
     "dev": "next dev",
     "build": "next build",
     "start": "node scripts/db-init.mjs && next start",
-    "db:init": "node --env-file=.env.local scripts/db-init.mjs"
+    "db:init": "node --env-file=.env.local scripts/db-init.mjs",
+    "db:seed": "node --env-file=.env.local scripts/db-seed.mjs"
   },
   "dependencies": {
     "next": "16.4.3",
+    "nodemailer": "^10.3.1",
     "pg": "^8.23.1",
     "react": "19.3.0",
     "react-dom": "19.3.0"
   },
   "devDependencies": {
     "@types/node": "^20",
+    "@types/nodemailer": "^8.0.2",
     "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",

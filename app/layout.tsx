@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
-import Shell from '@/components/Shell';
 import './globals.css';
 
 const inter = Inter({ variable: '--font-inter', subsets: ['latin'] });
@@ -14,9 +13,7 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
     <html lang="fr" className={`${inter.variable} ${mono.variable}`}>
-      <body>
-        <Shell>{children}</Shell>
-      </body>
+      <body>{children}</body>
     </html>
   );
 }

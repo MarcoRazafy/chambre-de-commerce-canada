@@ -1,7 +1,10 @@
 import { q, pool, fail } from '@/lib/db';
+import { guard } from '@/lib/auth';
 
 // Liste des conversations avec le membre, son contact principal et le dernier message
 export async function GET() {
+  const u = await guard();
+  if (u instanceof Response) return u;
   try {
     return Response.json(await q(`
       select t.id, t.sujet, t.member_id, m.nom as membre,
@@ -18,6 +21,8 @@ export async function GET() {
 
 // Nouvelle conversation : { member_id, sujet, texte }
 export async function POST(req: Request) {
+  const u = await guard();
+  if (u instanceof Response) return u;
   const { member_id, sujet, texte } = await req.json();
   if (!member_id || !sujet?.trim() || !texte?.trim()) return Response.json({ error: 'Membre, sujet et message requis' }, { status: 400 });
   const client = await pool.connect();
