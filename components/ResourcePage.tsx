@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
-import { api, display, isoLocal, optLabel, optValue, type Row } from '@/lib/format';
+import { api, display, isoLocal, optLabel, optValue, tone, type Row } from '@/lib/format';
 import { DETAIL, RELATED, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
 import FieldInput from './FieldInput';
 
@@ -121,7 +121,7 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
           </div>
         )}
         {rows === null ? <div className="empty">Chargement…</div> : shown.length === 0 ? (
-          <div className="empty">{rows.length ? 'Aucun résultat.' : 'Aucune donnée pour l’instant.'}</div>
+          <div className="empty">{rows.length ? 'Aucun résultat.' : 'Rien ici pour le moment.'}</div>
         ) : (
           <div className="tbl">
             <table>
@@ -131,7 +131,9 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
                   <tr key={row.id}>
                     {cols.map((f, i) => (
                       <td key={f.name} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>
-                        {i === 0 && DETAIL[table] ? <Link href={`/${DETAIL[table]}/${row.id}`}><b>{display(f, row, refs, labelOf)}</b></Link> : display(f, row, refs, labelOf)}
+                        {i === 0 && DETAIL[table] ? <Link href={`/${DETAIL[table]}/${row.id}`}><b>{display(f, row, refs, labelOf)}</b></Link>
+                          : f.name === 'statut' && row[f.name] ? <span className={`chip ${tone(row[f.name])}`}>{display(f, row, refs, labelOf)}</span>
+                          : display(f, row, refs, labelOf)}
                       </td>
                     ))}
                     <td className="r" style={{ whiteSpace: 'nowrap' }}>
@@ -139,7 +141,6 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
                         <button key={a.action} className="btn sm" style={{ marginRight: 4 }} onClick={() => act(a.action, { id: row.id }, a.confirm, a.ask)}>{a.label}</button>
                       ))}
                       <button className="btn sm ghost" onClick={() => setEditing(row)}>Modifier</button>
-                      <button className="btn sm ghost" onClick={() => remove(row)}>Supprimer</button>
                     </td>
                   </tr>
                 ))}
@@ -148,12 +149,13 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
           </div>
         )}
       </div>
-      {editing && <EditModal table={table} row={editing} refs={refs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); window.dispatchEvent(new Event('cc:refresh')); }} />}
+      {editing && <EditModal table={table} row={editing} refs={refs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); window.dispatchEvent(new Event('cc:refresh')); }}
+        onDelete={editing.id ? () => { const row = editing; setEditing(null); remove(row); } : undefined} />}
     </>
   );
 }
 
-export function EditModal({ table, row, refs, onClose, onSaved }: { table: string; row: Row; refs: Record<string, Row[]>; onClose: () => void; onSaved: () => void }) {
+export function EditModal({ table, row, refs, onClose, onSaved, onDelete }: { table: string; row: Row; refs: Record<string, Row[]>; onClose: () => void; onSaved: () => void; onDelete?: () => void }) {
   const r = RESOURCES[table];
   const fields = r.fields.filter(f => !f.readonly);
   const [vals, setVals] = useState<Row>(() => Object.fromEntries(fields.map(f => {
@@ -186,7 +188,7 @@ export function EditModal({ table, row, refs, onClose, onSaved }: { table: strin
   return (
     <div className="modal-bg" onClick={e => e.target === e.currentTarget && onClose()}>
       <form className="modal" onSubmit={submit}>
-        <div className="modal-h"><h2>{row.id ? 'Modifier' : 'Ajouter'} — {r.title}</h2><button type="button" className="btn sm ghost" onClick={onClose} aria-label="Fermer">✕</button></div>
+        <div className="modal-h"><div><h2>{row.id ? 'Modifier' : 'Ajouter'}</h2><span className="small muted">{r.title}</span></div><button type="button" className="btn sm ghost" onClick={onClose} aria-label="Fermer">✕</button></div>
         <div className="modal-b">
           {error && <div className="err">{error}</div>}
           <div className="form-grid">
@@ -196,6 +198,7 @@ export function EditModal({ table, row, refs, onClose, onSaved }: { table: strin
           </div>
         </div>
         <div className="modal-f">
+          {onDelete && <button type="button" className="btn ghost" style={{ marginRight: 'auto', color: 'var(--red)' }} onClick={onDelete}>Supprimer</button>}
           <button type="button" className="btn" onClick={onClose}>Annuler</button>
           <button className="btn cta" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button>
         </div>

@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
-import { api, display, type Row } from '@/lib/format';
+import { api, display, tone, type Row } from '@/lib/format';
 import { ROW_ACTIONS, runAction } from '@/lib/ui-actions';
 import ResourcePage, { EditModal } from '../ResourcePage';
 import IntroModal from '../IntroModal';
@@ -58,7 +58,7 @@ export default function MemberDetail({ id }: { id: number }) {
         <div className="card">
           <h2>Informations</h2>
           <dl className="kv">
-            {R.fields.filter(x => !['nom', 'ville', 'pays', 'secteur_id'].includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
+            {R.fields.filter(x => !['nom', 'ville', 'pays', 'secteur_id'].includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{x.name === 'statut' ? <span className={`chip ${tone(m.statut)}`}>{display(x, m, refs, t => RESOURCES[t].label)}</span> : display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
           </dl>
         </div>
         <div className="card">
@@ -69,7 +69,7 @@ export default function MemberDetail({ id }: { id: number }) {
                 <div className="grow small"><b>{t.sujet}</b><div className="muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.dernier ?? ''}</div></div>
               </Link>))}</div>
           )}
-          <h2>Suggestions IA</h2>
+          <h2>Rapprochements suggérés</h2>
           {sugg.length === 0 ? <p className="small muted">Aucune suggestion pour ce membre.</p> : sugg.map(s => {
             const other = s.a.id === id ? s.b : s.a;
             return (

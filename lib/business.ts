@@ -53,7 +53,7 @@ export async function emailInvoice(inv: Row, par: string, intro = 'Veuillez trou
   const r = await sendEmail({ to: await memberEmails(inv.member_id), subject: `Facture ${inv.numero}`, text: invoiceText(inv, member, org, intro), ref: `inv:${inv.id}:emise` });
   await q('update invoices set historique = historique || $1 where id = $2',
     [histo(r.sent ? 'Envoyée par courriel' : `Non envoyée par courriel : ${r.error ?? 'aucun contact'}`), inv.id]);
-  await journal('Paiements', 'Facture émise', `${inv.numero} — ${member.nom}`, par);
+  await journal('Paiements', 'Facture émise', `${inv.numero}, ${member.nom}`, par);
 }
 
 /* ===== Adhésions ===== */
@@ -64,7 +64,7 @@ export async function approveMember(id: number, par: string) {
   await q(`update members set statut = 'attente', acces = case when acces = 'aucun' then 'lien' else acces end where id = $1`, [id]);
   let msg = 'Demande acceptée.';
   if (f && f.prix != null) {
-    const inv = await createInvoice({ member_id: id, objet: 'cotisation', lignes: [{ des: `Cotisation annuelle — ${f.nom}`, mt: f.prix }], devise: f.devise, par, intro: 'Votre demande d’adhésion a été acceptée. Bienvenue ! Voici la facture de votre cotisation annuelle.' });
+    const inv = await createInvoice({ member_id: id, objet: 'cotisation', lignes: [{ des: `Cotisation annuelle (${f.nom})`, mt: f.prix }], devise: f.devise, par, intro: 'Votre demande d’adhésion a été acceptée. Bienvenue ! Voici la facture de votre cotisation annuelle.' });
     msg += ` Facture ${inv.numero} émise.`;
   } else msg += ' Aucune facture : la formule est sur devis ou absente.';
   await journal('Adhésions', 'Demande d’adhésion acceptée', m.nom, par);
@@ -91,16 +91,16 @@ export async function markPaid(id: number, mode: string | null, par: string) {
   const inv = await one('invoices', id);
   if (inv.statut === 'payee') throw new ActionError('Facture déjà payée');
   await q(`update invoices set statut = 'payee', mode_paiement = coalesce($1, mode_paiement), historique = historique || $2 where id = $3`,
-    [mode || null, histo(`Paiement enregistré${mode ? ' — ' + mode : ''}`), id]);
+    [mode || null, histo(`Paiement enregistré${mode ? ` (${mode})` : ''}`), id]);
   const m = await one('members', inv.member_id);
   if (inv.objet === 'cotisation')
     // Renouvellement : +1 an à partir de l'échéance en cours si elle est à venir, sinon à partir d'aujourd'hui
     await q(`update members set statut = 'a_jour', membre_depuis = coalesce(membre_depuis, current_date),
              renouvellement = greatest(coalesce(renouvellement, current_date), current_date) + interval '1 year' where id = $1`, [m.id]);
   const org = await getSettings('org');
-  await sendEmail({ to: await memberEmails(m.id), subject: `Paiement reçu — facture ${inv.numero}`, ref: `inv:${id}:payee`,
+  await sendEmail({ to: await memberEmails(m.id), subject: `Paiement reçu pour la facture ${inv.numero}`, ref: `inv:${id}:payee`,
     text: `Bonjour,\n\nNous avons bien reçu votre paiement de ${money(invoiceTotals(inv as never, org).total, inv.devise)} pour la facture ${inv.numero}. Merci !\n\n${org.court || org.nom || ''}` });
-  await journal('Paiements', 'Paiement enregistré', `${inv.numero} — ${m.nom}${mode ? ' — ' + mode : ''}`, par);
+  await journal('Paiements', 'Paiement enregistré', `${inv.numero}, ${m.nom}${mode ? ` (${mode})` : ''}`, par);
   return `Facture ${inv.numero} marquée payée.`;
 }
 
@@ -109,12 +109,12 @@ export async function remindInvoice(id: number, par: string, ref?: string) {
   if (!['envoyee', 'retard'].includes(inv.statut)) throw new ActionError('Seules les factures impayées peuvent être relancées');
   const m = await one('members', inv.member_id), org = await getSettings('org');
   const late = inv.echeance < today();
-  const r = await sendEmail({ to: await memberEmails(m.id), subject: `${late ? 'Relance' : 'Rappel'} — facture ${inv.numero}`, ref,
+  const r = await sendEmail({ to: await memberEmails(m.id), subject: `${late ? 'Relance' : 'Rappel'} : facture ${inv.numero}`, ref,
     text: invoiceText(inv, m, org, late ? 'Sauf erreur de notre part, la facture ci-dessous reste impayée après son échéance.' : 'Petit rappel : la facture ci-dessous arrive bientôt à échéance.') });
   if ((r as { duplicate?: boolean }).duplicate) return 'Relance déjà envoyée.';
   if (!r.sent) throw new ActionError(r.error ?? 'Envoi impossible');
   await q('update invoices set nb_relances = nb_relances + 1, historique = historique || $1 where id = $2', [histo(`${late ? 'Relance' : 'Rappel'} envoyé par courriel`), id]);
-  await journal('Paiements', 'Relance envoyée', `${inv.numero} — ${m.nom}`, par);
+  await journal('Paiements', 'Relance envoyée', `${inv.numero}, ${m.nom}`, par);
   return `Relance envoyée à ${m.nom}.`;
 }
 
@@ -150,7 +150,7 @@ export async function sendCampaign(id: number, par: string) {
     [c.titre, to.join(', '), to.length, r.sent ? 'envoyé' : 'échec', c.contenu, r.error]);
   if (!r.sent) throw new ActionError(r.error ?? 'Envoi impossible');
   await q(`update campaigns set statut = 'Envoyée', date_envoi = now(), destinataires = $1 where id = $2`, [r.sent, id]);
-  await journal('Communication', 'Newsletter envoyée', `${c.titre} — ${r.sent} destinataire(s)`, par);
+  await journal('Communication', 'Newsletter envoyée', `${c.titre} (${r.sent} destinataire(s))`, par);
   return `Lettre envoyée à ${r.sent} destinataire(s).${r.error ? ' Erreurs : ' + r.error : ''}`;
 }
 
@@ -165,7 +165,7 @@ export async function sendOutbox(id: number, par: string) {
   const r = await deliver(to, o.sujet, o.contenu ?? '');
   await q(`update outbox set statut = $1, erreur = $2, nb = $3, date_envoi = coalesce(date_envoi, now()) where id = $4`, [r.sent ? 'envoyé' : 'échec', r.error, to.length, id]);
   if (!r.sent) throw new ActionError(r.error ?? 'Envoi impossible');
-  await journal('Communication', 'Courriel envoyé', `${o.sujet} — ${r.sent} destinataire(s)`, par);
+  await journal('Communication', 'Courriel envoyé', `${o.sujet} (${r.sent} destinataire(s))`, par);
   return `Envoyé à ${r.sent} destinataire(s).`;
 }
 
@@ -176,7 +176,7 @@ export async function introduce(a: number, b: number, message: string, par: stri
   await q(`insert into connections (member_a, member_b, statut, note) values ($1, $2, 'relation', $3)
            on conflict (member_a, member_b) do update set statut = 'relation', note = excluded.note`, [x, y, message]);
   for (const [m, other] of [[ma, mb], [mb, ma]]) {
-    const [t] = await q<{ id: number }>('insert into threads (member_id, sujet) values ($1, $2) returning id', [m.id, `Mise en relation — ${other.nom}`]);
+    const [t] = await q<{ id: number }>('insert into threads (member_id, sujet) values ($1, $2) returning id', [m.id, `Mise en relation avec ${other.nom}`]);
     await q('insert into messages (thread_id, de_nous, texte) values ($1, true, $2)', [t.id, message]);
     await sendEmail({ to: await memberEmails(m.id), subject: `Mise en relation avec ${other.nom}`, text: `Bonjour,\n\n${message}` });
   }

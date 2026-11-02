@@ -36,7 +36,7 @@ async function run() {
       const [m] = await q<Row>('select nom from members where id = $1', [inv.member_id]);
       if (inv.objet === 'cotisation') await q(`update members set statut = 'retard' where id = $1 and statut in ('a_jour', 'attente')`, [inv.member_id]);
       await notify(`Facture ${inv.numero} passée en retard (${m?.nom ?? ''})`);
-      await journal('Paiements', 'Facture passée en retard', `${inv.numero} — ${m?.nom ?? ''}`, SYS);
+      await journal('Paiements', 'Facture passée en retard', `${inv.numero}, ${m?.nom ?? ''}`, SYS);
     }
   });
 
@@ -61,7 +61,7 @@ async function run() {
       where m.statut = 'a_jour' and m.renouvellement <= current_date + 30 and f.prix is not null
         and not exists (select 1 from invoices i where i.member_id = m.id and i.objet = 'cotisation' and i.date_emission > m.renouvellement - 45)`);
     for (const m of due)
-      await createInvoice({ member_id: m.id, objet: 'cotisation', lignes: [{ des: `Renouvellement de la cotisation annuelle — ${m.formule}`, mt: m.prix }],
+      await createInvoice({ member_id: m.id, objet: 'cotisation', lignes: [{ des: `Renouvellement de la cotisation annuelle (${m.formule})`, mt: m.prix }],
         devise: m.devise, echeance: m.renouvellement, par: SYS, intro: 'Votre adhésion arrive à échéance. Voici la facture de renouvellement de votre cotisation.' });
   });
 
@@ -73,8 +73,8 @@ async function run() {
       if (!step) continue;
       const to = (await q<{ email: string }>('select email from event_registrations where event_id = $1', [e.id])).map(r => r.email);
       const quand = new Date(e.date_debut).toLocaleString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: process.env.TZ || 'Indian/Antananarivo' });
-      await sendEmail({ to, subject: `Rappel — ${e.titre}`, ref: `evt:${e.id}:${step}`,
-        text: `Bonjour,\n\nPetit rappel : vous êtes inscrit(e) à « ${e.titre} », ${quand}.\n${e.format}${e.lieu ? ' — ' + e.lieu : ''}\n\nÀ bientôt !` });
+      await sendEmail({ to, subject: `Rappel : ${e.titre}`, ref: `evt:${e.id}:${step}`,
+        text: `Bonjour,\n\nPetit rappel : vous êtes inscrit(e) à « ${e.titre} », ${quand}.\n${e.format}${e.lieu ? ', ' + e.lieu : ''}\n\nÀ bientôt !` });
     }
   });
 

@@ -37,7 +37,7 @@ const list: Resource[] = [
     { name: 'renouvellement', label: 'Renouvellement', type: 'date', list: true },
     { name: 'acces', label: 'Accès plateforme', type: 'select', options: [['aucun', 'Aucun'], ['lien', 'Lien envoyé'], ['actif', 'Actif']] },
     { name: 'description', label: 'Description', type: 'textarea' },
-    { name: 'besoins', label: 'Besoins', type: 'tags', hint: 'Séparés par des virgules. Sert aux suggestions IA.' },
+    { name: 'besoins', label: 'Besoins', type: 'tags', hint: 'Séparés par des virgules. Servent à suggérer des rapprochements.' },
     { name: 'offres', label: 'Produits & services proposés', type: 'tags', hint: 'Séparés par des virgules.' },
     { name: 'interets', label: 'Centres d’intérêt', type: 'tags', hint: 'Séparés par des virgules.' },
     { name: 'renouvellement_auto', label: 'Renouvellement automatique', type: 'bool' },
@@ -209,25 +209,25 @@ const list: Resource[] = [
 
 export const RESOURCES: Record<string, Resource> = Object.fromEntries(list.map(r => [r.table, r]));
 
-// Menu. table vide = page dédiée ; icon = clé de lib/icons.ts ;
-// badge : 'new' (Nouveau), 'up' (Amélioré), 'demandes' (nombre de demandes d'adhésion)
+// Menu. table vide = page dédiée ; icon = clé de components/Icon.tsx ;
+// badge : 'demandes' affiche le nombre de demandes d'adhésion à traiter
 // parent : page absente du menu (comme dans la maquette), accessible depuis la page parente qui reste surlignée
-export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'new' | 'up' | 'demandes'; parent?: string };
+export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes'; parent?: string };
 export const NAV: [string, NavItem[]][] = [
   ['Pilotage', [
     { slug: '', label: 'Tableau de bord', icon: 'dash' },
     { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal' },
-    { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users', badge: 'up' },
+    { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users' },
     { slug: 'notifications', label: 'Notifications', icon: 'bell', table: 'notifications', parent: '' },
   ]],
   ['Adhérents', [
     { slug: 'membres', label: 'Membres', icon: 'users', table: 'members', badge: 'demandes' },
     { slug: 'contacts', label: 'Contacts', icon: 'userplus', table: 'contacts', parent: 'membres' },
-    { slug: 'annuaire', label: 'Annuaire', icon: 'book', badge: 'up' },
+    { slug: 'annuaire', label: 'Annuaire', icon: 'book' },
     { slug: 'mises-en-relation', label: 'Mises en relation', icon: 'spark', table: 'connections', parent: 'annuaire' },
   ]],
   ['Programme', [
-    { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events', badge: 'up' },
+    { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events' },
     { slug: 'inscriptions', label: 'Inscriptions', icon: 'userplus', table: 'event_registrations', parent: 'evenements' },
     { slug: 'agenda', label: 'Agenda', icon: 'agenda' },
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
@@ -238,21 +238,24 @@ export const NAV: [string, NavItem[]][] = [
   ]],
   ['Communication', [
     { slug: 'messagerie', label: 'Messagerie', icon: 'chat' },
-    { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns', badge: 'new' },
-    { slug: 'lettre', label: 'Abonnés à la lettre', icon: 'list', table: 'subscribers', badge: 'new' },
+    { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns' },
+    { slug: 'lettre', label: 'Abonnés à la lettre', icon: 'list', table: 'subscribers' },
     { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox', parent: 'newsletter' },
   ]],
   ['Finances', [
-    { slug: 'paiements', label: 'Paiements & factures', icon: 'file', table: 'invoices', badge: 'up' },
-    { slug: 'reglements', label: 'Règlements annoncés', icon: 'coin', table: 'reglements', badge: 'up' },
-    { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear', badge: 'new' },
+    { slug: 'paiements', label: 'Paiements & factures', icon: 'file', table: 'invoices' },
+    { slug: 'reglements', label: 'Règlements annoncés', icon: 'coin', table: 'reglements' },
+    { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear' },
     { slug: 'formules', label: 'Formules d’adhésion', icon: 'card', table: 'formules', parent: 'facturation' },
-    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'book', table: 'secteurs', parent: 'facturation' },
+    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'tag', table: 'secteurs', parent: 'facturation' },
   ]],
   ['Plateforme', [
-    { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star', badge: 'new' },
+    { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star' },
   ]],
 ];
+
+// Groupes affichés comme rubriques dépliables (avec leur icône) ; les autres groupes sont des liens directs
+export const GROUP_ICON: Record<string, string> = { Adhérents: 'users', Programme: 'cal', Communication: 'chat', Finances: 'coin' };
 
 export const PAGES: Record<string, { group: string; table: string }> = Object.fromEntries(
   NAV.flatMap(([group, items]) => items.filter(i => i.table).map(i => [i.slug, { group, table: i.table! }]))

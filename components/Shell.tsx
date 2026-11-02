@@ -1,46 +1,82 @@
 'use client';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Suspense, useCallback, useEffect, useState } from 'react';
-import { NAV, type NavItem } from '@/lib/resources';
+import { Fragment, Suspense, useCallback, useEffect, useState } from 'react';
+import { GROUP_ICON, NAV, type NavItem } from '@/lib/resources';
 import Icon from './Icon';
 
 type Me = { user: { nom: string; email: string; role: string; fonction: string | null }; notifs: number; demandes: number };
 
 function Badge({ badge, demandes }: { badge: NavItem['badge']; demandes: number }) {
-  if (badge === 'demandes') return demandes ? <span className="badge-n" title="Demandes à examiner">{demandes}</span> : null;
-  if (badge === 'new') return <span className="badge-new">Nouveau</span>;
-  if (badge === 'up') return <span className="badge-up">Amélioré</span>;
-  return null;
+  return badge === 'demandes' && demandes ? <span className="badge-n" title={`${demandes} demande(s) d’adhésion à examiner`}>{demandes}</span> : null;
+}
+
+// Menu à la GoDaddy : liens directs + rubriques dépliables. path vaut null pendant le pré-rendu.
+function NavTree({ path, demandes }: { path: string | null; demandes: number }) {
+  const at = (slug: string) => path !== null && (slug ? path === '/' + slug || path.startsWith('/' + slug + '/') : path === '/');
+  const hidden = NAV.flatMap(([, items]) => items).filter(i => i.parent !== undefined);
+  const isOn = (i: NavItem) => at(i.slug) || hidden.some(h => h.parent === i.slug && at(h.slug));
+  const activeGroup = NAV.find(([g, items]) => GROUP_ICON[g] && items.some(i => isOn(i) || at(i.slug)))?.[0];
+  const [openG, setOpenG] = useState<Record<string, boolean>>({});
+  useEffect(() => { if (activeGroup) setOpenG(o => ({ ...o, [activeGroup]: true })); }, [activeGroup]);
+
+  return NAV.map(([group, items]) => {
+    const visible = items.filter(i => i.parent === undefined);
+    if (!GROUP_ICON[group]) return (
+      <Fragment key={group}>
+        {visible.map(i => (
+          <Link key={i.slug} href={'/' + i.slug} className={`nav-i${isOn(i) ? ' on' : ''}`} aria-current={isOn(i) ? 'page' : undefined}>
+            <span className="nav-ic"><Icon name={i.icon} size={20} /></span><span>{i.label}</span><Badge badge={i.badge} demandes={demandes} />
+          </Link>
+        ))}
+      </Fragment>
+    );
+    const expanded = !!openG[group];
+    const dot = visible.some(i => i.badge === 'demandes') && demandes > 0;
+    return (
+      <div key={group} className={`nav-grp${expanded ? ' open' : ''}`}>
+        <button type="button" className="nav-i nav-parent" aria-expanded={expanded} onClick={() => setOpenG(o => ({ ...o, [group]: !expanded }))}>
+          <span className="nav-ic"><Icon name={GROUP_ICON[group]} size={20} />{dot && <i className="nav-dot" />}</span>
+          <span>{group}</span>
+          <span className="caret"><Icon name="down" size={16} /></span>
+        </button>
+        {/* Toujours rendu pour pouvoir animer l'ouverture ; inert le rend inaccessible quand il est replié */}
+        <div className="nav-sub-wrap" inert={!expanded}>
+          <div className="nav-sub">
+            {visible.map(i => (
+              <Link key={i.slug} href={'/' + i.slug} className={`nav-i${isOn(i) ? ' on' : ''}`} aria-current={isOn(i) ? 'page' : undefined}>
+                <span>{i.label}</span><Badge badge={i.badge} demandes={demandes} />
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  });
 }
 
 // Le menu dépend de l'adresse : isolé dans un <Suspense> pour que les pages restent pré-rendues
 function NavLinks({ demandes, onNavigate }: { demandes: number; onNavigate: () => void }) {
   const path = usePathname();
   useEffect(onNavigate, [path, onNavigate]);
-  const at = (slug: string) => slug ? path === '/' + slug || path.startsWith('/' + slug + '/') : path === '/';
-  const hidden = NAV.flatMap(([, items]) => items).filter(i => i.parent !== undefined);
-  return NAV.map(([group, items]) => (
-    <div className="nav-g" key={group}>
-      <div className="eyebrow">{group}</div>
-      {items.filter(i => i.parent === undefined).map(i => {
-        const on = at(i.slug) || hidden.some(h => h.parent === i.slug && at(h.slug));
-        return (
-          <Link key={i.slug} href={'/' + i.slug} className={on ? 'on' : ''}>
-            <Icon name={i.icon} /><span>{i.label}</span><Badge badge={i.badge} demandes={demandes} />
-          </Link>
-        );
-      })}
-    </div>
-  ));
+  return <NavTree path={path} demandes={demandes} />;
 }
 
 export default function Shell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(false);            // menu ouvert sur mobile
+  const [collapsed, setCollapsed] = useState(false);  // menu replié sur ordinateur
   const [panel, setPanel] = useState(false);
   const [me, setMe] = useState<Me | null>(null);
   const [term, setTerm] = useState('');
+
+  useEffect(() => {
+    try { setCollapsed(localStorage.getItem('cc:menu') === 'replie'); } catch {}
+  }, []);
+  function collapse(v: boolean) {
+    setCollapsed(v);
+    try { localStorage.setItem('cc:menu', v ? 'replie' : 'ouvert'); } catch {}
+  }
 
   const refresh = useCallback(() => {
     setOpen(false);
@@ -61,20 +97,20 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     window.location.href = '/connexion';
   }
 
-  const nav = NAV.map(([g, items]) => <div className="nav-g" key={g}><div className="eyebrow">{g}</div>{items.filter(i => i.parent === undefined).map(i => <Link key={i.slug} href={'/' + i.slug}><Icon name={i.icon} /><span>{i.label}</span></Link>)}</div>);
+  const demandes = me?.demandes ?? 0;
   return (
-    <>
+    <div className={`shell${collapsed ? ' collapsed' : ''}`}>
       <header className="top">
-        <button className="tb-btn" aria-label="Ouvrir le menu" onClick={() => setOpen(o => !o)}>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M4 7h16M4 12h16M4 17h16" /></svg>
+        <button className="tb-btn" aria-label="Afficher le menu" onClick={() => (window.innerWidth <= 920 ? setOpen(o => !o) : collapse(false))}>
+          <Icon name="menu" size={20} />
         </button>
         <form className="search" role="search" onSubmit={e => { e.preventDefault(); if (term.trim()) router.push('/recherche?q=' + encodeURIComponent(term.trim())); }}>
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="11" cy="11" r="7" /><path d="m20 20-4-4" /></svg>
-          <input placeholder="Rechercher un membre, un événement, une facture…" aria-label="Recherche" value={term} onChange={e => setTerm(e.target.value)} />
+          <Icon name="search" size={16} />
+          <input placeholder="Rechercher" aria-label="Recherche" value={term} onChange={e => setTerm(e.target.value)} />
         </form>
         <div className="sp" />
         <Link className="tb-btn" href="/notifications" aria-label="Notifications">
-          <Icon name="bell" size={19} />
+          <Icon name="bell" size={20} />
           {!!me?.notifs && <span className="bell-dot">{me.notifs}</span>}
         </Link>
         <button className="me" style={{ cursor: 'pointer' }} onClick={() => setPanel(p => !p)} title={me?.user.nom} aria-label="Mon compte">
@@ -89,17 +125,18 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       )}
       <div className="app">
         <aside className={`side${open ? ' open' : ''}`} id="side" aria-label="Menu du back-office">
-          <div className="brand"><div className="brand-mark">CC</div><div><b>CanCham Connect</b><span>Back-office · version 2</span></div></div>
-          <nav>
-            <Suspense fallback={nav}><NavLinks demandes={me?.demandes ?? 0} onNavigate={refresh} /></Suspense>
-          </nav>
-          <div className="legend">
-            <span><span className="badge-new">Nouveau</span> module ajouté</span>
-            <span><span className="badge-up">Amélioré</span> module existant enrichi</span>
+          <div className="side-h">
+            <button type="button" className="tb-btn side-toggle" aria-label="Replier le menu" title="Replier le menu" onClick={() => collapse(true)}>
+              <Icon name="sidebar" size={20} />
+            </button>
+            <div className="brand"><div className="brand-mark">CC</div><b>CanCham Connect</b></div>
           </div>
+          <nav className="nav">
+            <Suspense fallback={<NavTree path={null} demandes={demandes} />}><NavLinks demandes={demandes} onNavigate={refresh} /></Suspense>
+          </nav>
         </aside>
         <main className="main"><div className="content">{children}</div></main>
       </div>
-    </>
+    </div>
   );
 }

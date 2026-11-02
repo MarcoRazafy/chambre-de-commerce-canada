@@ -47,16 +47,16 @@ const EVENTS = [
 
 // [numéro, membre, objet, désignation, montant, devise, date, statut, mode]
 const INVOICES = [
-  ['0038', 'm8', 'cotisation', 'Cotisation annuelle — adhésion', 500000, 'MGA', '2026-10-29', 'envoyee'],
-  ['0037', 'm4', 'cotisation', 'Cotisation annuelle — adhésion', 300, 'CAD', '2026-10-27', 'envoyee'],
-  ['0036', 'm11', 'cotisation', 'Cotisation annuelle — adhésion', 500000, 'MGA', '2026-10-20', 'payee', 'Mobile Money'],
-  ['0031', 'm2', 'cotisation', 'Cotisation annuelle — adhésion', 300, 'CAD', '2026-10-21', 'payee', 'Carte bancaire'],
-  ['0029', 'm10', 'cotisation', 'Cotisation annuelle — adhésion', 300, 'CAD', '2026-09-15', 'retard'],
-  ['0027', 'm5', 'cotisation', 'Cotisation annuelle — adhésion', 250000, 'MGA', '2026-09-02', 'retard'],
-  ['0025', 'm3', 'evenement', 'Participation — Kit marketing, contenu visuel & présence digitale', 50000, 'MGA', '2026-10-09', 'envoyee'],
-  ['0024', 'm9', 'evenement', 'Participation — Kit marketing, contenu visuel & présence digitale', 50000, 'MGA', '2026-10-09', 'payee', 'Carte bancaire'],
-  ['0021', 'm6', 'cotisation', 'Cotisation annuelle — adhésion', 500000, 'MGA', '2026-02-10', 'payee', 'Carte bancaire'],
-  ['0019', 'm12', 'cotisation', 'Cotisation annuelle — adhésion', 150, 'CAD', '2026-05-09', 'payee', 'Carte bancaire'],
+  ['0038', 'm8', 'cotisation', 'Cotisation annuelle d’adhésion', 500000, 'MGA', '2026-10-29', 'envoyee'],
+  ['0037', 'm4', 'cotisation', 'Cotisation annuelle d’adhésion', 300, 'CAD', '2026-10-27', 'envoyee'],
+  ['0036', 'm11', 'cotisation', 'Cotisation annuelle d’adhésion', 500000, 'MGA', '2026-10-20', 'payee', 'Mobile Money'],
+  ['0031', 'm2', 'cotisation', 'Cotisation annuelle d’adhésion', 300, 'CAD', '2026-10-21', 'payee', 'Carte bancaire'],
+  ['0029', 'm10', 'cotisation', 'Cotisation annuelle d’adhésion', 300, 'CAD', '2026-09-15', 'retard'],
+  ['0027', 'm5', 'cotisation', 'Cotisation annuelle d’adhésion', 250000, 'MGA', '2026-09-02', 'retard'],
+  ['0025', 'm3', 'evenement', 'Participation à l’atelier Kit marketing, contenu visuel & présence digitale', 50000, 'MGA', '2026-10-09', 'envoyee'],
+  ['0024', 'm9', 'evenement', 'Participation à l’atelier Kit marketing, contenu visuel & présence digitale', 50000, 'MGA', '2026-10-09', 'payee', 'Carte bancaire'],
+  ['0021', 'm6', 'cotisation', 'Cotisation annuelle d’adhésion', 500000, 'MGA', '2026-02-10', 'payee', 'Carte bancaire'],
+  ['0019', 'm12', 'cotisation', 'Cotisation annuelle d’adhésion', 150, 'CAD', '2026-05-09', 'payee', 'Carte bancaire'],
 ];
 
 const TEAM = [
@@ -192,8 +192,8 @@ async function run() {
     const h = [[date + 'T09:00:00+03:00', 'Facture émise et envoyée par courriel']];
     const ech = new Date(date + 'T12:00:00Z'); ech.setUTCDate(ech.getUTCDate() + 30);
     const echeance = ech.toISOString().slice(0, 10);
-    if (statut === 'payee') h.push([date + 'T16:00:00+03:00', `Paiement enregistré — ${mode}`]);
-    if (statut === 'retard') h.push([echeance + 'T00:05:00+03:00', 'Passée en retard automatiquement à l’échéance'], [echeance + 'T09:00:00+03:00', 'Relance J+1 — notification + courriel']);
+    if (statut === 'payee') h.push([date + 'T16:00:00+03:00', `Paiement enregistré (${mode})`]);
+    if (statut === 'retard') h.push([echeance + 'T00:05:00+03:00', 'Passée en retard automatiquement à l’échéance'], [echeance + 'T09:00:00+03:00', 'Relance J+1 par notification et courriel']);
     invoice[n] = await ins('invoices', { numero: 'CC-2026-' + n, member_id: member[k].id, objet, lignes: JSON.stringify([{ des, mt }]), devise, date_emission: date, echeance, statut, mode_paiement: mode ?? null, nb_relances: statut === 'retard' ? 1 : 0, historique: histo(...h) });
   }
   await q(`select setval('invoice_seq', 38)`);   // la prochaine facture sera CC-2026-0039

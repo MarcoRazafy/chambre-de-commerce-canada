@@ -36,13 +36,13 @@ export default function Annuaire() {
   return (
     <>
       <div className="head"><div><div className="eyebrow">Adhérents</div><h1><em>Annuaire</em></h1>
-        <p className="muted">Les membres adhérents et les mises en relation suggérées : ce qu’un membre recherche, rapproché de ce qu’un autre propose.</p></div>
+        <p className="muted">Les membres adhérents. Quand l’un cherche ce qu’un autre propose, on vous suggère de les présenter.</p></div>
         <div className="actions"><Link className="btn" href="/mises-en-relation">Mises en relation</Link></div></div>
       {error && <div className="err">{error}</div>}
       {msg && <div className="chip c-green" style={{ alignSelf: 'flex-start', whiteSpace: 'normal' }}>{msg}</div>}
       <div className="new-zone">
-        <span className="new-label">Suggestions IA</span>
-        {sugg.length === 0 ? <p className="small muted">Aucune suggestion. Elles apparaissent quand les besoins d’un membre correspondent aux offres d’un autre.</p> : (
+        <span className="new-label">Rapprochements suggérés</span>
+        {sugg.length === 0 ? <p className="small muted">Pas de suggestion pour l’instant. Remplissez les besoins et les offres des membres pour en voir apparaître.</p> : (
           <div className="grid g2">
             {sugg.map(s => (
               <div className="sugg" key={s.a.id + '-' + s.b.id}>

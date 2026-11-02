@@ -52,23 +52,23 @@ async function Content() {
     q<Row>(`select statut, count(*)::int n, count(*) filter (where pays = 'MG')::int mg, count(*) filter (where pays = 'CA')::int ca from members group by statut`),
   ]);
 
-  const kpis: [string, React.ReactNode, string, string, string][] = [
-    ['Membres à jour', s.a_jour, '/membres', 'ic-green', 'users'],
-    ['Demandes d’adhésion', s.demandes, '/membres', 'ic-blue', 'userplus'],
-    ['À encaisser', <>{money(s.du_mga)}{s.du_cad > 0 && <div className="small muted">+ {money(s.du_cad, 'CAD')}</div>}</>, '/paiements', 'ic-amber', 'coin'],
-    ['Factures en retard', s.retard, '/paiements', 'ic-red', 'alert'],
-    ['Événements à venir', s.events, '/evenements', 'ic-navy', 'cal'],
-    ['Conversations', s.threads, '/messagerie', 'ic-violet', 'chat'],
-    ['Abonnés à la lettre', s.abonnes, '/lettre', 'ic-blue', 'mail'],
+  const kpis: [string, React.ReactNode, string, string][] = [
+    ['Membres à jour', s.a_jour, '/membres', 'users'],
+    ['Demandes d’adhésion', s.demandes, '/membres', 'userplus'],
+    ['À encaisser', <>{money(s.du_mga)}{s.du_cad > 0 && <div className="small muted">+ {money(s.du_cad, 'CAD')}</div>}</>, '/paiements', 'coin'],
+    ['Factures en retard', s.retard, '/paiements', 'alert'],
+    ['Événements à venir', s.events, '/evenements', 'cal'],
+    ['Conversations', s.threads, '/messagerie', 'chat'],
+    ['Abonnés à la lettre', s.abonnes, '/lettre', 'mail'],
   ];
   const total = repart.reduce((a, r) => a + r.n, 0);
   const empty = (t: string) => <p className="small muted">{t}</p>;
   return (
     <>
       <div className="grid g4">
-        {kpis.map(([l, v, href, ic, icon]) => (
+        {kpis.map(([l, v, href, icon]) => (
           <Link key={l} href={href} className="card kpi" style={{ textDecoration: 'none' }}>
-            <div className={`ic ${ic}`}><Icon name={icon} size={22} /></div>
+            <div className="ic"><Icon name={icon} size={22} /></div>
             <div><div className="l">{l}</div><div className="v">{v}</div></div>
           </Link>
         ))}

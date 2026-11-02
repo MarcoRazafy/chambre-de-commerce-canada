@@ -21,7 +21,7 @@ export default function Calendar() {
         const nom = (list: Row[], id: number, k = 'nom') => list.find(x => x.id === id)?.[k] ?? '';
         setItems([
           ...evs.map(e => ({ d: new Date(e.date_debut), t: e.titre, cls: 'c-red', href: `/evenements/${e.id}` })),
-          ...rdv.map(r => ({ d: new Date(r.date_debut), t: `${nom(types, r.type_id)} — ${nom(mem, r.member_id)}`, cls: 'c-green', href: '/rendez-vous' })),
+          ...rdv.map(r => ({ d: new Date(r.date_debut), t: `${nom(types, r.type_id)} avec ${nom(mem, r.member_id)}`, cls: 'c-green', href: '/rendez-vous' })),
           ...rap.map(r => ({ d: new Date(r.date_debut), t: r.titre, cls: 'c-blue', href: '/agenda' })),
         ]);
       })
