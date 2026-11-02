@@ -7,6 +7,7 @@ import { toast } from '@/lib/toast';
 import StatusBadge from './StatusBadge';
 import { DETAIL, RELATED, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
 import FieldInput from './FieldInput';
+import ModalBackdrop from './ModalBackdrop';
 
 const labelOf = (table: string) => RESOURCES[table].label;
 
@@ -184,7 +185,7 @@ export function EditModal({ table, row, refs, onClose, onSaved, onDelete }: { ta
   }
 
   return (
-    <div className="modal-bg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <ModalBackdrop onClose={onClose}>
       <form className="modal" onSubmit={submit}>
         <div className="modal-h"><div><h2>{row.id ? 'Modifier' : 'Ajouter'}</h2><span className="small muted">{r.title}</span></div><button type="button" className="btn sm ghost" onClick={onClose} aria-label="Fermer">✕</button></div>
         <div className="modal-b">
@@ -201,6 +202,6 @@ export function EditModal({ table, row, refs, onClose, onSaved, onDelete }: { ta
           <button className="btn cta" disabled={busy}>{busy ? 'Enregistrement…' : 'Enregistrer'}</button>
         </div>
       </form>
-    </div>
+    </ModalBackdrop>
   );
 }

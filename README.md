@@ -38,6 +38,14 @@ Elles tournent toutes les 10 minutes dans le serveur (`instrumentation.ts` → `
 
 Chaque envoi automatique est unique : il n'est jamais envoyé deux fois.
 
+## Messagerie
+
+- Conversations avec un membre, groupes (collègues et membres) et messages directs entre collègues.
+- Ce qui implique un membre est visible par toute l'équipe ; les groupes internes et les messages directs, seulement par leurs participants.
+- Les membres n'ont pas de compte : ils reçoivent les messages par courriel (pièces jointes incluses jusqu'à 10 Mo). Leurs réponses se notent dans la conversation (bouton « … » de la zone de rédaction).
+- Images, vidéos et fichiers jusqu'à 25 Mo chacun ; photos de profil et logos jusqu'à 3 Mo.
+- Mise à jour automatique toutes les 4 à 10 secondes (pas de connexion temps réel à configurer).
+
 ## Droits
 
 - **Administrateur** : tout.

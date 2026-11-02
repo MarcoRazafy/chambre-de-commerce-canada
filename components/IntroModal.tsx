@@ -1,5 +1,6 @@
 'use client';
 import { useState } from 'react';
+import ModalBackdrop from './ModalBackdrop';
 import { runAction } from '@/lib/ui-actions';
 
 type M = { id: number; nom: string };
@@ -19,7 +20,7 @@ export default function IntroModal({ a, b, why, onClose, onDone }: { a: M; b: M;
   }
 
   return (
-    <div className="modal-bg" onClick={e => e.target === e.currentTarget && onClose()}>
+    <ModalBackdrop onClose={onClose}>
       <form className="modal" onSubmit={submit}>
         <div className="modal-h"><h2>Mettre en relation</h2><button type="button" className="btn sm ghost" onClick={onClose} aria-label="Fermer">✕</button></div>
         <div className="modal-b">
@@ -32,6 +33,6 @@ export default function IntroModal({ a, b, why, onClose, onDone }: { a: M; b: M;
           <button className="btn cta" disabled={busy}>{busy ? 'Envoi…' : 'Envoyer l’introduction'}</button>
         </div>
       </form>
-    </div>
+    </ModalBackdrop>
   );
 }

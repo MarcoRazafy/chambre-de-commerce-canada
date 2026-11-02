@@ -7,6 +7,24 @@ create table if not exists settings (
   valeur jsonb not null default '{}'
 );
 
+/* ===== Comptes de l'équipe (créés tôt : la messagerie y fait référence) ===== */
+create table if not exists team_users (
+  id       serial primary key,
+  nom      text not null,
+  email    text not null unique,
+  role     text not null default 'Manager' check (role in ('Administrateur', 'Manager')),
+  fonction text,
+  actif    boolean not null default true,
+  password_hash      text,
+  derniere_connexion timestamptz
+);
+
+create table if not exists sessions (
+  id         text primary key,              -- empreinte SHA-256 du jeton du cookie
+  user_id    int not null references team_users(id) on delete cascade,
+  expires_at timestamptz not null
+);
+
 /* ===== Adhérents ===== */
 create table if not exists secteurs (
   id  serial primary key,
@@ -288,23 +306,6 @@ create table if not exists reglements (
 );
 
 /* ===== Plateforme ===== */
-create table if not exists team_users (
-  id       serial primary key,
-  nom      text not null,
-  email    text not null unique,
-  role     text not null default 'Manager' check (role in ('Administrateur', 'Manager')),
-  fonction text,
-  actif    boolean not null default true,
-  password_hash      text,
-  derniere_connexion timestamptz
-);
-
-create table if not exists sessions (
-  id         text primary key,              -- empreinte SHA-256 du jeton du cookie
-  user_id    int not null references team_users(id) on delete cascade,
-  expires_at timestamptz not null
-);
-
 create table if not exists platform_invoices (
   id              serial primary key,
   numero          text not null unique,

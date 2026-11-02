@@ -42,7 +42,8 @@ export default function MessagingDock({ me, unread }: { me: { id: number; nom: s
   if (path.startsWith('/messagerie')) return null;
   return (
     <div className="dock" aria-label="Messagerie rapide">
-      {wins.map(w => (
+      {/* La plus récente juste à gauche de la liste, comme LinkedIn */}
+      {[...wins].reverse().map(w => (
         <div key={w.id} className={`dock-win${w.min ? ' min' : ''}`}>
           {w.min ? (
             <div className="dock-mini">
