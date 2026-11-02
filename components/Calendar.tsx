@@ -20,9 +20,9 @@ export default function Calendar() {
       .then(([evs, rdv, rap, mem, types]) => {
         const nom = (list: Row[], id: number, k = 'nom') => list.find(x => x.id === id)?.[k] ?? '';
         setItems([
-          ...evs.map(e => ({ d: new Date(e.date_debut), t: e.titre, cls: 'c-red', href: `/evenements/${e.id}` })),
-          ...rdv.map(r => ({ d: new Date(r.date_debut), t: `${nom(types, r.type_id)} avec ${nom(mem, r.member_id)}`, cls: 'c-green', href: '/rendez-vous' })),
-          ...rap.map(r => ({ d: new Date(r.date_debut), t: r.titre, cls: 'c-blue', href: '/agenda' })),
+          ...evs.map(e => ({ d: new Date(e.date_debut), t: e.titre, cls: 'k-event', href: `/evenements/${e.id}` })),
+          ...rdv.map(r => ({ d: new Date(r.date_debut), t: `${nom(types, r.type_id)} avec ${nom(mem, r.member_id)}`, cls: 'k-rdv', href: '/rendez-vous' })),
+          ...rap.map(r => ({ d: new Date(r.date_debut), t: r.titre, cls: 'k-rappel', href: '/agenda' })),
         ]);
       })
       .catch(e => setError(e.message));
@@ -47,7 +47,7 @@ export default function Calendar() {
         </div>
       </div>
       {error && <div className="err">{error}</div>}
-      <div className="row small"><span className="chip c-red">Événement</span><span className="chip c-green">Rendez-vous</span><span className="chip c-blue">Rappel</span></div>
+      <div className="legend"><span className="k-event">Événement</span><span className="k-rdv">Rendez-vous</span><span className="k-rappel">Rappel</span></div>
       <div className="cal">
         {JOURS.map(j => <div className="dh" key={j}>{j}</div>)}
         {days.map(d => {
@@ -55,7 +55,7 @@ export default function Calendar() {
           return (
             <div key={+d} className={`d${d.getMonth() !== month.getMonth() ? ' out' : ''}${ymd(d) === today ? ' today' : ''}${evs.length ? ' has' : ''}`}>
               <b>{d.getDate()}</b>
-              {evs.map((e, i) => <Link key={i} href={e.href} className={`ev chip ${e.cls}`} title={`${hm(e.d)} · ${e.t}`}>{hm(e.d)} {e.t}</Link>)}
+              {evs.map((e, i) => <Link key={i} href={e.href} className={`ev ${e.cls}`} title={`${hm(e.d)} · ${e.t}`}>{hm(e.d)} {e.t}</Link>)}
             </div>
           );
         })}

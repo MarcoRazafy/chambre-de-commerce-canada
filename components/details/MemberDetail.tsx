@@ -2,7 +2,9 @@
 import Link from 'next/link';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
-import { api, display, tone, type Row } from '@/lib/format';
+import { api, display, type Row } from '@/lib/format';
+import { toast } from '@/lib/toast';
+import StatusBadge from '../StatusBadge';
 import { ROW_ACTIONS, runAction } from '@/lib/ui-actions';
 import ResourcePage, { EditModal } from '../ResourcePage';
 import IntroModal from '../IntroModal';
@@ -18,7 +20,6 @@ export default function MemberDetail({ id }: { id: number }) {
   const [sugg, setSugg] = useState<Sugg[]>([]);
   const [intro, setIntro] = useState<Sugg | null>(null);
   const [editing, setEditing] = useState(false);
-  const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
   const [v, setV] = useState(0);   // force le rechargement des tableaux après une action
 
@@ -37,7 +38,7 @@ export default function MemberDetail({ id }: { id: number }) {
 
   async function act(action: string, question?: string) {
     if (question && !confirm(question)) return;
-    try { setMsg(await runAction(action, { id })); setError(''); load(); } catch (e) { setError((e as Error).message); }
+    try { toast(await runAction(action, { id })); setError(''); load(); } catch (e) { setError((e as Error).message); }
   }
 
   if (!m) return error ? <div className="err">{error}</div> : <div className="empty">Chargement…</div>;
@@ -53,12 +54,11 @@ export default function MemberDetail({ id }: { id: number }) {
         </div>
       </div>
       {error && <div className="err">{error}</div>}
-      {msg && <div className="chip c-green" style={{ alignSelf: 'flex-start', whiteSpace: 'normal' }}>{msg}</div>}
       <div className="grid g21">
         <div className="card">
           <h2>Informations</h2>
           <dl className="kv">
-            {R.fields.filter(x => !['nom', 'ville', 'pays', 'secteur_id'].includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{x.name === 'statut' ? <span className={`chip ${tone(m.statut)}`}>{display(x, m, refs, t => RESOURCES[t].label)}</span> : display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
+            {R.fields.filter(x => !['nom', 'ville', 'pays', 'secteur_id'].includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{x.name === 'statut' ? <StatusBadge value={m.statut} label={display(x, m, refs, t => RESOURCES[t].label)} /> : display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
           </dl>
         </div>
         <div className="card">
@@ -87,7 +87,7 @@ export default function MemberDetail({ id }: { id: number }) {
       <ResourcePage key={'r' + v} table="rendez_vous" bare preset={{ member_id: id }} />
       <ResourcePage key={'e' + v} table="event_registrations" bare preset={{ member_id: id }} />
       {editing && <EditModal table="members" row={m} refs={refs} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}
-      {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); setMsg(t); load(); }} />}
+      {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); toast(t); load(); }} />}
     </>
   );
 }

@@ -2,6 +2,7 @@
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api, money, type Row } from '@/lib/format';
+import StatusBadge from './StatusBadge';
 
 // Montant mensuel de l'abonnement : forfait + utilisateurs actifs × prix, plus taxes
 export default function AbonnementSummary() {
@@ -25,7 +26,7 @@ export default function AbonnementSummary() {
             <thead><tr><th>Utilisateur</th><th>Rôle</th><th className="r">Par mois</th><th>Actif</th></tr></thead>
             <tbody>{users.map(u => (
               <tr key={u.id}><td><b>{u.nom}</b><div className="small muted">{u.email}</div></td><td>{u.role}</td>
-                <td className="r num">{money(u.actif ? per : 0, 'CAD')}</td><td>{u.actif ? <span className="chip c-green">Actif</span> : <span className="chip c-grey">Inactif</span>}</td></tr>
+                <td className="r num">{money(u.actif ? per : 0, 'CAD')}</td><td><StatusBadge value={u.actif ? 'actif' : 'inactif'} label={u.actif ? 'Actif' : 'Inactif'} /></td></tr>
             ))}</tbody>
           </table></div>
         )}

@@ -8,6 +8,10 @@ import type { Row } from './format';
 
 const SYS = 'Automatique';
 const STEPS: [key: string, offset: number][] = [['avant30', -30], ['avant7', -7], ['apres1', 1], ['apres7', 7], ['apres15', 15], ['apres30', 30]];
+const STEP_LABEL: Record<string, string> = {
+  avant30: '30 jours avant l’échéance', avant7: '7 jours avant l’échéance', apres1: 'le lendemain de l’échéance',
+  apres7: '7 jours après l’échéance', apres15: '15 jours après l’échéance', apres30: '30 jours après l’échéance',
+};
 
 async function safe(label: string, fn: () => Promise<unknown>) {
   try { await fn(); } catch (e) { console.error(`[tâches] ${label} :`, (e as Error).message); }
@@ -35,7 +39,7 @@ async function run() {
     for (const inv of late) {
       const [m] = await q<Row>('select nom from members where id = $1', [inv.member_id]);
       if (inv.objet === 'cotisation') await q(`update members set statut = 'retard' where id = $1 and statut in ('a_jour', 'attente')`, [inv.member_id]);
-      await notify(`Facture ${inv.numero} passée en retard (${m?.nom ?? ''})`);
+      await notify(`Facture ${inv.numero} passée en retard (${m?.nom ?? ''})`, `/paiements/${inv.id}`);
       await journal('Paiements', 'Facture passée en retard', `${inv.numero}, ${m?.nom ?? ''}`, SYS);
     }
   });
@@ -50,7 +54,7 @@ async function run() {
       if (rel.courriel) await safe(`relance ${inv.numero}`, () => remindInvoice(inv.id, SYS, `inv:${inv.id}:${step[0]}`));
       if (rel.notif && (await q(`insert into outbox (type, sujet, statut, ref) values ('notification', $1, 'envoyé', $2) on conflict (ref) do nothing returning id`,
         [`Relance ${inv.numero}`, `notif:${inv.id}:${step[0]}`])).length)
-        await notify(`Relance « ${step[0]} » pour la facture ${inv.numero}`);
+        await notify(`Relance de la facture ${inv.numero}, ${STEP_LABEL[step[0]]}`, `/paiements/${inv.id}`);
     }
   });
 

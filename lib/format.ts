@@ -47,14 +47,16 @@ export function display(f: Field, row: Row, refs: Record<string, Row[]>, labelOf
   }
 }
 
-// Couleur de la pastille d'un statut (toutes tables confondues)
+// Pastille d'un statut (toutes tables confondues) : teinte pâle + icône colorée
 const TONES: Record<string, string> = {
-  a_jour: 'c-green', payee: 'c-green', 'confirmé': 'c-green', 'Envoyée': 'c-green', 'envoyé': 'c-green', 'Abonné': 'c-green', relation: 'c-green',
+  a_jour: 'c-green', payee: 'c-green', 'confirmé': 'c-green', 'Envoyée': 'c-green', 'envoyé': 'c-green', 'Abonné': 'c-green', relation: 'c-green', actif: 'c-green',
   retard: 'c-red', 'échec': 'c-red', 'rejeté': 'c-red', Rebond: 'c-red',
   attente: 'c-amber', 'annoncé': 'c-amber', 'programmé': 'c-amber', 'Programmée': 'c-amber',
   demande: 'c-blue', envoyee: 'c-blue',
 };
+const TONE_ICON: Record<string, string> = { 'c-green': 'ok', 'c-red': 'alert', 'c-amber': 'clock', 'c-blue': 'new', 'c-grey': 'minus' };
 export const tone = (v: unknown) => TONES[String(v)] ?? 'c-grey';
+export const toneIcon = (v: unknown) => (String(v) === 'envoyee' ? 'send' : TONE_ICON[tone(v)]);
 
 export async function api<T = any>(url: string, method = 'GET', body?: unknown): Promise<T> {
   const res = await fetch(url, { method, headers: body ? { 'Content-Type': 'application/json' } : undefined, body: body ? JSON.stringify(body) : undefined });

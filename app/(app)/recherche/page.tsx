@@ -23,7 +23,7 @@ function Results() {
         {hits === null ? <div className="empty">Recherche…</div> : hits.length === 0 ? <div className="empty">Aucun résultat.</div> : (
           <div className="list">{hits.map((h, i) => (
             <Link key={i} href={h.href} className="it" style={{ textDecoration: 'none' }}>
-              <span className="chip c-grey" style={{ minWidth: 92, justifyContent: 'center' }}>{h.type}</span>
+              <span className="tag" style={{ minWidth: 92, textAlign: 'center' }}>{h.type}</span>
               <div className="grow"><b>{h.titre}</b>{h.detail && <div className="small muted">{h.detail}</div>}</div>
             </Link>
           ))}</div>

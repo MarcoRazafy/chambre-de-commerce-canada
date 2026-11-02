@@ -1,23 +1,31 @@
 'use client';
+import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, type Row } from '@/lib/format';
 import { runAction } from '@/lib/ui-actions';
+import Icon from './Icon';
 
 const when = (d: string) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
-// Fenêtre ouverte depuis la cloche : 30 dernières notifications, clic = lue
-export default function NotificationsPopup({ onChange }: { onChange: () => void }) {
+// Fenêtre ouverte depuis la cloche : 30 dernières notifications. Un clic la marque lue et ouvre la page liée.
+export default function NotificationsPopup({ onChange, onClose }: { onChange: () => void; onClose: () => void }) {
+  const router = useRouter();
   const [list, setList] = useState<Row[] | null>(null);
   const [error, setError] = useState('');
 
   const load = () => api<Row[]>('/api/notifications').then(l => setList(l.slice(0, 30))).catch(e => setError(e.message));
   useEffect(() => { load(); }, []);
 
-  async function read(n: Row) {
-    if (n.lu) return;
-    setList(l => l?.map(x => (x.id === n.id ? { ...x, lu: true } : x)) ?? null);
-    await api(`/api/notifications/${n.id}`, 'PATCH', { lu: true }).catch(e => setError(e.message));
-    onChange();
+  async function open(n: Row) {
+    if (!n.lu) {
+      setList(l => l?.map(x => (x.id === n.id ? { ...x, lu: true } : x)) ?? null);
+      await api(`/api/notifications/${n.id}`, 'PATCH', { lu: true }).catch(e => setError(e.message));
+      onChange();
+    }
+    if (n.lien) {
+      onClose();
+      router.push(n.lien);
+    }
   }
 
   async function readAll() {
@@ -36,9 +44,10 @@ export default function NotificationsPopup({ onChange }: { onChange: () => void 
         <ul className="notif-list">
           {list.map(n => (
             <li key={n.id}>
-              <button className={`notif-i${n.lu ? '' : ' unread'}`} onClick={() => read(n)}>
+              <button className={`notif-i${n.lu ? '' : ' unread'}${n.lien ? ' has-link' : ''}`} onClick={() => open(n)}>
                 <span className="notif-dot" aria-hidden="true" />
                 <span className="grow"><span className="notif-t">{n.texte}</span><span className="small muted">{when(n.created_at)}{n.lu ? '' : ' · non lue'}</span></span>
+                {n.lien && <span className="notif-go"><Icon name="down" size={14} /></span>}
               </button>
             </li>
           ))}

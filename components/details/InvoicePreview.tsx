@@ -3,14 +3,15 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { api, invoiceTotals, money, type Ligne, type Row } from '@/lib/format';
 import { ROW_ACTIONS, runAction } from '@/lib/ui-actions';
+import { toast } from '@/lib/toast';
+import StatusBadge from '../StatusBadge';
 
 const fDL = (d: string) => new Date(d.length === 10 ? d + 'T12:00' : d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
-const STATUT: Record<string, [string, string]> = { envoyee: ['Envoyée', 'c-blue'], payee: ['Payée', 'c-green'], retard: ['En retard', 'c-red'], annulee: ['Annulée', 'c-grey'] };
+const STATUT: Record<string, [string]> = { envoyee: ['Envoyée'], payee: ['Payée'], retard: ['En retard'], annulee: ['Annulée'] };
 
 // Aperçu imprimable de la facture (Imprimer → « Enregistrer en PDF » dans le navigateur)
 export default function InvoicePreview({ id }: { id: number }) {
   const [d, setD] = useState<{ inv: Row; m: Row; contact?: Row; org: Row } | null>(null);
-  const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -26,7 +27,7 @@ export default function InvoicePreview({ id }: { id: number }) {
     if (question && !confirm(question)) return;
     const mode = ask ? prompt(ask) : undefined;
     if (mode === null) return;
-    try { setMsg(await runAction(action, { id, mode: mode?.trim() })); setError(''); load(); } catch (e) { setError((e as Error).message); }
+    try { toast(await runAction(action, { id, mode: mode?.trim() })); setError(''); load(); } catch (e) { setError((e as Error).message); }
   }
 
   if (!d) return error ? <div className="err">{error}</div> : <div className="empty">Chargement…</div>;
@@ -41,12 +42,11 @@ export default function InvoicePreview({ id }: { id: number }) {
         </div>
       </div>
       {error && <div className="err no-print">{error}</div>}
-      {msg && <div className="chip c-green no-print" style={{ alignSelf: 'flex-start' }}>{msg}</div>}
       <div className="grid g21">
         <div className="invoice">
           <div className="row between" style={{ alignItems: 'flex-start' }}>
             <div className="brand" style={{ padding: 0 }}><div className="brand-mark">CC</div><div><b>{org.court || org.nom || 'Chambre de commerce'}</b><span>{org.nom && org.court ? org.nom : ''}</span></div></div>
-            <div style={{ textAlign: 'right' }}><h2>FACTURE</h2><div className="mono">{inv.numero}</div><span className={`chip ${STATUT[inv.statut][1]}`}>{STATUT[inv.statut][0]}</span></div>
+            <div style={{ textAlign: 'right' }}><h2>FACTURE</h2><div className="mono">{inv.numero}</div><StatusBadge value={inv.statut} label={STATUT[inv.statut][0]} /></div>
           </div>
           <div className="inv-cols">
             <div><div className="eyebrow">Émetteur</div>{org.nom}<br />{org.adresse}<br />{org.ville}<br />{org.courriel} {org.tel}

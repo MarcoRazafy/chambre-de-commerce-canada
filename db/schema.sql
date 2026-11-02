@@ -267,6 +267,7 @@ create table if not exists platform_invoices (
 create table if not exists notifications (
   id         serial primary key,
   texte      text not null,
+  lien       text,                          -- page ouverte au clic (ex. /membres/12)
   lu         boolean not null default false,
   created_at timestamptz not null default now()
 );
@@ -290,4 +291,5 @@ alter table outbox add constraint outbox_statut_check check (statut in ('program
 alter table subscribers add column if not exists jeton text not null default md5(random()::text || clock_timestamp()::text);
 create unique index if not exists subscribers_jeton_key on subscribers (jeton);
 alter table invoices add column if not exists objet text not null default 'autre';
+alter table notifications add column if not exists lien text;
 alter table team_users add column if not exists password_hash text, add column if not exists derniere_connexion timestamptz;

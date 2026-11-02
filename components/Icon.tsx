@@ -1,6 +1,6 @@
 // Icônes Phosphor (trait fin), utilisables côté serveur comme côté client
 import {
-  AddressBook, Bell, Briefcase, CaretDown, CaretUp, SidebarSimple, Storefront, CalendarBlank, CalendarCheck, ChatCircle, ClockCounterClockwise, Clock, Coins,
+  AddressBook, Bell, Briefcase, CheckCircle, MinusCircle, PlusCircle, X, CaretDown, CaretUp, SidebarSimple, Storefront, CalendarBlank, CalendarCheck, ChatCircle, ClockCounterClockwise, Clock, Coins,
   CreditCard, EnvelopeSimple, Folder, GearSix, Handshake, IdentificationCard, List, MagnifyingGlass, Newspaper,
   PaperPlaneTilt, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
@@ -12,10 +12,24 @@ const ICONS: Record<string, PhosphorIcon> = {
   chat: ChatCircle, mail: EnvelopeSimple, list: UserList, file: Receipt, coin: Coins, gear: GearSix,
   star: CreditCard, spark: Handshake, send: PaperPlaneTilt, bell: Bell, plus: Plus, userplus: UserPlus,
   alert: WarningCircle, card: IdentificationCard, tag: Tag, menu: List, search: MagnifyingGlass,
+  ok: CheckCircle, new: PlusCircle, minus: MinusCircle, close: X,
   down: CaretDown, up: CaretUp, sidebar: SidebarSimple, store: Storefront,
 };
 
+// Bouton du menu latéral, dessiné comme celui de GoDaddy : un panneau avec sa colonne, et une flèche
+// vers la gauche pour replier (collapse) ou vers la droite pour déplier (expand)
+function PanelIcon({ dir, size }: { dir: 'left' | 'right'; size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="16" rx="2.5" />
+      <path d="M9 4v16" />
+      <path d={dir === 'left' ? 'M16 9.5 13.5 12l2.5 2.5' : 'M13.5 9.5 16 12l-2.5 2.5'} />
+    </svg>
+  );
+}
+
 export default function Icon({ name, size = 18 }: { name: string; size?: number }) {
+  if (name === 'collapse' || name === 'expand') return <PanelIcon dir={name === 'collapse' ? 'left' : 'right'} size={size} />;
   const C = ICONS[name] ?? SquaresFour;
   return <C size={size} weight="regular" aria-hidden="true" />;
 }

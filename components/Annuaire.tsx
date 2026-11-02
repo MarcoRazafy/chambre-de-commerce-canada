@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { api, type Row } from '@/lib/format';
 import { runAction } from '@/lib/ui-actions';
+import { toast } from '@/lib/toast';
 import IntroModal from './IntroModal';
 
 type Sugg = { a: Row; b: Row; score: number; why: string[] };
@@ -13,7 +14,6 @@ export default function Annuaire() {
   const [sugg, setSugg] = useState<Sugg[]>([]);
   const [intro, setIntro] = useState<Sugg | null>(null);
   const [term, setTerm] = useState('');
-  const [msg, setMsg] = useState('');
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -39,7 +39,6 @@ export default function Annuaire() {
         <p className="muted">Les membres adhérents. Quand l’un cherche ce qu’un autre propose, on vous suggère de les présenter.</p></div>
         <div className="actions"><Link className="btn" href="/mises-en-relation">Mises en relation</Link></div></div>
       {error && <div className="err">{error}</div>}
-      {msg && <div className="chip c-green" style={{ alignSelf: 'flex-start', whiteSpace: 'normal' }}>{msg}</div>}
       <div className="new-zone">
         <span className="new-label">Rapprochements suggérés</span>
         {sugg.length === 0 ? <p className="small muted">Pas de suggestion pour l’instant. Remplissez les besoins et les offres des membres pour en voir apparaître.</p> : (
@@ -73,7 +72,7 @@ export default function Annuaire() {
           </Link>
         ))}
       </div>
-      {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); setMsg(t); load(); }} />}
+      {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); toast(t); load(); }} />}
     </>
   );
 }

@@ -2,7 +2,9 @@
 import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
-import { api, display, isoLocal, optLabel, optValue, tone, type Row } from '@/lib/format';
+import { api, display, isoLocal, optLabel, optValue, type Row } from '@/lib/format';
+import { toast } from '@/lib/toast';
+import StatusBadge from './StatusBadge';
 import { DETAIL, RELATED, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
 import FieldInput from './FieldInput';
 
@@ -22,7 +24,6 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
   const [refs, setRefs] = useState<Record<string, Row[]>>({});
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState('');
-  const [msg, setMsg] = useState('');
   const [term, setTerm] = useState('');
   const [sel, setSel] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
@@ -54,8 +55,7 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
       if (mode === null) return;
       extra = { mode: mode.trim() };
     }
-    setMsg('');
-    try { setMsg(await runAction(action, { ...body, ...extra })); setError(''); load(); }
+    try { toast(await runAction(action, { ...body, ...extra })); setError(''); load(); }
     catch (e) { setError((e as Error).message); }
   }
 
@@ -103,7 +103,6 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
         </div>
       )}
       {error && <div className="err">{error}</div>}
-      {msg && <div className="chip c-green" style={{ alignSelf: 'flex-start', whiteSpace: 'normal' }}>{msg}</div>}
       <div className="card">
         {bare && <div className="card-h"><h2>{r.title}</h2><div className="actions">{tools}</div></div>}
         {(rows?.length ?? 0) > 0 && (
@@ -131,7 +130,7 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
                     {cols.map((f, i) => (
                       <td key={f.name} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>
                         {i === 0 && DETAIL[table] ? <Link href={`/${DETAIL[table]}/${row.id}`}><b>{display(f, row, refs, labelOf)}</b></Link>
-                          : f.name === 'statut' && row[f.name] ? <span className={`chip ${tone(row[f.name])}`}>{display(f, row, refs, labelOf)}</span>
+                          : f.name === 'statut' && row[f.name] ? <StatusBadge value={row[f.name]} label={display(f, row, refs, labelOf)} />
                           : display(f, row, refs, labelOf)}
                       </td>
                     ))}

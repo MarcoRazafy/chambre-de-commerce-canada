@@ -204,11 +204,11 @@ async function run() {
   for (const [numero, date_facture, nb_utilisateurs] of [['PLT-2026-10', '2026-10-01', 7], ['PLT-2026-09', '2026-09-01', 7], ['PLT-2026-08', '2026-08-01', 6]])
     await ins('platform_invoices', { numero, date_facture, nb_utilisateurs, montant: Math.round((150 + nb_utilisateurs * 15) * 1.14975 * 100) / 100 });
 
-  for (const [texte, created_at] of [
-    ['Nouvelle demande d’adhésion : Cacao Sambirano Coop', '2026-10-30T22:17:00+03:00'],
-    ['Règlement annoncé : CC-2026-9LTTGK par MVola', '2026-10-30T18:21:00+03:00'],
-    ['Facture CC-2026-0029 passée en retard (Voyages Boréal)', '2026-10-15T00:05:00+03:00']])
-    await ins('notifications', { texte, created_at });
+  for (const [texte, lien, created_at] of [
+    ['Nouvelle demande d’adhésion : Cacao Sambirano Coop', `/membres/${member.m14.id}`, '2026-10-30T22:17:00+03:00'],
+    ['Règlement annoncé : CC-2026-9LTTGK par MVola', '/reglements', '2026-10-30T18:21:00+03:00'],
+    ['Facture CC-2026-0029 passée en retard (Voyages Boréal)', `/paiements/${invoice['0029'].id}`, '2026-10-15T00:05:00+03:00']])
+    await ins('notifications', { texte, lien, created_at });
 
   for (const [categorie, titre, detail, par, created_at] of [
     ['Communication', 'Inscription à la lettre d’information', 'andry.r@exemple.test', 'Visiteur', '2026-10-31T05:07:00+03:00'],

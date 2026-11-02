@@ -34,6 +34,7 @@ export default function Messagerie() {
       setMsgs(x => [...x, m]);
       setText('');
       loadThreads();
+      window.dispatchEvent(new Event('cc:refresh'));   // met à jour le compteur de la barre du haut
     } catch (err) { setError((err as Error).message); }
   }
 
@@ -85,7 +86,7 @@ export default function Messagerie() {
           ) : <div className="empty">Sélectionnez ou créez une conversation.</div>}
         </div>
       </div>
-      {creating && <NewThread onClose={() => setCreating(false)} onCreated={id => { setCreating(false); setCur(id); loadThreads(); }} />}
+      {creating && <NewThread onClose={() => setCreating(false)} onCreated={id => { setCreating(false); setCur(id); loadThreads(); window.dispatchEvent(new Event('cc:refresh')); }} />}
     </>
   );
 }
