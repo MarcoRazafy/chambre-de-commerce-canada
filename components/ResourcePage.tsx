@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
 import { api, display, isoLocal, optLabel, optValue, type Row } from '@/lib/format';
-import { DETAIL, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
+import { DETAIL, RELATED, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
 import FieldInput from './FieldInput';
 
 const labelOf = (table: string) => RESOURCES[table].label;
@@ -78,6 +78,7 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
   const add = <button className={bare ? 'btn sm' : 'btn cta'} onClick={() => setEditing({ ...preset })}>+ Ajouter</button>;
   const tools = (
     <>
+      {!bare && RELATED[table]?.map(([href, label]) => <Link key={href} className="btn" href={href}>{label}</Link>)}
       {table === 'notifications' && <button className="btn" onClick={() => act('notifications-read', {})}>Tout marquer comme lu</button>}
       {table === 'subscribers' && <>
         <a className="btn" href="/inscription" target="_blank">Formulaire public</a>

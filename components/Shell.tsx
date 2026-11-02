@@ -18,11 +18,13 @@ function Badge({ badge, demandes }: { badge: NavItem['badge']; demandes: number 
 function NavLinks({ demandes, onNavigate }: { demandes: number; onNavigate: () => void }) {
   const path = usePathname();
   useEffect(onNavigate, [path, onNavigate]);
+  const at = (slug: string) => slug ? path === '/' + slug || path.startsWith('/' + slug + '/') : path === '/';
+  const hidden = NAV.flatMap(([, items]) => items).filter(i => i.parent !== undefined);
   return NAV.map(([group, items]) => (
     <div className="nav-g" key={group}>
       <div className="eyebrow">{group}</div>
-      {items.map(i => {
-        const on = i.slug ? path === '/' + i.slug || path.startsWith('/' + i.slug + '/') : path === '/';
+      {items.filter(i => i.parent === undefined).map(i => {
+        const on = at(i.slug) || hidden.some(h => h.parent === i.slug && at(h.slug));
         return (
           <Link key={i.slug} href={'/' + i.slug} className={on ? 'on' : ''}>
             <Icon name={i.icon} /><span>{i.label}</span><Badge badge={i.badge} demandes={demandes} />
@@ -59,7 +61,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     window.location.href = '/connexion';
   }
 
-  const nav = NAV.map(([g, items]) => <div className="nav-g" key={g}><div className="eyebrow">{g}</div>{items.map(i => <Link key={i.slug} href={'/' + i.slug}><Icon name={i.icon} /><span>{i.label}</span></Link>)}</div>);
+  const nav = NAV.map(([g, items]) => <div className="nav-g" key={g}><div className="eyebrow">{g}</div>{items.filter(i => i.parent === undefined).map(i => <Link key={i.slug} href={'/' + i.slug}><Icon name={i.icon} /><span>{i.label}</span></Link>)}</div>);
   return (
     <>
       <header className="top">

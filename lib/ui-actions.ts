@@ -27,6 +27,14 @@ export const ROW_ACTIONS: Record<string, RowAction[]> = {
   ],
 };
 
+// Pages retirées du menu (comme dans la maquette), accessibles par un bouton sur la page parente
+export const RELATED: Record<string, [href: string, label: string][]> = {
+  members: [['/contacts', 'Contacts'], ['/formules', 'Formules'], ['/secteurs', 'Secteurs']],
+  events: [['/inscriptions', 'Inscriptions']],
+  rendez_vous: [['/types-rendez-vous', 'Types de rendez-vous']],
+  campaigns: [['/envois', 'Envois programmés']],
+};
+
 // Tables dont la première colonne ouvre une fiche : /<slug>/<id>
 export const DETAIL: Record<string, string> = { members: 'membres', events: 'evenements', invoices: 'paiements', dossiers: 'ressources' };
 

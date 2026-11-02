@@ -211,26 +211,27 @@ export const RESOURCES: Record<string, Resource> = Object.fromEntries(list.map(r
 
 // Menu. table vide = page dédiée ; icon = clé de lib/icons.ts ;
 // badge : 'new' (Nouveau), 'up' (Amélioré), 'demandes' (nombre de demandes d'adhésion)
-export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'new' | 'up' | 'demandes' };
+// parent : page absente du menu (comme dans la maquette), accessible depuis la page parente qui reste surlignée
+export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'new' | 'up' | 'demandes'; parent?: string };
 export const NAV: [string, NavItem[]][] = [
   ['Pilotage', [
     { slug: '', label: 'Tableau de bord', icon: 'dash' },
     { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal' },
     { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users', badge: 'up' },
-    { slug: 'notifications', label: 'Notifications', icon: 'bell', table: 'notifications' },
+    { slug: 'notifications', label: 'Notifications', icon: 'bell', table: 'notifications', parent: '' },
   ]],
   ['Adhérents', [
     { slug: 'membres', label: 'Membres', icon: 'users', table: 'members', badge: 'demandes' },
-    { slug: 'contacts', label: 'Contacts', icon: 'userplus', table: 'contacts' },
+    { slug: 'contacts', label: 'Contacts', icon: 'userplus', table: 'contacts', parent: 'membres' },
     { slug: 'annuaire', label: 'Annuaire', icon: 'book', badge: 'up' },
-    { slug: 'mises-en-relation', label: 'Mises en relation', icon: 'spark', table: 'connections' },
+    { slug: 'mises-en-relation', label: 'Mises en relation', icon: 'spark', table: 'connections', parent: 'annuaire' },
   ]],
   ['Programme', [
     { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events', badge: 'up' },
-    { slug: 'inscriptions', label: 'Inscriptions', icon: 'userplus', table: 'event_registrations' },
+    { slug: 'inscriptions', label: 'Inscriptions', icon: 'userplus', table: 'event_registrations', parent: 'evenements' },
     { slug: 'agenda', label: 'Agenda', icon: 'agenda' },
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
-    { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types' },
+    { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
     { slug: 'actualites', label: 'Actualités', icon: 'news', table: 'news' },
     { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'dossiers' },
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
@@ -239,14 +240,14 @@ export const NAV: [string, NavItem[]][] = [
     { slug: 'messagerie', label: 'Messagerie', icon: 'chat' },
     { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns', badge: 'new' },
     { slug: 'lettre', label: 'Abonnés à la lettre', icon: 'list', table: 'subscribers', badge: 'new' },
-    { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox' },
+    { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox', parent: 'newsletter' },
   ]],
   ['Finances', [
     { slug: 'paiements', label: 'Paiements & factures', icon: 'file', table: 'invoices', badge: 'up' },
     { slug: 'reglements', label: 'Règlements annoncés', icon: 'coin', table: 'reglements', badge: 'up' },
     { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear', badge: 'new' },
-    { slug: 'formules', label: 'Formules d’adhésion', icon: 'card', table: 'formules' },
-    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'book', table: 'secteurs' },
+    { slug: 'formules', label: 'Formules d’adhésion', icon: 'card', table: 'formules', parent: 'facturation' },
+    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'book', table: 'secteurs', parent: 'facturation' },
   ]],
   ['Plateforme', [
     { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star', badge: 'new' },

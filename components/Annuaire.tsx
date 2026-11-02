@@ -36,7 +36,8 @@ export default function Annuaire() {
   return (
     <>
       <div className="head"><div><div className="eyebrow">Adhérents</div><h1><em>Annuaire</em></h1>
-        <p className="muted">Les membres adhérents et les mises en relation suggérées : ce qu’un membre recherche, rapproché de ce qu’un autre propose.</p></div></div>
+        <p className="muted">Les membres adhérents et les mises en relation suggérées : ce qu’un membre recherche, rapproché de ce qu’un autre propose.</p></div>
+        <div className="actions"><Link className="btn" href="/mises-en-relation">Mises en relation</Link></div></div>
       {error && <div className="err">{error}</div>}
       {msg && <div className="chip c-green" style={{ alignSelf: 'flex-start', whiteSpace: 'normal' }}>{msg}</div>}
       <div className="new-zone">
