@@ -798,7 +798,7 @@ a.mention:hover{text-decoration:underline}
 .np-h{display:flex;gap:10px;align-items:center;padding:14px 16px 8px}
 .np-h>.grow{display:flex;flex-direction:column;min-width:0}
 .np-h b{font-weight:600}
-.np-org{width:42px;height:42px;border-radius:50%;display:grid;place-items:center;font-weight:700;color:var(--on-primary);background:var(--primary);flex:none}
+.np-org{width:42px;height:42px;border-radius:50%;object-fit:cover;flex:none;background:var(--side)}
 .np-menu{position:relative}
 .np-pop{position:absolute;right:0;top:40px;z-index:30;min-width:230px;display:flex;flex-direction:column;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:10px;box-shadow:var(--shadow-lg)}
 .np-pop button{display:flex;gap:10px;align-items:center;border:0;background:none;text-align:left;padding:9px 10px;border-radius:6px;cursor:pointer;color:var(--ink);font:inherit}

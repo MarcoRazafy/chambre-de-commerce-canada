@@ -125,9 +125,10 @@ export default function NewsPost({ n, me, onChanged, onEdit, onDeleted, onTag, h
   return (
     <article className="card np" id={`post-${n.id}`}>
       <header className="np-h">
-        {n.auteur ? <Avatar kind="user" id={n.auteur.id} size={42} /> : <span className="np-org">CC</span>}
+        {/* Sans auteur (actualités créées avant l'ajout de l'auteur) : publiée au nom de la plateforme */}
+        {n.auteur ? <Avatar kind="user" id={n.auteur.id} size={42} /> : <img className="np-org" src="/logo-app.png" alt="" width={42} height={42} />}
         <div className="grow">
-          <b>{n.auteur?.nom ?? 'CanCham'}</b>
+          <b>{n.auteur?.nom ?? 'L’Alliée Virtuelle'}</b>
           <span className="small muted">{n.categorie && <>{n.categorie} · </>}<time dateTime={n.created_at}>{date}</time>{n.updated_at && ' · modifié'}</span>
         </div>
         {!n.publie && <span className="chip c-amber"><Icon name="clock" size={14} />Brouillon</span>}
