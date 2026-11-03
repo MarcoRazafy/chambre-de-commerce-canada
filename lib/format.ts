@@ -78,3 +78,6 @@ export function relative(v: string | Date, now = Date.now()) {
   const days = Math.round(min / 1440);
   return days === 1 ? 'hier' : `il y a ${days} jours`;
 }
+
+// Adresse d'image saisie à la main : acceptée seulement en http(s)
+export const imageUrl = (v: unknown) => (typeof v === 'string' && /^https?:\/\/\S+$/i.test(v.trim()) ? v.trim() : null);

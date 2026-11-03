@@ -3,9 +3,10 @@ import { notFound } from '@/lib/crud';
 import { journal } from '@/lib/hooks';
 import { num, withUser } from '@/lib/api-helpers';
 import { MsgError } from '@/lib/messaging';
+import { imageUrl } from '@/lib/format';
 
 // Photo de profil (kind = user) ou logo de membre (kind = member).
-// Sans photo, renvoie un cercle de couleur avec les initiales : une balise <img> suffit partout, sans erreur 404.
+// Sans photo : l'adresse du logo saisie sur la fiche membre, sinon un cercle de couleur avec les initiales : une balise <img> suffit partout, sans erreur 404.
 type Ctx = { params: Promise<{ kind: string; id: string }> };
 const KINDS = { user: 'team_users', member: 'members' } as const;
 // Teintes terreuses de la charte (ardoise, lagon, forêt, vanille, latérite, bois de rose, marine, gris bleu) : blanc lisible sur chacune
@@ -31,7 +32,9 @@ export async function GET(_req: Request, { params }: Ctx) {
   return withUser(async () => {
     const [a] = await q<{ type: string; contenu: Buffer }>('select type, contenu from avatars where kind = $1 and ref_id = $2', [t.kind, t.id]);
     if (a) return new Response(new Uint8Array(a.contenu), { headers: { 'Content-Type': a.type, 'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' } });
-    const [r] = await q<{ nom: string }>(`select nom from ${KINDS[t.kind]} where id = $1`, [t.id]);
+    const [r] = await q<{ nom: string; logo_url?: string }>(`select nom${t.kind === 'member' ? ', logo_url' : ''} from ${KINDS[t.kind]} where id = $1`, [t.id]);
+    const logo = imageUrl(r?.logo_url);
+    if (logo) return new Response(null, { status: 302, headers: { Location: logo, 'Cache-Control': 'private, max-age=300' } });
     return new Response(initialsSvg(r?.nom ?? '?'), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=300' } });
   });
 }

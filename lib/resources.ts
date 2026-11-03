@@ -37,6 +37,8 @@ const list: Resource[] = [
     { name: 'renouvellement', label: 'Renouvellement', type: 'date', list: true },
     { name: 'acces', label: 'Accès plateforme', type: 'select', options: [['aucun', 'Aucun'], ['lien', 'Lien envoyé'], ['actif', 'Actif']] },
     { name: 'description', label: 'Description', type: 'textarea' },
+    { name: 'logo_url', label: 'Logo (adresse de l’image)', hint: 'https://… Utilisé si aucun logo n’est déposé sur la fiche.' },
+    { name: 'couverture_url', label: 'Image de couverture (adresse)', hint: 'https://… Affichée en haut de la carte dans l’annuaire.' },
     { name: 'besoins', label: 'Besoins', type: 'tags', hint: 'Séparés par des virgules. Servent à suggérer des rapprochements.' },
     { name: 'offres', label: 'Produits & services proposés', type: 'tags', hint: 'Séparés par des virgules.' },
     { name: 'interets', label: 'Centres d’intérêt', type: 'tags', hint: 'Séparés par des virgules.' },

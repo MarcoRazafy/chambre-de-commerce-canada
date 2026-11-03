@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "node --env-file-if-exists=.env.local scripts/db-init.mjs && next dev",
     "build": "next build",
     "start": "node scripts/db-init.mjs && next start",
     "db:init": "node --env-file=.env.local scripts/db-init.mjs",

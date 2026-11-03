@@ -35,6 +35,38 @@ const MEMBERS = [
   ['m14', 'Cacao Sambirano Coop', 'Agribusiness', 'MG', 'Ambanja', 'mg-ent', 'demande', null, null, 'aucun', ['Lova Ramanantsoa', 'Coordinateur', 'lova@cacaosambirano.test', '+261 32 99 999 99'], 'Coopérative de cacao fin aromatique.', ['Distributeurs au Canada'], ['Agroalimentaire', 'Export'], ['Cacao fin'], false, false, null],
 ];
 
+// Logo et couverture de l'annuaire : photos libres (Wikimedia Commons et Flickr, licences CC ou domaine public), par nom de membre
+const IMAGES = {
+  'Vanilla Coast SARL': ['https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Bourbon_vanilla_beans_-_extra_noire_-_%2B20cm.JPG/330px-Bourbon_vanilla_beans_-_extra_noire_-_%2B20cm.JPG',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Sambava_-_grading_vanilla_beans.jpg/1280px-Sambava_-_grading_vanilla_beans.jpg'],
+  'Maple Gourmet Distribution': ['https://live.staticflickr.com/5336/9199466646_0a51e2a627_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/9/95/MapleSyrupProduction.jpg/1280px-MapleSyrupProduction.jpg'],
+  'Lakana Digital': ['https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Boutres_et_pirogue_Vezo%2C_port_de_Tul%C3%A9ar%2C_Madagascar_%2826057141635%29.jpg/330px-Boutres_et_pirogue_Vezo%2C_port_de_Tul%C3%A9ar%2C_Madagascar_%2826057141635%29.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Antananarivo_Madagascar_andohalo_plaza.JPG/1280px-Antananarivo_Madagascar_andohalo_plaza.JPG'],
+  'Laurentides Capital': ['https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/20181016_-_27_-_Mont-Tremblant_National_Park_-_%22Gone_Glimmering%22.jpg/330px-20181016_-_27_-_Mont-Tremblant_National_Park_-_%22Gone_Glimmering%22.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/3/32/Chateau_Frontenac_vu_depuis_L%C3%A9vis.jpg/1280px-Chateau_Frontenac_vu_depuis_L%C3%A9vis.jpg'],
+  'Rafia Lova Création': ['https://upload.wikimedia.org/wikipedia/commons/thumb/6/61/Endilo_basket.jpg/330px-Endilo_basket.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Roadside_souvenir_shop_on_N7_III.jpg/1280px-Roadside_souvenir_shop_on_N7_III.jpg'],
+  'SoaEnergy': ['https://live.staticflickr.com/65535/49067328751_597169b335_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Innovation_Africa_-_solar_panels.jpg/1280px-Innovation_Africa_-_solar_panels.jpg'],
+  'Nordik Solaire inc.': ['https://live.staticflickr.com/44/137174263_8a667a9aab_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Solar_farm_in_Wisconsin_01.jpg/1280px-Solar_farm_in_Wisconsin_01.jpg'],
+  'Toamasina Fret Services': ['https://live.staticflickr.com/1617/25432477941_60fa4fda70_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Port_de_Toamasina.jpg/1280px-Port_de_Toamasina.jpg'],
+  'Nosy Lodge & Tours': ['https://live.staticflickr.com/65535/53469205031_d4313a54b5_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Nosy-iranja-beach.jpg/1280px-Nosy-iranja-beach.jpg'],
+  'Voyages Boréal': ['https://live.staticflickr.com/8715/16318815564_2f0bc68631_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Pink_Lake_in_Autumn.jpg/1280px-Pink_Lake_in_Autumn.jpg'],
+  'Akanga Textile SARLU': ['https://upload.wikimedia.org/wikipedia/commons/thumb/6/6d/Helmet_Guineafowl.jpg/330px-Helmet_Guineafowl.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/Sambalpuri_Ikat_weaving_loom_%28Tanta%29_from_Odisha.jpg/1280px-Sambalpuri_Ikat_weaving_loom_%28Tanta%29_from_Odisha.jpg'],
+  'BioCert Québec': ['https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Coloured_Erlenmeyer_flasks.jpg/330px-Coloured_Erlenmeyer_flasks.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Laboratory_scientist_conducts_an_experiment_with_a_Rotary_evaporator.jpg/1280px-Laboratory_scientist_conducts_an_experiment_with_a_Rotary_evaporator.jpg'],
+  'Kintana Conseil': ['https://live.staticflickr.com/4106/35324467190_2acb04109c_n.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/University_of_Antananarivo_Madagascar.JPG/1280px-University_of_Antananarivo_Madagascar.JPG'],
+  'Cacao Sambirano Coop': ['https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Cabosses_de_cacao%2C_Madagascar.jpg/330px-Cabosses_de_cacao%2C_Madagascar.jpg',
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Plantation_du_cacao_sur_la_route_RN6_de_Madagascar_05.jpg/1280px-Plantation_du_cacao_sur_la_route_RN6_de_Madagascar_05.jpg'],
+};
+
 // [titre, date, format, lieu, capacité, diffusion, tarif membre, tarif public, j7, j1, h2, inscrits (clés membres), présents]
 const EVENTS = [
   ['Accueil des nouveaux membres et présentation de la CanCham', '2026-11-12T09:00:00+03:00', 'Présentiel', 'Bureau de la CanCham, Soavimbahoaka', 30, 'Plateforme et page publique', null, null, true, true, false, ['m2', 'm3', 'm9', 'm11', 'm12'], []],
@@ -126,6 +158,7 @@ async function run() {
   for (const [k, nom, sect, pays, ville, f, statut, depuis, renouv, acces, [cnom, fn, email, tel], description, besoins, interets, offres, auto, prel, moyen] of MEMBERS) {
     const m = await ins('members', { nom, secteur_id: secteur[sect], pays, ville, formule_id: formule[f], statut, membre_depuis: depuis, renouvellement: renouv, acces, description, besoins, interets, offres, renouvellement_auto: auto, prelevement: prel, moyen_paiement: moyen });
     member[k] = m;
+    if (IMAGES[nom]) await q('update members set logo_url = $1, couverture_url = $2 where id = $3', [...IMAGES[nom], m.id]);
     await ins('contacts', { member_id: m.id, nom: cnom, fonction: fn, email, tel, principal: true });
   }
   await ins('contacts', { member_id: member.m9.id, nom: 'Hery Rabe', fonction: 'Responsable commercial', email: 'hery@nosylodge.test', tel: '+261 32 66 666 67', principal: false });

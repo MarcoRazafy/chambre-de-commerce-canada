@@ -1,9 +1,10 @@
 'use client';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
-import { api, type Row } from '@/lib/format';
+import { api, imageUrl, type Row } from '@/lib/format';
 import { runAction } from '@/lib/ui-actions';
 import { toast } from '@/lib/toast';
+import Avatar from './Avatar';
 import IntroModal from './IntroModal';
 
 type Sugg = { a: Row; b: Row; score: number; why: string[] };
@@ -63,11 +64,16 @@ export default function Annuaire() {
       {members?.length === 0 && <div className="card"><div className="empty">Aucun membre adhérent pour l’instant.</div></div>}
       <div className="mgrid">
         {shown.map(m => (
+          // Carte façon page d'entreprise : couverture, logo qui la chevauche, puis la présentation
           <Link href={`/membres/${m.id}`} className="card mcard" key={m.id} style={{ textDecoration: 'none' }}>
-            <div><h3>{m.nom}</h3><p className="small muted">{[m.ville, flag(m.pays)].filter(Boolean).join(', ')}</p></div>
-            {m.description && <p className="small">{m.description}</p>}
-            {m.offres.length > 0 && <div className="tags">{m.offres.map((o: string) => <span className="tag" key={o}>{o}</span>)}</div>}
-            {m.besoins.length > 0 && <p className="small muted">Recherche : {m.besoins.join(', ')}</p>}
+            <div className="mcard-cover">{imageUrl(m.couverture_url) && <img src={imageUrl(m.couverture_url)!} alt="" loading="lazy" referrerPolicy="no-referrer" />}</div>
+            <div className="mcard-logo"><Avatar kind="member" id={m.id} size={64} nom={m.nom} /></div>
+            <div className="mcard-body">
+              <div><h3>{m.nom}</h3><p className="small muted">{[m.ville, flag(m.pays)].filter(Boolean).join(', ')}</p></div>
+              {m.description && <p className="small">{m.description}</p>}
+              {m.offres.length > 0 && <div className="tags">{m.offres.map((o: string) => <span className="tag" key={o}>{o}</span>)}</div>}
+              {m.besoins.length > 0 && <p className="small muted">Recherche : {m.besoins.join(', ')}</p>}
+            </div>
           </Link>
         ))}
       </div>

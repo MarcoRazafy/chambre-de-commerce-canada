@@ -57,6 +57,8 @@ create table if not exists members (
   renouvellement_auto boolean not null default false,
   prelevement         boolean not null default false,
   moyen_paiement      text,
+  logo_url            text,                              -- adresse d'une image (sinon logo déposé ou initiales)
+  couverture_url      text,                              -- image de couverture dans l'annuaire
   created_at          timestamptz not null default now()
 );
 
@@ -363,3 +365,4 @@ alter table messages add column if not exists author_user_id int references team
 alter table messages alter column texte set default '';
 alter table messages add column if not exists reply_to int references messages(id) on delete set null,
   add column if not exists forwarded boolean not null default false;
+alter table members add column if not exists logo_url text, add column if not exists couverture_url text;
