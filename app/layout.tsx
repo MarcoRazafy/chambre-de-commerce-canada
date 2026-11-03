@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    // Plateforme en mode sombre uniquement (couleurs dans app/globals.css, :root[data-theme="dark"])
-    <html lang="fr" className={`${brand.variable} ${mono.variable}`} data-theme="dark">
+    // Fond clair, menu bleu marine (pour le mode sombre : data-theme="dark", couleurs dans app/globals.css)
+    <html lang="fr" className={`${brand.variable} ${mono.variable}`}>
       <body>{children}</body>
     </html>
   );
