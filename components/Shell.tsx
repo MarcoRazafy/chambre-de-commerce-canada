@@ -117,6 +117,40 @@ function RailNav({ path, demandes }: { path: string | null; demandes: number }) 
   );
 }
 
+// Mode sombre : retenu dans ce navigateur (lu par le script de app/layout.tsx au chargement)
+// Le bouton de la barre du haut et l'interrupteur du menu du compte restent synchronisés par l'événement cc:theme
+function useDark(): [boolean, () => void] {
+  const [dark, setDark] = useState(false);
+  useEffect(() => {
+    const read = () => setDark(document.documentElement.dataset.theme === 'dark');
+    read();
+    window.addEventListener('cc:theme', read);
+    return () => window.removeEventListener('cc:theme', read);
+  }, []);
+  function toggle() {
+    if (dark) delete document.documentElement.dataset.theme; else document.documentElement.dataset.theme = 'dark';
+    try { localStorage.setItem('theme', dark ? 'light' : 'dark'); } catch {}
+    window.dispatchEvent(new Event('cc:theme'));
+  }
+  return [dark, toggle];
+}
+
+function ThemeButton() {
+  const [dark, toggle] = useDark();
+  const label = dark ? 'Passer en mode clair' : 'Passer en mode sombre';
+  return <button className="tb-btn" title={label} aria-label={label} onClick={toggle}><Icon name={dark ? 'sun' : 'moon'} size={20} /></button>;
+}
+
+function ThemeSwitch() {
+  const [dark, toggle] = useDark();
+  return (
+    <label className="row between theme-row">
+      <span className="row" style={{ gap: 8 }}><Icon name="moon" size={16} />Mode sombre</span>
+      <input type="checkbox" className="switch" checked={dark} onChange={toggle} />
+    </label>
+  );
+}
+
 // Le menu dépend de l'adresse : isolé dans un <Suspense> pour que les pages restent pré-rendues
 function NavLinks({ demandes, rail, onNavigate }: { demandes: number; rail: boolean; onNavigate: () => void }) {
   const path = usePathname();
@@ -221,6 +255,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <input placeholder="Rechercher un membre, une facture, un événement…" aria-label="Recherche" value={term} onChange={e => setTerm(e.target.value)} />
             </form>
             <div className="top-r">
+              <ThemeButton />
               <Link className="tb-btn" href="/messagerie" title="Messagerie"
                 aria-label={me?.messages ? `Messagerie, ${me.messages} conversation(s) non lue(s)` : 'Messagerie'}>
                 <Icon name="chat" size={20} />
@@ -245,6 +280,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         <div className="npanel pop" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="row" style={{ flexWrap: 'nowrap' }}><Avatar kind="user" id={me.user.id} size={44} />
             <div><b>{me.user.nom}</b><div className="small muted">{me.user.email}</div><div className="small muted">{me.user.role}{me.user.fonction ? ' · ' + me.user.fonction : ''}</div></div></div>
+          <ThemeSwitch />
           <Link className="btn" href="/profil">Mon profil</Link>
           <button className="btn" onClick={logout}><Icon name="logout" size={16} /> Se déconnecter</button>
         </div>
