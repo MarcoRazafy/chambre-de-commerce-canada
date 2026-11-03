@@ -266,6 +266,27 @@ async function run() {
   for (const [nom, email, role, fonction, actif] of TEAM)
     await q('insert into team_users (nom, email, role, fonction, actif) values ($1, $2, $3, $4, $5) on conflict (email) do nothing', [nom, email, role, fonction, actif]);
 
+  // Actualités façon publication : auteur, texte avec mentions et #mots-clés, réactions, commentaires et réponses
+  {
+    const st = Object.fromEntries((await q('select email, id, nom from team_users')).map(r => [r.email, r]));
+    const com = st['communication@exemple.test'], ando = st['president@cancham.test'], dir = st['direction@exemple.test'], evt = st['evenements@exemple.test'];
+    const at = (p, kind) => `@[${p.nom}](${kind}:${p.id})`;
+    const [n1, n2, n3, n4] = (await q('select id from news order by date_pub desc, id desc')).map(r => r.id);
+    const posts = [
+      [n1, com, ['MECC9', 'Canada', 'Export'], `Notre délégation de 16 entreprises part ce week-end pour Montréal et Québec. Au programme : rencontres d’affaires, salons et visites d’institutions.\n\nMerci à ${at(member.m3, 'member')} et ${at(member.m9, 'member')} de nous accompagner, et à ${at(evt, 'user')} pour l’organisation. #MECC9`],
+      [n2, ando, ['MECC9', 'Équipe'], 'Dernière réunion de préparation avant le départ : billets, rendez-vous confirmés, kits de présentation imprimés. On vous raconte la mission au retour, lors de la restitution du 20 novembre.'],
+      [n3, dir, ['TRISEG', 'PME', 'Financement'], 'Le projet TRISEG recrute des PME malgaches pour un accompagnement à l’export : diagnostic, formation et mise en relation avec des acheteurs canadiens. Dossiers à déposer avant le 30 novembre.'],
+      [n4, com, ['MECC8', 'MECC9'], 'La restitution de la MECC 8 a réuni 60 participants. Les entreprises ont présenté les contrats signés au Canada, et les inscriptions pour la MECC 9 sont ouvertes.'],
+    ];
+    for (const [id, auteur, tags, contenu] of posts) await q('update news set auteur_id = $1, tags = $2, contenu = $3 where id = $4', [auteur.id, tags, contenu, id]);
+    for (const [id, who, emoji] of [[n1, ando, '❤️'], [n1, dir, '👍'], [n1, evt, '👍'], [n2, com, '👍'], [n2, dir, '👏'], [n4, ando, '👍']])
+      await q('insert into news_reactions (news_id, user_id, emoji) values ($1, $2, $3) on conflict do nothing', [id, who.id, emoji]);
+    const [c1] = await q('insert into news_comments (news_id, user_id, texte) values ($1, $2, $3) returning id', [n1, dir.id, 'Bon voyage à toute la délégation !']);
+    await q('insert into news_comments (news_id, parent_id, user_id, texte) values ($1, $2, $3, $4)', [n1, c1.id, evt.id, `${at(dir, 'user')} merci ! On partage les photos dès l’arrivée.`]);
+    await q('insert into news_comments (news_id, user_id, texte) values ($1, $2, $3)', [n1, ando.id, 'Fière de cette équipe 👏']);
+    await q('insert into news_comment_reactions (comment_id, user_id, emoji) values ($1, $2, $3)', [c1.id, com.id, '👍']);
+  }
+
   // Groupe de discussion : deux collègues et deux membres (visible par toute l'équipe, puisqu'il inclut des membres)
   const team = Object.fromEntries((await q('select id, email from team_users')).map(r => [r.email, r.id]));
   const g = await ins('threads', { type: 'groupe', sujet: 'Préparation de la restitution MECC 9', created_by: team['direction@exemple.test'], created_at: '2026-10-27T10:00:00+03:00' });

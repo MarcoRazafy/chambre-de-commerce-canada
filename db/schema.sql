@@ -375,3 +375,44 @@ alter table members add column if not exists logo_url text, add column if not ex
 alter table events add column if not exists date_fin timestamptz, add column if not exists couverture_url text,
   add column if not exists lien_visio text, add column if not exists description text,
   add column if not exists deroulement text, add column if not exists intervenants text;
+
+-- Actualités façon publication : auteur, mots-clés, photos et vidéos, réactions, commentaires (avec réponses) et leurs réactions.
+-- Les mentions sont écrites dans le texte sous la forme @[Nom](user:3) ou @[Nom](member:5).
+alter table news add column if not exists auteur_id int references team_users(id) on delete set null,
+  add column if not exists tags text[] not null default '{}',
+  add column if not exists created_at timestamptz not null default now(),
+  add column if not exists updated_at timestamptz;
+create table if not exists news_media (
+  id       serial primary key,
+  news_id  int not null references news(id) on delete cascade,
+  nom      text not null,
+  type     text not null,
+  taille   int not null,
+  contenu  bytea not null,
+  position int not null default 0
+);
+create table if not exists news_reactions (
+  news_id    int not null references news(id) on delete cascade,
+  user_id    int not null references team_users(id) on delete cascade,
+  emoji      text not null,
+  created_at timestamptz not null default now(),
+  primary key (news_id, user_id)
+);
+create table if not exists news_comments (
+  id         serial primary key,
+  news_id    int not null references news(id) on delete cascade,
+  parent_id  int references news_comments(id) on delete cascade,   -- réponse à un commentaire (un seul niveau)
+  user_id    int references team_users(id) on delete set null,
+  texte      text not null,
+  created_at timestamptz not null default now(),
+  edited_at  timestamptz
+);
+create table if not exists news_comment_reactions (
+  comment_id int not null references news_comments(id) on delete cascade,
+  user_id    int not null references team_users(id) on delete cascade,
+  emoji      text not null,
+  created_at timestamptz not null default now(),
+  primary key (comment_id, user_id)
+);
+create index if not exists news_comments_news on news_comments (news_id, created_at);
+create index if not exists news_media_news on news_media (news_id, position);

@@ -255,13 +255,18 @@ export async function fileFor(u: User, fid: number) {
 }
 
 // Destinataires possibles : collègues actifs et membres adhérents
+// Comparaison sans accents ni majuscules, côté base et côté saisie
+const FROM = 'àáâäãåçèéêëìíîïñòóôöõùúûüýÿœæ', TO = 'aaaaaaceeeeiiiinooooouuuuyyoa';
+const FOLD = (col: string) => `translate(lower(${col}), '${FROM}', '${TO}')`;
+const plain = (s: string) => [...s.toLowerCase()].map(c => (FROM.includes(c) ? TO[FROM.indexOf(c)] : c)).join('');
+
 export async function people(u: User, term: string) {
-  const like = '%' + term.trim().replace(/[\\%_]/g, c => '\\' + c) + '%';
+  const like = '%' + plain(term.trim()).replace(/[\\%_]/g, c => '\\' + c) + '%';
   const users = await q<Row>(`select 'user' as kind, id, nom, coalesce(fonction, role) as detail from team_users
-                              where actif and id <> $1 and nom ilike $2 order by nom limit 15`, [u.id, like]);
+                              where actif and id <> $1 and ${FOLD('nom')} like $2 order by nom limit 15`, [u.id, like]);
   const members = await q<Row>(`select 'member' as kind, m.id, m.nom, concat_ws(' · ', s.nom, m.ville) as detail from members m left join secteurs s on s.id = m.secteur_id
-                                where m.statut in ('a_jour', 'retard', 'attente') and (m.nom ilike $1
-                                  or exists (select 1 from contacts c where c.member_id = m.id and c.nom ilike $1)) order by m.nom limit 15`, [like]);
+                                where m.statut in ('a_jour', 'retard', 'attente') and (${FOLD('m.nom')} like $1
+                                  or exists (select 1 from contacts c where c.member_id = m.id and ${FOLD('c.nom')} like $1)) order by m.nom limit 15`, [like]);
   return [...users, ...members];
 }
 

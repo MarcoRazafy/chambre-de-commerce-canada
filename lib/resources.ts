@@ -239,7 +239,7 @@ export const NAV: [string, NavItem[]][] = [
     { slug: 'agenda', label: 'Agenda', icon: 'agenda' },
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
-    { slug: 'actualites', label: 'Actualités', icon: 'news', table: 'news' },
+    { slug: 'actualites', label: 'Actualités', icon: 'news' },
     { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'dossiers' },
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
   ]],
