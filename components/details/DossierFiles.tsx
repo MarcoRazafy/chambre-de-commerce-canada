@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, type Row } from '@/lib/format';
 
@@ -44,7 +43,7 @@ export default function DossierFiles({ id }: { id: number }) {
   return (
     <>
       <div className="head">
-        <div><div className="eyebrow"><Link href="/ressources">Ressources</Link></div><h1><em>{dossier.nom}</em></h1>
+        <div><h1><em>{dossier.nom}</em></h1>
           <p className="muted">{dossier.acces || 'Accès non précisé'}{dossier.payant ? ' · payant' : ''}</p></div>
         <div className="actions">
           <button className="btn cta" disabled={busy} onClick={() => input.current?.click()}>{busy ? 'Envoi…' : '+ Déposer des fichiers'}</button>

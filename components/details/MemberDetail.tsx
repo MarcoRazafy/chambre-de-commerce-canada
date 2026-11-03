@@ -48,7 +48,7 @@ export default function MemberDetail({ id }: { id: number }) {
   return (
     <>
       <div className="head">
-        <div><div className="eyebrow"><Link href="/membres">Membres</Link></div><h1><em>{m.nom}</em></h1>
+        <div><h1><em>{m.nom}</em></h1>
           <p className="muted">{[m.ville, f('pays'), f('secteur_id')].filter(x => x && x !== '—').join(' · ')}</p></div>
         <div className="actions">
           <Link className="btn" href={`/messagerie?a=member:${id}&nom=${encodeURIComponent(m.nom)}`}><Icon name="chat" size={16} /> Écrire</Link>

@@ -35,8 +35,7 @@ export default function Annuaire() {
   const shown = (members ?? []).filter(m => !term || [m.nom, m.ville, m.description, ...m.offres, ...m.besoins].join(' ').toLowerCase().includes(term.toLowerCase()));
   return (
     <>
-      <div className="head"><div><div className="eyebrow">Adhérents</div><h1><em>Annuaire</em></h1>
-        <p className="muted">Les membres adhérents. Quand l’un cherche ce qu’un autre propose, on vous suggère de les présenter.</p></div>
+      <div className="head page-tools">
         <div className="actions"><Link className="btn" href="/mises-en-relation">Mises en relation</Link></div></div>
       {error && <div className="err">{error}</div>}
       <div className="new-zone">

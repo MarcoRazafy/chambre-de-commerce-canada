@@ -8,5 +8,5 @@ export default async function ModulePage({ params }: { params: Promise<{ module:
   const { module } = await params;
   const page = Object.hasOwn(PAGES, module) ? PAGES[module] : null;
   if (!page) notFound();
-  return <ResourcePage table={page.table} group={page.group} />;
+  return <ResourcePage table={page.table} />;
 }

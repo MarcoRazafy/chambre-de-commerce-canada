@@ -2,7 +2,7 @@
 import {
   AddressBook, Archive, ArrowBendDownLeft, ArrowLeft, ArrowsOut, Bell, Briefcase, DotsThree, DownloadSimple, FileText, Image as ImageIcon, Info, Minus, NotePencil, Paperclip, PencilSimple, SignOut, Smiley, Star, Trash, UsersThree, VideoCamera, CheckCircle, MinusCircle, PlusCircle, X, CaretDown, CaretUp, SidebarSimple, Storefront, CalendarBlank, CalendarCheck, ChatCircle, ClockCounterClockwise, Clock, Coins,
   CreditCard, EnvelopeSimple, Folder, GearSix, Handshake, IdentificationCard, List, MagnifyingGlass, Newspaper,
-  PaperPlaneTilt, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
+  PaperPlaneTilt, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 
@@ -17,6 +17,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   minimize: Minus, open: ArrowsOut, back: ArrowLeft, archive: Archive, trash: Trash, doc: FileText, download: DownloadSimple,
   inbound: ArrowBendDownLeft, group: UsersThree, edit: PencilSimple, logout: SignOut,
   down: CaretDown, up: CaretUp, sidebar: SidebarSimple, store: Storefront,
+  user: User,
 };
 
 // Bouton du menu latéral, dessiné comme celui de GoDaddy : un panneau avec sa colonne, et une flèche

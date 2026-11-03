@@ -17,7 +17,6 @@ function Results() {
 
   return (
     <>
-      <div className="head"><div><div className="eyebrow">Recherche</div><h1>Résultats pour <em>« {q} »</em></h1></div></div>
       {error && <div className="err">{error}</div>}
       <div className="card">
         {hits === null ? <div className="empty">Recherche…</div> : hits.length === 0 ? <div className="empty">Aucun résultat.</div> : (

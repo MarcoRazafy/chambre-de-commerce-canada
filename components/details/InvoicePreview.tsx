@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { api, invoiceTotals, money, type Ligne, type Row } from '@/lib/format';
 import { ROW_ACTIONS, runAction } from '@/lib/ui-actions';
@@ -35,7 +34,7 @@ export default function InvoicePreview({ id }: { id: number }) {
   return (
     <>
       <div className="head no-print">
-        <div><div className="eyebrow"><Link href="/paiements">Paiements & factures</Link></div><h1>Facture <em>{inv.numero}</em></h1></div>
+        <div><h1>Facture <em>{inv.numero}</em></h1></div>
         <div className="actions">
           {ROW_ACTIONS.invoices.filter(a => a.show(inv)).map(a => <button key={a.action} className="btn" onClick={() => act(a.action, a.confirm, a.ask)}>{a.label}</button>)}
           <button className="btn cta" onClick={() => window.print()}>Imprimer / PDF</button>

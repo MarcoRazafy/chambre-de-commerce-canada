@@ -66,3 +66,15 @@ export async function api<T = any>(url: string, method = 'GET', body?: unknown):
   if (!res.ok) throw new Error(data.error || `Erreur ${res.status}`);
   return data;
 }
+
+// Date passée récente en langage courant (« il y a 3 h », « hier ») ; au-delà d'une semaine ou dans le futur : null
+export function relative(v: string | Date, now = Date.now()) {
+  const d = new Date(v).getTime();
+  const min = Math.round((now - d) / 60000);
+  if (min < 0 || min > 7 * 1440) return null;
+  if (min < 1) return 'à l’instant';
+  if (min < 60) return `il y a ${min} min`;
+  if (min < 1440) return `il y a ${Math.round(min / 60)} h`;
+  const days = Math.round(min / 1440);
+  return days === 1 ? 'hier' : `il y a ${days} jours`;
+}

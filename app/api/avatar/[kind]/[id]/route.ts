@@ -8,7 +8,8 @@ import { MsgError } from '@/lib/messaging';
 // Sans photo, renvoie un cercle de couleur avec les initiales : une balise <img> suffit partout, sans erreur 404.
 type Ctx = { params: Promise<{ kind: string; id: string }> };
 const KINDS = { user: 'team_users', member: 'members' } as const;
-const COLORS = ['#256BFF', '#13733A', '#B45309', '#5B3FA8', '#0F7C80', '#B91C1C', '#1F56D1', '#0B1B33'];
+// Teintes terreuses de la charte (ardoise, lagon, forêt, vanille, latérite, bois de rose, marine, gris bleu) : blanc lisible sur chacune
+const COLORS = ['#2C4A6B', '#0E6767', '#2D6440', '#9A6512', '#9E4026', '#8A3651', '#0B1B33', '#4F5D73'];
 const MAX = 3 * 1024 * 1024;
 
 async function target(params: Ctx['params']) {

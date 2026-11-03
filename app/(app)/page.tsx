@@ -101,8 +101,6 @@ async function Content() {
   const evolution = k.enc_mois_prec_mga && k.enc_mois_mga ? Math.round(((k.enc_mois_mga - k.enc_mois_prec_mga) / k.enc_mois_prec_mga) * 100) : null;
   const totalMembres = statuts.reduce((a, s) => a + s.n, 0);
   const mg = pays.find(p => p.pays === 'MG')?.n ?? 0, ca = pays.find(p => p.pays === 'CA')?.n ?? 0;
-  const prenom = user.nom.split(' ')[0];
-  const jour = new Date().toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
   const empty = (t: string) => <p className="small muted">{t}</p>;
 
   const tiles: { label: string; value: React.ReactNode; sub: React.ReactNode; href: string; icon: string}[] = [
@@ -118,9 +116,7 @@ async function Content() {
 
   return (
     <>
-      <div className="head dash-head">
-        <div><div className="eyebrow" style={{ textTransform: 'capitalize' }}>{jour}</div><h1>Bonjour, {prenom}</h1>
-          <p className="muted">Voici où en est la Chambre aujourd’hui.</p></div>
+      <div className="head page-tools">
         <div className="actions">
           <Link className="btn" href="/evenements"><Icon name="cal" size={16} /> Événements</Link>
           <Link className="btn" href="/messagerie"><Icon name="compose" size={16} /> Nouveau message</Link>
@@ -131,7 +127,7 @@ async function Content() {
       <div className="grid g4">
         {tiles.map(t => (
           <Link key={t.label} href={t.href} className="card stat">
-            <div className="stat-h"><span className="stat-l">{t.label}</span><span className="stat-ic"><Icon name={t.icon} size={18} /></span></div>
+            <div className="stat-h"><span className="stat-l">{t.label}</span><span className="stat-ic tile-ic"><Icon name={t.icon} size={18} fill /></span></div>
             <div className="stat-v num">{t.value}</div>
             <div className="stat-s">{t.sub}</div>
           </Link>

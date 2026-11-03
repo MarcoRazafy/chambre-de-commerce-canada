@@ -91,7 +91,7 @@ const list: Resource[] = [
     { name: 'email', label: 'Courriel', list: true },
     { name: 'present', label: 'Présent', type: 'bool', list: true },
   ] },
-  { table: 'agenda_rappels', title: 'Rappels de l’équipe', label: 'titre', orderBy: 'date_debut', desc: 'Rappels internes de l’équipe.', fields: [
+  { table: 'agenda_rappels', title: 'Rappels de l’équipe', label: 'titre', orderBy: 'date_debut', fields: [
     { name: 'titre', label: 'Titre', required: true, list: true },
     { name: 'date_debut', label: 'Date', type: 'datetime', required: true, list: true },
     { name: 'note', label: 'Note', type: 'textarea', list: true },

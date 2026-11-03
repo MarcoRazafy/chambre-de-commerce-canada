@@ -29,7 +29,6 @@ export default function ProfilPage() {
   if (!u) return <div className="empty">Chargement…</div>;
   return (
     <>
-      <div className="head"><div><div className="eyebrow">Compte</div><h1>Mon profil</h1><p className="muted">Votre photo et votre nom apparaissent dans la messagerie et le journal d’activité.</p></div></div>
       {error && <div className="err">{error}</div>}
       <div className="grid g21">
         <form className="card" onSubmit={e => { e.preventDefault(); patch(v, 'Profil enregistré.'); }}>

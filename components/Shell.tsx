@@ -7,6 +7,7 @@ import Icon from './Icon';
 import NotificationsPopup from './NotificationsPopup';
 import Toaster from './Toaster';
 import Avatar from './Avatar';
+import Breadcrumb from './Breadcrumb';
 import MessagingDock from './chat/MessagingDock';
 
 type Me = { user: { id: number; nom: string; email: string; role: string; fonction: string | null }; notifs: number; messages: number; demandes: number };
@@ -234,7 +235,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               </button>
             </div>
           </header>
-          <main className="main"><div className="content">{children}</div></main>
+          <main className="main"><div className="content"><Suspense fallback={null}><Breadcrumb /></Suspense>{children}</div></main>
         </div>
       </div>
       {open && <div className="pop-bg" onClick={() => setOpen(false)} />}   {/* mobile : un toucher à côté referme le menu */}

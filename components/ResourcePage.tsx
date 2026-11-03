@@ -1,10 +1,12 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
 import { api, display, isoLocal, optLabel, optValue, type Row } from '@/lib/format';
 import { toast } from '@/lib/toast';
-import StatusBadge from './StatusBadge';
+import Cell from './Cell';
+import Icon from './Icon';
 import { DETAIL, RELATED, ROW_ACTIONS, downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
 import FieldInput from './FieldInput';
 import ModalBackdrop from './ModalBackdrop';
@@ -13,13 +15,12 @@ const labelOf = (table: string) => RESOURCES[table].label;
 
 type Props = {
   table: string;
-  group?: string;
   bare?: boolean;                      // sans grand titre (dans une autre page)
   preset?: Record<string, unknown>;    // filtre fixe + valeurs par défaut du formulaire (ex. { member_id: 5 })
 };
 
 // Tableau + recherche, filtres, export, actions et formulaire pour n'importe quelle table de lib/resources.ts
-export default function ResourcePage({ table, group, bare, preset }: Props) {
+export default function ResourcePage({ table, bare, preset }: Props) {
   const r = RESOURCES[table];
   const [rows, setRows] = useState<Row[] | null>(null);
   const [refs, setRefs] = useState<Record<string, Row[]>>({});
@@ -28,6 +29,7 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
   const [term, setTerm] = useState('');
   const [sel, setSel] = useState<Record<string, string>>({});
   const fileRef = useRef<HTMLInputElement>(null);
+  const router = useRouter();
   const qs = preset ? '?' + new URLSearchParams(Object.entries(preset).map(([k, v]) => [k, String(v)])) : '';
 
   const load = useCallback(async () => {
@@ -94,21 +96,14 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
   return (
     <>
       {!bare && (
-        <div className="head">
-          <div>
-            {group && <div className="eyebrow">{group}</div>}
-            <h1><em>{r.title}</em></h1>
-            {r.desc && <p className="muted">{r.desc}</p>}
-          </div>
-          <div className="actions">{tools}</div>
-        </div>
+        <div className="head page-tools"><div className="actions">{tools}</div></div>
       )}
       {error && <div className="err">{error}</div>}
       <div className="card">
         {bare && <div className="card-h"><h2>{r.title}</h2><div className="actions">{tools}</div></div>}
         {(rows?.length ?? 0) > 0 && (
           <div className="filters">
-            <input className="inp" placeholder="Rechercher…" aria-label="Rechercher dans le tableau" value={term} onChange={e => setTerm(e.target.value)} />
+            <label className="search-inp"><Icon name="search" size={16} /><input className="inp" placeholder="Rechercher…" aria-label="Rechercher dans le tableau" value={term} onChange={e => setTerm(e.target.value)} /></label>
             {filterFields.map(f => (
               <select key={f.name} className="inp" style={{ flex: '0 1 200px' }} aria-label={f.label} value={sel[f.name] ?? ''} onChange={e => setSel({ ...sel, [f.name]: e.target.value })}>
                 <option value="">{f.label} : tous</option>
@@ -117,6 +112,7 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
                   : f.options!.map(o => <option key={optValue(o)} value={optValue(o)}>{optLabel(o)}</option>)}
               </select>
             ))}
+            <span className="count">{shown.length === rows!.length ? `${rows!.length} ligne${rows!.length > 1 ? 's' : ''}` : `${shown.length} sur ${rows!.length}`}</span>
           </div>
         )}
         {rows === null ? <div className="empty">Chargement…</div> : shown.length === 0 ? (
@@ -126,20 +122,23 @@ export default function ResourcePage({ table, group, bare, preset }: Props) {
             <table>
               <thead><tr>{cols.map(f => <th key={f.name}>{f.label}</th>)}<th /></tr></thead>
               <tbody>
-                {shown.map(row => (
-                  <tr key={row.id}>
+                {shown.map((row, n) => (
+                  // Un clic sur la ligne ouvre la fiche, ou le formulaire s'il n'y a pas de fiche (les boutons et liens gardent leur rôle)
+                  <tr key={row.id} style={{ '--i': Math.min(n, 14) } as React.CSSProperties} className="clickable"
+                    onClick={e => {
+                      if ((e.target as HTMLElement).closest('a,button')) return;
+                      if (DETAIL[table]) router.push(`/${DETAIL[table]}/${row.id}`); else setEditing(row);
+                    }}>
                     {cols.map((f, i) => (
                       <td key={f.name} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>
-                        {i === 0 && DETAIL[table] ? <Link href={`/${DETAIL[table]}/${row.id}`}><b>{display(f, row, refs, labelOf)}</b></Link>
-                          : f.name === 'statut' && row[f.name] ? <StatusBadge value={row[f.name]} label={display(f, row, refs, labelOf)} />
-                          : display(f, row, refs, labelOf)}
+                        <Cell f={f} row={row} refs={refs} labelOf={labelOf} table={table} first={i === 0} href={i === 0 && DETAIL[table] ? `/${DETAIL[table]}/${row.id}` : undefined} />
                       </td>
                     ))}
-                    <td className="r" style={{ whiteSpace: 'nowrap' }}>
+                    <td className="r row-actions">
                       {actions.filter(a => a.show(row)).map(a => (
-                        <button key={a.action} className="btn sm" style={{ marginRight: 4 }} onClick={() => act(a.action, { id: row.id }, a.confirm, a.ask)}>{a.label}</button>
+                        <button key={a.action} className="btn sm" onClick={() => act(a.action, { id: row.id }, a.confirm, a.ask)}>{a.label}</button>
                       ))}
-                      <button className="btn sm ghost" onClick={() => setEditing(row)}>Modifier</button>
+                      {!DETAIL[table] && <button className="btn ghost icon-btn" title="Modifier" aria-label={`Modifier ${row[r.label] ?? ''}`} onClick={() => setEditing(row)}><Icon name="edit" size={16} /></button>}
                     </td>
                   </tr>
                 ))}

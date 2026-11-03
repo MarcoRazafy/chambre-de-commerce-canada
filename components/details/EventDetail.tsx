@@ -1,5 +1,4 @@
 'use client';
-import Link from 'next/link';
 import { Fragment, useCallback, useEffect, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
 import { api, display, type Row } from '@/lib/format';
@@ -24,7 +23,7 @@ export default function EventDetail({ id }: { id: number }) {
   return (
     <>
       <div className="head">
-        <div><div className="eyebrow"><Link href="/evenements">Événements</Link></div><h1><em>{e.titre}</em></h1>
+        <div><h1><em>{e.titre}</em></h1>
           <p className="muted">{display(R.fields[1], e, {}, () => '')} · {e.format}{e.lieu ? ' · ' + e.lieu : ''}</p></div>
         <div className="actions"><button className="btn cta" onClick={() => setEditing(true)}>Modifier</button></div>
       </div>
