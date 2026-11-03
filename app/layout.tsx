@@ -11,14 +11,10 @@ export const metadata: Metadata = {
   description: 'Back-office de la Chambre de Commerce et de Coopération Canada–Madagascar',
 };
 
-// Thème appliqué avant l'affichage (pas d'éclair de fond clair) : le choix fait avec le bouton lune,
-// sinon celui de l'ordinateur (mode sombre du système), comme Facebook
-const THEME = `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.dataset.theme='dark'}catch(e){}`;
-
 export default function RootLayout({ children }: LayoutProps<'/'>) {
   return (
-    <html lang="fr" className={`${brand.variable} ${mono.variable}`} suppressHydrationWarning>
-      <head><script dangerouslySetInnerHTML={{ __html: THEME }} /></head>
+    // Plateforme en mode sombre uniquement (couleurs dans app/globals.css, :root[data-theme="dark"])
+    <html lang="fr" className={`${brand.variable} ${mono.variable}`} data-theme="dark">
       <body>{children}</body>
     </html>
   );
