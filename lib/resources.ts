@@ -16,7 +16,7 @@ export type Field = {
   hint?: string;
 };
 export type Resource = {
-  table: string; title: string; label: string; fields: Field[]; orderBy: string; desc?: string;
+  table: string; title: string; label: string; fields: Field[]; orderBy: string;
   select?: string;       // requête de lecture si elle diffère de « select * » (colonnes calculées)
   admin?: boolean;       // écriture réservée aux administrateurs
 };
@@ -26,7 +26,7 @@ const MOYENS = ['MVola', 'Orange Money', 'Airtel Money', 'Virement', 'Espèces',
 const created: Field = { name: 'created_at', label: 'Date', type: 'datetime', list: true, readonly: true };
 
 const list: Resource[] = [
-  { table: 'members', title: 'Membres', label: 'nom', orderBy: 'nom', desc: 'Les entreprises adhérentes et les demandes d’adhésion.', fields: [
+  { table: 'members', title: 'Membres', label: 'nom', orderBy: 'nom', fields: [
     { name: 'nom', label: 'Entreprise', required: true, list: true },
     { name: 'secteur_id', label: 'Secteur', type: 'ref', ref: 'secteurs', list: true },
     { name: 'pays', label: 'Pays', type: 'select', options: [['MG', 'Madagascar'], ['CA', 'Canada']], list: true, filter: true },
@@ -44,7 +44,7 @@ const list: Resource[] = [
     { name: 'prelevement', label: 'Prélèvement autorisé', type: 'bool' },
     { name: 'moyen_paiement', label: 'Moyen de paiement enregistré' },
   ] },
-  { table: 'contacts', title: 'Contacts', label: 'nom', orderBy: 'nom', desc: 'Les personnes à joindre chez chaque membre.', fields: [
+  { table: 'contacts', title: 'Contacts', label: 'nom', orderBy: 'nom', fields: [
     { name: 'member_id', label: 'Membre', type: 'ref', ref: 'members', required: true, list: true },
     { name: 'nom', label: 'Nom', required: true, list: true },
     { name: 'fonction', label: 'Fonction', list: true },
@@ -84,7 +84,7 @@ const list: Resource[] = [
     { name: 'rappel_j1', label: 'Rappel la veille', type: 'bool' },
     { name: 'rappel_h2', label: 'Rappel 2 heures avant', type: 'bool' },
   ] },
-  { table: 'event_registrations', title: 'Inscriptions aux événements', label: 'nom', orderBy: 'created_at desc', desc: 'Les inscrits reçoivent les rappels automatiques de l’événement.', fields: [
+  { table: 'event_registrations', title: 'Inscriptions aux événements', label: 'nom', orderBy: 'created_at desc', fields: [
     { name: 'event_id', label: 'Événement', type: 'ref', ref: 'events', required: true, list: true, filter: true },
     { name: 'member_id', label: 'Membre', type: 'ref', ref: 'members', list: true },
     { name: 'nom', label: 'Nom', required: true, list: true },
@@ -115,7 +115,7 @@ const list: Resource[] = [
     { name: 'publie', label: 'Publié', type: 'bool', list: true },
     { name: 'contenu', label: 'Contenu', type: 'textarea' },
   ] },
-  { table: 'dossiers', title: 'Ressources', label: 'nom', orderBy: 'nom', desc: 'Dossiers de documents partagés avec les membres. Ouvrez un dossier pour y déposer des fichiers.',
+  { table: 'dossiers', title: 'Ressources', label: 'nom', orderBy: 'nom',
     select: 'select d.*, (select count(*) from fichiers f where f.dossier_id = d.id)::int as nb_fichiers from dossiers d', fields: [
     { name: 'nom', label: 'Dossier', required: true, list: true },
     { name: 'nb_fichiers', label: 'Fichiers', type: 'number', list: true, readonly: true },
@@ -132,7 +132,7 @@ const list: Resource[] = [
     { name: 'sujet', label: 'Sujet', required: true, list: true },
     created,
   ] },
-  { table: 'campaigns', title: 'Newsletter', label: 'titre', orderBy: 'date_envoi desc nulls first', desc: 'La lettre d’information envoyée aux adhérents et aux abonnés.', fields: [
+  { table: 'campaigns', title: 'Newsletter', label: 'titre', orderBy: 'date_envoi desc nulls first', fields: [
     { name: 'titre', label: 'Lettre', required: true, list: true },
     { name: 'statut', label: 'Statut', type: 'select', options: ['Brouillon', 'Programmée', 'Envoyée'], list: true, filter: true, hint: 'Programmée : envoi automatique à la date indiquée, aux adhérents et aux abonnés.' },
     { name: 'date_envoi', label: 'Envoi', type: 'datetime', list: true },
@@ -148,7 +148,7 @@ const list: Resource[] = [
     { name: 'date_inscription', label: 'Inscription', type: 'date', list: true },
     { name: 'statut', label: 'Statut', type: 'select', options: ['Abonné', 'Désabonné', 'Rebond'], list: true, filter: true },
   ] },
-  { table: 'outbox', title: 'Envois programmés', label: 'sujet', orderBy: 'date_envoi desc nulls first, id desc', desc: 'Composez un courriel et programmez-le, ou retrouvez tous les envois automatiques (factures, relances, rappels).', fields: [
+  { table: 'outbox', title: 'Envois programmés', label: 'sujet', orderBy: 'date_envoi desc nulls first, id desc', fields: [
     { name: 'sujet', label: 'Sujet', required: true, list: true },
     { name: 'audience', label: 'Destinataires', type: 'select', options: ['Adhérents', 'Membres à jour', 'Abonnés à la lettre', 'Adhérents + abonnés', 'Adresses libres'], list: true },
     { name: 'destinataires', label: 'Adresses', hint: 'Adresses supplémentaires, séparées par des virgules.' },
@@ -171,14 +171,14 @@ const list: Resource[] = [
     { name: 'mode_paiement', label: 'Mode de paiement', type: 'select', options: MOYENS },
     { name: 'nb_relances', label: 'Relances envoyées', type: 'number' },
   ] },
-  { table: 'reglements', title: 'Règlements annoncés', label: 'reference', orderBy: 'annonce_le desc', desc: 'Paiements déclarés par les membres, à confirmer.', fields: [
+  { table: 'reglements', title: 'Règlements annoncés', label: 'reference', orderBy: 'annonce_le desc', fields: [
     { name: 'reference', label: 'Référence', required: true, list: true },
     { name: 'invoice_id', label: 'Facture', type: 'ref', ref: 'invoices', list: true },
     { name: 'moyen', label: 'Moyen', type: 'select', options: MOYENS, list: true },
     { name: 'annonce_le', label: 'Annoncé le', type: 'datetime', list: true },
     { name: 'statut', label: 'Statut', type: 'select', options: ['annoncé', 'confirmé', 'rejeté'], list: true, filter: true },
   ] },
-  { table: 'team_users', title: 'Équipe & accès', label: 'nom', orderBy: 'nom', admin: true, desc: 'Les comptes qui peuvent se connecter au back-office. Les managers ne peuvent pas gérer l’équipe, l’abonnement ni les réglages.', fields: [
+  { table: 'team_users', title: 'Équipe & accès', label: 'nom', orderBy: 'nom', admin: true, fields: [
     { name: 'nom', label: 'Nom', required: true, list: true },
     { name: 'email', label: 'Courriel', required: true, list: true },
     { name: 'role', label: 'Rôle', type: 'select', options: ['Administrateur', 'Manager'], list: true },

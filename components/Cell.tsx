@@ -1,13 +1,15 @@
 'use client';
 import Link from 'next/link';
 import type { Field } from '@/lib/resources';
-import { display, optValue, relative, type Row } from '@/lib/format';
+import { display, relative, type Row } from '@/lib/format';
 import Avatar from './Avatar';
 import StatusBadge from './StatusBadge';
 
 // Tables dont la première colonne porte une photo ou un logo
 const AVATAR: Record<string, string> = { members: 'member', team_users: 'user' };
 // Libellés des cases à cocher plus parlants que Oui / Non
+// Mot affiché quand la case est vide, à la place du tiret
+const EMPTY: Record<string, string> = { derniere_connexion: 'Jamais' };
 const BOOL: Record<string, [string, string]> = { actif: ['Actif', 'Inactif'], publie: ['Publié', 'Brouillon'], present: ['Présent', 'Absent'], lu: ['Lue', 'Non lue'] };
 
 type P = { f: Field; row: Row; refs: Record<string, Row[]>; labelOf: (t: string) => string; table: string; first: boolean; href?: string };
@@ -26,13 +28,9 @@ export default function Cell({ f, row, refs, labelOf, table, first, href }: P) {
       </span>
     );
   }
-  if (v == null || v === '') return <span className="cell-none">—</span>;
+  if (v == null || v === '') return <span className="cell-none">{EMPTY[f.name] ?? '—'}</span>;
   if (f.name === 'statut') return <StatusBadge value={v} label={text} />;
-  if (f.type === 'select') {
-    // Couleur fixée par la position de l'option : une valeur garde toujours la même teinte
-    const i = Math.max(0, (f.options ?? []).findIndex(o => optValue(o) === v));
-    return <span className={`pill cat-${(i % 6) + 1}`}>{text}</span>;
-  }
+  if (f.type === 'select') return <span className="pill">{text}</span>;
   if (f.type === 'bool') {
     const [yes, no] = BOOL[f.name] ?? ['Oui', 'Non'];
     return <span className={`state${v ? ' on' : ''}`}>{v ? yes : no}</span>;

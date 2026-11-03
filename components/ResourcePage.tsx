@@ -3,7 +3,8 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
-import { api, display, isoLocal, optLabel, optValue, type Row } from '@/lib/format';
+import { api, display, isoLocal, optLabel, optValue, total, type Row } from '@/lib/format';
+import type { Field } from '@/lib/resources';
 import { toast } from '@/lib/toast';
 import Cell from './Cell';
 import Icon from './Icon';
@@ -12,6 +13,17 @@ import FieldInput from './FieldInput';
 import ModalBackdrop from './ModalBackdrop';
 
 const labelOf = (table: string) => RESOURCES[table].label;
+
+// Valeur de tri d'une cellule : nombre pour les montants, dates et cases à cocher, texte affiché sinon
+function sortKey(f: Field, row: Row, refs: Record<string, Row[]>): number | string | null {
+  const v = row[f.name];
+  if (f.type === 'lignes') return `${row.devise ?? ''} ${String(total(v)).padStart(15, '0')}`;   // montants regroupés par devise (ariary et dollars ne se comparent pas)
+  if (v == null || v === '') return null;
+  if (f.type === 'number') return Number(v);
+  if (f.type === 'date' || f.type === 'datetime') return new Date(v).getTime();
+  if (f.type === 'bool') return v ? 1 : 0;
+  return display(f, row, refs, labelOf).toLocaleLowerCase('fr');
+}
 
 type Props = {
   table: string;
@@ -28,6 +40,7 @@ export default function ResourcePage({ table, bare, preset }: Props) {
   const [error, setError] = useState('');
   const [term, setTerm] = useState('');
   const [sel, setSel] = useState<Record<string, string>>({});
+  const [sort, setSort] = useState<{ col: string; dir: 1 | -1 } | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const router = useRouter();
   const qs = preset ? '?' + new URLSearchParams(Object.entries(preset).map(([k, v]) => [k, String(v)])) : '';
@@ -71,10 +84,21 @@ export default function ResourcePage({ table, bare, preset }: Props) {
 
   const cols = r.fields.filter(f => f.list && !(preset && f.name in preset));
   const filterFields = r.fields.filter(f => f.filter && !(preset && f.name in preset));
-  const shown = useMemo(() => (rows ?? []).filter(row =>
-    filterFields.every(f => !sel[f.name] || String(row[f.name]) === sel[f.name]) &&
-    (!term || cols.some(f => display(f, row, refs, labelOf).toLowerCase().includes(term.toLowerCase())))
-  ), [rows, sel, term, refs, cols, filterFields]);
+  const shown = useMemo(() => {
+    const list = (rows ?? []).filter(row =>
+      filterFields.every(f => !sel[f.name] || String(row[f.name]) === sel[f.name]) &&
+      (!term || cols.some(f => display(f, row, refs, labelOf).toLowerCase().includes(term.toLowerCase()))));
+    const f = sort && cols.find(c => c.name === sort.col);
+    if (!f) return list;
+    // Les cases vides restent en bas, quel que soit le sens
+    return list.map(row => ({ row, k: sortKey(f, row, refs) })).sort((a, b) =>
+      a.k === null ? (b.k === null ? 0 : 1) : b.k === null ? -1
+        : sort.dir * (typeof a.k === 'number' && typeof b.k === 'number' ? a.k - b.k : String(a.k).localeCompare(String(b.k), 'fr', { numeric: true })),
+    ).map(x => x.row);
+  }, [rows, sel, term, refs, cols, filterFields, sort]);
+  const filtered = !!term || Object.values(sel).some(Boolean);
+  const toggleSort = (col: string) => setSort(s => (s?.col === col ? { col, dir: s.dir === 1 ? -1 : 1 } : { col, dir: 1 }));
+  const open = (row: Row) => (DETAIL[table] ? router.push(`/${DETAIL[table]}/${row.id}`) : setEditing(row));
 
   const exportCsv = () => downloadCsv(r.title, cols.map(f => f.label), shown.map(row => cols.map(f => display(f, row, refs, labelOf))));
   const actions = ROW_ACTIONS[table] ?? [];
@@ -115,22 +139,41 @@ export default function ResourcePage({ table, bare, preset }: Props) {
             <span className="count">{shown.length === rows!.length ? `${rows!.length} ligne${rows!.length > 1 ? 's' : ''}` : `${shown.length} sur ${rows!.length}`}</span>
           </div>
         )}
-        {rows === null ? <div className="empty">Chargement…</div> : shown.length === 0 ? (
-          <div className="empty">{rows.length ? 'Aucun résultat.' : 'Rien ici pour le moment.'}</div>
+        {rows === null ? (
+          <div className="skeleton" aria-busy="true" aria-label="Chargement">{[0, 1, 2, 3, 4].map(i => <span key={i} />)}</div>
+        ) : shown.length === 0 ? (
+          <div className="empty-state">
+            <span className="tile-ic"><Icon name={filtered ? 'search' : 'new'} size={18} fill /></span>
+            {filtered ? <>
+              <b>Aucun résultat{term ? ` pour « ${term} »` : ''}</b>
+              <button className="btn sm" onClick={() => { setTerm(''); setSel({}); }}>Effacer la recherche et les filtres</button>
+            </> : <>
+              <b>Rien ici pour le moment</b>
+              <button className="btn sm cta" onClick={() => setEditing({ ...preset })}>+ Ajouter</button>
+            </>}
+          </div>
         ) : (
-          <div className="tbl">
+          <div className="tbl tbl-cards">
             <table>
-              <thead><tr>{cols.map(f => <th key={f.name}>{f.label}</th>)}<th /></tr></thead>
+              <thead><tr>
+                {cols.map(f => (
+                  <th key={f.name} aria-sort={sort?.col === f.name ? (sort.dir === 1 ? 'ascending' : 'descending') : 'none'}>
+                    <button className={`th-sort${sort?.col === f.name ? ' on' : ''}`} onClick={() => toggleSort(f.name)}>
+                      {f.label}<Icon name={sort?.col === f.name && sort.dir === -1 ? 'down' : 'up'} size={12} />
+                    </button>
+                  </th>
+                ))}
+                <th><span className="sr-only">Actions</span></th>
+              </tr></thead>
               <tbody>
                 {shown.map((row, n) => (
                   // Un clic sur la ligne ouvre la fiche, ou le formulaire s'il n'y a pas de fiche (les boutons et liens gardent leur rôle)
-                  <tr key={row.id} style={{ '--i': Math.min(n, 14) } as React.CSSProperties} className="clickable"
-                    onClick={e => {
-                      if ((e.target as HTMLElement).closest('a,button')) return;
-                      if (DETAIL[table]) router.push(`/${DETAIL[table]}/${row.id}`); else setEditing(row);
-                    }}>
+                  // Au clavier : Tab jusqu'à la ligne puis Entrée
+                  <tr key={row.id} style={{ '--i': Math.min(n, 14) } as React.CSSProperties} className="clickable" tabIndex={0}
+                    onClick={e => { if (!(e.target as HTMLElement).closest('a,button')) open(row); }}
+                    onKeyDown={e => { if (e.key === 'Enter' && e.target === e.currentTarget) open(row); }}>
                     {cols.map((f, i) => (
-                      <td key={f.name} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>
+                      <td key={f.name} data-label={f.label} className={f.type === 'number' || f.type === 'lignes' ? 'num' : ''}>
                         <Cell f={f} row={row} refs={refs} labelOf={labelOf} table={table} first={i === 0} href={i === 0 && DETAIL[table] ? `/${DETAIL[table]}/${row.id}` : undefined} />
                       </td>
                     ))}
