@@ -35,6 +35,34 @@ const MEMBERS = [
   ['m14', 'Cacao Sambirano Coop', 'Agribusiness', 'MG', 'Ambanja', 'mg-ent', 'demande', null, null, 'aucun', ['Lova Ramanantsoa', 'Coordinateur', 'lova@cacaosambirano.test', '+261 32 99 999 99'], 'Coopérative de cacao fin aromatique.', ['Distributeurs au Canada'], ['Agroalimentaire', 'Export'], ['Cacao fin'], false, false, null],
 ];
 
+// Fiche des événements : couverture (photos libres Wikimedia Commons), fin, présentation, déroulement, intervenants ; clé = début du titre
+const EVENT_DETAILS = [
+  ["Accueil des nouveaux membres", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Audience_at_on_the_Black_Sea_Grain_conference_sessions.jpg/1280px-Audience_at_on_the_Black_Sea_Grain_conference_sessions.jpg", "2026-11-12T11:30:00+03:00",
+    "Une matinée pour faire connaissance avec l’équipe et les autres membres. On vous présente les services de la Chambre (missions, formations, mises en relation) et la façon d’utiliser votre espace en ligne.",
+    "09:00 Accueil, café et badges\n09:30 Mot de bienvenue de la présidente\n09:45 Les services de la CanCham\n10:30 Tour de table des nouveaux membres\n11:00 Échanges libres et visite des bureaux",
+    "Ando — Présidente de la CanCham\nAndry Rakoto — Fondateur, Lakana Digital"],
+  ["Restitution MECC 9", "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Montreal_-_QC_-_Skyline.jpg/1280px-Montreal_-_QC_-_Skyline.jpg", "2026-11-20T17:30:00+03:00",
+    "Bilan de la 9e mission économique et commerciale au Canada (Montréal et Québec) : rencontres d’affaires, contrats signés et pistes à suivre. Les entreprises participantes racontent ce qu’elles en retirent.",
+    "15:00 Ouverture\n15:15 Bilan de la mission à Montréal et Québec\n16:00 Témoignages des entreprises participantes\n16:45 Questions du public\n17:15 Cocktail de réseautage",
+    "Rivo Andrianina — PDG, SoaEnergy\nKevin Bouchard — Directeur export, Nordik Solaire\nTiana Rabe — Propriétaire, Nosy Lodge & Tours"],
+  ["Formation DBC — Exporter vers le Québec", "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Containers_at_the_Port_of_Montreal.jpg/1280px-Containers_at_the_Port_of_Montreal.jpg", "2026-11-26T20:00:00+03:00",
+    "Ce qu’il faut savoir avant d’envoyer ses produits au Québec : règles d’étiquetage en français, douane, certification et recherche d’un distributeur.",
+    "18:00 Le marché québécois en chiffres\n18:30 Normes, étiquetage et douane\n19:15 Trouver un distributeur\n19:45 Questions-réponses",
+    "Isabelle Côté — Consultante, BioCert Québec\nJulie Tremblay — Acheteuse principale, Maple Gourmet Distribution"],
+  ["Formation DBC — Investissement", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/Avenue_of_the_Baobabs_at_Sunset.jpg/1280px-Avenue_of_the_Baobabs_at_Sunset.jpg", "2026-10-20T19:30:00+03:00",
+    "Investir à Madagascar dans le tourisme et le numérique : où sont les besoins, comment monter une joint-venture et quelles erreurs éviter.",
+    "18:00 Les opportunités dans le tourisme\n18:30 Le numérique à Madagascar\n19:00 Monter une joint-venture : étapes et pièges",
+    "Tiana Rabe — Propriétaire, Nosy Lodge & Tours\nAndry Rakoto — Fondateur, Lakana Digital\nMarc-André Gagnon — Associé, Laurentides Capital"],
+  ["Kit marketing", "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Nikon_DSLR_camera_D850.jpg/1280px-Nikon_DSLR_camera_D850.jpg", "2026-10-12T17:00:00+03:00",
+    "Atelier pratique pour soigner son image : logo et couleurs, photos de produits prises au téléphone, publications sur les réseaux sociaux. Venez avec vos produits et votre téléphone.",
+    "14:00 Identité visuelle : logo, couleurs, police\n15:00 Photos de produits au téléphone\n16:00 Réseaux sociaux : quoi publier et quand\n16:45 Bilan et questions",
+    "Andry Rakoto — Fondateur, Lakana Digital"],
+  ["Introduction au Canada", "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ec/Parliament_Hill_Ottawa_by_Louie_Luo.jpg/1280px-Parliament_Hill_Ottawa_by_Louie_Luo.jpg", "2026-10-10T18:30:00+03:00",
+    "Premier pas vers le marché canadien : le pays en bref, les accords commerciaux avec l’Afrique et les démarches pour vendre ou s’installer.",
+    "17:00 Le Canada en bref\n17:30 Accords commerciaux et accès au marché\n18:00 Questions",
+    "Philippe Morin — Président, Voyages Boréal"],
+];
+
 // Logo et couverture de l'annuaire : photos libres (Wikimedia Commons et Flickr, licences CC ou domaine public), par nom de membre
 const IMAGES = {
   'Vanilla Coast SARL': ['https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Bourbon_vanilla_beans_-_extra_noire_-_%2B20cm.JPG/330px-Bourbon_vanilla_beans_-_extra_noire_-_%2B20cm.JPG',
@@ -166,6 +194,8 @@ async function run() {
 
   for (const [titre, date, format, lieu, capacite, diffusion, tm, tp, j7, j1, h2, inscrits, presents] of EVENTS) {
     const e = await ins('events', { titre, date_debut: date, format, lieu, capacite, diffusion, tarif_membre: tm, tarif_public: tp, rappel_j7: j7, rappel_j1: j1, rappel_h2: h2 });
+    const d = EVENT_DETAILS.find(([k]) => titre.startsWith(k));
+    if (d) await q('update events set couverture_url = $1, date_fin = $2, description = $3, deroulement = $4, intervenants = $5 where id = $6', [...d.slice(1), e.id]);
     for (const k of inscrits) {
       const [c] = await q('select nom, email from contacts where member_id = $1 and principal', [member[k].id]);
       await ins('event_registrations', { event_id: e.id, member_id: member[k].id, nom: c.nom, email: c.email, present: presents.includes(k) });

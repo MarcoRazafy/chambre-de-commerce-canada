@@ -98,6 +98,12 @@ create table if not exists events (
   rappel_j7     boolean not null default false,
   rappel_j1     boolean not null default false,
   rappel_h2     boolean not null default false,
+  date_fin      timestamptz,
+  couverture_url text,                 -- photo de couverture (adresse)
+  lien_visio    text,                  -- lien de connexion (hybride, webinaire)
+  description   text,
+  deroulement   text,                  -- programme : une étape par ligne, « 09:00 Accueil »
+  intervenants  text,                  -- une personne par ligne, « Nom — fonction »
   created_at    timestamptz not null default now()
 );
 
@@ -366,3 +372,6 @@ alter table messages alter column texte set default '';
 alter table messages add column if not exists reply_to int references messages(id) on delete set null,
   add column if not exists forwarded boolean not null default false;
 alter table members add column if not exists logo_url text, add column if not exists couverture_url text;
+alter table events add column if not exists date_fin timestamptz, add column if not exists couverture_url text,
+  add column if not exists lien_visio text, add column if not exists description text,
+  add column if not exists deroulement text, add column if not exists intervenants text;

@@ -1,7 +1,7 @@
 'use client';
 import Link from 'next/link';
 import type { Field } from '@/lib/resources';
-import { display, relative, type Row } from '@/lib/format';
+import { display, imageUrl, relative, type Row } from '@/lib/format';
 import Avatar from './Avatar';
 import StatusBadge from './StatusBadge';
 
@@ -24,6 +24,7 @@ export default function Cell({ f, row, refs, labelOf, table, first, href }: P) {
     return (
       <span className="cell-main">
         {AVATAR[table] && <Avatar kind={AVATAR[table]} id={row.id} size={32} />}
+        {imageUrl(row.couverture_url) && !AVATAR[table] && <img className="cell-thumb" src={imageUrl(row.couverture_url)!} alt="" loading="lazy" referrerPolicy="no-referrer" />}
         {href ? <Link href={href}>{name}</Link> : name}
       </span>
     );
