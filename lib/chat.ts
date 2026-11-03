@@ -9,6 +9,11 @@ export const FILTRES: [string, string][] = [
   ['groupes', 'Groupes'], ['equipe', 'Équipe'], ['archivees', 'Archivées'],
 ];
 
+export const REACTIONS = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
+
+// Message composé seulement d'émojis (3 au plus) : affiché en grand, sans bulle, comme Messenger
+export const onlyEmoji = (t: string) => !!t && /^(\p{Extended_Pictographic}|\p{Emoji_Component}|\u200d|\ufe0f|\s)+$/u.test(t) && [...t.replace(/\s/g, '')].filter(c => /\p{Extended_Pictographic}/u.test(c)).length <= 3 && !/\d/.test(t);
+
 export const EMOJIS = ['😀', '😊', '😂', '🙂', '😉', '😍', '🤝', '👍', '👏', '🙏', '💪', '🎉', '✅', '❌', '⚠️', '📌', '📎', '📅', '📞', '✉️',
   '💡', '🚀', '🔥', '⭐', '❤️', '😅', '🤔', '😮', '😢', '👀', '🇲🇬', '🇨🇦', '🌍', '💼', '📈', '🧾', '💰', '☕', '🕐', '👋'];
 
@@ -25,11 +30,12 @@ export const chat = {
   get: (id: number) => fetch(`/api/messagerie/${id}`).then(r => json<Row>(r)),
   create: (body: { user_ids: number[]; member_ids: number[]; sujet?: string }) =>
     fetch('/api/messagerie', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => json<Row>(r)),
-  send: (id: number, texte: string, files: File[], entrant?: number | null) => {
+  send: (id: number, texte: string, files: File[], entrant?: number | null, replyTo?: number | null) => {
     const f = new FormData();
     f.set('texte', texte);
     files.forEach(x => f.append('files', x));
     if (entrant) f.set('entrant', String(entrant));
+    if (replyTo) f.set('reply_to', String(replyTo));
     return fetch(`/api/messagerie/${id}`, { method: 'POST', body: f }).then(r => json<Row>(r));
   },
   patch: (id: number, body: Row) => fetch(`/api/messagerie/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).then(r => json<Row>(r)),
@@ -39,6 +45,8 @@ export const chat = {
   removePerson: (id: number, kind: string, ref: number) => fetch(`/api/messagerie/${id}/participants?kind=${kind}&ref=${ref}`, { method: 'DELETE' }).then(r => json<null>(r)),
   editMsg: (mid: number, texte: string) => fetch(`/api/messagerie/messages/${mid}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ texte }) }).then(r => json<Row>(r)),
   deleteMsg: (mid: number) => fetch(`/api/messagerie/messages/${mid}`, { method: 'DELETE' }).then(r => json<null>(r)),
+  react: (mid: number, emoji: string) => fetch(`/api/messagerie/messages/${mid}/reaction`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emoji }) }).then(r => json<Row>(r)),
+  forward: (mid: number, thread_id: number) => fetch(`/api/messagerie/messages/${mid}/transfert`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ thread_id }) }).then(r => json<Row>(r)),
   people: (q: string) => fetch(`/api/messagerie/personnes?q=${encodeURIComponent(q)}`).then(r => json<Person[]>(r)),
 };
 

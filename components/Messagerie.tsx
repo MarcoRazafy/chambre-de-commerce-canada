@@ -26,6 +26,12 @@ function Inbox() {
   const [error, setError] = useState('');
 
   useEffect(() => { fetch('/api/auth/me').then(r => r.json()).then(d => d.user && setMe(d.user)); }, []);
+  // La page reste en mémoire (cachée) après navigation : une classe posée/retirée ici, plutôt qu'un :has(.inbox) en CSS,
+  // rend la barre de défilement aux autres pages dès qu'on quitte la messagerie
+  useEffect(() => {
+    document.body.classList.add('inbox-page');
+    return () => document.body.classList.remove('inbox-page');
+  }, []);
   // Liens « écrire à » : /messagerie?a=member:12 ou ?a=user:3, et ?c=<conversation>
   useEffect(() => {
     const c = Number(sp.get('c'));
@@ -57,7 +63,7 @@ function Inbox() {
   if (!me) return <div className="empty">Chargement…</div>;
   const open = cur !== null || nouveau !== null;
   return (
-    <div className="inbox">
+    <div className={`inbox${open ? ' has-open' : ''}`}>
       <div className="inbox-top">
         <h1>Messagerie</h1>
         <label className="inbox-search"><Icon name="search" size={16} />
@@ -74,9 +80,8 @@ function Inbox() {
           <ConversationList threads={threads} active={cur} meId={me.id} onSelect={select} />
         </aside>
         <section className="inbox-main">
-          {open && <button className="btn ghost sm inbox-back" onClick={() => select(null)}><Icon name="back" size={16} /> Conversations</button>}
-          {nouveau !== null ? <NewConversation key={nouveau.map(p => p.kind + p.id).join()} initial={nouveau} onCreated={id => select(id)} onClose={() => setNouveau(null)} />
-            : cur !== null ? <ConversationView key={cur} id={cur} meId={me.id} infoOpen={info} onToggleInfo={() => setInfo(v => !v)} onData={setData} />
+          {nouveau !== null ? <NewConversation key={nouveau.map(p => p.kind + p.id).join()} initial={nouveau} onCreated={id => select(id)} onClose={() => setNouveau(null)} onBack={() => select(null)} />
+            : cur !== null ? <ConversationView key={cur} id={cur} meId={me.id} infoOpen={info} onToggleInfo={() => setInfo(v => !v)} onData={setData} onBack={() => select(null)} />
             : (
               <div className="inbox-empty">
                 <Icon name="chat" size={40} />

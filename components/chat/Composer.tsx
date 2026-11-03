@@ -10,10 +10,12 @@ type Props = {
   compact?: boolean;
   autoFocus?: boolean;
   placeholder?: string;
+  reply?: { auteur: string; texte: string } | null;   // message auquel on répond
+  onCancelReply?: () => void;
 };
 
 // Zone de rédaction : Entrée envoie, Maj+Entrée va à la ligne ; images, vidéos, fichiers (bouton, glisser-déposer, coller), émojis
-export default function Composer({ onSend, members = [], incoming, compact, autoFocus, placeholder }: Props) {
+export default function Composer({ onSend, members = [], incoming, compact, autoFocus, placeholder, reply, onCancelReply }: Props) {
   const [texte, setTexte] = useState('');
   const [files, setFiles] = useState<File[]>([]);
   const [entrant, setEntrant] = useState<number | null>(null);
@@ -25,6 +27,7 @@ export default function Composer({ onSend, members = [], incoming, compact, auto
   const pick = useRef<HTMLInputElement>(null);
 
   useEffect(() => { if (incoming?.length) setFiles(f => [...f, ...incoming]); }, [incoming]);
+  useEffect(() => { if (reply) area.current?.focus(); }, [reply]);
   useEffect(() => {   // hauteur automatique
     const a = area.current;
     if (a) { a.style.height = 'auto'; a.style.height = Math.min(a.scrollHeight, compact ? 120 : 200) + 'px'; }
@@ -69,6 +72,13 @@ export default function Composer({ onSend, members = [], incoming, compact, auto
           <button type="button" className="btn ghost sm" onClick={() => setEntrant(null)}>Annuler</button>
         </div>
       )}
+      {reply && (
+        <div className="reply-bar">
+          <Icon name="inbound" size={14} />
+          <span className="grow"><b>Réponse à {reply.auteur}</b><span className="small muted">{reply.texte || 'Pièce jointe'}</span></span>
+          <button type="button" className="tb-btn" title="Annuler la réponse" onClick={onCancelReply}><Icon name="close" size={14} /></button>
+        </div>
+      )}
       {error && <div className="err">{error}</div>}
       {files.length > 0 && (
         <div className="pending">
@@ -81,7 +91,7 @@ export default function Composer({ onSend, members = [], incoming, compact, auto
           ))}
         </div>
       )}
-      <textarea ref={area} rows={compact ? 1 : 3} value={texte} autoFocus={autoFocus} aria-label="Votre message"
+      <textarea ref={area} rows={1} value={texte} autoFocus={autoFocus} aria-label="Votre message"
         placeholder={placeholder ?? (who ? `Ce que ${who.nom} a répondu…` : 'Rédigez un message…')}
         onChange={e => setTexte(e.target.value)}
         onKeyDown={e => { if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) { e.preventDefault(); send(); } }}

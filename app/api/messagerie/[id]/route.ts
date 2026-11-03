@@ -11,14 +11,15 @@ export async function GET(_req: Request, { params }: Ctx) {
   return withUser(async u => Response.json(await getThread(u, id)));
 }
 
-// Envoi d'un message : formulaire multipart avec « texte », des « files » et, pour noter une réponse reçue, « entrant » = id du membre
+// Envoi d'un message : formulaire multipart avec « texte », des « files », « reply_to » (message auquel on répond)
+// et, pour noter une réponse reçue, « entrant » = id du membre
 export async function POST(req: Request, { params }: Ctx) {
   const id = num((await params).id);
   if (Number.isNaN(id)) return notFound();
   return withUser(async u => {
     const form = await req.formData();
     const entrant = Number(form.get('entrant')) || null;
-    const msg = await sendMessage(u, id, String(form.get('texte') ?? ''), await uploads(form), entrant);
+    const msg = await sendMessage(u, id, String(form.get('texte') ?? ''), await uploads(form), entrant, Number(form.get('reply_to')) || null);
     return Response.json(msg, { status: 201 });
   });
 }

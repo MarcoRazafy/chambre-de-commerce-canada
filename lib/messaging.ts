@@ -85,16 +85,27 @@ export async function getThread(u: User, id: number) {
   const t = await access(u, id);
   const participants = await participantsOf(id);
   const messages = await q<Row>(`
-    select ms.id, ms.de_nous, ms.texte, ms.created_at, ms.edited_at, ms.deleted_at, ms.author_user_id, ms.author_member_id,
+    select ms.id, ms.de_nous, ms.texte, ms.created_at, ms.edited_at, ms.deleted_at, ms.author_user_id, ms.author_member_id, ms.forwarded, ms.reply_to,
            coalesce(au.nom, am.nom, case when ms.de_nous then 'L’équipe' else tm.nom end) as auteur,
            case when ms.author_user_id is not null then 'user' when ms.author_member_id is not null or not ms.de_nous then 'member' else null end as auteur_kind,
            coalesce(ms.author_user_id, ms.author_member_id, case when not ms.de_nous then t.member_id end) as auteur_id,
            (select coalesce(json_agg(json_build_object('id', f.id, 'nom', f.nom, 'type', f.type, 'taille', f.taille) order by f.id), '[]')
-              from message_files f where f.message_id = ms.id) as fichiers
+              from message_files f where f.message_id = ms.id) as fichiers,
+           -- message cité (réponse)
+           (select json_build_object('id', r.id, 'texte', left(r.texte, 140), 'supprime', r.deleted_at is not null,
+                     'fichiers', (select count(*) from message_files rf where rf.message_id = r.id),
+                     'auteur', coalesce(ru.nom, rm.nom, case when r.de_nous then 'L’équipe' else tm.nom end))
+              from messages r left join team_users ru on ru.id = r.author_user_id left join members rm on rm.id = r.author_member_id
+              where r.id = ms.reply_to) as reponse_a,
+           -- réactions regroupées par émoji, avec les noms
+           (select coalesce(json_agg(json_build_object('emoji', x.emoji, 'n', x.n, 'noms', x.noms, 'moi', x.moi) order by x.premier), '[]')
+              from (select mr.emoji, count(*)::int as n, string_agg(ru2.nom, ', ' order by mr.created_at) as noms,
+                           bool_or(mr.user_id = $2) as moi, min(mr.created_at) as premier
+                    from message_reactions mr join team_users ru2 on ru2.id = mr.user_id where mr.message_id = ms.id group by mr.emoji) x) as reactions
     from messages ms join threads t on t.id = ms.thread_id
     left join team_users au on au.id = ms.author_user_id left join members am on am.id = ms.author_member_id
     left join members tm on tm.id = t.member_id
-    where ms.thread_id = $1 order by ms.created_at`, [id]);
+    where ms.thread_id = $1 order by ms.created_at`, [id, u.id]);
   const [m] = t.member_id ? await q<Row>(`
     select m.id, m.nom, m.ville, m.pays, m.statut, m.description, m.offres, m.besoins, s.nom as secteur,
            (select coalesce(json_agg(json_build_object('nom', c.nom, 'fonction', c.fonction, 'email', c.email, 'tel', c.tel) order by c.principal desc, c.id), '[]')
@@ -124,7 +135,7 @@ export async function setState(u: User, id: number, body: { important?: boolean;
 type Upload = { nom: string; type: string; taille: number; contenu: Buffer };
 
 // Envoi d'un message. entrant = réponse reçue d'un membre (par téléphone, courriel…) que l'équipe note dans la conversation.
-export async function sendMessage(u: User, id: number, texte: string, files: Upload[], entrant?: number | null) {
+export async function sendMessage(u: User, id: number, texte: string, files: Upload[], entrant?: number | null, replyTo?: number | null) {
   const t = await access(u, id);
   texte = texte.trim();
   if (!texte && !files.length) throw new MsgError('Message vide');
@@ -134,8 +145,9 @@ export async function sendMessage(u: User, id: number, texte: string, files: Upl
   try {
     await client.query('begin');
     ({ rows: [msg] } = await client.query(
-      `insert into messages (thread_id, de_nous, author_user_id, author_member_id, texte) values ($1, $2, $3, $4, $5) returning *`,
-      [id, !entrant, entrant ? null : u.id, entrant ?? null, texte]));
+      `insert into messages (thread_id, de_nous, author_user_id, author_member_id, texte, reply_to)
+       values ($1, $2, $3, $4, $5, (select id from messages where id = $6 and thread_id = $1)) returning *`,
+      [id, !entrant, entrant ? null : u.id, entrant ?? null, texte, replyTo ?? null]));
     for (const f of files)
       await client.query('insert into message_files (message_id, nom, type, taille, contenu) values ($1, $2, $3, $4, $5)', [msg.id, f.nom, f.type, f.taille, f.contenu]);
     await client.query('commit');
@@ -251,4 +263,28 @@ export async function people(u: User, term: string) {
                                 where m.statut in ('a_jour', 'retard', 'attente') and (m.nom ilike $1
                                   or exists (select 1 from contacts c where c.member_id = m.id and c.nom ilike $1)) order by m.nom limit 15`, [like]);
   return [...users, ...members];
+}
+
+// Réaction : un même émoji une deuxième fois retire la réaction ; un autre émoji la remplace
+export async function react(u: User, mid: number, emoji: string) {
+  const [m] = await q<Row>('select thread_id from messages where id = $1 and deleted_at is null', [mid]);
+  if (!m) throw new MsgError('Message introuvable');
+  await access(u, m.thread_id);
+  if (!emoji || [...emoji].length > 8) throw new MsgError('Réaction invalide');
+  const [cur] = await q<{ emoji: string }>('select emoji from message_reactions where message_id = $1 and user_id = $2', [mid, u.id]);
+  if (cur?.emoji === emoji) await q('delete from message_reactions where message_id = $1 and user_id = $2', [mid, u.id]);
+  else await q(`insert into message_reactions (message_id, user_id, emoji) values ($1, $2, $3)
+                on conflict (message_id, user_id) do update set emoji = excluded.emoji, created_at = now()`, [mid, u.id, emoji]);
+}
+
+// Transférer un message (texte et pièces jointes) vers une autre conversation
+export async function forward(u: User, mid: number, target: number) {
+  const [m] = await q<Row>('select * from messages where id = $1 and deleted_at is null', [mid]);
+  if (!m) throw new MsgError('Message introuvable');
+  await access(u, m.thread_id);
+  await access(u, target);
+  const files = await q<Row>('select nom, type, taille, contenu from message_files where message_id = $1', [mid]);
+  const msg = await sendMessage(u, target, m.texte || ' ', files.map(f => ({ nom: f.nom, type: f.type, taille: f.taille, contenu: f.contenu })));
+  await q('update messages set forwarded = true where id = $1', [msg.id]);
+  return msg;
 }

@@ -207,10 +207,21 @@ create table if not exists messages (
   de_nous          boolean not null default false,  -- true = écrit par l'équipe
   author_user_id   int references team_users(id) on delete set null,
   author_member_id int references members(id) on delete set null,   -- réponse d'un membre notée par l'équipe
+  reply_to         int references messages(id) on delete set null,  -- message auquel on répond
+  forwarded        boolean not null default false,                   -- message transféré d'une autre conversation
   texte            text not null default '',
   edited_at        timestamptz,
   deleted_at       timestamptz,
   created_at       timestamptz not null default now()
+);
+
+-- Réactions aux messages (une par personne et par message, comme Messenger)
+create table if not exists message_reactions (
+  message_id int not null references messages(id) on delete cascade,
+  user_id    int not null references team_users(id) on delete cascade,
+  emoji      text not null,
+  created_at timestamptz not null default now(),
+  primary key (message_id, user_id)
 );
 
 create table if not exists message_files (
@@ -350,3 +361,5 @@ alter table messages add column if not exists author_user_id int references team
   add column if not exists author_member_id int references members(id) on delete set null,
   add column if not exists edited_at timestamptz, add column if not exists deleted_at timestamptz;
 alter table messages alter column texte set default '';
+alter table messages add column if not exists reply_to int references messages(id) on delete set null,
+  add column if not exists forwarded boolean not null default false;

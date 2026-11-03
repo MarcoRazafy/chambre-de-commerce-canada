@@ -6,7 +6,7 @@ import Composer from './Composer';
 import PeoplePicker from './PeoplePicker';
 
 // Nouveau message : un destinataire = conversation directe ; plusieurs = groupe (avec un nom facultatif)
-export default function NewConversation({ initial = [], compact, onCreated, onClose }: { initial?: Person[]; compact?: boolean; onCreated: (id: number) => void; onClose?: () => void }) {
+export default function NewConversation({ initial = [], compact, onCreated, onClose, onBack }: { initial?: Person[]; compact?: boolean; onCreated: (id: number) => void; onClose?: () => void; onBack?: () => void }) {
   const [to, setTo] = useState<Person[]>(initial);
   const [sujet, setSujet] = useState('');
 
@@ -20,7 +20,7 @@ export default function NewConversation({ initial = [], compact, onCreated, onCl
 
   return (
     <div className="conv new-conv">
-      <header className="conv-h"><b className="grow">Nouveau message</b>{onClose && <button className="tb-btn" title="Fermer" onClick={onClose}><Icon name="close" size={18} /></button>}</header>
+      <header className="conv-h">{onBack && <button className="tb-btn conv-back" aria-label="Retour aux conversations" onClick={onBack}><Icon name="back" size={20} /></button>}<b className="grow">Nouveau message</b>{onClose && <button className="tb-btn" title="Fermer" onClick={onClose}><Icon name="close" size={18} /></button>}</header>
       <div className="new-to">
         <PeoplePicker value={to} onChange={setTo} autoFocus={!initial.length} />
         {to.length > 1 && <input className="inp" placeholder="Nom du groupe (facultatif)" aria-label="Nom du groupe" value={sujet} onChange={e => setSujet(e.target.value)} />}
