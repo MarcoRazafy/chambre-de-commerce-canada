@@ -78,7 +78,9 @@ button,input,select,textarea{font:inherit;color:inherit}
 .search input::placeholder{color:var(--muted)}
 
 .bell-dot{position:absolute;top:2px;right:2px;min-width:16px;height:16px;padding:0 4px;border-radius:99px;background:var(--accent);color:var(--on-accent);font-size:.65rem;font-weight:700;display:grid;place-items:center}
-.me{width:34px;height:34px;border-radius:50%;background:var(--ink);color:#fff;font-weight:600;font-size:.85rem;display:grid;place-items:center;border:0;flex:none;margin-left:6px}
+/* Bouton du compte : uniquement la photo (ou les initiales), sans fond ni marge derrière */
+.me{width:34px;height:34px;padding:0;border-radius:50%;background:none;color:var(--ink);font-weight:600;font-size:.85rem;display:grid;place-items:center;border:0;flex:none;margin-left:6px;overflow:hidden}
+.me .avatar{width:100%;height:100%}
 
 /* Structure et menu latéral : bleu marine, rubriques dépliables à la GoDaddy, repliable en colonne d'icônes */
 .shell{min-height:100%}
