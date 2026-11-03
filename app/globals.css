@@ -198,8 +198,8 @@ button,input,select,textarea{font:inherit;color:inherit}
 .c-blue{background:var(--blue-xs)} .c-blue svg{color:var(--blue)}
 .tag{display:inline-block;font-size:.75rem;padding:1px 7px;border-radius:4px;background:var(--surface-2);border:1px solid var(--line);color:var(--ink-2)}
 .tags{display:flex;flex-wrap:wrap;gap:5px}
-/* Catégories (rôle, format, type…) : pastille arrondie, même bleu que les boutons principaux, texte blanc */
-.pill{display:inline-flex;align-items:center;font-size:.78rem;font-weight:600;padding:2px 10px;border-radius:99px;white-space:nowrap;line-height:1.5;color:var(--on-primary);background:var(--primary)}
+/* Catégories (rôle, format, type…) : pastille arrondie, bleu de la marque, texte blanc (contraste 4,5:1) */
+.pill{display:inline-flex;align-items:center;font-size:.78rem;font-weight:600;padding:2px 10px;border-radius:99px;white-space:nowrap;line-height:1.5;color:var(--on-accent);background:var(--accent)}
 /* Oui / non : un point (vert ou gris) suivi du mot, jamais la couleur seule */
 .state{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .state::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--line-strong)}
