@@ -11,11 +11,13 @@ function match(a: Member, b: Member) {
   const raw = shared.length * 12 + (ab.length + ba.length) * 26 + (bridge && (ab.length || ba.length) ? 10 : 0);
   if (!raw) return null;
   const why: string[] = [];
+  // Échanges structurés pour l'affichage : qui propose (from) quoi (tag) à qui (to)
+  const flows = [...ab.map(tag => ({ tag, from: b.id, to: a.id })), ...ba.map(tag => ({ tag, from: a.id, to: b.id }))];
   ab.forEach(x => why.push(`${a.nom} cherche « ${x} », proposé par ${b.nom}`));
   ba.forEach(x => why.push(`${b.nom} cherche « ${x} », proposé par ${a.nom}`));
   if (shared.length) why.push(`Intérêts communs : ${shared.join(', ')}`);
   if (bridge) why.push('Un membre au Canada, l’autre à Madagascar');
-  return { a: { id: a.id, nom: a.nom, pays: a.pays }, b: { id: b.id, nom: b.nom, pays: b.pays }, score: Math.min(97, 35 + raw), why };
+  return { a: { id: a.id, nom: a.nom, pays: a.pays }, b: { id: b.id, nom: b.nom, pays: b.pays }, score: Math.min(97, 35 + raw), why, flows, shared, bridge };
 }
 
 // GET /api/suggestions?member=12 pour limiter à un membre
