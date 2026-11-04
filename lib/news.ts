@@ -18,7 +18,7 @@ async function notifyMentions(u: User, before: string | null, after: string, lie
   const ids = [...mentionedUsers(after)].filter(id => !old.has(id) && id !== u.id);
   if (!ids.length) return;
   const names = await q<{ nom: string }>('select nom from team_users where id = any($1) order by nom', [ids]);
-  for (const n of names) await notify(`${u.nom} a mentionné ${n.nom} ${ou}`, lien);
+  for (const n of names) await notify(`${u.nom} a mentionné ${n.nom} ${ou}`, lien, { user: u.id, icon: 'chat' });
 }
 
 const reactionsOf = (table: string, key: string) => `

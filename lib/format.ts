@@ -79,5 +79,5 @@ export function relative(v: string | Date, now = Date.now()) {
   return days === 1 ? 'hier' : `il y a ${days} jours`;
 }
 
-// Adresse d'image saisie à la main : acceptée seulement en http(s)
-export const imageUrl = (v: unknown) => (typeof v === 'string' && /^https?:\/\/\S+$/i.test(v.trim()) ? v.trim() : null);
+// Adresse d'image saisie à la main : http(s), ou une image de l'annuaire livrée avec l'application (/annuaire/…)
+export const imageUrl = (v: unknown) => (typeof v === 'string' && /^(https?:\/\/\S+|\/annuaire\/[\w.-]+)$/i.test(v.trim()) ? v.trim() : null);

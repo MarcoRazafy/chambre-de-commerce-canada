@@ -39,7 +39,7 @@ async function run() {
     for (const inv of late) {
       const [m] = await q<Row>('select nom from members where id = $1', [inv.member_id]);
       if (inv.objet === 'cotisation') await q(`update members set statut = 'retard' where id = $1 and statut in ('a_jour', 'attente')`, [inv.member_id]);
-      await notify(`Facture ${inv.numero} passée en retard (${m?.nom ?? ''})`, `/paiements/${inv.id}`);
+      await notify(`Facture ${inv.numero} passée en retard (${m?.nom ?? ''})`, `/paiements/${inv.id}`, { member: inv.member_id, icon: 'alert' });
       await journal('Paiements', 'Facture passée en retard', `${inv.numero}, ${m?.nom ?? ''}`, SYS);
     }
   });
@@ -47,14 +47,14 @@ async function run() {
   // 2. Relances selon les réglages : seule la dernière étape atteinte est envoyée
   const steps = STEPS.filter(([k]) => rel[k]);
   if (steps.length && (rel.courriel || rel.notif)) await safe('relances', async () => {
-    const invs = await q<Row>(`select id, numero, (current_date - echeance) as d from invoices where statut in ('envoyee', 'retard')`);
+    const invs = await q<Row>(`select id, numero, member_id, (current_date - echeance) as d from invoices where statut in ('envoyee', 'retard')`);
     for (const inv of invs) {
       const step = steps.filter(([, off]) => off <= inv.d).at(-1);
       if (!step) continue;
       if (rel.courriel) await safe(`relance ${inv.numero}`, () => remindInvoice(inv.id, SYS, `inv:${inv.id}:${step[0]}`));
       if (rel.notif && (await q(`insert into outbox (type, sujet, statut, ref) values ('notification', $1, 'envoyé', $2) on conflict (ref) do nothing returning id`,
         [`Relance ${inv.numero}`, `notif:${inv.id}:${step[0]}`])).length)
-        await notify(`Relance de la facture ${inv.numero}, ${STEP_LABEL[step[0]]}`, `/paiements/${inv.id}`);
+        await notify(`Relance de la facture ${inv.numero}, ${STEP_LABEL[step[0]]}`, `/paiements/${inv.id}`, { member: inv.member_id, icon: 'mail' });
     }
   });
 

@@ -3,7 +3,14 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { api, type Row } from '@/lib/format';
 import { runAction } from '@/lib/ui-actions';
+import Avatar from './Avatar';
 import Icon from './Icon';
+
+// Icône du type d'événement (enregistrée avec la notification, sinon devinée d'après le texte pour les anciennes)
+const iconOf = (n: Row): string => n.icone ?? (
+  /^Relance|^Rappel/.test(n.texte) ? 'mail' : /retard/.test(n.texte) ? 'alert' : /^Règlement|paiement|payée/i.test(n.texte) ? 'coin'
+  : /demande d’adhésion/.test(n.texte) ? 'userplus' : /mentionné/.test(n.texte) ? 'chat' : /actualité/i.test(n.texte) ? 'news'
+  : /événement|inscri/i.test(n.texte) ? 'cal' : 'bell');
 
 const when = (d: string) => new Date(d).toLocaleString('fr-FR', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
 
@@ -46,6 +53,10 @@ export default function NotificationsPopup({ onChange, onClose }: { onChange: ()
             <li key={n.id}>
               <button className={`notif-i${n.lu ? '' : ' unread'}${n.lien ? ' has-link' : ''}`} onClick={() => open(n)}>
                 <span className="notif-dot" aria-hidden="true" />
+                <span className={`notif-who ic-${iconOf(n)}`} aria-hidden="true">
+                  {n.actor_id ? <Avatar kind={n.actor_kind} id={n.actor_id} size={40} /> : <span className="notif-tile"><Icon name={iconOf(n)} size={20} fill /></span>}
+                  {n.actor_id && <span className="notif-badge"><Icon name={iconOf(n)} size={12} fill /></span>}
+                </span>
                 <span className="grow"><span className="notif-t">{n.texte}</span><span className="small muted">{when(n.created_at)}{n.lu ? '' : ' · non lue'}</span></span>
                 {n.lien && <span className="notif-go"><Icon name="down" size={14} /></span>}
               </button>

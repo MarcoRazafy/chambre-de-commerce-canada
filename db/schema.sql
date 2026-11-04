@@ -416,3 +416,18 @@ create table if not exists news_comment_reactions (
 );
 create index if not exists news_comments_news on news_comments (news_id, created_at);
 create index if not exists news_media_news on news_media (news_id, position);
+
+-- Fiche membre enrichie (reprise de l'annuaire CanCham) : accroche, site, forme juridique, recherche détaillée, cadrage de la couverture
+alter table members add column if not exists activite text, add column if not exists site_web text,
+  add column if not exists type_membre text, add column if not exists statut_juridique text,
+  add column if not exists recherche text, add column if not exists motivation text,
+  add column if not exists couverture_y int;
+
+-- Notifications : qui est concerné (logo du membre ou photo du collègue) et icône du type d'événement
+alter table notifications add column if not exists actor_kind text check (actor_kind in ('member', 'user')),
+  add column if not exists actor_id int, add column if not exists icone text;
+-- Anciennes notifications : le membre retrouvé à partir du lien (facture ou fiche membre)
+update notifications n set actor_kind = 'member', actor_id = i.member_id
+  from invoices i where n.actor_id is null and n.lien ~ '^/paiements/\d+$' and i.id = substring(n.lien from '\d+$')::int;
+update notifications n set actor_kind = 'member', actor_id = m.id
+  from members m where n.actor_id is null and n.lien ~ '^/membres/\d+$' and m.id = substring(n.lien from '\d+$')::int;
