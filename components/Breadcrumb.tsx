@@ -41,7 +41,7 @@ export default function Breadcrumb() {
   const { icon, crumbs } = trail(path, q);
   return (
     <nav className="crumbs" aria-label="Fil d’Ariane">
-      <span className="crumb-ic"><Icon name={icon} size={16} /></span>
+      <span className="tile-ic xs crumb-ic"><Icon name={icon} size={14} fill /></span>
       {crumbs.map((c, i) => (
         <Fragment key={i}>
           {i > 0 && <span className="crumb-sep" aria-hidden="true">›</span>}

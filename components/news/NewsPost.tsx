@@ -129,8 +129,9 @@ export default function NewsPost({ n, me, onChanged, onEdit, onDeleted, onTag, h
         {n.auteur ? <Avatar kind="user" id={n.auteur.id} size={42} /> : <img className="np-org" src="/logo-app.png" alt="" width={42} height={42} />}
         <div className="grow">
           <b>{n.auteur?.nom ?? 'L’Alliée Virtuelle'}</b>
-          <span className="small muted">{n.categorie && <>{n.categorie} · </>}<time dateTime={n.created_at}>{date}</time>{n.updated_at && ' · modifié'}</span>
+          <span className="small muted"><time dateTime={n.created_at}>{date}</time>{n.updated_at && ' · modifié'}</span>
         </div>
+        {n.categorie && <span className="np-cat">{n.categorie}</span>}
         {!n.publie && <span className="chip c-amber"><Icon name="clock" size={14} />Brouillon</span>}
         <div className="np-menu" ref={menuRef}>
           <button type="button" className="tb-btn" aria-label="Plus d’actions" aria-expanded={menu} onClick={() => setMenu(m => !m)}><Icon name="more" size={20} /></button>

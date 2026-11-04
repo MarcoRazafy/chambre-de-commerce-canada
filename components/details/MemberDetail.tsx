@@ -108,9 +108,9 @@ export default function MemberDetail({ id }: { id: number }) {
             <h1>{m.nom}</h1>
             <div className="mhero-meta">
               <StatusBadge value={m.statut} label={f('statut')} />
-              {lieu && <span><Icon name="pin" size={15} />{lieu}</span>}
-              {m.membre_depuis && <span><Icon name="cal" size={15} />Membre depuis {f('membre_depuis')}</span>}
-              {m.site_web && <a href={href(m.site_web)} target="_blank" rel="noopener noreferrer"><Icon name="share" size={15} />{host(m.site_web)}</a>}
+              {lieu && <span><span className="tile-ic xs"><Icon name="pin" size={14} fill /></span>{lieu}</span>}
+              {m.membre_depuis && <span><span className="tile-ic xs"><Icon name="cal" size={14} fill /></span>Membre depuis {f('membre_depuis')}</span>}
+              {m.site_web && <a href={href(m.site_web)} target="_blank" rel="noopener noreferrer"><span className="tile-ic xs"><Icon name="share" size={14} fill /></span>{host(m.site_web)}</a>}
             </div>
           </div>
           <div className="mhero-actions">

@@ -1,11 +1,6 @@
 import Calendar from '@/components/Calendar';
-import ResourcePage from '@/components/ResourcePage';
 
+// Le calendrier affiche aussi, en dessous, la liste des rappels de l'équipe
 export default function AgendaPage() {
-  return (
-    <>
-      <Calendar />
-      <ResourcePage table="agenda_rappels" bare />
-    </>
-  );
+  return <Calendar />;
 }
