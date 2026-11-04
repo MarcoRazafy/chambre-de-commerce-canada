@@ -143,13 +143,13 @@ export default function Annuaire() {
         <button className="btn sm" onClick={() => { setTerm(''); setPays(''); setSecteur(''); }}>Effacer les filtres</button></div>}
       <div className="dgrid">
         {shown.map(m => {
-          const cover = imageUrl(m.couverture_url);
+          const cover = m.couverture_deposee ? `/api/avatar/cover/${m.id}` : imageUrl(m.couverture_url);
           const desc = m.activite || m.description;
           return (
             // Carte de l'annuaire : couverture (ou logo flouté), logo carré qui la chevauche, secteur, nom, lieu, accroche, puis ce que le membre propose et recherche
             <Link href={`/membres/${m.id}`} className="dcard" key={m.id} aria-label={`${m.nom}, ${secteurs[m.secteur_id] ?? ''} — voir la fiche`}>
               <div className={`dcard-cover${cover ? '' : ' blurred'}`}>
-                {cover ? <img src={cover} alt="" loading="lazy" referrerPolicy="no-referrer" style={m.couverture_y != null ? { objectPosition: `50% ${m.couverture_y}%` } : undefined} />
+                {cover ? <img src={cover} alt="" loading="lazy" referrerPolicy="no-referrer" style={!m.couverture_deposee && m.couverture_y != null ? { objectPosition: `50% ${m.couverture_y}%` } : undefined} />
                   : <img className="cover-blur" src={`/api/avatar/member/${m.id}`} alt="" loading="lazy" />}
                 <span className="dcard-pill"><Icon name="pin" size={12} />{flag(m.pays)}</span>
                 {isNew(m.membre_depuis) && <span className="dcard-pill new">Nouveau</span>}

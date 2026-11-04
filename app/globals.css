@@ -990,3 +990,59 @@ a.mention:hover{text-decoration:underline}
 .match-flows li.match-more,.match-flows li.match-shared{background:none;padding:0 2px;font-size:.76rem;color:var(--muted)}
 .match-actions{display:flex;gap:8px;margin-top:auto}
 @media (prefers-reduced-motion:reduce){.match{animation:none;transition:none}}
+
+/* ===== Fiche membre ===== */
+.mhero{padding:0;gap:0;overflow:hidden}
+.mhero-cover{position:relative;height:clamp(150px,22vw,240px);overflow:hidden;background:var(--surface-2)}
+.mhero-cover>img{display:block;width:100%;height:100%;object-fit:cover}
+.mhero-cover>img.cover-blur{position:absolute;inset:-60px;width:calc(100% + 120px);height:calc(100% + 120px);max-width:none;filter:blur(36px) saturate(1.7)}
+.mhero-cover::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,rgba(11,27,51,0) 45%,rgba(11,27,51,.45));pointer-events:none}
+.mhero-cover-tools{position:absolute;right:14px;bottom:14px;z-index:1;display:flex;gap:6px}
+.mhero-glass{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 12px;border:1px solid rgba(255,255,255,.35);border-radius:10px;font:inherit;font-size:.82rem;font-weight:600;color:#fff;background:rgba(11,27,51,.45);backdrop-filter:blur(8px);cursor:pointer;transition:background .15s}
+.mhero-glass:hover{background:rgba(11,27,51,.65)}
+.mhero-glass.icon{width:36px;padding:0;justify-content:center}
+.mhero-glass:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.mhero-main{display:flex;flex-wrap:wrap;align-items:flex-end;gap:16px 20px;padding:0 24px 22px}
+.mhero-logo{position:relative;flex:none;margin-top:-56px;z-index:1}
+.mhero-logo .avatar{width:112px!important;height:112px!important;border-radius:22px;object-fit:contain;background:#fff;border:4px solid var(--surface);box-shadow:0 8px 24px rgba(11,27,51,.18)}
+.mhero-logo-btn{position:absolute;right:-4px;bottom:-4px;display:grid;place-items:center;width:34px;height:34px;border-radius:50%;border:3px solid var(--surface);color:var(--on-primary);background:var(--primary);cursor:pointer;transition:background .15s}
+.mhero-logo-btn:hover{background:var(--accent)}
+.mhero-id{flex:1 1 320px;min-width:0;display:flex;flex-direction:column;gap:4px;padding-top:12px}
+.mhero-id h1{margin:0;font-size:clamp(1.35rem,2.4vw,1.8rem);line-height:1.2;color:var(--ink);overflow-wrap:anywhere}
+.mhero-meta{display:flex;flex-wrap:wrap;align-items:center;gap:6px 16px;margin-top:6px;font-size:.87rem;color:var(--muted)}
+.mhero-meta>span:not(.chip),.mhero-meta>a{display:inline-flex;align-items:center;gap:5px}
+.mhero-meta a{color:var(--link);text-decoration:none;font-weight:500}
+.mhero-meta a:hover{text-decoration:underline}
+.mhero-actions{display:flex;flex-wrap:wrap;gap:8px}
+.mdetail{display:grid;grid-template-columns:minmax(0,1.7fr) minmax(300px,1fr);gap:16px;align-items:start}
+.mdetail-main,.mdetail-side{display:flex;flex-direction:column;gap:16px;min-width:0}
+.mdetail-side{position:sticky;top:84px;max-height:calc(100vh - 100px);overflow:auto;scrollbar-width:thin}
+.mabout-lead{margin:0;font-size:1rem;font-weight:600;line-height:1.55;color:var(--ink)}
+.mabout-text{margin:0;font-size:.9rem;line-height:1.7;color:var(--ink-2);white-space:pre-line}
+.mabout-block{display:flex;flex-direction:column;gap:6px;padding-top:14px;border-top:1px solid var(--line)}
+.mabout-block h3{margin:0;font-size:.72rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.mtags{display:flex;flex-direction:column;gap:12px}
+.mtags>div{display:grid;grid-template-columns:84px minmax(0,1fr);gap:8px;align-items:start}
+.mtags .dcard-k{padding-top:5px}
+.mtags-list{display:flex;flex-wrap:wrap;gap:6px}
+.mtags-list .dchip{white-space:normal}
+.mkv{grid-template-columns:200px minmax(0,1fr)}
+.msugg-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.msugg{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px solid var(--line);border-radius:12px;background:var(--surface);transition:border-color .15s,box-shadow .15s}
+.msugg:hover{border-color:var(--line-strong);box-shadow:var(--shadow)}
+.msugg-h{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.msugg-who{display:flex;align-items:center;gap:10px;min-width:0;text-decoration:none;color:var(--ink)}
+.msugg-who .avatar{width:40px!important;height:40px!important;border-radius:10px;object-fit:contain;background:#fff;border:1px solid var(--line)}
+.msugg-who b{font-size:.88rem;line-height:1.3;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.msugg-who:hover b{color:var(--link)}
+.match-score.sm{width:44px;height:44px;flex:none;align-self:center}
+.match-score.sm b{font-size:.82rem}
+.msugg-flows{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.msugg-flows li{display:flex;align-items:center;gap:8px;font-size:.82rem;color:var(--ink);min-width:0}
+.msugg-dir{display:inline-flex;align-items:center;gap:3px;flex:none;padding:1px 7px;border-radius:999px;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em}
+.msugg-flows li.give .msugg-dir{color:var(--green);background:var(--green-soft)}
+.msugg-flows li.give .msugg-dir svg{transform:rotate(180deg)}
+.msugg-flows li.get .msugg-dir{color:var(--link);background:var(--accent-soft)}
+.msugg .btn{align-self:flex-start}
+@media (max-width:1100px){.mdetail{grid-template-columns:minmax(0,1fr)}.mdetail-side{position:static;max-height:none;overflow:visible}}
+@media (max-width:640px){.mhero-main{padding:0 16px 18px}.mhero-logo{margin-top:-44px}.mhero-logo .avatar{width:88px!important;height:88px!important;border-radius:18px}.mkv,.mtags>div{grid-template-columns:minmax(0,1fr)}.mhero-cover-tools .mhero-glass:not(.icon){font-size:0;gap:0;width:36px;padding:0;justify-content:center}}

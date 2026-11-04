@@ -26,7 +26,8 @@ const MOYENS = ['MVola', 'Orange Money', 'Airtel Money', 'Virement', 'Espèces',
 const created: Field = { name: 'created_at', label: 'Date', type: 'datetime', list: true, readonly: true };
 
 const list: Resource[] = [
-  { table: 'members', title: 'Membres', label: 'nom', orderBy: 'nom', fields: [
+  { table: 'members', title: 'Membres', label: 'nom', orderBy: 'nom',
+    select: `select m.*, exists (select 1 from avatars a where a.kind = 'cover' and a.ref_id = m.id) as couverture_deposee from members m`, fields: [
     { name: 'nom', label: 'Entreprise', required: true, list: true },
     { name: 'secteur_id', label: 'Secteur', type: 'ref', ref: 'secteurs', list: true },
     { name: 'pays', label: 'Pays', type: 'select', options: [['MG', 'Madagascar'], ['CA', 'Canada']], list: true, filter: true },

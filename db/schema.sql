@@ -431,3 +431,7 @@ update notifications n set actor_kind = 'member', actor_id = i.member_id
   from invoices i where n.actor_id is null and n.lien ~ '^/paiements/\d+$' and i.id = substring(n.lien from '\d+$')::int;
 update notifications n set actor_kind = 'member', actor_id = m.id
   from members m where n.actor_id is null and n.lien ~ '^/membres/\d+$' and m.id = substring(n.lien from '\d+$')::int;
+
+-- Couvertures déposées pour les membres (même table que les logos, kind = 'cover')
+alter table avatars drop constraint if exists avatars_kind_check;
+alter table avatars add constraint avatars_kind_check check (kind in ('user', 'member', 'cover'));
