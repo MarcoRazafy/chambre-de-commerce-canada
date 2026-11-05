@@ -38,6 +38,14 @@ export default function Annuaire() {
   const [pays, setPays] = useState('');
   const [secteur, setSecteur] = useState('');
   const [secteurs, setSecteurs] = useState<Record<number, string>>({});
+  const [tab, setTab] = useState<'annuaire' | 'maillage'>('annuaire');
+  useEffect(() => { if (new URLSearchParams(window.location.search).get('onglet') === 'maillage') setTab('maillage'); }, []);
+  function openTab(t: 'annuaire' | 'maillage') {
+    setTab(t);
+    const url = new URL(window.location.href);
+    if (t === 'maillage') url.searchParams.set('onglet', 'maillage'); else url.searchParams.delete('onglet');
+    window.history.replaceState(null, '', url);
+  }
   const [error, setError] = useState('');
 
   const load = useCallback(async () => {
@@ -78,10 +86,17 @@ export default function Annuaire() {
       <div className="head page-tools">
         <div className="actions"><Link className="btn" href="/mises-en-relation">Mises en relation</Link></div></div>
       {error && <div className="err">{error}</div>}
-      <div className="new-zone">
-        <div className="row between"><span className="new-label">Rapprochements suggérés{sugg.length > 0 && ` · ${sugg.length}`}</span>
-          {sugg.length > 0 && <span className="small muted">Calculés à partir des besoins et des offres de chaque membre</span>}</div>
-        {sugg.length === 0 ? <p className="small muted">Pas de suggestion pour l’instant. Remplissez les besoins et les offres des membres pour en voir apparaître.</p> : (
+      <div className="tabs" role="tablist" aria-label="Annuaire">
+        <button type="button" role="tab" id="tab-annuaire" aria-controls="panel-annuaire" aria-selected={tab === 'annuaire'} className={tab === 'annuaire' ? 'on' : ''} onClick={() => openTab('annuaire')}>
+          <Icon name="book" size={16} />Annuaire<span className="tab-n">{members?.length ?? '…'}</span></button>
+        <button type="button" role="tab" id="tab-maillage" aria-controls="panel-maillage" aria-selected={tab === 'maillage'} className={tab === 'maillage' ? 'on' : ''} onClick={() => openTab('maillage')}>
+          <Icon name="spark" size={16} />Maillage<span className="tab-n">{sugg.length}</span></button>
+      </div>
+      {tab === 'maillage' && (
+      <section className="new-zone" role="tabpanel" id="panel-maillage" aria-labelledby="tab-maillage">
+        <div className="row between"><span className="new-label">Rapprochements pertinents{sugg.length > 0 && ` · ${sugg.length}`}</span>
+          {sugg.length > 0 && <span className="small muted">Seulement quand un membre a exprimé un besoin qu’un autre membre propose. 3 rapprochements au plus par membre.</span>}</div>
+        {sugg.length === 0 ? <p className="small muted">Pas de rapprochement pertinent pour l’instant. Renseignez ce que chaque membre recherche et propose pour en voir apparaître.</p> : (
           <div className="mgrid2">
             {ordered.slice(0, nSugg).map(s => {
               const nom = (id: number) => (id === s.a.id ? s.a.nom : s.b.nom);
@@ -122,8 +137,10 @@ export default function Annuaire() {
             })}
           </div>
         )}
-        {ordered.length > nSugg && <button type="button" className="btn sm" onClick={() => setNSugg(n => n + 6)}>Voir d’autres suggestions ({ordered.length - nSugg})</button>}
-      </div>
+        {ordered.length > nSugg && <button type="button" className="btn sm" onClick={() => setNSugg(n => n + 6)}>Voir d’autres rapprochements ({ordered.length - nSugg})</button>}
+      </section>
+      )}
+      {tab === 'annuaire' && <div className="tab-panel" role="tabpanel" id="panel-annuaire" aria-labelledby="tab-annuaire">
       {(members?.length ?? 0) > 0 && (
         <div className="dir-tools">
           <label className="search-inp dir-search"><Icon name="search" size={16} />
@@ -174,6 +191,7 @@ export default function Annuaire() {
           );
         })}
       </div>
+      </div>}
       {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); toast(t); load(); }} />}
     </>
   );

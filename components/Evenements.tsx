@@ -12,7 +12,6 @@ const FORMAT_CLASS: Record<string, string> = { 'Présentiel': 'f-site', 'Hybride
 const d = (v: string) => new Date(v);
 const day = (v: string) => d(v).toLocaleDateString('fr-FR', { day: '2-digit' });
 const month = (v: string) => d(v).toLocaleDateString('fr-FR', { month: 'short' }).replace('.', '');
-const longDate = (v: string) => d(v).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
 const hour = (v: string) => d(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 const hours = (e: Row) => hour(e.date_debut) + (e.date_fin ? ` – ${hour(e.date_fin)}` : '');
 const money = (n: unknown) => `${Number(n).toLocaleString('fr-FR')} Ar`;
@@ -39,7 +38,7 @@ function Fill({ e, past }: { e: Row; past: boolean }) {
   );
 }
 
-// Page Événements : le prochain événement mis en avant, puis les cartes (à venir ou passés)
+// Page Événements : les cartes des événements (à venir ou passés), sur trois colonnes
 export default function Evenements() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState('');
@@ -58,8 +57,7 @@ export default function Evenements() {
   const past = all.filter(isPast).sort((a, b) => d(b.date_debut).getTime() - d(a.date_debut).getTime());
   const base = period === 'avenir' ? upcoming : period === 'passes' ? past : [...upcoming, ...past];
   const shown = base.filter(e => (!format || e.format === format) && (!term || [e.titre, e.lieu, e.description].join(' ').toLowerCase().includes(term.toLowerCase())));
-  const next = period !== 'passes' && !format && !term ? upcoming[0] : null;
-  const cards = next ? shown.filter(e => e.id !== next.id) : shown;
+  const cards = shown;
   const cols = R.fields.filter(f => f.list);
   const exportCsv = () => downloadCsv(R.title, cols.map(f => f.label), shown.map(e => cols.map(f => display(f, e, {}, t => RESOURCES[t].label))));
 
@@ -87,33 +85,10 @@ export default function Evenements() {
             </select>
           </div>
 
-          {next && (
-            // Le prochain événement, en grand
-            <Link href={`/evenements/${next.id}`} className="ev-next card">
-              <div className="ev-next-cover">
-                {imageUrl(next.couverture_url) ? <img src={imageUrl(next.couverture_url)!} alt="" referrerPolicy="no-referrer" /> : <span className="ev-cover-empty"><Icon name="cal" size={40} /></span>}
-                <span className="ev-badge-next">Prochain événement · {countdown(next.date_debut)}</span>
-              </div>
-              <div className="ev-next-body">
-                <span className={`ev-format ${FORMAT_CLASS[next.format] ?? ''}`}>{next.format}</span>
-                <h2>{next.titre}</h2>
-                <ul className="ev-facts">
-                  <li><span className="tile-ic xs"><Icon name="cal" size={14} fill /></span><span className="cap1">{longDate(next.date_debut)}</span></li>
-                  <li><span className="tile-ic xs"><Icon name="clock" size={14} fill /></span>{hours(next)}</li>
-                  {next.lieu && <li><span className="tile-ic xs"><Icon name="pin" size={14} fill /></span>{next.lieu}</li>}
-                  <li><span className="tile-ic xs"><Icon name="coin" size={14} fill /></span>{price(next)}</li>
-                </ul>
-                {next.description && <p className="ev-next-desc">{next.description}</p>}
-                <Fill e={next} past={false} />
-                <span className="ev-next-go">Voir la fiche et les inscrits <Icon name="back" size={16} /></span>
-              </div>
-            </Link>
-          )}
-
           {all.length === 0 ? (
             <div className="card empty-state"><span className="tile-ic"><Icon name="cal" size={18} fill /></span><b>Aucun événement pour le moment</b>
               <button className="btn sm cta" onClick={() => setEditing({})}>Créer le premier</button></div>
-          ) : cards.length === 0 && !next ? (
+          ) : cards.length === 0 ? (
             <div className="card empty-state"><b>Aucun événement ne correspond</b>
               <button className="btn sm" onClick={() => { setTerm(''); setFormat(''); setPeriod('tous'); }}>Voir tous les événements</button></div>
           ) : (
