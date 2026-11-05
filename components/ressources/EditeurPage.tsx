@@ -7,7 +7,7 @@ import { CATS, mediaUrl } from '@/lib/bibliotheque';
 import Icon from '../Icon';
 import ChoixCouleur from './ChoixCouleur';
 import TexteRiche from './TexteRiche';
-import { VideoEnLien, iconeDocument } from './PageRessource';
+import { PieceJointe, VideoEnLien } from './PageRessource';
 import { ChampImage, ChoixDossier, arbo, envoyer, formatDe, useApercus } from './outils';
 
 // Fichier d'un bloc photo / vidéo : numéro une fois envoyé, aperçu local et progression pendant l'envoi
@@ -183,15 +183,10 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
           <p className={`small ep-state${echec ? ' bad' : ''}`}>{echec ? 'Un envoi a échoué : relancez-le dans son bloc.' : enCours ? 'Envoi des fichiers en cours…' : `${blocs.length} bloc${blocs.length > 1 ? 's' : ''} sur ${PLAFOND_BLOCS}`}</p>
         </section>
 
-        <section className="card">
-          <div><h2 className="ep-h">Blocs</h2><p className="small muted">Glissez un bloc dans la page, ou cliquez pour l’ajouter à la fin.</p></div>
-          <div className="ep-cat">
-            {CATALOGUE.map(c => (
-              <button key={c.type} type="button" draggable onClick={() => inserer(cle => neuf(c.type, cle), blocs.length)} onDragEnd={finir}
-                onDragStart={e => { setGlisse({ nouveau: c.type }); e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData(MARQUE, c.type); }}>
-                <span className="tile-ic xs"><Icon name={c.icone} size={15} fill /></span>{c.nom}</button>
-            ))}
-          </div>
+        <section className="card ep-cover">
+          <ChampImage libelle="Couverture" valeur={cover} onChange={v => { setCover(v); setModifie(true); }}
+            apercuAuto={premiere ? premiere.apercu ?? mediaUrl(premiere.media) : null}
+            aide={cover ? undefined : premiere ? 'La première photo de la page sert de couverture.' : 'Sans couverture, la première photo de la page en tient lieu.'} />
         </section>
 
         <section className="card">
@@ -211,9 +206,6 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
           <div className="field"><label htmlFor="ep-desc">Description</label>
             <textarea id="ep-desc" className="inp" rows={3} maxLength={600} value={description} onChange={e => { setDescription(e.target.value); setModifie(true); }} />
             <span className="hint">{description.length}/600 · la carte en montre les premières lignes.</span></div>
-          <ChampImage libelle="Couverture" valeur={cover} onChange={v => { setCover(v); setModifie(true); }}
-            apercuAuto={premiere ? premiere.apercu ?? mediaUrl(premiere.media) : null}
-            aide={cover ? undefined : premiere ? 'La première photo de la page sert de couverture.' : 'Sans couverture, la première photo de la page en tient lieu.'} />
         </section>
       </aside>
 
@@ -263,7 +255,11 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
           </div>
 
           <div className="ep-add">
-            {CATALOGUE.map(c => <button key={c.type} type="button" onClick={() => inserer(cle => neuf(c.type, cle), blocs.length)}><Icon name={c.icone} size={14} /> {c.nom}</button>)}
+            {CATALOGUE.map(c => (
+              <button key={c.type} type="button" draggable title="Cliquez pour l’ajouter à la fin, ou glissez-le dans la page" onClick={() => inserer(cle => neuf(c.type, cle), blocs.length)} onDragEnd={finir}
+                onDragStart={e => { setGlisse({ nouveau: c.type }); e.dataTransfer.effectAllowed = 'copy'; e.dataTransfer.setData(MARQUE, c.type); }}>
+                <Icon name={c.icone} size={14} /> {c.nom}</button>
+            ))}
           </div>
         </div>
       </div>
@@ -343,11 +339,8 @@ function BlocPieceJointe({ bloc, onFichier, onRefus }: { bloc: EFichier; onFichi
   if (!bloc.media && !bloc.local) return <ZoneDepot accept={DOCUMENTS} icone="attach" invite="Choisir un document" aide="PDF, Word, Excel, PowerPoint, 100 Mo au plus. Ou glissez-le ici." onFichier={choisir} />;
   return (
     <>
-      <div className="pr-file">
-        <span className="tile-ic"><Icon name={iconeDocument(bloc.nom)} size={18} fill /></span>
-        <span className="grow"><b>{bloc.nom ?? 'Pièce jointe'}</b><small>{bloc.taille ?? (bloc.pct !== undefined ? 'Envoi…' : '')}</small></span>
-        <Remplacer accept={DOCUMENTS} libelle="Remplacer" onFichier={choisir} />
-      </div>
+      <PieceJointe url={bloc.apercu ?? mediaUrl(bloc.media)!} nom={bloc.nom} taille={bloc.taille ?? (bloc.pct !== undefined ? 'Envoi…' : undefined)}
+        actions={<Remplacer accept={DOCUMENTS} libelle="Remplacer" onFichier={choisir} />} />
       <Suivi b={bloc} onReessayer={() => bloc.local && onFichier(bloc.local)} />
     </>
   );

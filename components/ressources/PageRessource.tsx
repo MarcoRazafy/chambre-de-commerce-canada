@@ -58,18 +58,29 @@ function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
     </figure>
   );
   if (bloc.type === 'fichier') {
-    const url = mediaUrl(bloc.media)!, ic = iconeDocument(bloc.nom);
-    return (
-      <div className="pr-file">
-        <span className="tile-ic"><Icon name={ic} size={18} fill /></span>
-        <span className="grow"><b>{bloc.nom}</b><small>{[LIBELLE[ic], bloc.taille].filter(Boolean).join(' · ')}</small></span>
-        {ic === 'pdf' && <a className="btn sm" href={url} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Ouvrir</a>}
-        <a className="btn sm" href={`${url}?dl=1`}><Icon name="download" size={14} /> Télécharger</a>
-      </div>
-    );
+    const url = mediaUrl(bloc.media)!;
+    return <PieceJointe url={url} nom={bloc.nom} taille={bloc.taille}
+      actions={<><a className="btn sm" href={url} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Plein écran</a>
+        <a className="btn sm" href={`${url}?dl=1`}><Icon name="download" size={14} /> Télécharger</a></>} />;
   }
   if (bloc.source === 'lien') return <VideoEnLien url={bloc.url} titre={titre} />;
   return <div className="pr-video"><video src={mediaUrl(bloc.media)!} controls playsInline preload="metadata" aria-label={titre} /></div>;
+}
+
+// Pièce jointe affichée dans la page : un PDF s'ouvre directement dans le lecteur du navigateur ;
+// un document Office (que le navigateur ne sait pas afficher) reste une carte à télécharger
+export function PieceJointe({ url, nom, taille, actions }: { url: string; nom?: string; taille?: string; actions?: ReactNode }) {
+  const ic = iconeDocument(nom);
+  return (
+    <div className={`pr-file${ic === 'pdf' ? ' inline' : ''}`}>
+      <div className="pr-file-h">
+        <span className="tile-ic xs"><Icon name={ic} size={15} fill /></span>
+        <span className="grow"><b>{nom ?? 'Pièce jointe'}</b><small>{[LIBELLE[ic], taille].filter(Boolean).join(' · ')}</small></span>
+        {actions}
+      </div>
+      {ic === 'pdf' && <iframe className="pr-file-view" src={`${url}#navpanes=0&view=FitH`} title={nom ?? 'Pièce jointe'} />}
+    </div>
+  );
 }
 
 // Lecture d'une ressource « Page » : les blocs dans l'ordre, sur une feuille blanche
