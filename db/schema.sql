@@ -435,3 +435,51 @@ update notifications n set actor_kind = 'member', actor_id = m.id
 -- Couvertures déposées pour les membres (même table que les logos, kind = 'cover')
 alter table avatars drop constraint if exists avatars_kind_check;
 alter table avatars add constraint avatars_kind_check check (kind in ('user', 'member', 'cover'));
+
+/* ===== Gestion des membres reprise de CanCham Connect ===== */
+-- Cadrage horizontal de la couverture (le vertical existe déjà : couverture_y)
+alter table members add column if not exists couverture_x int;
+
+-- Catalogue « Produits & services » de chaque membre (5 photos au plus par offre, stockées en base)
+create table if not exists produits (
+  id          serial primary key,
+  member_id   int not null references members(id) on delete cascade,
+  label       text not null,
+  type        text not null default 'service' check (type in ('produit', 'service')),
+  prix        text,                                   -- en clair : « 25 000 Ar le flacon », « Sur devis »
+  description text,
+  ordre       int not null default 0,
+  created_at  timestamptz not null default now()
+);
+create index if not exists produits_member_idx on produits (member_id, ordre);
+create table if not exists produit_photos (
+  id         serial primary key,
+  produit_id int not null references produits(id) on delete cascade,
+  nom        text not null,
+  type       text not null,
+  taille     int not null,
+  contenu    bytea not null,
+  position   int not null default 0
+);
+create index if not exists produit_photos_idx on produit_photos (produit_id, position);
+
+-- Commentaires internes de l'équipe sur un membre (jamais visibles du membre)
+create table if not exists member_notes (
+  id         serial primary key,
+  member_id  int not null references members(id) on delete cascade,
+  texte      text not null,
+  auteur     text not null,
+  user_id    int references team_users(id) on delete set null,
+  created_at timestamptz not null default now()
+);
+create index if not exists member_notes_idx on member_notes (member_id, created_at desc);
+
+-- Photos des contacts (même table que les logos et les couvertures)
+alter table avatars drop constraint if exists avatars_kind_check;
+alter table avatars add constraint avatars_kind_check check (kind in ('user', 'member', 'cover', 'contact'));
+
+-- Supprimer un membre garde ses factures : elles gardent une copie du destinataire
+alter table invoices add column if not exists destinataire_nom text, add column if not exists destinataire jsonb;
+alter table invoices alter column member_id drop not null;
+alter table invoices drop constraint if exists invoices_member_id_fkey;
+alter table invoices add constraint invoices_member_id_fkey foreign key (member_id) references members(id) on delete set null;

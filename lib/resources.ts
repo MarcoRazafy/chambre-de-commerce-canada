@@ -46,6 +46,7 @@ const list: Resource[] = [
     { name: 'motivation', label: 'Motivation à l’adhésion', type: 'textarea' },
     { name: 'logo_url', label: 'Logo (adresse de l’image)', hint: 'https://… Utilisé si aucun logo n’est déposé sur la fiche.' },
     { name: 'couverture_url', label: 'Image de couverture (adresse)', hint: 'https://… Affichée en haut de la carte dans l’annuaire.' },
+    { name: 'couverture_x', label: 'Cadrage horizontal de la couverture (%)', type: 'number', hint: '0 = gauche, 50 = centre, 100 = droite. Se règle aussi en faisant glisser la couverture sur la fiche.' },
     { name: 'couverture_y', label: 'Cadrage vertical de la couverture (%)', type: 'number', hint: '0 = haut de l’image, 50 = centre, 100 = bas.' },
     { name: 'besoins', label: 'Besoins', type: 'tags', hint: 'Séparés par des virgules. Servent à suggérer des rapprochements.' },
     { name: 'offres', label: 'Produits & services proposés', type: 'tags', hint: 'Séparés par des virgules.' },

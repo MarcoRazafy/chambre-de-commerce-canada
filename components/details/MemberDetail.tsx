@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Fragment, useCallback, useEffect, useRef, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
 import { api, display, imageUrl, type Row } from '@/lib/format';
@@ -7,9 +8,12 @@ import { toast } from '@/lib/toast';
 import StatusBadge from '../StatusBadge';
 import Avatar, { avatarChanged } from '../Avatar';
 import Icon from '../Icon';
-import { ROW_ACTIONS, runAction } from '@/lib/ui-actions';
 import ResourcePage, { EditModal } from '../ResourcePage';
 import IntroModal from '../IntroModal';
+import Produits from './member/Produits';
+import Notes from './member/Notes';
+import Contacts from './member/Contacts';
+import Adhesion, { Factures, Historique } from './member/Adhesion';
 
 type Flow = { tag: string; from: number; to: number };
 type Sugg = { a: Row; b: Row; score: number; why: string[]; flows: Flow[] };
@@ -42,14 +46,23 @@ export default function MemberDetail({ id }: { id: number }) {
   const [error, setError] = useState('');
   const [v, setV] = useState(0);        // force le rechargement des tableaux après une action
   const [coverV, setCoverV] = useState(0);
+  const [invoices, setInvoices] = useState<Row[]>([]);
+  const [histo, setHisto] = useState<Row[] | null>(null);
+  const [meId, setMeId] = useState<number | null>(null);
+  const [frame, setFrame] = useState<{ x: number; y: number } | null>(null);   // recadrage en cours
+  const drag = useRef<{ px: number; py: number; x: number; y: number } | null>(null);
+  const router = useRouter();
   const coverInput = useRef<HTMLInputElement>(null);
   const logoInput = useRef<HTMLInputElement>(null);
 
   const load = useCallback(async () => {
     try {
-      const [mm, sect, form, th, sg] = await Promise.all([
-        api<Row>(`/api/members/${id}`), api<Row[]>('/api/secteurs'), api<Row[]>('/api/formules'), api<Row[]>(`/api/messagerie?member_id=${id}`), api<Sugg[]>(`/api/suggestions?member=${id}`)]);
+      const [mm, sect, form, th, sg, inv, h] = await Promise.all([
+        api<Row>(`/api/members/${id}`), api<Row[]>('/api/secteurs'), api<Row[]>('/api/formules'), api<Row[]>(`/api/messagerie?member_id=${id}`), api<Sugg[]>(`/api/suggestions?member=${id}`),
+        api<Row[]>(`/api/invoices?member_id=${id}`), api<Row[]>(`/api/membres/${id}/historique`)]);
       setM(mm);
+      setInvoices(inv);
+      setHisto(h);
       setRefs({ secteurs: sect, formules: form });
       setThreads(th);
       setSugg(sg);
@@ -57,17 +70,47 @@ export default function MemberDetail({ id }: { id: number }) {
     } catch (e) { setError((e as Error).message); }
   }, [id]);
   useEffect(() => { load(); }, [load]);
+  useEffect(() => { fetch('/api/auth/me').then(r => r.json()).then(d => d.user && setMeId(d.user.id)).catch(() => {}); }, []);
 
-  async function act(action: string, question?: string) {
-    if (question && !confirm(question)) return;
-    try { toast(await runAction(action, { id })); setError(''); load(); } catch (e) { setError((e as Error).message); }
-  }
   async function upload(kind: 'member' | 'cover', f: File) {
     try {
       await sendImage(kind, id, f);
       toast(kind === 'cover' ? 'Couverture mise à jour.' : 'Logo mis à jour.');
       if (kind === 'cover') { setCoverV(Date.now()); load(); }
     } catch (e) { toast((e as Error).message, 'error'); }
+  }
+  async function removeMember() {
+    if (!m || !confirm(`Supprimer ${m.nom} ? Il sera retiré de l’annuaire avec ses contacts, ses produits et ses inscriptions. Ses factures restent dans les paiements, à son nom.`)) return;
+    try { toast((await api<{ message: string }>(`/api/membres/${id}/action`, 'POST', { op: 'supprimer' })).message); router.push('/membres'); }
+    catch (e) { setError((e as Error).message); }
+  }
+  async function addBesoin() {
+    if (!m) return;
+    const t = prompt('Ce que le membre recherche (une phrase courte, elle devient une étiquette « Recherche ») :')?.trim().replace(/\s+/g, ' ');
+    if (!t) return;
+    if (m.besoins.length >= 15) return toast('15 besoins au plus : retirez-en un en modifiant la fiche.', 'error');
+    try { await api(`/api/members/${id}`, 'PATCH', { besoins: [...m.besoins, t.slice(0, 200)] }); toast('Besoin ajouté.'); load(); } catch (e) { toast((e as Error).message, 'error'); }
+  }
+  // Recadrage de la couverture : on fait glisser l'image (ou flèches du clavier), la position vaut aussi pour l'annuaire
+  function startFrame() { setFrame({ x: m?.couverture_x ?? 50, y: m?.couverture_y ?? 50 }); }
+  function onDown(e: React.PointerEvent) { if (!frame) return; (e.target as HTMLElement).setPointerCapture(e.pointerId); drag.current = { px: e.clientX, py: e.clientY, x: frame.x, y: frame.y }; }
+  function onMove(e: React.PointerEvent) {
+    const d = drag.current;
+    if (!d || !frame) return;
+    const box = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    setFrame({ x: Math.round(Math.min(100, Math.max(0, d.x - ((e.clientX - d.px) / box.width) * 100))), y: Math.round(Math.min(100, Math.max(0, d.y - ((e.clientY - d.py) / box.height) * 100))) });
+  }
+  function onKey(e: React.KeyboardEvent) {
+    if (!frame) return;
+    const k: Record<string, [number, number]> = { ArrowLeft: [2, 0], ArrowRight: [-2, 0], ArrowUp: [0, 2], ArrowDown: [0, -2] };
+    if (e.key === 'Escape') return setFrame(null);
+    if (!k[e.key]) return;
+    e.preventDefault();
+    setFrame(f => f && ({ x: Math.min(100, Math.max(0, f.x + k[e.key][0])), y: Math.min(100, Math.max(0, f.y + k[e.key][1])) }));
+  }
+  async function saveFrame() {
+    if (!frame) return;
+    try { await api(`/api/members/${id}`, 'PATCH', { couverture_x: frame.x, couverture_y: frame.y }); toast('Cadrage enregistré.'); setFrame(null); load(); } catch (e) { toast((e as Error).message, 'error'); }
   }
   async function removeCover() {
     await fetch(`/api/avatar/cover/${id}`, { method: 'DELETE' });
@@ -88,13 +131,23 @@ export default function MemberDetail({ id }: { id: number }) {
 
       {/* En-tête : couverture (déposée, adresse, ou logo flouté), logo qui la chevauche, identité et actions */}
       <section className="mhero card">
-        <div className={`mhero-cover${cover ? '' : ' blurred'}`}>
-          {cover ? <img src={cover} alt="" referrerPolicy="no-referrer" style={!m.couverture_deposee && m.couverture_y != null ? { objectPosition: `50% ${m.couverture_y}%` } : undefined} />
+        <div className={`mhero-cover${cover ? '' : ' blurred'}${frame ? ' framing' : ''}`} onPointerDown={onDown} onPointerMove={onMove} onPointerUp={() => { drag.current = null; }}
+          onKeyDown={onKey} tabIndex={frame ? 0 : -1} aria-label={frame ? 'Faites glisser la couverture ou utilisez les flèches du clavier' : undefined}>
+          {cover ? <img src={cover} alt="" referrerPolicy="no-referrer" draggable={false} style={{ objectPosition: `${frame?.x ?? m.couverture_x ?? 50}% ${frame?.y ?? m.couverture_y ?? 50}%` }} />
             : <img className="cover-blur" src={`/api/avatar/member/${id}`} alt="" />}
-          <div className="mhero-cover-tools">
-            <button type="button" className="mhero-glass" onClick={() => coverInput.current?.click()}><Icon name="image" size={16} />{cover ? 'Changer la couverture' : 'Ajouter une couverture'}</button>
-            {m.couverture_deposee && <button type="button" className="mhero-glass icon" aria-label="Retirer la couverture" onClick={removeCover}><Icon name="trash" size={16} /></button>}
-          </div>
+          {frame ? (
+            <div className="mhero-cover-tools">
+              <span className="mhero-hint">Faites glisser l’image · le cadrage vaut aussi pour l’annuaire</span>
+              <button type="button" className="mhero-glass" onClick={() => setFrame(null)}>Annuler</button>
+              <button type="button" className="mhero-glass on" onClick={saveFrame}><Icon name="ok" size={16} />Enregistrer</button>
+            </div>
+          ) : (
+            <div className="mhero-cover-tools">
+              {cover && <button type="button" className="mhero-glass" onClick={startFrame}><Icon name="open" size={16} />Recadrer</button>}
+              <button type="button" className="mhero-glass" onClick={() => coverInput.current?.click()}><Icon name="image" size={16} />{cover ? 'Changer la couverture' : 'Ajouter une couverture'}</button>
+              {m.couverture_deposee && <button type="button" className="mhero-glass icon" aria-label="Retirer la couverture" onClick={removeCover}><Icon name="trash" size={16} /></button>}
+            </div>
+          )}
           <input ref={coverInput} type="file" accept="image/png,image/jpeg,image/webp" hidden onChange={e => { const x = e.target.files?.[0]; if (x) upload('cover', x); e.target.value = ''; }} />
         </div>
         <div className="mhero-main">
@@ -115,7 +168,6 @@ export default function MemberDetail({ id }: { id: number }) {
           </div>
           <div className="mhero-actions">
             <Link className="btn" href={`/messagerie?a=member:${id}&nom=${encodeURIComponent(m.nom)}`}><Icon name="chat" size={16} /> Écrire</Link>
-            {ROW_ACTIONS.members.filter(a => a.show(m)).map(a => <button key={a.action} className="btn" onClick={() => act(a.action, a.confirm)}>{a.label}</button>)}
             <button className="btn cta" onClick={() => setEditing(true)}><Icon name="edit" size={16} /> Modifier</button>
           </div>
         </div>
@@ -123,15 +175,33 @@ export default function MemberDetail({ id }: { id: number }) {
 
       <div className="mdetail">
         <div className="mdetail-main">
-          {(m.activite || m.description || m.recherche || m.motivation) && (
+          <section className="card">
+            <h2>Présentation</h2>
+            {m.activite && <p className="mabout-lead">{m.activite}</p>}
+            {m.description && m.description !== m.activite && <p className="mabout-text">{m.description}</p>}
+            {!m.activite && !m.description && <p className="small muted">Pas encore de présentation. « Modifier » permet de la rédiger.</p>}
+            <div className="mabout-block">
+              <div className="row between"><h3>Recherche actuellement</h3><button type="button" className="btn sm ghost" onClick={addBesoin}><Icon name="plus" size={14} /> Ajouter</button></div>
+              {m.besoins.length > 0 ? <ul className="mneeds">{m.besoins.map((t: string) => <li key={t}>{t}</li>)}</ul> : <p className="small muted">Aucun besoin déclaré.</p>}
+              {m.recherche && <p className="mabout-text">{m.recherche}</p>}
+            </div>
+          </section>
+
+          {(m.motivation || m.statut_juridique || m.formule_id || m.statut === 'demande') && (
             <section className="card">
-              <h2>À propos</h2>
-              {m.activite && <p className="mabout-lead">{m.activite}</p>}
-              {m.description && m.description !== m.activite && <p className="mabout-text">{m.description}</p>}
-              {m.recherche && <div className="mabout-block"><h3>Ce que l’entreprise recherche</h3><p className="mabout-text">{m.recherche}</p></div>}
-              {m.motivation && <div className="mabout-block"><h3>Motivation à l’adhésion</h3><p className="mabout-text">{m.motivation}</p></div>}
+              <h2>Dossier de candidature</h2>
+              <p className="small muted">Les réponses données à l’inscription.</p>
+              <dl className="kv mkv">
+                <dt>Statut juridique</dt><dd>{m.statut_juridique || '—'}</dd>
+                <dt>Pays d’implantation</dt><dd>{f('pays')}</dd>
+                <dt>Formule demandée</dt><dd>{f('formule_id') !== '—' ? f('formule_id') : 'Pas encore choisie'}</dd>
+              </dl>
+              {m.motivation && <div className="mabout-block"><h3>Motivation à rejoindre la chambre</h3><p className="mabout-text">{m.motivation}</p></div>}
             </section>
           )}
+
+          <Produits memberId={id} />
+          <Contacts memberId={id} physique={m.type_membre === 'physique'} />
 
           {(m.offres.length > 0 || m.besoins.length > 0 || m.interets.length > 0) && (
             <section className="card">
@@ -145,14 +215,16 @@ export default function MemberDetail({ id }: { id: number }) {
           )}
 
           <section className="card">
-            <h2>Adhésion</h2>
+            <h2>Autres informations</h2>
             <dl className="kv mkv">
-              {R.fields.filter(x => !SHOWN.includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
+              {R.fields.filter(x => !SHOWN.includes(x.name) && !['membre_depuis', 'renouvellement', 'formule_id', 'statut_juridique', 'couverture_x'].includes(x.name)).map(x => <Fragment key={x.name}><dt>{x.label}</dt><dd>{display(x, m, refs, t => RESOURCES[t].label)}</dd></Fragment>)}
             </dl>
           </section>
         </div>
 
         <aside className="mdetail-side">
+          <Adhesion m={m} formules={refs.formules ?? []} invoices={invoices} onChanged={load} />
+          <Factures m={m} invoices={invoices} />
           <section className="card">
             <div className="row between"><h2>Rapprochements suggérés</h2>{sugg.length > 0 && <span className="chip c-green">{sugg.length}</span>}</div>
             {sugg.length === 0 ? <p className="small muted">Aucune suggestion pour ce membre. Renseignez ce qu’il propose et recherche pour en obtenir.</p> : (
@@ -181,6 +253,9 @@ export default function MemberDetail({ id }: { id: number }) {
             {sugg.length > nSugg && <button type="button" className="btn sm ghost" onClick={() => setNSugg(n => n + 4)}>Voir {Math.min(4, sugg.length - nSugg)} autres suggestions ({sugg.length - nSugg} restantes)</button>}
           </section>
 
+          <Historique list={histo} />
+          <Notes memberId={id} meId={meId} version={v} />
+
           <section className="card">
             <h2>Conversations</h2>
             {threads.length === 0 ? <p className="small muted">Aucune conversation avec ce membre.</p> : (
@@ -190,11 +265,14 @@ export default function MemberDetail({ id }: { id: number }) {
                 </Link>))}</div>
             )}
           </section>
+          <section className="card mdanger">
+            <h2>Zone sensible</h2>
+            <p className="small muted">La suppression retire le membre, ses contacts, ses produits et ses inscriptions. Ses factures restent dans les paiements, à son nom.</p>
+            <button type="button" className="btn rg-reject" onClick={removeMember}><Icon name="trash" size={15} /> Supprimer ce membre</button>
+          </section>
         </aside>
       </div>
 
-      <ResourcePage key={'c' + v} table="contacts" bare preset={{ member_id: id }} />
-      <ResourcePage key={'i' + v} table="invoices" bare preset={{ member_id: id }} />
       <ResourcePage key={'r' + v} table="rendez_vous" bare preset={{ member_id: id }} />
       <ResourcePage key={'e' + v} table="event_registrations" bare preset={{ member_id: id }} />
       {editing && <EditModal table="members" row={m} refs={refs} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}

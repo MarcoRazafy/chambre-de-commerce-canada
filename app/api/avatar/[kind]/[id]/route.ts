@@ -5,10 +5,10 @@ import { num, withUser } from '@/lib/api-helpers';
 import { MsgError } from '@/lib/messaging';
 import { imageUrl } from '@/lib/format';
 
-// Photo de profil (kind = user), logo de membre (kind = member) ou couverture de membre (kind = cover).
+// Photo de profil (kind = user), logo de membre (kind = member), couverture de membre (kind = cover) ou portrait d'un contact (kind = contact).
 // Sans photo : l'adresse du logo saisie sur la fiche membre, sinon un cercle de couleur avec les initiales : une balise <img> suffit partout, sans erreur 404.
 type Ctx = { params: Promise<{ kind: string; id: string }> };
-const KINDS = { user: 'team_users', member: 'members', cover: 'members' } as const;
+const KINDS = { user: 'team_users', member: 'members', cover: 'members', contact: 'contacts' } as const;
 // Teintes terreuses de la charte (ardoise, lagon, forêt, vanille, latérite, bois de rose, marine, gris bleu) : blanc lisible sur chacune
 const COLORS = ['#2C4A6B', '#0E6767', '#2D6440', '#9A6512', '#9E4026', '#8A3651', '#0B1B33', '#4F5D73'];
 const MAX = 3 * 1024 * 1024, MAX_COVER = 6 * 1024 * 1024;
@@ -51,7 +51,7 @@ export async function PUT(req: Request, { params }: Ctx) {
     await q(`insert into avatars (kind, ref_id, type, contenu) values ($1, $2, $3, $4)
              on conflict (kind, ref_id) do update set type = excluded.type, contenu = excluded.contenu, updated_at = now()`,
       [t.kind, t.id, f.type, Buffer.from(await f.arrayBuffer())]);
-    await journal(t.kind === 'user' ? 'Équipe' : 'Adhésions', { user: 'Photo de profil modifiée', member: 'Logo de membre modifié', cover: 'Couverture de membre modifiée' }[t.kind], `#${t.id}`, u.nom);
+    await journal(t.kind === 'user' ? 'Équipe' : 'Adhésions', { user: 'Photo de profil modifiée', member: 'Logo de membre modifié', cover: 'Couverture de membre modifiée', contact: 'Portrait de contact modifié' }[t.kind], `#${t.id}`, u.nom);
     return Response.json({ ok: true, v: Date.now() });
   });
 }

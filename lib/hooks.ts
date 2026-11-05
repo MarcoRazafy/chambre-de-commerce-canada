@@ -24,6 +24,10 @@ const VERB = { ajout: 'Ajout dans', modification: 'Modification dans', suppressi
 export async function afterWrite(r: Resource, op: keyof typeof VERB, row: Record<string, any>, par: string) {
   if (r.table === 'journal' || r.table === 'notifications') return;
   await journal(CAT[r.table] ?? 'Système', `${VERB[op]} ${r.title}`, String(row[r.label] ?? '#' + row.id), par);
+  if (r.table === 'contacts' && op !== 'suppression' && row.principal)
+    await q('update contacts set principal = false where member_id = $1 and id <> $2 and principal', [row.member_id, row.id]);
+  if (r.table === 'contacts' && op === 'suppression' && row.principal)
+    await q('update contacts set principal = true where id = (select id from contacts where member_id = $1 order by id limit 1)', [row.member_id]);
   if (op === 'ajout' && r.table === 'members' && row.statut === 'demande') await notify(`Nouvelle demande d’adhésion : ${row.nom}`, `/membres/${row.id}`, { member: row.id, icon: 'userplus' });
   if (op === 'ajout' && r.table === 'reglements') {
     const [inv] = row.invoice_id ? await q<{ member_id: number }>('select member_id from invoices where id = $1', [row.invoice_id]) : [];

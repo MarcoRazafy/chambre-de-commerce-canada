@@ -39,6 +39,8 @@ export default function Annuaire() {
   const [secteur, setSecteur] = useState('');
   const [secteurs, setSecteurs] = useState<Record<number, string>>({});
   const [tab, setTab] = useState<'annuaire' | 'maillage'>('annuaire');
+  const [vign, setVign] = useState<Record<number, { total: number; produits: { label: string; photo: number | null }[] }>>({});
+  useEffect(() => { api<Row[]>('/api/membres/vignettes').then(l => setVign(Object.fromEntries(l.map(x => [x.member_id, x])))).catch(() => {}); }, []);
   useEffect(() => { if (new URLSearchParams(window.location.search).get('onglet') === 'maillage') setTab('maillage'); }, []);
   function openTab(t: 'annuaire' | 'maillage') {
     setTab(t);
@@ -180,6 +182,18 @@ export default function Annuaire() {
                 <h3 className="dcard-name">{m.nom}</h3>
                 {m.ville && <p className="dcard-meta">{cap(m.ville)}</p>}
                 {desc && <p className="dcard-desc">{desc}</p>}
+                {/* Catalogue du membre : 4 vignettes au plus (photo de chaque offre), sinon les titres */}
+                {vign[m.id] && (() => {
+                  const v = vign[m.id], photos = v.produits.filter(p => p.photo);
+                  return photos.length > 0 ? (
+                    <div className="dcard-prods" aria-label={`${v.total} produit(s) et service(s)`}>
+                      {photos.slice(0, 4).map((p, i) => (
+                        <span key={i} className="dcard-prod" title={p.label}><img src={`/api/produits/photos/${p.photo}`} alt="" loading="lazy" />
+                          {i === 3 && v.total > 4 && <b>+{v.total - 4}</b>}</span>
+                      ))}
+                    </div>
+                  ) : <div className="dcard-chips">{v.produits.slice(0, 3).map(p => <span key={p.label} className="dchip">{p.label}</span>)}</div>;
+                })()}
               </div>
               {(m.offres.length > 0 || m.besoins.length > 0) && (
                 <div className="dcard-foot">

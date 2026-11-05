@@ -91,7 +91,7 @@ export default function Paiements() {
   const count = (f: Filter) => all.filter(i => !f || (f === 'du' ? ['envoyee', 'retard'].includes(i.statut) : i.statut === f)).length;
   const shown = all.filter(i => (!filter || (filter === 'du' ? ['envoyee', 'retard'].includes(i.statut) : i.statut === filter))
     && (!objet || i.objet === objet)
-    && (!term || [i.numero, members[i.member_id], i.lignes?.[0]?.des].join(' ').toLowerCase().includes(term.toLowerCase())));
+    && (!term || [i.numero, members[i.member_id] ?? i.destinataire_nom, i.lignes?.[0]?.des].join(' ').toLowerCase().includes(term.toLowerCase())));
   const cols = R.fields.filter(f => f.list);
   const exportCsv = () => downloadCsv(R.title, cols.map(f => f.label), shown.map(i => cols.map(f => display(f, i, { members: Object.entries(members).map(([id, nom]) => ({ id: Number(id), nom })) }, t => RESOURCES[t].label))));
 
@@ -156,7 +156,7 @@ export default function Paiements() {
                     <li key={i.id} className={`inv-row clickable${i.statut === 'retard' ? ' is-late' : ''}`} onClick={() => router.push(`/paiements/${i.id}`)}>
                       <span className="sub-who">
                         <Avatar kind="member" id={i.member_id} size={38} nom={members[i.member_id]} />
-                        <span className="sub-id"><b>{members[i.member_id] ?? '—'}</b><Link href={`/paiements/${i.id}`} onClick={e => e.stopPropagation()}>{i.numero}</Link></span>
+                        <span className="sub-id"><b>{members[i.member_id] ?? i.destinataire_nom ?? '—'}</b><Link href={`/paiements/${i.id}`} onClick={e => e.stopPropagation()}>{i.numero}</Link></span>
                       </span>
                       <span className="inv-obj"><span className="sub-src"><Icon name={OBJET_ICON[i.objet] ?? 'file'} size={13} />{OBJET[i.objet] ?? i.objet}</span>
                         {i.lignes?.[0]?.des && <small>{String(i.lignes[0].des).replace(/^(Cotisation annuelle|Participation) — /, '')}</small>}</span>
