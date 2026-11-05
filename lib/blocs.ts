@@ -1,6 +1,7 @@
 // Blocs d'une ressource « Page », repris de CanCham Connect : titre, texte riche, photo, vidéo.
 // Partagé entre le navigateur (éditeur, lecture) et le serveur (validation avant enregistrement).
-// Les photos et vidéos déposées sont désignées par le numéro de leur fichier (table res_medias).
+// Une pièce jointe (PDF, document Office…) s'ouvre ou se télécharge depuis la page.
+// Les photos, vidéos et pièces jointes déposées sont désignées par le numéro de leur fichier (table res_medias).
 
 export type Taille = 'petit' | 'grand' | 'tres-grand';
 export type Alignement = 'centre' | 'droite';
@@ -12,7 +13,8 @@ export interface BlocTitre { type: 'titre'; texte: string; niveau: 2 | 3; aligne
 export interface BlocTexte { type: 'texte'; lignes: Ligne[] }
 export interface BlocPhoto { type: 'photo'; media: number; legende?: string }
 export type BlocVideo = { type: 'video'; source: 'fichier'; media: number } | { type: 'video'; source: 'lien'; url: string };
-export type Bloc = BlocTitre | BlocTexte | BlocPhoto | BlocVideo;
+export interface BlocFichier { type: 'fichier'; media: number; nom: string; taille?: string }
+export type Bloc = BlocTitre | BlocTexte | BlocPhoto | BlocVideo | BlocFichier;
 export type TypeBloc = Bloc['type'];
 
 export const PLAFOND_BLOCS = 80;
@@ -171,6 +173,12 @@ export function lireBlocs(valeur: unknown): { blocs: Bloc[]; erreur?: undefined 
       if (!media) continue;
       const legende = typeof b.legende === 'string' ? propre(b.legende).replace(/\s+/g, ' ').trim().slice(0, 300) : '';
       blocs.push({ type: 'photo', media, ...(legende ? { legende } : {}) });
+    } else if (b.type === 'fichier') {
+      const media = idMedia(b.media);
+      if (!media) continue;
+      const nom = typeof b.nom === 'string' ? propre(b.nom).trim().slice(0, 200) : '';
+      const taille = typeof b.taille === 'string' ? propre(b.taille).trim().slice(0, 20) : '';
+      blocs.push({ type: 'fichier', media, nom: nom || 'Pièce jointe', ...(taille ? { taille } : {}) });
     } else if (b.type === 'video') {
       if (b.source === 'lien') {
         if (typeof b.url !== 'string') return illisible;
@@ -194,23 +202,25 @@ export function blocsEnregistres(contenu: unknown): Bloc[] {
 }
 
 export const mediasDesBlocs = (blocs: Bloc[]) =>
-  blocs.flatMap(b => (b.type === 'photo' || (b.type === 'video' && b.source === 'fichier') ? [b.media] : []));
+  blocs.flatMap(b => (b.type === 'photo' || b.type === 'fichier' || (b.type === 'video' && b.source === 'fichier') ? [b.media] : []));
 
 export const premierePhoto = (blocs: Bloc[]) => blocs.find((b): b is BlocPhoto => b.type === 'photo')?.media ?? null;
 
 // Étiquette de taille d'une page : « 3 min de lecture · 2 vidéos »
 export function etiquettePage(blocs: Bloc[]): string {
-  let mots = 0, photos = 0, videos = 0;
+  let mots = 0, photos = 0, videos = 0, pieces = 0;
   const compter = (t: string) => t.split(/\s+/).filter(Boolean).length;
   for (const b of blocs) {
     if (b.type === 'titre') mots += compter(b.texte);
     else if (b.type === 'photo') photos++;
     else if (b.type === 'video') videos++;
+    else if (b.type === 'fichier') pieces++;
     else for (const l of b.lignes) for (const p of l.genre === 'p' ? l.passages : l.items.flat()) mots += compter(p.t);
   }
   const parties: string[] = [];
   if (mots >= 40) parties.push(`${Math.max(1, Math.round(mots / 200))} min de lecture`);
   if (videos) parties.push(`${videos} vidéo${videos > 1 ? 's' : ''}`);
+  if (pieces && parties.length < 2) parties.push(`${pieces} pièce${pieces > 1 ? 's' : ''} jointe${pieces > 1 ? 's' : ''}`);
   if (photos && parties.length < 2) parties.push(`${photos} photo${photos > 1 ? 's' : ''}`);
   return parties.join(' · ') || 'Page';
 }

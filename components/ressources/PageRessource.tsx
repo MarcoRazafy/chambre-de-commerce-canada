@@ -1,8 +1,13 @@
 import { Fragment, type ReactNode } from 'react';
 import { lienVideo, type Alignement, type Bloc, type Ligne, type Passage } from '@/lib/blocs';
 import { mediaUrl } from '@/lib/bibliotheque';
+import Icon from '../Icon';
 
 const ALIGN: Record<Alignement, string> = { centre: 'center', droite: 'right' };
+
+// Icône d'une pièce jointe d'après son extension
+export const iconeDocument = (nom = '') => (/\.pdf$/i.test(nom) ? 'pdf' : /\.(docx?|odt|rtf)$/i.test(nom) ? 'docx' : 'doc');
+const LIBELLE: Record<string, string> = { pdf: 'PDF', docx: 'Document Word', doc: 'Document' };
 
 function Passages({ passages }: { passages: Passage[] }) {
   return passages.map((p, i) => {
@@ -52,6 +57,17 @@ function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
       {bloc.legende && <figcaption>{bloc.legende}</figcaption>}
     </figure>
   );
+  if (bloc.type === 'fichier') {
+    const url = mediaUrl(bloc.media)!, ic = iconeDocument(bloc.nom);
+    return (
+      <div className="pr-file">
+        <span className="tile-ic"><Icon name={ic} size={18} fill /></span>
+        <span className="grow"><b>{bloc.nom}</b><small>{[LIBELLE[ic], bloc.taille].filter(Boolean).join(' · ')}</small></span>
+        {ic === 'pdf' && <a className="btn sm" href={url} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Ouvrir</a>}
+        <a className="btn sm" href={`${url}?dl=1`}><Icon name="download" size={14} /> Télécharger</a>
+      </div>
+    );
+  }
   if (bloc.source === 'lien') return <VideoEnLien url={bloc.url} titre={titre} />;
   return <div className="pr-video"><video src={mediaUrl(bloc.media)!} controls playsInline preload="metadata" aria-label={titre} /></div>;
 }

@@ -97,7 +97,7 @@ export default function RessourceFichier({ ressource, dossiers, dossierParDefaut
           <div className="field"><label htmlFor="rf-d">Dossier</label><ChoixDossier id="rf-d" dossiers={noeuds} valeur={dossier} onChange={setDossier} /></div>
           <div className="field"><label htmlFor="rf-a">Accès</label>
             <select id="rf-a" className="inp" value={payant ? 'payant' : 'gratuit'} onChange={e => setPayant(e.target.value === 'payant')}>
-              <option value="gratuit">Gratuit, inclus dans l’adhésion</option><option value="payant">Payant</option></select></div>
+              <option value="gratuit">Inclus dans l’adhésion</option><option value="payant">Payant</option></select></div>
           {payant && <div className="field"><label htmlFor="rf-p">Prix (Ariary)</label><input id="rf-p" className="inp" type="number" min={1} step={500} required value={prix} onChange={e => setPrix(e.target.value)} /></div>}
         </div>
         <div className="field"><label htmlFor="rf-desc">Description</label>

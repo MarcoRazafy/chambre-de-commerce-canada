@@ -7,20 +7,22 @@ import { CATS, mediaUrl } from '@/lib/bibliotheque';
 import Icon from '../Icon';
 import ChoixCouleur from './ChoixCouleur';
 import TexteRiche from './TexteRiche';
-import { VideoEnLien } from './PageRessource';
+import { VideoEnLien, iconeDocument } from './PageRessource';
 import { ChampImage, ChoixDossier, arbo, envoyer, formatDe, useApercus } from './outils';
 
 // Fichier d'un bloc photo / vidéo : numéro une fois envoyé, aperçu local et progression pendant l'envoi
-type Envoi = { media: number | null; apercu?: string; pct?: number; erreur?: string; local?: File };
+type Envoi = { media: number | null; apercu?: string; pct?: number; erreur?: string; local?: File; nom?: string; taille?: string };
 type ETitre = { cle: string; type: 'titre'; texte: string; niveau: 2 | 3; alignement?: Alignement; couleur?: string };
 type ETexte = { cle: string; type: 'texte'; lignes: Ligne[] };
 type EPhoto = { cle: string; type: 'photo'; legende: string } & Envoi;
 type EVideo = { cle: string; type: 'video'; source: 'fichier' | 'lien'; url: string } & Envoi;
-type Edite = ETitre | ETexte | EPhoto | EVideo;
+type EFichier = { cle: string; type: 'fichier' } & Envoi;
+type Edite = ETitre | ETexte | EPhoto | EVideo | EFichier;
 
 const CATALOGUE: { type: TypeBloc; nom: string; icone: string }[] = [
   { type: 'titre', nom: 'Titre', icone: 'heading' }, { type: 'texte', nom: 'Texte', icone: 'text' },
   { type: 'photo', nom: 'Photo', icone: 'image' }, { type: 'video', nom: 'Vidéo', icone: 'video' },
+  { type: 'fichier', nom: 'Pièce jointe', icone: 'attach' },
 ];
 const NOM = Object.fromEntries(CATALOGUE.map(c => [c.type, c.nom])) as Record<TypeBloc, string>;
 const MARQUE = 'application/x-alliee-bloc';
@@ -32,16 +34,19 @@ const ALIGN_CSS: Record<Alignement, 'center' | 'right'> = { centre: 'center', dr
 const versEdite = (b: Bloc, cle: string): Edite =>
   b.type === 'titre' || b.type === 'texte' ? { cle, ...b }
   : b.type === 'photo' ? { cle, type: 'photo', media: b.media, legende: b.legende ?? '' }
+  : b.type === 'fichier' ? { cle, type: 'fichier', media: b.media, nom: b.nom, taille: b.taille }
   : b.source === 'lien' ? { cle, type: 'video', source: 'lien', media: null, url: b.url }
   : { cle, type: 'video', source: 'fichier', media: b.media, url: '' };
 const neuf = (type: TypeBloc, cle: string): Edite =>
   type === 'titre' ? { cle, type, texte: '', niveau: 2 } : type === 'texte' ? { cle, type, lignes: [] }
-  : type === 'photo' ? { cle, type, media: null, legende: '' } : { cle, type, source: 'fichier', media: null, url: '' };
+  : type === 'photo' ? { cle, type, media: null, legende: '' } : type === 'fichier' ? { cle, type, media: null }
+  : { cle, type: 'video', source: 'fichier', media: null, url: '' };
 const estVide = (b: Edite) => b.type === 'titre' ? !b.texte.trim() : b.type === 'texte' ? !b.lignes.length : !b.local && !b.media && !(b.type === 'video' && b.url.trim());
 const versBloc = (b: Edite) =>
   b.type === 'titre' ? { type: 'titre', texte: b.texte, niveau: b.niveau, alignement: b.alignement, couleur: b.couleur }
   : b.type === 'texte' ? { type: 'texte', lignes: b.lignes }
   : b.type === 'photo' ? { type: 'photo', media: b.media, legende: b.legende }
+  : b.type === 'fichier' ? { type: 'fichier', media: b.media, nom: b.nom, taille: b.taille }
   : b.source === 'lien' ? { type: 'video', source: 'lien', url: b.url } : { type: 'video', source: 'fichier', media: b.media };
 
 // Éditeur d'une ressource « Page », repris de CanCham Connect : colonne de réglages, feuille de blocs à composer
@@ -79,10 +84,10 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
 
   // Envoi immédiat du fichier d'un bloc, avec reprise possible en cas d'échec
   function televerser(cle: string, f: File) {
-    majEnvoi(cle, { local: f, apercu: apercu(f), pct: 0, erreur: undefined, media: null });
+    majEnvoi(cle, { local: f, apercu: apercu(f), pct: 0, erreur: undefined, media: null, nom: f.name });
     setModifie(true);
     envoyer(f, pct => majEnvoi(cle, { pct }))
-      .then(m => majEnvoi(cle, { media: m.id, pct: undefined }))
+      .then(m => majEnvoi(cle, { media: m.id, pct: undefined, taille: m.libelle }))
       .catch(e => majEnvoi(cle, { erreur: (e as Error).message, pct: undefined }));
   }
 
@@ -126,7 +131,8 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
         const fmt = formatDe(f.type);
         if (fmt === 'image') inserer(cle => neuf('photo', cle), rang + i, f);
         else if (fmt === 'video') inserer(cle => neuf('video', cle), rang + i, f);
-        else refus.push(`« ${f.name} » : seules les photos et les vidéos (MP4, WebM, MOV) se déposent dans la page.`);
+        else if (fmt) inserer(cle => neuf('fichier', cle), rang + i, f);
+        else refus.push(`« ${f.name} » : déposez une photo, une vidéo, un PDF ou un document Office.`);
       });
       if (refus.length) setErreur(refus.join(' '));
     }
@@ -195,7 +201,7 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
               {Object.entries(CATS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}</select></div>
           <div className="field"><label htmlFor="ep-type">Accès</label>
             <select id="ep-type" className="inp" value={payant ? 'payant' : 'gratuit'} onChange={e => { setPayant(e.target.value === 'payant'); setModifie(true); }}>
-              <option value="gratuit">Gratuit, inclus dans l’adhésion</option><option value="payant">Payant</option></select></div>
+              <option value="gratuit">Inclus dans l’adhésion</option><option value="payant">Payant</option></select></div>
           {payant && <div className="field"><label htmlFor="ep-prix">Prix (Ariary)</label>
             <input id="ep-prix" className="inp" type="number" min={1} step={500} value={prix} onChange={e => { setPrix(e.target.value); setModifie(true); }} />
             <span className="hint">Les entreprises qui y ont accès se choisissent depuis la bibliothèque.</span></div>}
@@ -222,7 +228,7 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
             {!blocs.length && (
               <div className={`ep-empty${glisse ? ' on' : ''}`}>
                 <Icon name="plus" size={26} /><b>La page est vide</b>
-                <span>Glissez ici un bloc de la colonne de gauche, ou une photo, une vidéo depuis votre ordinateur.</span>
+                <span>Glissez ici un bloc de la colonne de gauche, ou une photo, une vidéo, un document depuis votre ordinateur.</span>
               </div>
             )}
             {blocs.map((b, i) => {
@@ -246,6 +252,7 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
                     </div>
                     {b.type === 'titre' ? <BlocTitre bloc={b} actif={ici} onChange={p => modifier(b.cle, p)} />
                       : b.type === 'texte' ? <TexteRiche lignes={b.lignes} actif={ici} onChange={lignes => modifier(b.cle, { lignes })} />
+                      : b.type === 'fichier' ? <BlocPieceJointe bloc={b} onFichier={f => televerser(b.cle, f)} onRefus={setErreur} />
                       : b.type === 'photo' ? <BlocPhoto bloc={b} onChange={p => modifier(b.cle, p)} onFichier={f => televerser(b.cle, f)} onRefus={setErreur} />
                       : <BlocVideo bloc={b} onChange={p => modifier(b.cle, p)} onFichier={f => televerser(b.cle, f)} onRefus={setErreur} />}
                   </div>
@@ -327,6 +334,24 @@ const Remplacer = ({ accept, libelle, onFichier }: { accept: string; libelle: st
 );
 
 const PHOTOS = 'image/jpeg,image/png,image/webp';
+const DOCUMENTS = 'application/pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.odt,.ods,.odp,.rtf';
+
+// Pièce jointe : un document que le lecteur ouvre ou télécharge depuis la page
+function BlocPieceJointe({ bloc, onFichier, onRefus }: { bloc: EFichier; onFichier: (f: File) => void; onRefus: (m: string) => void }) {
+  const choisir = (f: File) => (formatDe(f.type) === 'pdf' || formatDe(f.type) === 'docx' ? onFichier(f)
+    : onRefus(`« ${f.name} » : une pièce jointe est un PDF ou un document Word, Excel, PowerPoint. Les photos et vidéos ont leur propre bloc.`));
+  if (!bloc.media && !bloc.local) return <ZoneDepot accept={DOCUMENTS} icone="attach" invite="Choisir un document" aide="PDF, Word, Excel, PowerPoint, 100 Mo au plus. Ou glissez-le ici." onFichier={choisir} />;
+  return (
+    <>
+      <div className="pr-file">
+        <span className="tile-ic"><Icon name={iconeDocument(bloc.nom)} size={18} fill /></span>
+        <span className="grow"><b>{bloc.nom ?? 'Pièce jointe'}</b><small>{bloc.taille ?? (bloc.pct !== undefined ? 'Envoi…' : '')}</small></span>
+        <Remplacer accept={DOCUMENTS} libelle="Remplacer" onFichier={choisir} />
+      </div>
+      <Suivi b={bloc} onReessayer={() => bloc.local && onFichier(bloc.local)} />
+    </>
+  );
+}
 const VIDEOS = 'video/mp4,video/webm,video/quicktime';
 
 function BlocPhoto({ bloc, onChange, onFichier, onRefus }: { bloc: EPhoto; onChange: (p: Partial<EPhoto>) => void; onFichier: (f: File) => void; onRefus: (m: string) => void }) {
