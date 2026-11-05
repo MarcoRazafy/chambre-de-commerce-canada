@@ -41,8 +41,8 @@ function PanelIcon({ dir, size }: { dir: 'left' | 'right'; size: number }) {
   );
 }
 
-export default function Icon({ name, size = 18, fill }: { name: string; size?: number; fill?: boolean }) {
+export default function Icon({ name, size = 18, fill, bold }: { name: string; size?: number; fill?: boolean; bold?: boolean }) {
   if (name === 'collapse' || name === 'expand') return <PanelIcon dir={name === 'collapse' ? 'left' : 'right'} size={size} />;
   const C = ICONS[name] ?? SquaresFour;
-  return <C size={size} weight={fill ? 'fill' : 'regular'} aria-hidden="true" />;
+  return <C size={size} weight={fill ? 'fill' : bold ? 'bold' : 'regular'} aria-hidden="true" />;
 }

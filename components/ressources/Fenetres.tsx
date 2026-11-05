@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { api, type Row } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import { PROFONDEUR_MAX, quand } from '@/lib/bibliotheque';
@@ -12,12 +12,16 @@ export function Menu({ libelle, children, classe = '' }: { libelle: string; chil
   const [ouvert, setOuvert] = useState(false);
   const [haut, setHaut] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
-  // Près du bas de l'écran, le menu s'ouvre vers le haut
-  const basculer = () => {
-    const r = ref.current?.getBoundingClientRect();
-    setHaut(!!r && window.innerHeight - r.bottom < 340 && r.top > 340);
-    setOuvert(o => !o);
-  };
+  const pop = useRef<HTMLDivElement>(null);
+  const basculer = () => { setHaut(false); setOuvert(o => !o); };
+  // Le menu s'ouvre vers le haut s'il dépasserait le bas de l'écran ou de la page (sinon la page s'allonge
+  // et le menu latéral, fixé à l'écran, remonte en laissant une bande vide), et s'il a la place au-dessus
+  useLayoutEffect(() => {
+    if (!ouvert || !pop.current || !ref.current) return;
+    const h = pop.current.offsetHeight + 8, b = ref.current.getBoundingClientRect();
+    const finPage = (document.querySelector('.app') ?? document.body).getBoundingClientRect().bottom;
+    setHaut(b.bottom + h > Math.min(window.innerHeight, finPage) && b.top - h > 64);
+  }, [ouvert]);
   useEffect(() => {
     if (!ouvert) return;
     const clic = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOuvert(false); };
@@ -27,8 +31,8 @@ export function Menu({ libelle, children, classe = '' }: { libelle: string; chil
   }, [ouvert]);
   return (
     <div className={`rmenu ${classe}`} ref={ref} onClick={e => e.stopPropagation()}>
-      <button type="button" className="btn sm ghost nl-icon" aria-label={libelle} title={libelle} aria-expanded={ouvert} onClick={basculer}><Icon name="more" size={18} /></button>
-      {ouvert && <div className={`rmenu-pop${haut ? ' up' : ''}`} role="menu">{children(() => setOuvert(false))}</div>}
+      <button type="button" className="btn sm ghost nl-icon" aria-label={libelle} title={libelle} aria-expanded={ouvert} onClick={basculer}><Icon name="more" size={20} bold /></button>
+      {ouvert && <div ref={pop} className={`rmenu-pop${haut ? ' up' : ''}`} role="menu">{children(() => setOuvert(false))}</div>}
     </div>
   );
 }

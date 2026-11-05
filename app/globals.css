@@ -1249,6 +1249,8 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .nl-card .nl-meters{padding:10px 12px;border-radius:10px;background:var(--surface-2)}
 .nl-card .nl-actions{flex-wrap:nowrap;align-items:center;width:100%}
 .nl-icon{width:34px;padding:0;justify-content:center;margin-left:auto}
+.btn.nl-icon{padding:0}   /* « .btn.sm » imposait 10 px de marge et écrasait l'icône à 12 px */
+.nl-icon svg{flex:none}
 @media (max-width:520px){.nl-card{grid-template-columns:96px minmax(0,1fr)}.nl-card .nl-paper{height:130px}.nl-card .nl-info{min-height:130px}}
 
 /* ===== Abonnés à la lettre ===== */
@@ -1676,6 +1678,8 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .rmenu-pop{position:absolute;top:calc(100% + 6px);right:0;z-index:30;min-width:230px;display:flex;flex-direction:column;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);animation:fade-in .12s ease both}
 .rmenu-pop.wide{min-width:300px}
 .rmenu-pop.up{top:auto;bottom:calc(100% + 6px)}
+.rmenu-pop{max-width:calc(100vw - 32px)}
+@media (max-width:600px){.page-tools .rmenu-pop{left:0;right:auto}}
 /* La carte (ou la ligne, la section) dont le menu est ouvert passe devant ses voisines */
 .rc:has(.rmenu-pop),.rd:has(.rmenu-pop){z-index:20}
 .rl:has(.rmenu-pop),.rs-head:has(.rmenu-pop),.head:has(.rmenu-pop){position:relative;z-index:20}
@@ -1734,7 +1738,9 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .rc-foot .grow{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .rc-acc{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 8px;border-radius:7px;border:1px solid var(--line);background:var(--surface);font:inherit;font-size:.76rem;font-weight:700;color:var(--ink-2);cursor:pointer}
 .rc-acc:hover{border-color:var(--line-strong);background:var(--surface-2)}
-.rc-grip{display:grid;place-items:center;color:var(--muted);cursor:grab}
+.rc-grip{display:grid;place-items:center;width:24px;height:28px;color:var(--muted);cursor:grab;opacity:.45;transition:opacity .15s}
+.rc:hover .rc-grip,.rl:hover .rc-grip{opacity:1}
+.rmenu .nl-icon{color:var(--ink-2)}
 
 /* Liste de ressources */
 .rl-list{list-style:none;margin:0;padding:0;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:visible}
@@ -1758,7 +1764,7 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .rh{padding:0;gap:0;overflow:hidden}
 .rh-cover{height:clamp(120px,18vw,200px);position:relative;overflow:hidden;background:var(--surface-2)}
 .rh-cover img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-.rh-pattern{position:absolute;inset:0;background:radial-gradient(circle at 18% 30%,rgba(61,139,255,.35),transparent 45%),radial-gradient(circle at 80% 70%,rgba(11,27,51,.55),transparent 55%),linear-gradient(135deg,#0B1B33,#1E3A6B 55%,#256BFF)}
+.rh-pattern{position:absolute;inset:0;background:radial-gradient(circle at 18% 30%,color-mix(in srgb,var(--accent-light) 35%,transparent),transparent 45%),radial-gradient(circle at 80% 70%,color-mix(in srgb,var(--primary) 55%,transparent),transparent 55%),linear-gradient(135deg,var(--primary),var(--primary-hover) 55%,var(--accent))}
 .rh:not(.has-cover) .rh-cover{height:96px}
 .rh-body{display:flex;gap:14px;align-items:flex-start;flex-wrap:wrap;padding:0 20px 18px}
 .rh-ic{width:56px;height:56px;border-radius:16px;margin-top:-28px;border:3px solid var(--surface);box-sizing:content-box;position:relative}
