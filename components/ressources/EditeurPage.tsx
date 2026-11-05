@@ -7,7 +7,8 @@ import { CATS, mediaUrl } from '@/lib/bibliotheque';
 import Icon from '../Icon';
 import ChoixCouleur from './ChoixCouleur';
 import TexteRiche from './TexteRiche';
-import { PieceJointe, VideoEnLien } from './PageRessource';
+import { PieceJointe } from './PageRessource';
+import VideoPrivee from './VideoPrivee';
 import { ChampImage, ChoixDossier, arbo, envoyer, formatDe, useApercus } from './outils';
 
 // Fichier d'un bloc photo / vidéo : numéro une fois envoyé, aperçu local et progression pendant l'envoi
@@ -376,7 +377,7 @@ function BlocVideo({ bloc, onChange, onFichier, onRefus }: { bloc: EVideo; onCha
           {!lien ? <p className="hint ep-hint">YouTube, Vimeo ou Google Drive : la vidéo se lit dans la page, sans quitter la plateforme.</p>
             : video ? (
               <div className="ep-hint">
-                <VideoEnLien url={lien} titre="Aperçu de la vidéo" />
+                <VideoPrivee url={lien} titre="Aperçu de la vidéo" />
                 {video.plateforme === 'drive' && <p className="hint"><Icon name="alert" size={13} /> Dans Google Drive, partagez le fichier à « Tous les utilisateurs disposant du lien ». Sinon, une demande d’accès s’affiche à la place de la vidéo.</p>}
               </div>
             ) : <p className="hint err-t ep-hint">Lien non reconnu : collez l’adresse d’une vidéo YouTube, Vimeo ou Google Drive.</p>}

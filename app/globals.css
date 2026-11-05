@@ -1984,3 +1984,36 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .rv-meta dl{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 12px;margin:0;font-size:.84rem}
 .rv-meta dt{color:var(--muted)} .rv-meta dd{margin:0;overflow-wrap:anywhere}
 @media (max-width:1100px){.rv-layout{grid-template-columns:minmax(0,1fr)}.rv-side{position:static}}
+
+/* Lecteur des vidéos en lien (YouTube, Vimeo, Drive) sans les commandes de la plateforme */
+.vp{position:relative;aspect-ratio:16/9;width:100%;overflow:hidden;border-radius:12px;background:#000}
+.vp:fullscreen{aspect-ratio:auto;width:100vw;height:100vh;border-radius:0}
+.vp iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vp-drive{position:absolute;inset:0 0 auto 0;height:60px}
+.vp-bande{position:absolute;left:0;right:0;height:17%;min-height:62px;background:#000;pointer-events:none;opacity:0;transition:opacity .5s}
+.vp-bande.haut{top:0} .vp-bande.bas{bottom:0} .vp-bande.on{opacity:1}
+.vp-zone{position:absolute;inset:0;width:100%;height:100%;display:grid;place-items:center;border:0;padding:0;background:transparent;cursor:pointer}
+.vp-zone:disabled{cursor:wait} .vp-zone.libre{pointer-events:none}
+.vp-zone.fond{background:var(--primary)} .vp-zone.voile{background:rgba(0,0,0,.3)}
+.vp-zone img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.vp-voile{position:absolute;inset:0;background:color-mix(in srgb,var(--primary) 35%,transparent)}
+.vp-play{position:relative;width:68px;height:68px;border-radius:50%;display:grid;place-items:center;color:#fff;background:var(--accent);box-shadow:0 10px 30px -8px rgba(0,0,0,.7);transition:transform .15s}
+.vp-zone:hover .vp-play{transform:scale(1.06)}
+.vp-play svg{margin-left:3px}
+.vp-spin{width:28px;height:28px;border-radius:50%;border:3px solid rgba(255,255,255,.35);border-top-color:#fff;animation:vp-tour 0.9s linear infinite}
+@keyframes vp-tour{to{transform:rotate(360deg)}}
+.vp-aide{position:absolute;left:0;right:0;bottom:12px;margin:0;text-align:center;font-size:.8rem;font-weight:600;color:#fff;text-shadow:0 1px 6px rgba(0,0,0,.9);pointer-events:none}
+.vp-barre{position:absolute;left:0;right:0;bottom:0;display:flex;align-items:center;gap:6px;padding:28px 10px 8px;background:linear-gradient(to top,rgba(0,0,0,.85),transparent);opacity:0;transition:opacity .2s}
+.vp:hover .vp-barre,.vp-barre.on,.vp-barre:focus-within{opacity:1}
+.vp-barre button{width:36px;height:36px;flex:none;display:grid;place-items:center;border:0;border-radius:50%;background:none;color:#fff;cursor:pointer}
+.vp-barre button:hover{background:rgba(255,255,255,.15)}
+.vp-temps{flex:none;font-size:.76rem;font-weight:600;color:#fff;font-variant-numeric:tabular-nums}
+.vp-barre input{flex:1;min-width:0;margin:0 4px;accent-color:var(--accent);cursor:pointer}
+
+/* Document Word mis en page dans l'écran */
+.dx{max-height:min(78vh,900px);overflow:auto;background:var(--surface-2)}
+.dx-msg{margin:0;padding:28px 16px;text-align:center;font-size:.86rem;color:var(--muted)}
+.dx-pages .docx-wrapper{background:var(--surface-2)!important;padding:20px 12px!important}
+.dx-pages .docx-wrapper>section.docx{box-shadow:var(--shadow-lg)!important;margin-bottom:20px!important;max-width:100%}
+.rv-docx{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.rv-docx .dx{max-height:min(82vh,1100px)}

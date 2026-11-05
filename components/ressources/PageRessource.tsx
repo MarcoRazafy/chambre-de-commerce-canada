@@ -1,7 +1,9 @@
 import { Fragment, type ReactNode } from 'react';
-import { lienVideo, type Alignement, type Bloc, type Ligne, type Passage } from '@/lib/blocs';
+import { type Alignement, type Bloc, type Ligne, type Passage } from '@/lib/blocs';
 import { mediaUrl } from '@/lib/bibliotheque';
 import Icon from '../Icon';
+import VideoPrivee from './VideoPrivee';
+import DocxApercu from './DocxApercu';
 
 const ALIGN: Record<Alignement, string> = { centre: 'center', droite: 'right' };
 
@@ -33,18 +35,6 @@ export function TexteMisEnForme({ lignes }: { lignes: Ligne[] }) {
   );
 }
 
-// Vidéo YouTube, Vimeo ou Google Drive lue par le lecteur de la plateforme, sans quitter la page
-export function VideoEnLien({ url, titre }: { url: string; titre: string }) {
-  const v = lienVideo(url);
-  if (!v) return null;
-  return (
-    <div className="pr-embed">
-      <iframe src={v.integration} title={titre} loading="lazy" allow="accelerometer; encrypted-media; gyroscope; picture-in-picture; fullscreen"
-        allowFullScreen referrerPolicy="strict-origin-when-cross-origin" />
-    </div>
-  );
-}
-
 function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
   if (bloc.type === 'titre') {
     const style = { ...(bloc.couleur ? { color: bloc.couleur } : {}), ...(bloc.alignement ? { textAlign: ALIGN[bloc.alignement] as 'center' } : {}) };
@@ -60,10 +50,10 @@ function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
   if (bloc.type === 'fichier') {
     const url = mediaUrl(bloc.media)!;
     return <PieceJointe url={url} nom={bloc.nom} taille={bloc.taille}
-      actions={<><a className="btn sm" href={url} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Plein écran</a>
+      actions={<>{iconeDocument(bloc.nom) === 'pdf' && <a className="btn sm" href={url} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Plein écran</a>}
         <a className="btn sm" href={`${url}?dl=1`}><Icon name="download" size={14} /> Télécharger</a></>} />;
   }
-  if (bloc.source === 'lien') return <VideoEnLien url={bloc.url} titre={titre} />;
+  if (bloc.source === 'lien') return <VideoPrivee url={bloc.url} titre={titre} />;
   return <div className="pr-video"><video src={mediaUrl(bloc.media)!} controls playsInline preload="metadata" aria-label={titre} /></div>;
 }
 
@@ -72,13 +62,14 @@ function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
 export function PieceJointe({ url, nom, taille, actions }: { url: string; nom?: string; taille?: string; actions?: ReactNode }) {
   const ic = iconeDocument(nom);
   return (
-    <div className={`pr-file${ic === 'pdf' ? ' inline' : ''}`}>
+    <div className={`pr-file${ic === 'pdf' || /\.docx$/i.test(nom ?? '') ? ' inline' : ''}`}>
       <div className="pr-file-h">
         <span className="tile-ic xs"><Icon name={ic} size={15} fill /></span>
         <span className="grow"><b>{nom ?? 'Pièce jointe'}</b><small>{[LIBELLE[ic], taille].filter(Boolean).join(' · ')}</small></span>
         {actions}
       </div>
-      {ic === 'pdf' && <iframe className="pr-file-view" src={`${url}#navpanes=0&view=FitH`} title={nom ?? 'Pièce jointe'} />}
+      {ic === 'pdf' && <iframe className="pr-file-view" src={`${url}#toolbar=0&navpanes=0&view=FitH`} title={nom ?? 'Pièce jointe'} />}
+      {/\.docx$/i.test(nom ?? '') && <DocxApercu url={url} />}
     </div>
   );
 }

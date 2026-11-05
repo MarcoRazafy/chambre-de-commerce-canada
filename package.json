@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",
+    "docx-preview": "^0.4.1",
     "next": "16.4.3",
     "nodemailer": "^10.3.1",
     "pg": "^8.23.1",

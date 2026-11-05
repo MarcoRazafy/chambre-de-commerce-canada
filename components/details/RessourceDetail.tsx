@@ -9,6 +9,7 @@ import { CATS, FMTS, FMT_ICON, ariary, mediaUrl, quand } from '@/lib/bibliothequ
 import Icon from '../Icon';
 import PageRessource from '../ressources/PageRessource';
 import EditeurPage from '../ressources/EditeurPage';
+import DocxApercu from '../ressources/DocxApercu';
 import RessourceFichier from '../ressources/RessourceFichier';
 import { AccesFenetre } from '../ressources/Fenetres';
 
@@ -115,13 +116,14 @@ export default function RessourceDetail({ id }: { id: number }) {
                 <span className="small muted">Le fichier de cette ressource n’a pas pu être repris de CanCham Connect. Déposez-le pour que les membres puissent la lire.</span>
                 <button type="button" className="btn cta" onClick={() => basculer('modifier')}><Icon name="upload" size={16} /> Déposer le fichier</button>
               </div>
-            ) : x.fmt === 'pdf' ? <iframe className="rv-pdf" src={fichier} title={x.titre} />
+            ) : x.fmt === 'pdf' ? <iframe className="rv-pdf" src={`${fichier}#toolbar=0&navpanes=0&view=FitH`} title={x.titre} />
             : x.fmt === 'video' ? <div className="pr-video rv-video"><video src={fichier} controls playsInline preload="metadata" poster={mediaUrl(x.cover) ?? undefined} /></div>
             : x.fmt === 'image' ? <a className="rv-image" href={fichier} target="_blank" rel="noreferrer"><img src={fichier} alt={x.titre} /></a>
+            : /\.docx$/i.test(x.fichier_nom ?? '') ? <div className="rv-docx"><DocxApercu url={fichier} /></div>
             : (
               <div className="card empty-state">
                 <span className="tile-ic"><Icon name="docx" size={22} fill /></span><b>{x.fichier_nom}</b>
-                <span className="small muted">Le navigateur n’affiche pas les documents Word : téléchargez-le pour l’ouvrir.</span>
+                <span className="small muted">Ce format ne s’affiche pas dans le navigateur : téléchargez-le pour l’ouvrir.</span>
                 <a className="btn cta" href={`${fichier}?dl=1`}><Icon name="download" size={16} /> Télécharger ({x.taille})</a>
               </div>
             )}
