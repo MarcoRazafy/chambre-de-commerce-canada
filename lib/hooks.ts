@@ -14,7 +14,7 @@ export const notify = (texte: string, lien?: string, who: Who = {}) =>
 const CAT: Record<string, string> = {
   members: 'Adhésions', contacts: 'Adhésions', connections: 'Adhésions', formules: 'Adhésions', secteurs: 'Adhésions',
   events: 'Événements', event_registrations: 'Événements', agenda_rappels: 'Événements', rdv_types: 'Événements', rendez_vous: 'Événements',
-  news: 'Contenus', dossiers: 'Contenus', services: 'Contenus',
+  news: 'Contenus', services: 'Contenus',
   campaigns: 'Communication', subscribers: 'Communication', outbox: 'Communication', threads: 'Communication',
   invoices: 'Paiements', reglements: 'Paiements', platform_invoices: 'Paiements', team_users: 'Équipe',
 };

@@ -36,7 +36,7 @@ export const RELATED: Record<string, [href: string, label: string][]> = {
 };
 
 // Tables dont la première colonne ouvre une fiche : /<slug>/<id>
-export const DETAIL: Record<string, string> = { members: 'membres', events: 'evenements', invoices: 'paiements', dossiers: 'ressources' };
+export const DETAIL: Record<string, string> = { members: 'membres', events: 'evenements', invoices: 'paiements' };
 
 export async function runAction(action: string, body: Record<string, unknown>) {
   const res = await fetch('/api/actions/' + action, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });

@@ -161,7 +161,7 @@ async function run() {
 
   if (RESET) {
     await q(`truncate secteurs, formules, members, contacts, connections, events, event_registrations, agenda_rappels, rdv_types, rendez_vous,
-             news, dossiers, fichiers, services, threads, messages, outbox, campaigns, subscribers, invoices, reglements,
+             news, res_ressources, res_dossiers, res_medias, services, threads, messages, outbox, campaigns, subscribers, invoices, reglements,
              platform_invoices, notifications, journal restart identity cascade`);
     await q('delete from team_users where password_hash is null');
     await q(`delete from avatars where kind = 'member' or (kind = 'user' and ref_id not in (select id from team_users))`);
@@ -218,11 +218,18 @@ async function run() {
     ['MECC 8 restituée, MECC 9 lancée : la mission continue', 'Vie de la chambre', '2026-09-22', true, 0, 0]])
     await ins('news', { titre, categorie, date_pub, publie, likes, commentaires, contenu: titre + '\n\nArticle de démonstration.' });
 
-  for (const [nom, acces] of [['AGENDA TOURISME', 'Réservé à 13 entreprises'], ['MECC - octobre 2026', 'Réservé à 16 entreprises'], ['AGENDA DIGITAL', 'Réservé à 3 entreprises'], ['CANADA - BIENVENUE', 'Réservé à 2 entreprises'], ['BIENVENUE - MADAGASCAR', 'Tous les membres']]) {
-    const d = await ins('dossiers', { nom, acces, payant: false });
-    const txt = `Document de démonstration du dossier « ${nom} ».\n`;
-    await ins('fichiers', { dossier_id: d.id, nom: 'Lisez-moi.txt', type: 'text/plain', taille: Buffer.byteLength(txt), contenu: Buffer.from(txt) });
-  }
+  // Bibliothèque : un dossier ouvert à tous, un dossier réservé, deux pages composées (npm run db:import-cancham-ressources reprend les vraies)
+  const p = (t, extra = {}) => ({ genre: 'p', passages: t ? [{ t, ...extra }] : [] });
+  const dOuvert = await ins('res_dossiers', { nom: 'BIENVENUE - MADAGASCAR' });
+  const dReserve = await ins('res_dossiers', { nom: 'MECC - octobre 2026', restreint: true, auteur_nom: 'CanCham', auteur_role: 'Équipe' });
+  await q('insert into res_acces_dossiers (dossier_id, member_id, ouvert_par) values ($1, $2, $3), ($1, $4, $3)', [dReserve.id, member.m1.id, 'Démonstration', member.m3.id]);
+  await ins('res_ressources', { dossier_id: dOuvert.id, titre: 'Bien démarrer avec la chambre', cat: 'guide', fmt: 'page', taille: 'Page', ordre: 0,
+    description: 'Les services de la chambre, l’annuaire, les événements : par où commencer.',
+    contenu: JSON.stringify([{ type: 'titre', texte: 'Bienvenue', niveau: 2, couleur: '#ad0707' },
+      { type: 'texte', lignes: [p('Cette page de démonstration montre les blocs disponibles : titres, texte mis en forme, photos et vidéos.'),
+        { genre: 'ul', items: [[{ t: 'Consultez l’annuaire', g: true }], [{ t: 'Inscrivez-vous aux événements' }]] }] }]) });
+  await ins('res_ressources', { dossier_id: dReserve.id, titre: 'Programme de la mission', cat: 'formation', fmt: 'page', taille: 'Page', ordre: 0, type: 'payant', prix: 50000,
+    contenu: JSON.stringify([{ type: 'texte', lignes: [p('Programme détaillé, réservé aux entreprises inscrites.', { couleur: '#007140', g: true })] }]) });
 
   for (const [nom, prix, description] of [
     ['Tournage de vidéo de présentation', null, 'Tournage, montage et diffusion d’une vidéo de présentation auprès de la communauté d’affaires.'],

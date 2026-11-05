@@ -2,6 +2,9 @@
 import {
   AddressBook, Archive, ArrowBendDownLeft, ArrowLeft, ArrowsOut, Bell, Briefcase, DotsThree, DownloadSimple, FileText, Image as ImageIcon, Info, Minus, NotePencil, Paperclip, PencilSimple, SignOut, Smiley, Star, Trash, UsersThree, VideoCamera, CheckCircle, MinusCircle, PlusCircle, X, CaretDown, CaretUp, SidebarSimple, Storefront, CalendarBlank, CalendarCheck, ChatCircle, ClockCounterClockwise, Clock, Coins,
   CreditCard, EnvelopeSimple, Folder, GearSix, Handshake, IdentificationCard, List, MagnifyingGlass, Newspaper,
+  FolderLock, FolderPlus, FolderOpen, Copy, Scissors, ClipboardText, ArrowUp, ArrowDown, DotsSixVertical, TextAlignLeft, TextAlignCenter, TextAlignRight,
+  TextB, TextItalic, TextUnderline, LinkSimple, ListBullets, ListNumbers, TextH, TextT, Palette, Eye, Books, Rows, Lock, CaretRight, UploadSimple,
+  FilePdf, FileDoc, FileVideo, FileImage, Article, ArrowLineUp, ArrowLineDown, CheckSquare, ArrowSquareOut,
   MapPin, PaperPlaneTilt, Play, ShareFat, ThumbsUp, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
@@ -17,6 +20,12 @@ const ICONS: Record<string, PhosphorIcon> = {
   minimize: Minus, open: ArrowsOut, back: ArrowLeft, archive: Archive, trash: Trash, doc: FileText, download: DownloadSimple,
   inbound: ArrowBendDownLeft, group: UsersThree, edit: PencilSimple, logout: SignOut,
   down: CaretDown, up: CaretUp, sidebar: SidebarSimple, store: Storefront,
+  folderlock: FolderLock, folderplus: FolderPlus, folderopen: FolderOpen, copy: Copy, cut: Scissors, paste: ClipboardText,
+  arrowup: ArrowUp, arrowdown: ArrowDown, grip: DotsSixVertical, alignleft: TextAlignLeft, aligncenter: TextAlignCenter, alignright: TextAlignRight,
+  bold: TextB, italic: TextItalic, underline: TextUnderline, link: LinkSimple, ul: ListBullets, ol: ListNumbers, heading: TextH, text: TextT,
+  palette: Palette, eye: Eye, books: Books, rows: Rows, lock: Lock, caret: CaretRight, upload: UploadSimple,
+  pdf: FilePdf, docx: FileDoc, filevideo: FileVideo, fileimage: FileImage, article: Article, first: ArrowLineUp, last: ArrowLineDown,
+  checks: CheckSquare, external: ArrowSquareOut,
   user: User, pin: MapPin, like: ThumbsUp, play: Play, share: ShareFat,
 };
 

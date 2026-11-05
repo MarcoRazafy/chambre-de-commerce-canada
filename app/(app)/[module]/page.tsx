@@ -9,6 +9,7 @@ import Reglements from '@/components/Reglements';
 import Equipe from '@/components/Equipe';
 import Journal from '@/components/Journal';
 import Membres from '@/components/Membres';
+import Bibliotheque from '@/components/ressources/Bibliotheque';
 import { PAGES } from '@/lib/resources';
 
 export const generateStaticParams = () => Object.keys(PAGES).map(module => ({ module }));
@@ -17,6 +18,7 @@ export const generateStaticParams = () => Object.keys(PAGES).map(module => ({ mo
 const CUSTOM: Record<string, () => React.ReactNode> = {
   events: () => <Evenements />, campaigns: () => <Newsletter />, subscribers: () => <Abonnes />,
   invoices: () => <Paiements />, reglements: () => <Reglements />, team_users: () => <Equipe />, journal: () => <Journal />, members: () => <Membres />,
+  res_ressources: () => <Bibliotheque />,
 };
 
 // Les paramètres d'URL sont lus dans un composant sous <Suspense> : l'enveloppe de la page s'affiche tout de suite

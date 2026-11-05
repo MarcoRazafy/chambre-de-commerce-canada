@@ -132,13 +132,6 @@ const list: Resource[] = [
     { name: 'publie', label: 'Publié', type: 'bool', list: true },
     { name: 'contenu', label: 'Contenu', type: 'textarea' },
   ] },
-  { table: 'dossiers', title: 'Ressources', label: 'nom', orderBy: 'nom',
-    select: 'select d.*, (select count(*) from fichiers f where f.dossier_id = d.id)::int as nb_fichiers from dossiers d', fields: [
-    { name: 'nom', label: 'Dossier', required: true, list: true },
-    { name: 'nb_fichiers', label: 'Fichiers', type: 'number', list: true, readonly: true },
-    { name: 'acces', label: 'Accès', list: true, hint: 'Ex. : Tous les membres' },
-    { name: 'payant', label: 'Payant', type: 'bool', list: true },
-  ] },
   { table: 'services', title: 'Services CanCham', label: 'nom', orderBy: 'nom', fields: [
     { name: 'nom', label: 'Service', required: true, list: true },
     { name: 'prix', label: 'Prix (Ar)', type: 'number', list: true, hint: 'Vide = inclus dans l’adhésion.' },
@@ -249,7 +242,7 @@ export const NAV: [string, NavItem[]][] = [
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
     { slug: 'actualites', label: 'Actualités', icon: 'news' },
-    { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'dossiers' },
+    { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'res_ressources' },
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
   ]],
   ['Communication', [

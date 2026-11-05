@@ -10,7 +10,8 @@
     "db:seed": "node --env-file=.env.local scripts/db-seed.mjs",
     "db:import-cancham": "node --env-file=.env.local scripts/import-cancham.mjs",
     "db:import-cancham-actualites": "node --env-file=.env.local scripts/import-cancham-actualites.mjs",
-    "db:import-cancham-fiches": "node --env-file=.env.local scripts/import-cancham-fiches.mjs"
+    "db:import-cancham-fiches": "node --env-file=.env.local scripts/import-cancham-fiches.mjs",
+    "db:import-cancham-ressources": "node --env-file=.env.local scripts/import-cancham-ressources.mjs"
   },
   "dependencies": {
     "@phosphor-icons/react": "^2.1.10",

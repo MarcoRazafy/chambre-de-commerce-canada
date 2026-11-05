@@ -151,23 +151,6 @@ create table if not exists news (
   commentaires int not null default 0
 );
 
-create table if not exists dossiers (
-  id          serial primary key,
-  nom         text not null,
-  acces       text,
-  payant      boolean not null default false
-);
-
-create table if not exists fichiers (
-  id         serial primary key,
-  dossier_id int not null references dossiers(id) on delete cascade,
-  nom        text not null,
-  type       text,
-  taille     int not null,
-  contenu    bytea not null,
-  created_at timestamptz not null default now()
-);
-
 create table if not exists services (
   id          serial primary key,
   nom         text not null,
@@ -352,7 +335,6 @@ create table if not exists journal (
 
 /* ===== Mises à jour des bases créées avec une version précédente ===== */
 alter table events drop column if exists inscrits, drop column if exists presents;
-alter table dossiers drop column if exists nb_fichiers;
 alter table outbox add column if not exists audience text, add column if not exists erreur text, add column if not exists ref text;
 create unique index if not exists outbox_ref_key on outbox (ref);
 alter table outbox drop constraint if exists outbox_statut_check;
@@ -434,7 +416,7 @@ update notifications n set actor_kind = 'member', actor_id = m.id
 
 -- Couvertures déposées pour les membres (même table que les logos, kind = 'cover')
 alter table avatars drop constraint if exists avatars_kind_check;
-alter table avatars add constraint avatars_kind_check check (kind in ('user', 'member', 'cover'));
+alter table avatars add constraint avatars_kind_check check (kind in ('user', 'member', 'cover', 'contact'));
 
 /* ===== Gestion des membres reprise de CanCham Connect ===== */
 -- Cadrage horizontal de la couverture (le vertical existe déjà : couverture_y)
@@ -483,3 +465,66 @@ alter table invoices add column if not exists destinataire_nom text, add column 
 alter table invoices alter column member_id drop not null;
 alter table invoices drop constraint if exists invoices_member_id_fkey;
 alter table invoices add constraint invoices_member_id_fkey foreign key (member_id) references members(id) on delete set null;
+
+/* ===== Bibliothèque de ressources (reprise de CanCham Connect) ===== */
+-- Remplace les anciens dossiers / fichiers de démonstration
+drop table if exists fichiers;
+drop table if exists dossiers;
+-- Fichiers de la bibliothèque (documents, vidéos, photos, couvertures, médias des pages), stockés en base.
+-- Un fichier que plus rien ne référence est effacé ; un envoi jamais rattaché l'est au bout de 24 h.
+create table if not exists res_medias (
+  id         serial primary key,
+  nom        text not null,
+  type       text not null,
+  taille     bigint not null,
+  contenu    bytea not null,
+  created_at timestamptz not null default now()
+);
+create table if not exists res_dossiers (
+  id           serial primary key,
+  parent_id    int references res_dossiers(id) on delete cascade,
+  nom          text not null,
+  restreint    boolean not null default false,       -- vrai : réservé aux entreprises choisies
+  cover        int references res_medias(id) on delete set null,
+  auteur_nom   text,
+  auteur_role  text,
+  auteur_bio   text,
+  auteur_photo int references res_medias(id) on delete set null,
+  created_at   timestamptz not null default now(),
+  updated_at   timestamptz not null default now()
+);
+create index if not exists res_dossiers_parent_idx on res_dossiers (parent_id);
+create table if not exists res_ressources (
+  id          serial primary key,
+  dossier_id  int references res_dossiers(id) on delete set null,
+  titre       text not null,
+  cat         text not null default 'guide' check (cat in ('guide', 'modele', 'formation', 'rapport')),
+  fmt         text not null default 'page' check (fmt in ('pdf', 'docx', 'video', 'image', 'page')),
+  taille      text not null default '—',             -- étiquette : « 2,4 Mo », « 3 min de lecture »
+  description text,
+  type        text not null default 'gratuit' check (type in ('gratuit', 'payant')),
+  prix        int not null default 0,                -- en ariary
+  ordre       int not null default 0,
+  fichier     int references res_medias(id) on delete set null,
+  cover       int references res_medias(id) on delete set null,
+  contenu     jsonb,                                 -- blocs d'une ressource « Page »
+  date        date not null default current_date,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now()
+);
+create index if not exists res_ressources_dossier_idx on res_ressources (dossier_id, ordre);
+create table if not exists res_acces_dossiers (
+  dossier_id int not null references res_dossiers(id) on delete cascade,
+  member_id  int not null references members(id) on delete cascade,
+  ouvert_par text,
+  created_at timestamptz not null default now(),
+  primary key (dossier_id, member_id)
+);
+-- Ressources payantes ouvertes à une entreprise (par l'équipe)
+create table if not exists res_acces_ressources (
+  ressource_id int not null references res_ressources(id) on delete cascade,
+  member_id    int not null references members(id) on delete cascade,
+  ouvert_par   text,
+  created_at   timestamptz not null default now(),
+  primary key (ressource_id, member_id)
+);

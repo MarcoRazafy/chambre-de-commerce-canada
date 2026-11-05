@@ -8,7 +8,7 @@ import Icon from './Icon';
 // Pages hors menu
 const EXTRA: Record<string, { label: string; icon: string }> = { profil: { label: 'Mon profil', icon: 'user' }, recherche: { label: 'Recherche', icon: 'search' } };
 // Dernier maillon des fiches (/membres/5…)
-const FICHE: Record<string, string> = { membres: 'Fiche membre', evenements: 'Événement', paiements: 'Facture', ressources: 'Dossier' };
+const FICHE: Record<string, string> = { membres: 'Fiche membre', evenements: 'Événement', paiements: 'Facture', ressources: 'Ressource' };
 
 const ITEMS = new Map<string, { item: NavItem; group: string }>(NAV.flatMap(([group, items]) => items.map(item => [item.slug, { item, group }] as const)));
 
