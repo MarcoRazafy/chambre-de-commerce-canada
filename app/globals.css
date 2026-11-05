@@ -1838,10 +1838,10 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 
 /* Éditeur de page */
 .ep{display:grid;grid-template-columns:292px minmax(0,1fr);gap:20px;align-items:start}
-.ep-side{display:flex;flex-direction:column;gap:14px;position:sticky;top:76px;max-height:calc(100vh - 92px);overflow-y:auto;padding-right:2px}
+/* La colonne suit la hauteur de la page ; « Publier » est à son pied et reste collé au bas de l'écran pendant l'écriture */
+.ep-side{display:flex;flex-direction:column;gap:14px;align-self:stretch;min-width:0}
 .ep-side .card{padding:16px;gap:12px}
 .ep-cover .field>label{font-size:.76rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
-.ep-side{overflow-x:hidden}
 /* Colonne étroite : le champ image s'empile (aperçu pleine largeur, boutons dessous) au lieu de déborder */
 .ep-side .ci{flex-direction:column;gap:8px}
 .ep-side .ci-vue{width:100%}
@@ -1849,6 +1849,7 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .ep-side .ci-act{flex-direction:row;flex-wrap:wrap;align-items:center}
 .ep-side .ci-act .hint{flex-basis:100%}
 .ep-save .btn{width:100%}
+.ep-save{margin-top:auto;position:sticky;bottom:16px;z-index:2;box-shadow:0 -10px 28px -18px rgba(11,27,51,.4)}
 .ep-state{margin:0;text-align:center;color:var(--muted)} .ep-state.bad{color:var(--red);font-weight:600}
 .ep-h{font-size:.76rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted)}
 .ep-main{min-width:0}
@@ -1897,7 +1898,9 @@ a.mkpi:hover{transform:translateY(-2px);box-shadow:var(--shadow-lg)}
 .ep-legend:focus{outline:none}
 .ep-src{margin-bottom:10px}
 .ep-hint{margin-top:8px}
-@media (max-width:1100px){.ep{grid-template-columns:minmax(0,1fr)}.ep-side{position:static;max-height:none;overflow:visible}}
+@media (max-width:1100px){.ep{grid-template-columns:minmax(0,1fr);padding-bottom:96px}
+  .ep-save{position:fixed;left:16px;right:16px;bottom:12px;flex-direction:row;flex-wrap:wrap;align-items:center;padding:10px 14px}
+  .ep-save .btn{width:auto} .ep-save .ep-state{text-align:left;flex:1}}
 
 /* Barre de mise en forme */
 .tr-bar{position:sticky;top:72px;z-index:20;margin-bottom:8px;border:1px solid var(--line);border-radius:12px;background:var(--surface);box-shadow:0 8px 20px -14px rgba(11,27,51,.45)}

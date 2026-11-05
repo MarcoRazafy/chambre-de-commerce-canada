@@ -176,13 +176,6 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
   return (
     <div className="ep">
       <aside className="ep-side">
-        <section className="card ep-save">
-          <button type="button" className="btn cta" disabled={busy || enCours} onClick={enregistrer}>
-            <Icon name="ok" size={16} /> {busy ? 'Enregistrement…' : ressource ? 'Enregistrer la page' : 'Publier la page'}</button>
-          <button type="button" className="btn ghost" onClick={() => (!modifie || confirm('Quitter sans enregistrer les changements ?')) && onCancel()}>Annuler</button>
-          <p className={`small ep-state${echec ? ' bad' : ''}`}>{echec ? 'Un envoi a échoué : relancez-le dans son bloc.' : enCours ? 'Envoi des fichiers en cours…' : `${blocs.length} bloc${blocs.length > 1 ? 's' : ''} sur ${PLAFOND_BLOCS}`}</p>
-        </section>
-
         <section className="card ep-cover">
           <ChampImage libelle="Couverture" valeur={cover} onChange={v => { setCover(v); setModifie(true); }}
             apercuAuto={premiere ? premiere.apercu ?? mediaUrl(premiere.media) : null}
@@ -206,6 +199,13 @@ export default function EditeurPage({ ressource, dossiers, dossierParDefaut, onS
           <div className="field"><label htmlFor="ep-desc">Description</label>
             <textarea id="ep-desc" className="inp" rows={3} maxLength={600} value={description} onChange={e => { setDescription(e.target.value); setModifie(true); }} />
             <span className="hint">{description.length}/600 · la carte en montre les premières lignes.</span></div>
+        </section>
+
+        <section className="card ep-save">
+          <button type="button" className="btn cta" disabled={busy || enCours} onClick={enregistrer}>
+            <Icon name="ok" size={16} /> {busy ? 'Enregistrement…' : ressource ? 'Enregistrer la page' : 'Publier la page'}</button>
+          <button type="button" className="btn ghost" onClick={() => (!modifie || confirm('Quitter sans enregistrer les changements ?')) && onCancel()}>Annuler</button>
+          <p className={`small ep-state${echec ? ' bad' : ''}`}>{echec ? 'Un envoi a échoué : relancez-le dans son bloc.' : enCours ? 'Envoi des fichiers en cours…' : `${blocs.length} bloc${blocs.length > 1 ? 's' : ''} sur ${PLAFOND_BLOCS}`}</p>
         </section>
       </aside>
 
