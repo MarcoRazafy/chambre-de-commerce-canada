@@ -242,6 +242,9 @@ export const NAV: [string, NavItem[]][] = [
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
     { slug: 'actualites', label: 'Actualités', icon: 'news' },
+  ]],
+  // Liens directs du menu, hors des rubriques dépliables
+  ['Contenus', [
     { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'res_ressources' },
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
   ]],
