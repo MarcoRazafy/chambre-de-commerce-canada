@@ -8,6 +8,7 @@ import Icon from './Icon';
 import StatusBadge from './StatusBadge';
 import { Stack } from './Newsletter';
 import { EditModal } from './ResourcePage';
+import { GestionEtiquettes, PastillesDe, PoserEtiquette, useEtiquettes } from './etiquettes/Etiquettes';
 
 const R = RESOURCES.subscribers;
 const STATUTS = ['Abonné', 'Désabonné', 'Rebond'] as const;
@@ -26,6 +27,11 @@ export default function Abonnes() {
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState('');
+  const [sel, setSel] = useState<number[]>([]);
+  const [tag, setTag] = useState('');
+  const [poser, setPoser] = useState(false);
+  const [gestion, setGestion] = useState(false);
+  const { cat, load: loadCat } = useEtiquettes();
   const fileRef = useRef<HTMLInputElement>(null);
 
   const load = useCallback(() => api<Row[]>('/api/subscribers').then(r => { setRows(r); setError(''); }).catch(e => setError(e.message)), []);
@@ -35,7 +41,7 @@ export default function Abonnes() {
     const list = parseCsv(await file.text());
     if (fileRef.current) fileRef.current.value = '';
     if (!list.length) return setError('Fichier vide');
-    try { toast(await runAction('subscribers-import', { rows: list })); load(); } catch (e) { setError((e as Error).message); }
+    try { toast(await runAction('subscribers-import', { rows: list })); load(); loadCat(); } catch (e) { setError((e as Error).message); }
   }
 
   const all = rows ?? [];
@@ -43,7 +49,10 @@ export default function Abonnes() {
   const recent = all.filter(s => s.statut === 'Abonné' && Date.now() - new Date(s.date_inscription).getTime() < 30 * 864e5).length;
   const sources = Object.entries(all.reduce<Record<string, number>>((a, s) => { const k = s.source || 'Autre'; a[k] = (a[k] ?? 0) + 1; return a; }, {})).sort((a, b) => b[1] - a[1]);
   const top = sources.slice(0, 3), rest = sources.slice(3).reduce((a, [, c]) => a + c, 0);
-  const shown = all.filter(s => (!filter || s.statut === filter) && (!term || [s.email, s.nom, s.source].join(' ').toLowerCase().includes(term.toLowerCase())));
+  const tagsDe = (id: number) => cat?.posees.abonnes[id] ?? [];
+  const shown = all.filter(s => (!filter || s.statut === filter) && (!tag || tagsDe(s.id).includes(Number(tag))) && (!term || [s.email, s.nom, s.source].join(' ').toLowerCase().includes(term.toLowerCase())));
+  const toutCoche = shown.length > 0 && shown.every(s => sel.includes(s.id));
+  const cocher = (id: number) => setSel(l => (l.includes(id) ? l.filter(x => x !== id) : [...l, id]));
   const cols = R.fields.filter(f => f.list);
   const exportCsv = () => downloadCsv(R.title, cols.map(f => f.label), shown.map(s => cols.map(f => String(s[f.name] ?? ''))));
 
@@ -51,7 +60,8 @@ export default function Abonnes() {
     <>
       <div className="head page-tools"><div className="actions">
         <a className="btn" href="/inscription" target="_blank" rel="noopener">Formulaire public</a>
-        <button className="btn" onClick={() => fileRef.current?.click()}>Importer un CSV</button>
+        <button className="btn" onClick={() => setGestion(true)} disabled={!cat}><Icon name="tag" size={16} /> Étiquettes</button>
+        <button className="btn" onClick={() => fileRef.current?.click()} title="Colonnes : email, nom, et facultativement etiquettes (séparées par | ou ;)">Importer un CSV</button>
         <input ref={fileRef} type="file" accept=".csv,text/csv" hidden onChange={e => e.target.files?.[0] && importCsv(e.target.files[0])} />
         <button className="btn" onClick={exportCsv} disabled={!shown.length}>Exporter</button>
         <button className="btn cta" onClick={() => setEditing({ statut: 'Abonné' })}><Icon name="plus" size={16} /> Ajouter</button>
@@ -90,7 +100,20 @@ export default function Abonnes() {
                 <button type="button" className={!filter ? 'on' : ''} aria-pressed={!filter} onClick={() => setFilter('')}>Tous · {all.length}</button>
                 {STATUTS.map(st => <button type="button" key={st} className={filter === st ? 'on' : ''} aria-pressed={filter === st} onClick={() => setFilter(st)}>{st === 'Rebond' ? 'En échec' : st + 's'} · {n(st)}</button>)}
               </div>
+              {cat && cat.etiquettes.length > 0 && (
+                <select className="inp dir-sector" aria-label="Étiquette" value={tag} onChange={e => setTag(e.target.value)}>
+                  <option value="">Toutes les étiquettes</option>
+                  {cat.etiquettes.map(e => <option key={e.id} value={e.id}>{e.nom} ({e.abonnes})</option>)}
+                </select>
+              )}
             </div>
+            {sel.length > 0 && (
+              <div className="rb-bar sel on">
+                <span className="small"><b>{sel.length}</b> abonné{sel.length > 1 ? 's' : ''} sélectionné{sel.length > 1 ? 's' : ''}</span>
+                <button type="button" className="btn sm cta" disabled={!cat} onClick={() => setPoser(true)}><Icon name="tag" size={14} /> Étiqueter</button>
+                <button type="button" className="linkish small" onClick={() => setSel([])}>Désélectionner</button>
+              </div>
+            )}
 
             {shown.length === 0 ? (
               <div className="empty-state"><b>{all.length ? 'Aucun abonné ne correspond' : 'Aucun abonné pour le moment'}</b>
@@ -98,12 +121,14 @@ export default function Abonnes() {
                   : <a className="btn sm cta" href="/inscription" target="_blank" rel="noopener">Partager le formulaire public</a>}</div>
             ) : (
               <ul className="sub-list" aria-label="Abonnés">
-                <li className="sub-row sub-head" aria-hidden="true"><span>Abonné</span><span>Source</span><span>Inscription</span><span>Statut</span><span /></li>
+                <li className="sub-row sub-head"><span className="sub-who"><input type="checkbox" className="sub-check" checked={toutCoche} aria-label="Tout sélectionner"
+                  onChange={() => setSel(toutCoche ? sel.filter(id => !shown.some(s => s.id === id)) : [...new Set([...sel, ...shown.map(s => s.id)])])} />Abonné</span><span>Source</span><span>Inscription</span><span>Statut</span><span /></li>
                 {shown.map(s => (
                   <li key={s.id} className={`sub-row${s.statut !== 'Abonné' ? ' dim' : ''}`}>
                     <span className="sub-who">
+                      <input type="checkbox" className="sub-check" checked={sel.includes(s.id)} onChange={() => cocher(s.id)} aria-label={`Sélectionner ${s.email}`} />
                       <span className="sub-av" style={{ background: color(s.email) }} aria-hidden="true">{initials(s)}</span>
-                      <span className="sub-id"><b>{s.nom || s.email.split('@')[0]}</b><a href={`mailto:${s.email}`}>{s.email}</a></span>
+                      <span className="sub-id"><b>{s.nom || s.email.split('@')[0]}</b><a href={`mailto:${s.email}`}>{s.email}</a><PastillesDe ids={tagsDe(s.id)} cat={cat} /></span>
                     </span>
                     <span className="sub-src"><Icon name={SOURCE_ICON(s.source ?? '')} size={13} />{s.source || 'Autre'}</span>
                     <span className="sub-date"><b>{longDate(s.date_inscription)}</b><small>{relative(s.date_inscription)}</small></span>
@@ -116,6 +141,8 @@ export default function Abonnes() {
           </section>
         </>
       )}
+      {gestion && cat && <GestionEtiquettes cat={cat} onClose={() => setGestion(false)} onChanged={loadCat} />}
+      {poser && cat && <PoserEtiquette cat={cat} cible="abonne" ids={sel} onClose={() => setPoser(false)} onDone={() => { setPoser(false); setSel([]); loadCat(); }} />}
       {editing && <EditModal table="subscribers" row={editing} refs={{}} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </>
   );

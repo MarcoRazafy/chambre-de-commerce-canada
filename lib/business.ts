@@ -2,6 +2,7 @@
 import { q } from './db';
 import { journal, notify } from './hooks';
 import { appUrl, audienceEmails, deliver, sendEmail } from './mail';
+import { etiqueterImport, lireRegle, resoudre } from './audiences';
 import { invoiceTotals, money, type Ligne, type Row } from './format';
 
 export class ActionError extends Error {}
@@ -142,12 +143,13 @@ export async function sendCampaign(id: number, par: string) {
   const c = await one('campaigns', id);
   if (c.statut === 'Envoyée') throw new ActionError('Lettre déjà envoyée');
   if (!c.contenu?.trim()) throw new ActionError('La lettre n’a pas de contenu');
-  const to = await audienceEmails('Adhérents + abonnés');
-  if (!to.length) throw new ActionError('Aucun destinataire : ajoutez des contacts aux membres ou des abonnés');
+  // Destinataires choisis pour cette lettre (étiquettes) ; sans choix : adhérents + abonnés
+  const to = (await resoudre(lireRegle(c))).map(p => p.email);
+  if (!to.length) throw new ActionError('Aucun destinataire pour cette audience : modifiez les étiquettes choisies');
   const jetons = new Map((await q<{ email: string; jeton: string }>(`select lower(email) email, jeton from subscribers where statut = 'Abonné'`)).map(s => [s.email, s.jeton]));
   const r = await deliver(to, c.titre, email => c.contenu + (jetons.has(email) ? `\n\n—\nSe désabonner : ${appUrl()}/desabonnement?t=${jetons.get(email)}` : ''));
-  await q(`insert into outbox (type, sujet, audience, destinataires, nb, date_envoi, statut, contenu, erreur) values ('newsletter', $1, 'Adhérents + abonnés', $2, $3, now(), $4, $5, $6)`,
-    [c.titre, to.join(', '), to.length, r.sent ? 'envoyé' : 'échec', c.contenu, r.error]);
+  await q(`insert into outbox (type, sujet, audience, destinataires, nb, date_envoi, statut, contenu, erreur) values ('newsletter', $1, $7, $2, $3, now(), $4, $5, $6)`,
+    [c.titre, to.join(', '), to.length, r.sent ? 'envoyé' : 'échec', c.contenu, r.error, c.inclure?.length ? 'Audience par étiquettes' : 'Adhérents + abonnés']);
   if (!r.sent) throw new ActionError(r.error ?? 'Envoi impossible');
   await q(`update campaigns set statut = 'Envoyée', date_envoi = now(), destinataires = $1 where id = $2`, [r.sent, id]);
   await journal('Communication', 'Newsletter envoyée', `${c.titre} (${r.sent} destinataire(s))`, par);
@@ -184,13 +186,18 @@ export async function introduce(a: number, b: number, message: string, par: stri
   return `${ma.nom} et ${mb.nom} ont été mis en relation.`;
 }
 
-export async function importSubscribers(rows: { email: string; nom?: string }[], par: string) {
+// Colonnes lues : email, nom, et facultativement « etiquettes » (séparées par , ou ;), posées sur l'abonné
+export async function importSubscribers(rows: { email: string; nom?: string; etiquettes?: string; tags?: string }[], par: string) {
   let n = 0;
+  const etiquettes: { email: string; etiquettes: string[] }[] = [];
   for (const r of rows.slice(0, 5000)) {
     const email = String(r.email ?? '').trim().toLowerCase();
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) continue;
     n += (await q(`insert into subscribers (email, nom, source) values ($1, $2, 'Import CSV') on conflict (email) do nothing returning id`, [email, r.nom?.trim() || null])).length;
+    const noms = String(r.etiquettes ?? r.tags ?? '').split(/[,;|]/).map(t => t.replace(/\s+/g, ' ').trim()).filter(Boolean);
+    if (noms.length) etiquettes.push({ email, etiquettes: [...new Set(noms)] });
   }
+  if (etiquettes.length) await etiqueterImport(etiquettes);
   await journal('Communication', 'Import d’abonnés', `${n} abonné(s) ajouté(s)`, par);
   return `${n} abonné(s) importé(s).`;
 }

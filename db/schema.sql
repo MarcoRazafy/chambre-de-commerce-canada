@@ -528,3 +528,40 @@ create table if not exists res_acces_ressources (
   created_at   timestamptz not null default now(),
   primary key (ressource_id, member_id)
 );
+
+/* ===== Newsletter : étiquettes et audiences ===== */
+-- Étiquettes posées par l'équipe (les étiquettes automatiques — pays, secteur, cotisation, formule, événement, source — se calculent)
+create table if not exists etiquettes (
+  id         serial primary key,
+  nom        text not null unique,
+  couleur    text not null default '#256BFF',
+  created_at timestamptz not null default now()
+);
+create table if not exists abonne_etiquettes (
+  subscriber_id int not null references subscribers(id) on delete cascade,
+  etiquette_id  int not null references etiquettes(id) on delete cascade,
+  primary key (subscriber_id, etiquette_id)
+);
+create table if not exists membre_etiquettes (
+  member_id    int not null references members(id) on delete cascade,
+  etiquette_id int not null references etiquettes(id) on delete cascade,
+  primary key (member_id, etiquette_id)
+);
+-- Choix de destinataires enregistrés pour être réutilisés (« Lettre Tourisme »…)
+-- inclure / exclure : clés d'étiquettes (« pays:CA », « secteur:3 », « etiquette:7 »…) ;
+-- mode : il suffit d'une étiquette incluse, ou il les faut toutes ; contacts : contact principal de chaque membre, ou tous ses contacts
+create table if not exists audiences (
+  id         serial primary key,
+  nom        text not null,
+  inclure    text[] not null default '{}',
+  exclure    text[] not null default '{}',
+  mode       text not null default 'une' check (mode in ('une', 'toutes')),
+  contacts   text not null default 'principal' check (contacts in ('principal', 'tous')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+-- Destinataires d'une lettre (vide : adhérents + abonnés, comme avant)
+alter table campaigns add column if not exists inclure text[] not null default '{}',
+  add column if not exists exclure text[] not null default '{}',
+  add column if not exists mode text not null default 'une',
+  add column if not exists contacts text not null default 'principal';

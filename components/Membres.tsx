@@ -8,6 +8,7 @@ import Avatar from './Avatar';
 import Icon from './Icon';
 import StatusBadge from './StatusBadge';
 import { EditModal } from './ResourcePage';
+import { GestionEtiquettes, PastillesDe, PoserEtiquette, useEtiquettes } from './etiquettes/Etiquettes';
 
 // Onglets de statut, comme dans CanCham Connect
 const TABS = [
@@ -53,6 +54,12 @@ export default function Membres() {
   const [formule, setFormule] = useState('');
   const [adding, setAdding] = useState(false);
   const [error, setError] = useState('');
+  const [sel, setSel] = useState<number[]>([]);
+  const [tag, setTag] = useState('');
+  const [poser, setPoser] = useState(false);
+  const [gestion, setGestion] = useState(false);
+  const { cat, load: loadCat } = useEtiquettes();
+  const tagsDe = (id: number) => cat?.posees.membres[id] ?? [];
 
   const load = useCallback(() => Promise.all(['members', 'formules', 'secteurs', 'invoices', 'contacts'].map(t => api<Row[]>('/api/' + t)))
     .then(([m, f, s, i, c]) => {
@@ -73,10 +80,11 @@ export default function Membres() {
 
   const all = rows ?? [];
   // Compteurs des onglets : après la recherche et la formule, avant le statut
-  const base = all.filter(m => (!formule || String(m.formule_id) === formule)
+  const base = all.filter(m => (!formule || String(m.formule_id) === formule) && (!tag || tagsDe(m.id).includes(Number(tag)))
     && (!term || fold([m.nom, secteurs[m.secteur_id], m.ville, m.pays === 'CA' ? 'Canada' : 'Madagascar'].join(' ')).includes(fold(term))));
   const count = (k: string) => base.filter(m => !k || m.statut === k).length;
   const shown = base.filter(m => !tab || m.statut === tab);
+  const toutCoche = shown.length > 0 && shown.every(m => sel.includes(m.id));
   const invOf = (id: number) => invoices.filter(i => i.member_id === id);
   const principal = (id: number) => contacts.filter(c => c.member_id === id).sort((a, b) => Number(b.principal) - Number(a.principal) || a.id - b.id)[0];
 
@@ -94,6 +102,7 @@ export default function Membres() {
     <>
       <div className="head page-tools"><div className="actions">
         <Link className="btn" href="/contacts">Contacts</Link>
+        <button className="btn" onClick={() => setGestion(true)} disabled={!cat}><Icon name="tag" size={16} /> Étiquettes</button>
         <button className="btn" onClick={exportCsv} disabled={!shown.length}><Icon name="download" size={16} /> Exporter</button>
         <button className="btn cta" onClick={() => setAdding(true)}><Icon name="plus" size={16} /> Ajouter un membre</button>
       </div></div>
@@ -115,21 +124,37 @@ export default function Membres() {
               <option value="">Toutes les formules</option>
               {Object.values(formules).map(f => <option key={f.id} value={f.id}>{f.nom}</option>)}
             </select>
-            {(term || formule) && <button type="button" className="linkish small" onClick={() => { setTerm(''); setFormule(''); }}>Effacer les filtres</button>}
+            {cat && cat.etiquettes.length > 0 && (
+              <select className="inp dir-sector" aria-label="Étiquette" value={tag} onChange={e => setTag(e.target.value)}>
+                <option value="">Toutes les étiquettes</option>
+                {cat.etiquettes.map(e => <option key={e.id} value={e.id}>{e.nom} ({e.membres})</option>)}
+              </select>
+            )}
+            {(term || formule || tag) && <button type="button" className="linkish small" onClick={() => { setTerm(''); setFormule(''); setTag(''); }}>Effacer les filtres</button>}
             <span className="small muted dir-count">{shown.length} membre{shown.length > 1 ? 's' : ''}</span>
           </div>
 
+          {sel.length > 0 && (
+            <div className="rb-bar sel on">
+              <span className="small"><b>{sel.length}</b> membre{sel.length > 1 ? 's' : ''} sélectionné{sel.length > 1 ? 's' : ''}</span>
+              <button type="button" className="btn sm cta" disabled={!cat} onClick={() => setPoser(true)}><Icon name="tag" size={14} /> Étiqueter</button>
+              <button type="button" className="linkish small" onClick={() => setSel([])}>Désélectionner</button>
+            </div>
+          )}
           {shown.length === 0 ? <div className="empty-state"><b>Aucun membre ne correspond à ces critères.</b></div> : (
             <ul className="sub-list" aria-label="Membres">
-              <li className="mb-row sub-head" aria-hidden="true"><span>Membre</span><span>Formule</span><span>Situation</span><span>Accès</span><span /></li>
+              <li className="mb-row sub-head"><span className="sub-who"><input type="checkbox" className="sub-check" checked={toutCoche} aria-label="Tout sélectionner"
+                onChange={() => setSel(toutCoche ? sel.filter(id => !shown.some(m => m.id === id)) : [...new Set([...sel, ...shown.map(m => m.id)])])} />Membre</span><span>Formule</span><span>Situation</span><span>Accès</span><span /></li>
               {shown.map(m => {
                 const f = formules[m.formule_id], s = situation(m, f, invOf(m.id)), [accL, accC] = ACCES[m.acces] ?? ACCES.aucun;
                 return (
                   <li key={m.id} className={`mb-row clickable${s.urgent ? ' is-late' : ''}`} onClick={() => router.push(`/membres/${m.id}`)}>
                     <span className="sub-who">
+                      <input type="checkbox" className="sub-check" checked={sel.includes(m.id)} aria-label={`Sélectionner ${m.nom}`}
+                        onClick={e => e.stopPropagation()} onChange={() => setSel(l => (l.includes(m.id) ? l.filter(x => x !== m.id) : [...l, m.id]))} />
                       <Avatar kind="member" id={m.id} size={40} nom={m.nom} />
                       <span className="sub-id"><Link href={`/membres/${m.id}`} onClick={e => e.stopPropagation()} className="mb-name">{m.nom}</Link>
-                        <span>{[secteurs[m.secteur_id], cap(m.ville)].filter(Boolean).join(' · ') || '—'}</span></span>
+                        <span>{[secteurs[m.secteur_id], cap(m.ville)].filter(Boolean).join(' · ') || '—'}</span><PastillesDe ids={tagsDe(m.id)} cat={cat} /></span>
                     </span>
                     <span className="mb-f"><b>{f?.nom ?? 'Formule à choisir'}</b><small>{f?.prix != null ? `${money(Number(f.prix), f.devise)} / an` : 'Cotisation à définir'}</small></span>
                     <span className="mb-sit"><StatusBadge value={m.statut} label={STATUT[m.statut] ?? m.statut} /><small className={s.urgent ? 'urgent' : ''}>{s.detail}</small></span>
@@ -143,6 +168,8 @@ export default function Membres() {
           <p className="small muted">L’export reprend la liste affichée (onglet et filtres), au format tableur.</p>
         </section>
       )}
+      {gestion && cat && <GestionEtiquettes cat={cat} onClose={() => setGestion(false)} onChanged={loadCat} />}
+      {poser && cat && <PoserEtiquette cat={cat} cible="membre" ids={sel} onClose={() => setPoser(false)} onDone={() => { setPoser(false); setSel([]); loadCat(); }} />}
       {adding && <EditModal table="members" row={{ statut: 'attente', pays: 'MG', acces: 'aucun', type_membre: 'morale' }} refs={{ secteurs: Object.entries(secteurs).map(([id, nom]) => ({ id: Number(id), nom })), formules: Object.values(formules) }}
         onClose={() => setAdding(false)} onSaved={() => { setAdding(false); load(); }} />}
     </>

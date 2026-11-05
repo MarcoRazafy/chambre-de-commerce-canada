@@ -66,6 +66,7 @@ export function parseCsv(text: string) {
   const split = (l: string) => l.split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
   const head = split(lines[0]).map(h => h.toLowerCase());
   const ie = head.findIndex(h => /e-?mail|courriel/.test(h)), inom = head.findIndex(h => /nom|name/.test(h));
+  const itag = head.findIndex(h => /[ée]tiquette|tags?$/.test(h));   // facultative : « Presse | VIP »
   const body = ie >= 0 ? lines.slice(1) : lines;
-  return body.map(split).map(c => ({ email: c[ie >= 0 ? ie : 0], nom: inom >= 0 ? c[inom] : undefined }));
+  return body.map(split).map(c => ({ email: c[ie >= 0 ? ie : 0], nom: inom >= 0 ? c[inom] : undefined, etiquettes: itag >= 0 ? c[itag] : undefined }));
 }

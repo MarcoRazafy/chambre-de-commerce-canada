@@ -161,7 +161,7 @@ async function run() {
 
   if (RESET) {
     await q(`truncate secteurs, formules, members, contacts, connections, events, event_registrations, agenda_rappels, rdv_types, rendez_vous,
-             news, res_ressources, res_dossiers, res_medias, services, threads, messages, outbox, campaigns, subscribers, invoices, reglements,
+             news, res_ressources, res_dossiers, res_medias, etiquettes, audiences, services, threads, messages, outbox, campaigns, subscribers, invoices, reglements,
              platform_invoices, notifications, journal restart identity cascade`);
     await q('delete from team_users where password_hash is null');
     await q(`delete from avatars where kind = 'member' or (kind = 'user' and ref_id not in (select id from team_users))`);

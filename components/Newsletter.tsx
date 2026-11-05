@@ -8,6 +8,7 @@ import Icon from './Icon';
 import ModalBackdrop from './ModalBackdrop';
 import StatusBadge from './StatusBadge';
 import { EditModal } from './ResourcePage';
+import { DestinatairesFenetre, GestionEtiquettes, regleDe, resumer, useEtiquettes } from './etiquettes/Etiquettes';
 
 type Filter = '' | 'Brouillon' | 'Programmée' | 'Envoyée';
 const num = (v: unknown, d = 0) => Number(v ?? 0).toLocaleString('fr-FR', { maximumFractionDigits: d });
@@ -85,14 +86,20 @@ export default function Newsletter() {
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
   const [preview, setPreview] = useState<Row | null>(null);
+  const [dest, setDest] = useState<Row | null>(null);
+  const [gestion, setGestion] = useState(false);
   const [error, setError] = useState('');
+  const { cat, load: loadCat } = useEtiquettes();
 
   const load = useCallback(() => Promise.all([api<Row[]>('/api/campaigns'), api<Row[]>('/api/subscribers')])
     .then(([c, s]) => { setRows(c); setSubs(s); setError(''); }).catch(e => setError(e.message)), []);
   useEffect(() => { load(); }, [load]);
 
   async function send(c: Row) {
-    if (!confirm(`Envoyer « ${c.titre} » maintenant à tous les adhérents et abonnés ?`)) return;
+    // Le nombre exact de destinataires est recalculé au moment d'envoyer
+    let n = '';
+    try { n = String((await api<Row>('/api/audiences/apercu', 'POST', regleDe(c))).total); } catch { /* le serveur refusera s'il n'y a personne */ }
+    if (!confirm(`Envoyer « ${c.titre} » maintenant à ${n || 'tous les'} destinataire${n === '1' ? '' : 's'} (${resumer(regleDe(c), cat)}) ?`)) return;
     try { toast(await runAction('campaign-send', { id: c.id })); load(); } catch (e) { setError((e as Error).message); }
   }
 
@@ -117,6 +124,7 @@ export default function Newsletter() {
       <div className="head page-tools"><div className="actions">
         <Link className="btn" href="/envois">Envois programmés</Link>
         <Link className="btn" href="/lettre">Abonnés</Link>
+        <button className="btn" onClick={() => setGestion(true)} disabled={!cat}><Icon name="tag" size={16} /> Étiquettes</button>
         <button className="btn cta" onClick={() => setEditing({ statut: 'Brouillon' })}><Icon name="plus" size={16} /> Nouvelle lettre</button>
       </div></div>
       {error && <div className="err">{error}</div>}
@@ -161,7 +169,10 @@ export default function Newsletter() {
                         <span className="nl-when">{c.date_envoi ? `${isSent ? '' : 'Prévue · '}${short(c.date_envoi)}` : 'Non programmée'}</span>
                       </div>
                       <h3>{c.titre}</h3>
-                      <p className="nl-sub"><Icon name="users" size={14} />{c.destinataires ? `${num(c.destinataires)} destinataires` : `${num(actifs)} abonnés et les adhérents`}</p>
+                      {isSent
+                        ? <p className="nl-sub"><Icon name="users" size={14} />{c.destinataires ? `${num(c.destinataires)} destinataires` : `${num(actifs)} abonnés et les adhérents`}</p>
+                        : <p className="nl-sub nl-dest"><Icon name="users" size={14} /><span className="grow">{resumer(regleDe(c), cat)}{c.inclure?.length && c.destinataires ? ` · ${num(c.destinataires)} destinataire${c.destinataires > 1 ? 's' : ''}` : ''}</span>
+                          <button type="button" className="linkish small" disabled={!cat} onClick={() => setDest(c)}>Choisir</button></p>}
                       {isSent
                         ? <div className="nl-meters"><Meter label="Ouverture" value={c.taux_ouverture} tone="blue" /><Meter label="Clics" value={c.taux_clic} tone="green" /></div>
                         : <p className="nl-excerpt">{(c.contenu ?? '').replace(/^Bonjour[^\n]*\n+/i, '').split('\n').find((l: string) => l.trim()) ?? 'Pas encore de contenu.'}</p>}
@@ -187,6 +198,9 @@ export default function Newsletter() {
           </div>
         </ModalBackdrop>
       )}
+      {gestion && cat && <GestionEtiquettes cat={cat} onClose={() => setGestion(false)} onChanged={loadCat} />}
+      {dest && cat && <DestinatairesFenetre titre={dest.titre} initiale={regleDe(dest)} cat={cat} onClose={() => setDest(null)}
+        onSave={async r => { try { const x = await api<Row>(`/api/campaigns/${dest.id}/destinataires`, 'PUT', r); toast(`Destinataires enregistrés : ${x.total}.`); setDest(null); load(); } catch (e) { toast((e as Error).message, 'error'); } }} />}
       {editing && <EditModal table="campaigns" row={editing} refs={{}} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </>
   );

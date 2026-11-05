@@ -144,7 +144,7 @@ const list: Resource[] = [
   ] },
   { table: 'campaigns', title: 'Newsletter', label: 'titre', orderBy: 'date_envoi desc nulls first', fields: [
     { name: 'titre', label: 'Lettre', required: true, list: true },
-    { name: 'statut', label: 'Statut', type: 'select', options: ['Brouillon', 'Programmée', 'Envoyée'], list: true, filter: true, hint: 'Programmée : envoi automatique à la date indiquée, aux adhérents et aux abonnés.' },
+    { name: 'statut', label: 'Statut', type: 'select', options: ['Brouillon', 'Programmée', 'Envoyée'], list: true, filter: true, hint: 'Programmée : envoi automatique à la date indiquée, aux destinataires choisis sur la carte de la lettre (par défaut : adhérents et abonnés).' },
     { name: 'date_envoi', label: 'Envoi', type: 'datetime', list: true },
     { name: 'destinataires', label: 'Destinataires', type: 'number', list: true },
     { name: 'taux_ouverture', label: 'Ouverture (%)', type: 'number', list: true },
