@@ -133,31 +133,38 @@ export function PoserEtiquette({ cat, cible, ids, onClose, onDone }: { cat: Cata
 }
 
 /* ===== Choix des destinataires d'une lettre ===== */
-export type Regle = { inclure: string[]; exclure: string[]; mode: 'une' | 'toutes'; contacts: 'principal' | 'tous' };
-export const REGLE_DEFAUT: Regle = { inclure: ['type:membre', 'type:abonne'], exclure: [], mode: 'une', contacts: 'principal' };
-export const regleDe = (c: Row): Regle => (c.inclure?.length ? { inclure: c.inclure, exclure: c.exclure ?? [], mode: c.mode === 'toutes' ? 'toutes' : 'une', contacts: c.contacts === 'tous' ? 'tous' : 'principal' } : REGLE_DEFAUT);
+export type Regle = { inclure: string[]; exclure: string[]; mode: 'une' | 'toutes'; contacts: 'principal' | 'tous'; retires: string[] };
+// Par défaut : tout le monde, avec tous les contacts de chaque membre
+export const REGLE_DEFAUT: Regle = { inclure: ['type:membre', 'type:abonne'], exclure: [], mode: 'une', contacts: 'tous', retires: [] };
+export const regleDe = (c: Row): Regle => (c.inclure?.length
+  ? { inclure: c.inclure, exclure: c.exclure ?? [], mode: c.mode === 'toutes' ? 'toutes' : 'une', contacts: c.contacts === 'principal' ? 'principal' : 'tous', retires: c.retires ?? [] }
+  : { ...REGLE_DEFAUT, retires: c.retires ?? [] });
 
 // « Tourisme ou Canada, sauf En retard »
 export function resumer(r: Regle, cat: Catalogue | null) {
   const nom = new Map(cat?.groupes.flatMap(g => g.tags.map(t => [t.cle, t.nom] as const)) ?? []);
   const dire = (l: string[], et: string) => l.map(k => nom.get(k) ?? k).join(et);
-  if (!r.exclure.length && r.inclure.length === 2 && r.inclure.includes('type:membre') && r.inclure.includes('type:abonne') && r.mode === 'une') return 'Adhérents et abonnés';
-  return dire(r.inclure, r.mode === 'toutes' ? ' et ' : ' ou ') + (r.exclure.length ? `, sauf ${dire(r.exclure, ', ')}` : '');
+  const base = !r.exclure.length && r.inclure.length === 2 && r.inclure.includes('type:membre') && r.inclure.includes('type:abonne') && r.mode === 'une'
+    ? 'Tous les adhérents et abonnés'
+    : dire(r.inclure, r.mode === 'toutes' ? ' et ' : ' ou ') + (r.exclure.length ? `, sauf ${dire(r.exclure, ', ')}` : '');
+  return base + (r.retires.length ? ` (${r.retires.length} retiré${r.retires.length > 1 ? 's' : ''} à la main)` : '');
 }
 
-type Apercu = { total: number; membres: number; abonnes: number; liste: Row[] };
+type Personne = { email: string; nom: string; entreprise: string | null; origine: string; retire: boolean };
+type Apercu = { total: number; membres: number; abonnes: number; retires: number; liste: Personne[] };
+const plier = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
 export function DestinatairesFenetre({ titre, initiale, cat, onClose, onSave }: {
   titre: string; initiale: Regle; cat: Catalogue; onClose: () => void; onSave: (r: Regle) => Promise<void>;
 }) {
   const [r, setR] = useState<Regle>(initiale);
   const [ap, setAp] = useState<Apercu | null>(null);
-  const [voir, setVoir] = useState(false);
   const [busy, setBusy] = useState(false);
   const [audiences, setAudiences] = useState<Row[]>([]);
   const [filtre, setFiltre] = useState('');
+  const [cherche, setCherche] = useState('');
   useEffect(() => { api<Row[]>('/api/audiences').then(setAudiences).catch(() => {}); }, []);
-  // Compteur en direct (après une courte pause de saisie)
+  // Liste et compteur en direct (après une courte pause)
   useEffect(() => {
     let fini = false;
     const t = setTimeout(() => api<Apercu>('/api/audiences/apercu', 'POST', r).then(a => !fini && setAp(a)).catch(() => {}), 200);
@@ -170,7 +177,11 @@ export function DestinatairesFenetre({ titre, initiale, cat, onClose, onSave }: 
     const e = etat(k), sans = { inclure: x.inclure.filter(y => y !== k), exclure: x.exclure.filter(y => y !== k) };
     return { ...x, ...(e === '' ? { ...sans, inclure: [...sans.inclure, k] } : e === 'in' ? { ...sans, exclure: [...sans.exclure, k] } : sans) };
   });
-  const groupes = useMemo(() => cat.groupes.map(g => ({ ...g, tags: g.tags.filter(t => !filtre || t.nom.toLowerCase().includes(filtre.toLowerCase())) })).filter(g => g.tags.length), [cat, filtre]);
+  // Cocher / décocher une personne : décochée, elle ne reçoit pas cette lettre
+  const basculer = (email: string) => setR(x => ({ ...x, retires: x.retires.includes(email) ? x.retires.filter(e => e !== email) : [...x.retires, email] }));
+  const groupes = useMemo(() => cat.groupes.map(g => ({ ...g, tags: g.tags.filter(t => !filtre || plier(t.nom).includes(plier(filtre))) })).filter(g => g.tags.length), [cat, filtre]);
+  const gens = (ap?.liste ?? []).filter(p => !cherche || plier([p.entreprise, p.nom, p.email].join(' ')).includes(plier(cherche)));
+  const retiresIci = (ap?.liste ?? []).filter(p => r.retires.includes(p.email)).length;
 
   async function enregistrerAudience() {
     const nom = prompt('Nom de cette audience (pour la réutiliser) :', '');
@@ -185,72 +196,94 @@ export function DestinatairesFenetre({ titre, initiale, cat, onClose, onSave }: 
 
   return (
     <ModalBackdrop onClose={onClose}>
-      <div className="modal wide" role="dialog" aria-label="Destinataires de la lettre">
+      <div className="modal aud-modal" role="dialog" aria-label="Destinataires de la lettre">
         <div className="modal-h"><div><h2>Destinataires</h2><p className="small muted">{titre}</p></div><button type="button" className="btn sm ghost" aria-label="Fermer" onClick={onClose}>✕</button></div>
-        <div className="modal-b">
-          {audiences.length > 0 && (
-            <div className="aud-saved"><span className="small muted">Audiences enregistrées :</span>
-              {audiences.map(a => (
-                <span key={a.id} className="aud-chip">
-                  <button type="button" onClick={() => setR({ inclure: a.inclure, exclure: a.exclure, mode: a.mode, contacts: a.contacts })}>{a.nom}</button>
-                  <button type="button" aria-label={`Supprimer l’audience ${a.nom}`} title="Supprimer" onClick={() => supprimerAudience(a)}><Icon name="close" size={12} /></button>
-                </span>
+        <div className="aud-body">
+          <section className="aud-col">
+            <h3 className="aud-h">1. Qui ? <span>par étiquettes</span></h3>
+            {audiences.length > 0 && (
+              <div className="aud-saved"><span className="small muted">Audiences enregistrées :</span>
+                {audiences.map(a => (
+                  <span key={a.id} className="aud-chip">
+                    <button type="button" onClick={() => setR({ inclure: a.inclure, exclure: a.exclure, mode: a.mode, contacts: a.contacts, retires: a.retires ?? [] })}>{a.nom}</button>
+                    <button type="button" aria-label={`Supprimer l’audience ${a.nom}`} title="Supprimer" onClick={() => supprimerAudience(a)}><Icon name="close" size={12} /></button>
+                  </span>
+                ))}
+              </div>
+            )}
+            <div className="aud-how">
+              <span><b className="aud-in">1 clic : ✓ inclure</b> · <b className="aud-out">2 clics : ✕ exclure</b> · 3 clics : retirer</span>
+              {(r.inclure.length > 0 || r.exclure.length > 0) && <button type="button" className="linkish small" onClick={() => setR({ ...r, inclure: [], exclure: [] })}>Tout effacer</button>}
+            </div>
+            <label className="search-inp aud-filter"><Icon name="search" size={15} /><input className="inp" placeholder="Chercher une étiquette…" aria-label="Chercher une étiquette" value={filtre} onChange={e => setFiltre(e.target.value)} /></label>
+            <div className="aud-groups">
+              {groupes.map(g => (
+                <div key={g.titre} className="aud-group">
+                  <h4>{g.titre}</h4>
+                  <div className="aud-tags">
+                    {g.tags.length ? g.tags.map(t => {
+                      const e = etat(t.cle);
+                      return (
+                        <button key={t.cle} type="button" className={`aud-tag ${e}`} onClick={() => cycle(t.cle)} aria-pressed={!!e}
+                          title={e === 'in' ? 'Incluse : cliquez pour l’exclure' : e === 'out' ? 'Exclue : cliquez pour la retirer' : 'Cliquez pour l’inclure'}>
+                          {e === 'in' ? '✓ ' : e === 'out' ? '✕ ' : ''}{t.couleur && <i style={{ background: t.couleur }} />}{t.nom}<small>{t.n}</small>
+                        </button>
+                      );
+                    }) : <span className="small muted">{g.manuelles ? 'Aucune étiquette : créez-en depuis « Étiquettes ».' : '—'}</span>}
+                  </div>
+                </div>
               ))}
             </div>
-          )}
-          <div className="aud-how">
-            <span><b className="aud-in">✓ Inclure</b> : un clic sur une étiquette · <b className="aud-out">✕ Exclure</b> : deuxième clic · troisième clic : retirer</span>
-            {(r.inclure.length > 0 || r.exclure.length > 0) && <button type="button" className="linkish small" onClick={() => setR({ ...r, inclure: [], exclure: [] })}>Tout effacer</button>}
-            <label className="search-inp"><Icon name="search" size={15} /><input className="inp" placeholder="Filtrer les étiquettes…" aria-label="Filtrer les étiquettes" value={filtre} onChange={e => setFiltre(e.target.value)} /></label>
-          </div>
-          <div className="aud-groups">
-            {groupes.map(g => (
-              <div key={g.titre} className="aud-group">
-                <h3>{g.titre}</h3>
-                <div className="aud-tags">
-                  {g.tags.length ? g.tags.map(t => {
-                    const e = etat(t.cle);
-                    return (
-                      <button key={t.cle} type="button" className={`aud-tag ${e}`} onClick={() => cycle(t.cle)} aria-pressed={!!e}
-                        title={e === 'in' ? 'Incluse : cliquez pour l’exclure' : e === 'out' ? 'Exclue : cliquez pour la retirer' : 'Cliquez pour l’inclure'}>
-                        {e === 'in' ? '✓ ' : e === 'out' ? '✕ ' : ''}{t.couleur && <i style={{ background: t.couleur }} />}{t.nom}<small>{t.n}</small>
-                      </button>
-                    );
-                  }) : <span className="small muted">{g.manuelles ? 'Aucune étiquette : créez-en depuis « Étiquettes ».' : '—'}</span>}
-                </div>
+            <div className="aud-opts">
+              <div className="seg" role="radiogroup" aria-label="Combinaison des étiquettes incluses">
+                <button type="button" role="radio" aria-checked={r.mode === 'une'} className={r.mode === 'une' ? 'on' : ''} onClick={() => setR({ ...r, mode: 'une' })}>Au moins une étiquette</button>
+                <button type="button" role="radio" aria-checked={r.mode === 'toutes'} className={r.mode === 'toutes' ? 'on' : ''} onClick={() => setR({ ...r, mode: 'toutes' })}>Toutes les étiquettes</button>
               </div>
-            ))}
-          </div>
-          <div className="aud-opts">
-            <div className="seg" role="radiogroup" aria-label="Combinaison des étiquettes incluses">
-              <button type="button" role="radio" aria-checked={r.mode === 'une'} className={r.mode === 'une' ? 'on' : ''} onClick={() => setR({ ...r, mode: 'une' })}>Au moins une étiquette</button>
-              <button type="button" role="radio" aria-checked={r.mode === 'toutes'} className={r.mode === 'toutes' ? 'on' : ''} onClick={() => setR({ ...r, mode: 'toutes' })}>Toutes les étiquettes</button>
+              <label className="fs-switch aud-switch">
+                <input type="checkbox" className="switch" checked={r.contacts === 'tous'} onChange={e => setR({ ...r, contacts: e.target.checked ? 'tous' : 'principal' })} />
+                <span><b>Tous les contacts des membres</b><small>Coupé : seulement le contact principal de chaque membre.</small></span>
+              </label>
             </div>
-            <label className="fs-switch aud-switch">
-              <input type="checkbox" className="switch" checked={r.contacts === 'tous'} onChange={e => setR({ ...r, contacts: e.target.checked ? 'tous' : 'principal' })} />
-              <span><b>Tous les contacts des membres</b><small>Sinon, seulement le contact principal de chaque membre.</small></span>
-            </label>
-          </div>
+          </section>
+
+          <section className="aud-col aud-people">
+            <h3 className="aud-h">2. Vérifiez la liste <span>décochez qui ne doit pas la recevoir</span></h3>
+            <div className="aud-people-tools">
+              <label className="search-inp"><Icon name="search" size={15} /><input className="inp" placeholder="Chercher une personne, une entreprise…" aria-label="Chercher une personne" value={cherche} onChange={e => setCherche(e.target.value)} /></label>
+              {r.retires.length > 0 && <button type="button" className="linkish small" onClick={() => setR({ ...r, retires: [] })}>Tout remettre ({r.retires.length})</button>}
+            </div>
+            {!r.inclure.length ? <p className="small muted aud-vide">Choisissez au moins une étiquette à gauche.</p>
+              : !ap ? <div className="skeleton"><span /><span /><span /></div>
+              : !gens.length ? <p className="small muted aud-vide">{cherche ? 'Personne ne correspond.' : 'Aucune personne ne porte ces étiquettes.'}</p>
+              : (
+                <ul className="aud-list">
+                  {gens.map(p => {
+                    const garde = !r.retires.includes(p.email);
+                    return (
+                      <li key={p.email} className={garde ? '' : 'off'}>
+                        <label>
+                          <input type="checkbox" checked={garde} onChange={() => basculer(p.email)} aria-label={`${garde ? 'Retirer' : 'Remettre'} ${p.email}`} />
+                          <span className="aud-who"><b>{p.entreprise ?? (p.nom || p.email)}</b><span>{p.entreprise && p.nom ? `${p.nom} · ` : ''}{p.email}</span></span>
+                          <small>{garde ? (p.origine === 'membre' ? 'Membre' : 'Abonné') : 'Retiré'}</small>
+                        </label>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+          </section>
         </div>
         <div className="aud-foot">
           <div className="aud-count" aria-live="polite">
             <b>{ap ? ap.total : '…'}</b> destinataire{ap && ap.total > 1 ? 's' : ''}
-            {ap && <small>{ap.membres} contact{ap.membres > 1 ? 's' : ''} de membres · {ap.abonnes} abonné{ap.abonnes > 1 ? 's' : ''} · sans doublon ni désabonné</small>}
-            <span className="small">{r.inclure.length ? resumer(r, cat) : 'Choisissez au moins une étiquette à inclure.'}</span>
+            {ap && <small>{ap.membres} contact{ap.membres > 1 ? 's' : ''} de membres · {ap.abonnes} abonné{ap.abonnes > 1 ? 's' : ''}{retiresIci ? ` · ${retiresIci} retiré${retiresIci > 1 ? 's' : ''} à la main` : ''} · sans doublon ni désabonné</small>}
           </div>
           <div className="row">
-            <button type="button" className="btn sm" disabled={!ap?.total} onClick={() => setVoir(v => !v)}><Icon name="eye" size={14} /> {voir ? 'Masquer la liste' : 'Voir la liste'}</button>
             <button type="button" className="btn sm" disabled={!r.inclure.length} onClick={enregistrerAudience}><Icon name="star" size={14} /> Enregistrer comme audience</button>
             <button type="button" className="btn" onClick={onClose}>Annuler</button>
             <button type="button" className="btn cta" disabled={busy || !r.inclure.length || !ap?.total} onClick={async () => { setBusy(true); try { await onSave(r); } finally { setBusy(false); } }}>
               <Icon name="ok" size={15} /> Valider ces destinataires</button>
           </div>
-          {voir && ap && (
-            <ul className="aud-list">
-              {ap.liste.map(p => <li key={p.email}><b>{p.entreprise ?? p.nom ?? p.email}</b><span>{p.entreprise ? `${p.nom} · ` : ''}{p.email}</span><small>{p.origine === 'membre' ? 'Membre' : 'Abonné'}</small></li>)}
-              {ap.total > ap.liste.length && <li className="small muted">… et {ap.total - ap.liste.length} autres</li>}
-            </ul>
-          )}
         </div>
       </div>
     </ModalBackdrop>

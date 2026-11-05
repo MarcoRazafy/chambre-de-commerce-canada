@@ -10,10 +10,12 @@ import { journal } from './hooks';
 import { MsgError } from './messaging';
 
 type Row = Record<string, any>;
-export type Regle = { inclure: string[]; exclure: string[]; mode: 'une' | 'toutes'; contacts: 'principal' | 'tous' };
+// retires : adresses retirées à la main (« pas lui pour cette lettre »)
+export type Regle = { inclure: string[]; exclure: string[]; mode: 'une' | 'toutes'; contacts: 'principal' | 'tous'; retires: string[] };
 type Personne = { email: string; nom: string; entreprise: string | null; origine: 'membre' | 'abonne'; tags: Set<string> };
 
-export const PAR_DEFAUT: Regle = { inclure: ['type:membre', 'type:abonne'], exclure: [], mode: 'une', contacts: 'principal' };
+// Par défaut : tout le monde, avec tous les contacts de chaque membre
+export const PAR_DEFAUT: Regle = { inclure: ['type:membre', 'type:abonne'], exclure: [], mode: 'une', contacts: 'tous', retires: [] };
 const ACTIFS = ['a_jour', 'retard', 'attente'];
 const STATUTS: Record<string, string> = { a_jour: 'À jour', retard: 'En retard', attente: 'Paiement attendu' };
 const PAYS: Record<string, string> = { CA: 'Canada', MG: 'Madagascar' };
@@ -25,7 +27,8 @@ export function lireRegle(b: Row | null | undefined): Regle {
   const liste = (v: unknown) => (Array.isArray(v) ? [...new Set(v.map(cle).filter(Boolean))].slice(0, 60) : []);
   return {
     inclure: liste(b?.inclure), exclure: liste(b?.exclure),
-    mode: b?.mode === 'toutes' ? 'toutes' : 'une', contacts: b?.contacts === 'tous' ? 'tous' : 'principal',
+    mode: b?.mode === 'toutes' ? 'toutes' : 'une', contacts: b?.contacts === 'principal' ? 'principal' : 'tous',
+    retires: Array.isArray(b?.retires) ? [...new Set(b.retires.map((e: unknown) => String(e ?? '').trim().toLowerCase()).filter((e: string) => EMAIL.test(e)))].slice(0, 5000) as string[] : [],
   };
 }
 
@@ -68,24 +71,34 @@ async function personnes(contacts: Regle['contacts']) {
   return { liste: [...parEmail.values()], exclues: exclues.size };
 }
 
-// Destinataires d'une règle
+// Personnes visées par les étiquettes (avant les retraits à la main) ; une lettre jamais réglée vise tout le monde
+async function viser(regle: Regle) {
+  const r = regle.inclure.length ? regle : { ...PAR_DEFAUT, retires: regle.retires };
+  const { liste } = await personnes(r.contacts);
+  return liste.filter(p => (r.mode === 'toutes' ? r.inclure.every(t => p.tags.has(t)) : r.inclure.some(t => p.tags.has(t)))
+    && !r.exclure.some(t => p.tags.has(t)))
+    .sort((a, b) => (a.entreprise ?? a.nom).localeCompare(b.entreprise ?? b.nom, 'fr'));
+}
+
+// Destinataires réels d'une règle : sans les personnes retirées à la main
 export async function resoudre(regle: Regle) {
-  const inclure = regle.inclure.length ? regle.inclure : PAR_DEFAUT.inclure;
-  const { liste } = await personnes(regle.contacts);
-  const garde = liste.filter(p => (regle.mode === 'toutes' ? inclure.every(t => p.tags.has(t)) : inclure.some(t => p.tags.has(t)))
-    && !regle.exclure.some(t => p.tags.has(t)));
-  return garde.sort((a, b) => (a.entreprise ?? a.nom).localeCompare(b.entreprise ?? b.nom, 'fr'));
+  const retires = new Set(regle.retires);
+  return (await viser(regle)).filter(p => !retires.has(p.email));
 }
 
 export async function apercu(regle: Regle) {
   // Sans étiquette incluse, personne (le « par défaut » ne vaut que pour les lettres jamais réglées)
-  if (!regle.inclure.length) return { total: 0, membres: 0, abonnes: 0, liste: [] };
-  const liste = await resoudre(regle);
+  if (!regle.inclure.length) return { total: 0, membres: 0, abonnes: 0, retires: 0, liste: [] };
+  const retires = new Set(regle.retires);
+  const vises = await viser(regle);
+  const gardes = vises.filter(p => !retires.has(p.email));
   return {
-    total: liste.length,
-    membres: liste.filter(p => p.origine === 'membre').length,
-    abonnes: liste.filter(p => p.origine === 'abonne').length,
-    liste: liste.slice(0, 500).map(p => ({ email: p.email, nom: p.nom, entreprise: p.entreprise, origine: p.origine })),
+    total: gardes.length,
+    membres: gardes.filter(p => p.origine === 'membre').length,
+    abonnes: gardes.filter(p => p.origine === 'abonne').length,
+    retires: vises.length - gardes.length,
+    // Toutes les personnes visées, chacune avec sa case : décochée = retirée de la lettre
+    liste: vises.slice(0, 3000).map(p => ({ email: p.email, nom: p.nom, entreprise: p.entreprise, origine: p.origine, retire: retires.has(p.email) })),
   };
 }
 
@@ -207,10 +220,10 @@ export async function enregistrerAudience(u: User, id: number | null, b: Row) {
   if (!nom) throw new MsgError('Donnez un nom à l’audience');
   const r = lireRegle(b);
   if (!r.inclure.length) throw new MsgError('Choisissez au moins une étiquette à inclure');
-  const vals = [nom, r.inclure, r.exclure, r.mode, r.contacts];
+  const vals = [nom, r.inclure, r.exclure, r.mode, r.contacts, r.retires];
   const [a] = id
-    ? await q<Row>('update audiences set nom = $1, inclure = $2, exclure = $3, mode = $4, contacts = $5, updated_at = now() where id = $6 returning *', [...vals, id])
-    : await q<Row>('insert into audiences (nom, inclure, exclure, mode, contacts) values ($1, $2, $3, $4, $5) returning *', vals);
+    ? await q<Row>('update audiences set nom = $1, inclure = $2, exclure = $3, mode = $4, contacts = $5, retires = $6, updated_at = now() where id = $7 returning *', [...vals, id])
+    : await q<Row>('insert into audiences (nom, inclure, exclure, mode, contacts, retires) values ($1, $2, $3, $4, $5, $6) returning *', vals);
   if (!a) throw new MsgError('Audience introuvable');
   await journal('Communication', id ? 'Audience modifiée' : 'Audience enregistrée', nom, u.nom);
   return a;
@@ -225,8 +238,8 @@ export async function supprimerAudience(id: number) {
 export async function destinatairesLettre(u: User, id: number, b: Row) {
   const r = lireRegle(b);
   if (!r.inclure.length) throw new MsgError('Choisissez au moins une étiquette à inclure');
-  const [c] = await q<Row>(`update campaigns set inclure = $1, exclure = $2, mode = $3, contacts = $4 where id = $5 and statut <> 'Envoyée' returning titre`,
-    [r.inclure, r.exclure, r.mode, r.contacts, id]);
+  const [c] = await q<Row>(`update campaigns set inclure = $1, exclure = $2, mode = $3, contacts = $4, retires = $5 where id = $6 and statut <> 'Envoyée' returning titre`,
+    [r.inclure, r.exclure, r.mode, r.contacts, r.retires, id]);
   if (!c) throw new MsgError('Lettre introuvable ou déjà envoyée');
   const { total } = await apercu(r);
   await q('update campaigns set destinataires = $1 where id = $2', [total, id]);

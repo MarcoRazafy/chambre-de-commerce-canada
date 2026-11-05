@@ -565,3 +565,8 @@ alter table campaigns add column if not exists inclure text[] not null default '
   add column if not exists exclure text[] not null default '{}',
   add column if not exists mode text not null default 'une',
   add column if not exists contacts text not null default 'principal';
+-- Personnes retirées à la main d'une lettre ou d'une audience (adresses), et tous les contacts des membres par défaut
+alter table campaigns add column if not exists retires text[] not null default '{}';
+alter table audiences add column if not exists retires text[] not null default '{}';
+alter table campaigns alter column contacts set default 'tous';
+alter table audiences alter column contacts set default 'tous';

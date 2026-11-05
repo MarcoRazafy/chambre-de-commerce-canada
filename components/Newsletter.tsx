@@ -171,8 +171,10 @@ export default function Newsletter() {
                       <h3>{c.titre}</h3>
                       {isSent
                         ? <p className="nl-sub"><Icon name="users" size={14} />{c.destinataires ? `${num(c.destinataires)} destinataires` : `${num(actifs)} abonnés et les adhérents`}</p>
-                        : <p className="nl-sub nl-dest"><Icon name="users" size={14} /><span className="grow">{resumer(regleDe(c), cat)}{c.inclure?.length && c.destinataires ? ` · ${num(c.destinataires)} destinataire${c.destinataires > 1 ? 's' : ''}` : ''}</span>
-                          <button type="button" className="linkish small" disabled={!cat} onClick={() => setDest(c)}>Choisir</button></p>}
+                        : <div className="nl-dest">
+                          <span className="nl-dest-t"><Icon name="users" size={15} /><span><b>Destinataires</b>{resumer(regleDe(c), cat)}{c.inclure?.length && c.destinataires ? ` · ${num(c.destinataires)}` : ''}</span></span>
+                          <button type="button" className="btn sm" disabled={!cat} onClick={() => setDest(c)}><Icon name="userplus" size={15} /> Choisir les destinataires</button>
+                        </div>}
                       {isSent
                         ? <div className="nl-meters"><Meter label="Ouverture" value={c.taux_ouverture} tone="blue" /><Meter label="Clics" value={c.taux_clic} tone="green" /></div>
                         : <p className="nl-excerpt">{(c.contenu ?? '').replace(/^Bonjour[^\n]*\n+/i, '').split('\n').find((l: string) => l.trim()) ?? 'Pas encore de contenu.'}</p>}
