@@ -4,7 +4,7 @@ import {
   CreditCard, EnvelopeSimple, Folder, GearSix, Handshake, IdentificationCard, List, MagnifyingGlass, Newspaper,
   FolderLock, FolderPlus, FolderOpen, Copy, Scissors, ClipboardText, ArrowUp, ArrowDown, DotsSixVertical, TextAlignLeft, TextAlignCenter, TextAlignRight,
   TextB, TextItalic, TextUnderline, LinkSimple, ListBullets, ListNumbers, TextH, TextT, Palette, Eye, Books, Rows, Lock, CaretRight, UploadSimple,
-  Pause, SpeakerHigh, SpeakerSlash, FilePdf, FileDoc, FileVideo, FileImage, Article, ArrowLineUp, ArrowLineDown, CheckSquare, ArrowSquareOut,
+  House, Pause, SpeakerHigh, SpeakerSlash, FilePdf, FileDoc, FileVideo, FileImage, Article, ArrowLineUp, ArrowLineDown, CheckSquare, ArrowSquareOut,
   MapPin, PaperPlaneTilt, Play, ShareFat, ThumbsUp, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
@@ -25,7 +25,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   bold: TextB, italic: TextItalic, underline: TextUnderline, link: LinkSimple, ul: ListBullets, ol: ListNumbers, heading: TextH, text: TextT,
   palette: Palette, eye: Eye, books: Books, rows: Rows, lock: Lock, caret: CaretRight, upload: UploadSimple,
   pdf: FilePdf, docx: FileDoc, filevideo: FileVideo, fileimage: FileImage, article: Article, first: ArrowLineUp, last: ArrowLineDown,
-  checks: CheckSquare, external: ArrowSquareOut, pause: Pause, son: SpeakerHigh, muet: SpeakerSlash,
+  checks: CheckSquare, external: ArrowSquareOut, home: House, pause: Pause, son: SpeakerHigh, muet: SpeakerSlash,
   user: User, pin: MapPin, like: ThumbsUp, play: Play, share: ShareFat,
 };
 

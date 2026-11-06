@@ -1,4 +1,5 @@
 'use client';
+import { useNouveau } from '@/lib/useNouveau';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -37,6 +38,7 @@ export default function ResourcePage({ table, bare, preset }: Props) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [refs, setRefs] = useState<Record<string, Row[]>>({});
   const [editing, setEditing] = useState<Row | null>(null);
+  useNouveau(() => setEditing({ ...(preset ?? {}) }), !bare);
   const [error, setError] = useState('');
   const [term, setTerm] = useState('');
   const [sel, setSel] = useState<Record<string, string>>({});

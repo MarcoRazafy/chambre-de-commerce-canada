@@ -8,6 +8,7 @@ import Icon from './Icon';
 import ModalBackdrop from './ModalBackdrop';
 import StatusBadge from './StatusBadge';
 import { EditModal } from './ResourcePage';
+import { useNouveau } from '@/lib/useNouveau';
 import { DestinatairesFenetre, GestionEtiquettes, regleDe, resumer, useEtiquettes } from './etiquettes/Etiquettes';
 
 type Filter = '' | 'Brouillon' | 'Programmée' | 'Envoyée';
@@ -85,6 +86,7 @@ export default function Newsletter() {
   const [filter, setFilter] = useState<Filter>('');
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
+  useNouveau(() => setEditing({ statut: 'Brouillon' }));
   const [preview, setPreview] = useState<Row | null>(null);
   const [dest, setDest] = useState<Row | null>(null);
   const [gestion, setGestion] = useState(false);

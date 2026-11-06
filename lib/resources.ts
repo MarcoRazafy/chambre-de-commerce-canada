@@ -222,52 +222,52 @@ export const RESOURCES: Record<string, Resource> = Object.fromEntries(list.map(r
 // Menu. table vide = page dédiée ; icon = clé de components/Icon.tsx ;
 // badge : 'demandes' affiche le nombre de demandes d'adhésion à traiter
 // parent : page absente du menu (comme dans la maquette), accessible depuis la page parente qui reste surlignée
-export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes'; parent?: string };
+export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes' | 'reglements'; parent?: string };
+// Menu, comme dans la maquette « Propositions UX » : sections titrées, sans accordéon.
+// parent : page rattachée, absente du menu (elle allume son parent). La section « Plateforme » s'affiche en bas du menu.
 export const NAV: [string, NavItem[]][] = [
-  ['Pilotage', [
-    { slug: '', label: 'Tableau de bord', icon: 'dash' },
-    { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal' },
-    { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users' },
+  ['', [
+    { slug: '', label: 'Accueil', icon: 'home' },
   ]],
-  ['Adhérents', [
+  ['Membres', [
     { slug: 'membres', label: 'Membres', icon: 'users', table: 'members', badge: 'demandes' },
     { slug: 'contacts', label: 'Contacts', icon: 'userplus', table: 'contacts', parent: 'membres' },
     { slug: 'annuaire', label: 'Annuaire', icon: 'book' },
-    { slug: 'mises-en-relation', label: 'Mises en relation', icon: 'spark', table: 'connections', parent: 'annuaire' },
+    { slug: 'mises-en-relation', label: 'Mises en relation', icon: 'spark', table: 'connections' },
   ]],
-  ['Programme', [
+  ['Activités', [
     { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events' },
     { slug: 'inscriptions', label: 'Inscriptions', icon: 'userplus', table: 'event_registrations', parent: 'evenements' },
     { slug: 'agenda', label: 'Agenda', icon: 'agenda' },
     { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
     { slug: 'actualites', label: 'Actualités', icon: 'news' },
-  ]],
-  // Liens directs du menu, hors des rubriques dépliables
-  ['Contenus', [
     { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'res_ressources' },
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
   ]],
   ['Communication', [
-    { slug: 'messagerie', label: 'Messagerie', icon: 'chat' },
     { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns' },
-    { slug: 'lettre', label: 'Abonnés à la lettre', icon: 'list', table: 'subscribers' },
+    { slug: 'lettre', label: 'Abonnés', icon: 'list', table: 'subscribers' },
     { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox', parent: 'newsletter' },
   ]],
   ['Finances', [
-    { slug: 'paiements', label: 'Paiements & factures', icon: 'file', table: 'invoices' },
-    { slug: 'reglements', label: 'Règlements annoncés', icon: 'coin', table: 'reglements' },
-    { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear' },
-    { slug: 'formules', label: 'Formules d’adhésion', icon: 'card', table: 'formules', parent: 'facturation' },
-    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'tag', table: 'secteurs', parent: 'facturation' },
+    { slug: 'paiements', label: 'Factures & paiements', icon: 'file', table: 'invoices' },
+    { slug: 'reglements', label: 'Règlements', icon: 'coin', table: 'reglements', badge: 'reglements' },
   ]],
   ['Plateforme', [
     { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star' },
+    { slug: 'parametres', label: 'Paramètres', icon: 'gear' },
+    { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users', parent: 'parametres' },
+    { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal', parent: 'parametres' },
+    { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear', parent: 'parametres' },
+    { slug: 'formules', label: 'Formules d’adhésion', icon: 'card', table: 'formules', parent: 'parametres' },
+    { slug: 'secteurs', label: 'Secteurs d’activité', icon: 'tag', table: 'secteurs', parent: 'parametres' },
   ]],
 ];
+export const PIED = 'Plateforme';   // section affichée en bas du menu
 
-// Groupes affichés comme rubriques dépliables (avec leur icône) ; les autres groupes sont des liens directs
-export const GROUP_ICON: Record<string, string> = { Adhérents: 'users', Programme: 'cal', Communication: 'chat', Finances: 'coin' };
+// Sections reprises dans le fil d'Ariane (« Membres › Annuaire »)
+export const GROUP_ICON: Record<string, string> = { Membres: 'users', Activités: 'cal', Communication: 'chat', Finances: 'coin' };
 
 export const PAGES: Record<string, { group: string; table: string }> = Object.fromEntries(
   NAV.flatMap(([group, items]) => items.filter(i => i.table).map(i => [i.slug, { group, table: i.table! }]))

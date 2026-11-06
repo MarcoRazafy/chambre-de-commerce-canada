@@ -1,4 +1,5 @@
 'use client';
+import { useNouveau } from '@/lib/useNouveau';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
@@ -70,6 +71,7 @@ export default function Paiements() {
   const [objet, setObjet] = useState('');
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
+  useNouveau(() => setEditing({ objet: 'cotisation', devise: 'MGA' }));
   const [paying, setPaying] = useState<Row | null>(null);
   const [error, setError] = useState('');
 

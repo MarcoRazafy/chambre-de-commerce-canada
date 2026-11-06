@@ -8,6 +8,7 @@ import Avatar from './Avatar';
 import Icon from './Icon';
 import StatusBadge from './StatusBadge';
 import { EditModal } from './ResourcePage';
+import { useNouveau } from '@/lib/useNouveau';
 import { GestionEtiquettes, PastillesDe, PoserEtiquette, useEtiquettes } from './etiquettes/Etiquettes';
 
 // Onglets de statut, comme dans CanCham Connect
@@ -53,6 +54,7 @@ export default function Membres() {
   const [term, setTerm] = useState('');
   const [formule, setFormule] = useState('');
   const [adding, setAdding] = useState(false);
+  useNouveau(() => setAdding(true));
   const [error, setError] = useState('');
   const [sel, setSel] = useState<number[]>([]);
   const [tag, setTag] = useState('');

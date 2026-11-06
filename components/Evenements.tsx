@@ -1,4 +1,5 @@
 'use client';
+import { useNouveau } from '@/lib/useNouveau';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
@@ -46,6 +47,7 @@ export default function Evenements() {
   const [format, setFormat] = useState('');
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
+  useNouveau(() => setEditing({}));
 
   const load = useCallback(() => api<Row[]>('/api/events').then(r => { setRows(r); setError(''); }).catch(e => setError(e.message)), []);
   useEffect(() => { load(); }, [load]);

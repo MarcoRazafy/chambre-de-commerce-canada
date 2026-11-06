@@ -6,7 +6,7 @@ import { GROUP_ICON, NAV, type NavItem } from '@/lib/resources';
 import Icon from './Icon';
 
 // Pages hors menu
-const EXTRA: Record<string, { label: string; icon: string }> = { profil: { label: 'Mon profil', icon: 'user' }, recherche: { label: 'Recherche', icon: 'search' } };
+const EXTRA: Record<string, { label: string; icon: string }> = { profil: { label: 'Mon profil', icon: 'user' }, recherche: { label: 'Recherche', icon: 'search' }, messagerie: { label: 'Messagerie', icon: 'chat' } };
 // Dernier maillon des fiches (/membres/5…)
 const FICHE: Record<string, string> = { membres: 'Fiche membre', evenements: 'Événement', paiements: 'Facture', ressources: 'Ressource' };
 
