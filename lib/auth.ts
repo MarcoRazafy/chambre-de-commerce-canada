@@ -32,6 +32,17 @@ export async function openSession(userId: number) {
   (await cookies()).set(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: DAYS * 86400 });
 }
 
+// Connexion d'un membre de l'équipe : ouvre la session si le compte existe, est actif et le mot de passe juste
+export async function connecterEquipe(email: string, password: string) {
+  const [u] = await q<{ id: number; nom: string; actif: boolean; password_hash: string | null }>(
+    'select id, nom, actif, password_hash from team_users where lower(email) = lower($1)', [email.trim()]);
+  // Même durée de calcul que le compte existe ou non
+  const ok = await verifyPassword(password, u?.password_hash ?? 'aa:' + '0'.repeat(128));
+  if (!u || !ok || !u.actif) return null;
+  await openSession(u.id);
+  return u;
+}
+
 export async function closeSession() {
   const jar = await cookies();
   const token = jar.get(COOKIE)?.value;

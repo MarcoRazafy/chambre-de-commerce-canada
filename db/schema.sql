@@ -581,3 +581,19 @@ create table if not exists maillage (
   complete_le timestamptz,
   maj_le      timestamptz not null default now()
 );
+-- Espace membre : chaque contact d'un membre peut avoir son accès (courriel + mot de passe),
+-- avec ses propres sessions, distinctes de celles de l'équipe
+alter table contacts add column if not exists password_hash text, add column if not exists derniere_connexion timestamptz;
+create unique index if not exists contacts_email_acces on contacts (lower(email)) where password_hash is not null;
+create table if not exists membre_sessions (
+  id         text primary key,             -- empreinte SHA-256 du jeton du cookie
+  contact_id int not null references contacts(id) on delete cascade,
+  expires_at timestamptz not null
+);
+-- Espace membre : ce que chaque contact a lu dans les conversations de son entreprise
+create table if not exists membre_lectures (
+  thread_id    int not null references threads(id) on delete cascade,
+  contact_id   int not null references contacts(id) on delete cascade,
+  last_read_at timestamptz not null default now(),
+  primary key (thread_id, contact_id)
+);

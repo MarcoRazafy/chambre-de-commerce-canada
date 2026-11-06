@@ -2,6 +2,8 @@ import { q } from '@/lib/db';
 import { notFound } from '@/lib/crud';
 import { journal } from '@/lib/hooks';
 import { num, withUser } from '@/lib/api-helpers';
+import { currentUser } from '@/lib/auth';
+import { membreConnecte } from '@/lib/espace';
 import { MsgError } from '@/lib/messaging';
 import { imageUrl } from '@/lib/format';
 
@@ -29,14 +31,18 @@ function initialsSvg(nom: string) {
 export async function GET(_req: Request, { params }: Ctx) {
   const t = await target(params);
   if (!t) return notFound();
-  return withUser(async () => {
-    const [a] = await q<{ type: string; contenu: Buffer }>('select type, contenu from avatars where kind = $1 and ref_id = $2', [t.kind, t.id]);
-    if (a) return new Response(new Uint8Array(a.contenu), { headers: { 'Content-Type': a.type, 'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' } });
-    const [r] = await q<{ nom: string; logo_url?: string }>(`select nom${t.kind === 'member' ? ', logo_url' : ''} from ${KINDS[t.kind]} where id = $1`, [t.id]);
-    const logo = imageUrl(r?.logo_url);
-    if (logo) return new Response(null, { status: 302, headers: { Location: logo, 'Cache-Control': 'private, max-age=300' } });
-    return new Response(initialsSvg(r?.nom ?? '?'), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=300' } });
-  });
+  // Espace membre : les logos des membres et les photos de l'équipe sont lisibles aussi par un membre connecté
+  if (!(await currentUser()) && t.kind !== 'contact' && await membreConnecte()) return lire(t);
+  return withUser(async () => lire(t));
+}
+
+async function lire(t: { kind: keyof typeof KINDS; id: number }) {
+  const [a] = await q<{ type: string; contenu: Buffer }>('select type, contenu from avatars where kind = $1 and ref_id = $2', [t.kind, t.id]);
+  if (a) return new Response(new Uint8Array(a.contenu), { headers: { 'Content-Type': a.type, 'Cache-Control': 'private, max-age=300', 'X-Content-Type-Options': 'nosniff' } });
+  const [r] = await q<{ nom: string; logo_url?: string }>(`select nom${t.kind === 'member' ? ', logo_url' : ''} from ${KINDS[t.kind]} where id = $1`, [t.id]);
+  const logo = imageUrl(r?.logo_url);
+  if (logo) return new Response(null, { status: 302, headers: { Location: logo, 'Cache-Control': 'private, max-age=300' } });
+  return new Response(initialsSvg(r?.nom ?? '?'), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=300' } });
 }
 
 // Nouvelle photo (formulaire multipart, champ « file ») : sa propre photo, ou n'importe laquelle pour un administrateur ; tout logo de membre

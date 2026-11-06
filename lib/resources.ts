@@ -62,6 +62,7 @@ const list: Resource[] = [
     { name: 'email', label: 'Courriel', list: true },
     { name: 'tel', label: 'Téléphone', list: true },
     { name: 'principal', label: 'Contact principal', type: 'bool', list: true },
+    { name: 'password', label: 'Mot de passe de l’espace membre', type: 'password', hint: 'Donne à ce contact l’accès à l’espace membre (/espace), avec son courriel. 8 caractères minimum ; laisser vide pour ne pas le changer.' },
   ] },
   { table: 'connections', title: 'Mises en relation', label: 'id', orderBy: 'created_at desc', fields: [
     { name: 'member_a', label: 'Membre A', type: 'ref', ref: 'members', required: true, list: true },

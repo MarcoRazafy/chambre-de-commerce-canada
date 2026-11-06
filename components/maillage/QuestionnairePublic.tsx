@@ -14,7 +14,7 @@ export default function QuestionnairePublic() {
   const url = `/api/public/maillage/${encodeURIComponent(jeton)}`;
 
   useEffect(() => {
-    fetch(url).then(async r => { const x = await r.json().catch(() => ({})); if (!r.ok) throw new Error(x.error || 'Lien introuvable'); setD(x); setDebut(x.pct > 0); })
+    fetch(url).then(async r => { const x = await r.json().catch(() => ({})); if (!r.ok) throw new Error(x.error || 'Lien introuvable'); setD(x); setDebut(!!x.maj_le); })
       .catch(e => setErreur(e.message));
   }, [url]);
   const enregistrer = useCallback(async (patch: Reponses) => {

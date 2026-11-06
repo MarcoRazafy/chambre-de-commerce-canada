@@ -1,19 +1,25 @@
-import { q, fail } from '@/lib/db';
-import { openSession, verifyPassword } from '@/lib/auth';
+import { fail } from '@/lib/db';
+import { connecterEquipe } from '@/lib/auth';
+import { connecter } from '@/lib/espace';
 import { journal } from '@/lib/hooks';
+import { MsgError } from '@/lib/messaging';
 
+// Une seule porte : un compte de l'équipe ouvre le back-office ; un contact membre est dirigé vers son espace
 export async function POST(req: Request) {
-  const { email, password } = await req.json();
+  const { email, password } = await req.json().catch(() => ({}));
+  const e = String(email ?? ''), p = String(password ?? '');
   try {
-    const [u] = await q<{ id: number; nom: string; actif: boolean; password_hash: string | null }>(
-      'select id, nom, actif, password_hash from team_users where lower(email) = lower($1)', [String(email ?? '').trim()]);
-    // Même réponse et même durée de calcul que le compte existe ou non
-    const ok = await verifyPassword(String(password ?? ''), u?.password_hash ?? 'aa:' + '0'.repeat(128));
-    if (!u || !ok || !u.actif) return Response.json({ error: 'Courriel ou mot de passe incorrect' }, { status: 401 });
-    await openSession(u.id);
-    await journal('Équipe', 'Connexion', null, u.nom);
-    return Response.json({ ok: true });
-  } catch (e) {
-    return fail(e);
+    const u = await connecterEquipe(e, p);
+    if (u) { await journal('Équipe', 'Connexion', null, u.nom); return Response.json({ ok: true, vers: '/' }); }
+    try {
+      const c = await connecter(e, p);
+      await journal('Adhésions', 'Connexion', 'Espace membre', c.nom);
+      return Response.json({ ok: true, vers: '/espace/demarrage' });
+    } catch (x) {
+      if (x instanceof MsgError) return Response.json({ error: 'Courriel ou mot de passe incorrect' }, { status: 401 });
+      throw x;
+    }
+  } catch (x) {
+    return fail(x);
   }
 }

@@ -19,13 +19,13 @@ export default function ConnexionPage() {
     setError('');
     const res = await fetch(setup ? '/api/auth/setup' : '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(v) });
     const d = await res.json().catch(() => ({}));
-    if (res.ok) window.location.href = '/';
+    if (res.ok) window.location.href = d.vers || '/';
     else { setError(d.error || 'Erreur'); setBusy(false); }
   }
 
   const set = (k: keyof typeof v) => (e: React.ChangeEvent<HTMLInputElement>) => setV({ ...v, [k]: e.target.value });
   return (
-    <PublicCard title={setup ? <>Créer le <em>premier administrateur</em></> : <>Se <em>connecter</em></>}>
+    <PublicCard sous="CanCham Madagascar · membres et équipe" title={setup ? <>Créer le <em>premier administrateur</em></> : <>Se <em>connecter</em></>}>
       {setup && <p className="small muted">Aucun compte n’existe encore. Ce compte aura tous les droits ; vous pourrez ensuite ajouter l’équipe dans « Équipe & accès ».</p>}
       {error && <div className="err">{error}</div>}
       {setup !== null && (
@@ -38,6 +38,7 @@ export default function ConnexionPage() {
           <button className="btn cta" disabled={busy} style={{ justifyContent: 'center' }}>{busy ? 'Un instant…' : setup ? 'Créer le compte' : 'Se connecter'}</button>
         </form>
       )}
+      {setup === false && <p className="small muted" style={{ textAlign: 'center' }}>Membres de la Chambre et équipe : connectez-vous ici, vous arrivez directement dans votre espace.</p>}
     </PublicCard>
   );
 }

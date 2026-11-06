@@ -35,7 +35,7 @@ export function TexteMisEnForme({ lignes }: { lignes: Ligne[] }) {
   );
 }
 
-function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
+function BlocLu({ bloc, titre, media = id => mediaUrl(id)! }: { bloc: Bloc; titre: string; media?: (id: number) => string }) {
   if (bloc.type === 'titre') {
     const style = { ...(bloc.couleur ? { color: bloc.couleur } : {}), ...(bloc.alignement ? { textAlign: ALIGN[bloc.alignement] as 'center' } : {}) };
     return bloc.niveau === 2 ? <h2 className="pr-h2" style={style}>{bloc.texte}</h2> : <h3 className="pr-h3" style={style}>{bloc.texte}</h3>;
@@ -43,18 +43,18 @@ function BlocLu({ bloc, titre }: { bloc: Bloc; titre: string }) {
   if (bloc.type === 'texte') return <TexteMisEnForme lignes={bloc.lignes} />;
   if (bloc.type === 'photo') return (
     <figure className="pr-photo">
-      <a href={mediaUrl(bloc.media)!} target="_blank" rel="noreferrer" title="Voir en grand"><img src={mediaUrl(bloc.media)!} alt={bloc.legende ?? ''} loading="lazy" /></a>
+      <a href={media(bloc.media)} target="_blank" rel="noreferrer" title="Voir en grand"><img src={media(bloc.media)} alt={bloc.legende ?? ''} loading="lazy" /></a>
       {bloc.legende && <figcaption>{bloc.legende}</figcaption>}
     </figure>
   );
   if (bloc.type === 'fichier') {
-    const url = mediaUrl(bloc.media)!;
+    const url = media(bloc.media);
     return <PieceJointe url={url} nom={bloc.nom} taille={bloc.taille}
       actions={<>{iconeDocument(bloc.nom) === 'pdf' && <a className="btn sm" href={url} target="_blank" rel="noreferrer"><Icon name="external" size={14} /> Plein écran</a>}
         <a className="btn sm" href={`${url}?dl=1`}><Icon name="download" size={14} /> Télécharger</a></>} />;
   }
   if (bloc.source === 'lien') return <VideoPrivee url={bloc.url} titre={titre} />;
-  return <div className="pr-video"><video src={mediaUrl(bloc.media)!} controls playsInline preload="metadata" aria-label={titre} /></div>;
+  return <div className="pr-video"><video src={media(bloc.media)} controls playsInline preload="metadata" aria-label={titre} /></div>;
 }
 
 // Pièce jointe affichée dans la page : un PDF s'ouvre directement dans le lecteur du navigateur ;
@@ -75,10 +75,11 @@ export function PieceJointe({ url, nom, taille, actions }: { url: string; nom?: 
 }
 
 // Lecture d'une ressource « Page » : les blocs dans l'ordre, sur une feuille blanche
-export default function PageRessource({ titre, blocs }: { titre: string; blocs: Bloc[] }) {
+// media : adresse d'un fichier (l'espace membre passe la sienne, qui vérifie les droits de l'entreprise)
+export default function PageRessource({ titre, blocs, media }: { titre: string; blocs: Bloc[]; media?: (id: number) => string }) {
   return (
     <article className="pr-page">
-      {blocs.length ? blocs.map((b, i) => <BlocLu key={i} bloc={b} titre={titre} />) : <p className="muted">Cette page est encore vide.</p>}
+      {blocs.length ? blocs.map((b, i) => <BlocLu key={i} bloc={b} titre={titre} media={media} />) : <p className="muted">Cette page est encore vide.</p>}
     </article>
   );
 }
