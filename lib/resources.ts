@@ -222,7 +222,7 @@ export const RESOURCES: Record<string, Resource> = Object.fromEntries(list.map(r
 // Menu. table vide = page dédiée ; icon = clé de components/Icon.tsx ;
 // badge : 'demandes' affiche le nombre de demandes d'adhésion à traiter
 // parent : page absente du menu (comme dans la maquette), accessible depuis la page parente qui reste surlignée
-export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes' | 'reglements'; parent?: string };
+export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes' | 'reglements' | 'messages'; parent?: string };
 // Menu, comme dans la maquette « Propositions UX » : sections titrées, sans accordéon.
 // parent : page rattachée, absente du menu (elle allume son parent). La section « Plateforme » s'affiche en bas du menu.
 export const NAV: [string, NavItem[]][] = [
@@ -246,7 +246,9 @@ export const NAV: [string, NavItem[]][] = [
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services', parent: 'ressources' },
   ]],
   ['Communication', [
+    { slug: 'messagerie', label: 'Messagerie', icon: 'chat', badge: 'messages' },
     { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns' },
+    { slug: 'etiquettes', label: 'Étiquettes', icon: 'tag' },
     { slug: 'lettre', label: 'Abonnés', icon: 'list', table: 'subscribers', parent: 'newsletter' },
     { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox', parent: 'newsletter' },
   ]],

@@ -32,7 +32,7 @@ function Lien({ i, on, n }: { i: NavItem; on: boolean; n: number }) {
 // Menu en sections titrées (Membres, Activités…), la section « Plateforme » en bas
 function Menu({ path, me, pied }: { path: string | null; me: Me | null; pied?: boolean }) {
   const isOn = matcher(path);
-  const compte = (i: NavItem) => (i.badge === 'demandes' ? me?.demandes ?? 0 : i.badge === 'reglements' ? me?.reglements ?? 0 : 0);
+  const compte = (i: NavItem) => (i.badge === 'demandes' ? me?.demandes ?? 0 : i.badge === 'reglements' ? me?.reglements ?? 0 : i.badge === 'messages' ? me?.messages ?? 0 : 0);
   return NAV.filter(([g]) => (g === PIED) === !!pied).map(([group, items]) => (
     <div key={group || 'accueil'} className="nav-sec">
       {group && !pied && <div className="nav-eyebrow">{group}</div>}

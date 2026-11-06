@@ -11,7 +11,6 @@ const plier = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerC
 const ICONE: Record<string, string> = { Membre: 'users', Contact: 'user', Événement: 'cal', Facture: 'file', Actualité: 'news', Abonné: 'mail', Conversation: 'chat' };
 const PAGES: Opt[] = [
   ...NAV.flatMap(([, items]) => items).map(i => ({ groupe: 'Pages', label: i.label, href: '/' + i.slug, icon: i.icon })),
-  { groupe: 'Pages', label: 'Messagerie', href: '/messagerie', icon: 'chat' },
   { groupe: 'Pages', label: 'Mon profil', href: '/profil', icon: 'user' },
 ];
 const ACTIONS: Opt[] = CREER.map(([icon, l, href]) => ({ groupe: 'Actions', label: `Créer : ${l.toLowerCase()}`, href, icon: 'plus' }));

@@ -49,7 +49,7 @@ export function FacturesPaiements() {
 }
 
 /* ===== Newsletter ===== */
-function EtiquettesOnglet() {
+export function EtiquettesOnglet() {
   const { cat, load } = useEtiquettes();
   const [gestion, setGestion] = useState(false);
   if (!cat) return <div className="card"><div className="skeleton"><span /><span /></div></div>;
@@ -90,7 +90,6 @@ export function NewsletterGroupe() {
     <Onglets titre="Newsletter" description="Les lettres, leurs destinataires et les personnes abonnées." onglets={[
       { cle: 'lettres', label: 'Lettres', icon: 'mail', contenu: () => <Newsletter /> },
       { cle: 'abonnes', label: 'Abonnés', icon: 'list', contenu: () => <Abonnes /> },
-      { cle: 'etiquettes', label: 'Étiquettes', icon: 'tag', contenu: () => <EtiquettesOnglet /> },
       { cle: 'envois', label: 'Envois programmés', icon: 'send', contenu: () => <ResourcePage table="outbox" /> },
       { cle: 'formulaire', label: 'Formulaire public', icon: 'external', contenu: () => <FormulairePublic /> },
     ]} />
