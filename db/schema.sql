@@ -570,3 +570,14 @@ alter table campaigns add column if not exists retires text[] not null default '
 alter table audiences add column if not exists retires text[] not null default '{}';
 alter table campaigns alter column contacts set default 'tous';
 alter table audiences alter column contacts set default 'tous';
+-- Questionnaire de maillage : les réponses de chaque membre (une clé par question : A1, B1…),
+-- la visibilité choisie par section, et le lien personnel qui permet d'y répondre sans compte
+create table if not exists maillage (
+  member_id   int primary key references members(id) on delete cascade,
+  reponses    jsonb not null default '{}',
+  jeton       text unique,
+  rempli_par  text,
+  commence_le timestamptz,
+  complete_le timestamptz,
+  maj_le      timestamptz not null default now()
+);

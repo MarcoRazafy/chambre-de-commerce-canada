@@ -1,5 +1,6 @@
 'use client';
 import Link from 'next/link';
+import { Pager, usePage } from './Pagination';
 import { useCallback, useEffect, useState } from 'react';
 import { api, imageUrl, type Row } from '@/lib/format';
 import Avatar from './Avatar';
@@ -46,6 +47,7 @@ export default function Annuaire() {
 
   const used = [...new Set((members ?? []).map(m => m.secteur_id).filter(Boolean))].sort((a, b) => (secteurs[a] ?? '').localeCompare(secteurs[b] ?? '', 'fr'));
   const shown = (members ?? []).filter(m => (!pays || m.pays === pays) && (!secteur || String(m.secteur_id) === secteur)).filter(m => !term || [m.nom, m.ville, m.activite, m.description, m.recherche, ...m.offres, ...m.besoins].join(' ').toLowerCase().includes(term.toLowerCase()));
+  const pg = usePage(shown, [term, pays, secteur]);
   return (
     <>
       {error && <div className="err">{error}</div>}
@@ -70,7 +72,7 @@ export default function Annuaire() {
       {members && members.length > 0 && shown.length === 0 && <div className="card empty-state"><b>Aucun membre ne correspond</b>
         <button className="btn sm" onClick={() => { setTerm(''); setPays(''); setSecteur(''); }}>Effacer les filtres</button></div>}
       <div className="dgrid">
-        {shown.map(m => {
+        {pg.items.map(m => {
           const cover = m.couverture_deposee ? `/api/avatar/cover/${m.id}` : imageUrl(m.couverture_url);
           const desc = m.activite || m.description;
           return (
@@ -114,6 +116,7 @@ export default function Annuaire() {
           );
         })}
       </div>
+      <Pager p={pg} quoi="membres" />
       </div>
     </>
   );

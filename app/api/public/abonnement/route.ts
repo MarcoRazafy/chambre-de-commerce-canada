@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   try {
     await q(`insert into subscribers (email, nom, source) values ($1, $2, 'Page publique')
              on conflict (email) do update set statut = 'Abonné', nom = coalesce(subscribers.nom, excluded.nom)`, [e, String(nom ?? '').trim().slice(0, 120) || null]);
-    await journal('Communication', 'Inscription à la lettre d’information', e, 'Visiteur');
+    await journal('Communication', 'Inscription à la newsletter', e, 'Visiteur');
     return Response.json({ ok: true });
   } catch (err) {
     return fail(err);

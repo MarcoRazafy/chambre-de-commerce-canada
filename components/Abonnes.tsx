@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { Pager, usePage } from './Pagination';
 import { RESOURCES } from '@/lib/resources';
 import { api, relative, type Row } from '@/lib/format';
 import { downloadCsv, parseCsv, runAction } from '@/lib/ui-actions';
@@ -51,6 +52,7 @@ export default function Abonnes() {
   const top = sources.slice(0, 3), rest = sources.slice(3).reduce((a, [, c]) => a + c, 0);
   const tagsDe = (id: number) => cat?.posees.abonnes[id] ?? [];
   const shown = all.filter(s => (!filter || s.statut === filter) && (!tag || tagsDe(s.id).includes(Number(tag))) && (!term || [s.email, s.nom, s.source].join(' ').toLowerCase().includes(term.toLowerCase())));
+  const pg = usePage(shown, [filter, term, tag]);
   const toutCoche = shown.length > 0 && shown.every(s => sel.includes(s.id));
   const cocher = (id: number) => setSel(l => (l.includes(id) ? l.filter(x => x !== id) : [...l, id]));
   const cols = R.fields.filter(f => f.list);
@@ -123,7 +125,7 @@ export default function Abonnes() {
               <ul className="sub-list" aria-label="Abonnés">
                 <li className="sub-row sub-head"><span className="sub-who"><input type="checkbox" className="sub-check" checked={toutCoche} aria-label="Tout sélectionner"
                   onChange={() => setSel(toutCoche ? sel.filter(id => !shown.some(s => s.id === id)) : [...new Set([...sel, ...shown.map(s => s.id)])])} />Abonné</span><span>Source</span><span>Inscription</span><span>Statut</span><span /></li>
-                {shown.map(s => (
+                {pg.items.map(s => (
                   <li key={s.id} className={`sub-row${s.statut !== 'Abonné' ? ' dim' : ''}`}>
                     <span className="sub-who">
                       <input type="checkbox" className="sub-check" checked={sel.includes(s.id)} onChange={() => cocher(s.id)} aria-label={`Sélectionner ${s.email}`} />
@@ -138,6 +140,7 @@ export default function Abonnes() {
                 ))}
               </ul>
             )}
+            <Pager p={pg} quoi="abonnés" />
           </section>
         </>
       )}

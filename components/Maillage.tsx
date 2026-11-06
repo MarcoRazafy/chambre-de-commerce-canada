@@ -12,7 +12,7 @@ export type Sugg = { a: { id: number; nom: string; pays: string }; b: { id: numb
 const level = (s: number) => (s >= 90 ? 'Excellente' : s >= 75 ? 'Très bonne' : 'Bonne');
 const flag = (p: string) => (p === 'CA' ? 'Canada' : 'Madagascar');
 
-// Rapprochements pertinents : seulement quand un membre a exprimé un besoin qu'un autre membre propose
+// Mises en relation suggérées : seulement quand un membre a exprimé un besoin qu'un autre membre propose
 export default function Maillage({ onCount }: { onCount?: (n: number) => void }) {
   const [sugg, setSugg] = useState<Sugg[] | null>(null);
   const [intro, setIntro] = useState<Sugg | null>(null);
@@ -24,7 +24,7 @@ export default function Maillage({ onCount }: { onCount?: (n: number) => void })
   async function ignore(s: Sugg) {
     try {
       await api('/api/connections', 'POST', { member_a: Math.min(s.a.id, s.b.id), member_b: Math.max(s.a.id, s.b.id), statut: 'ignoree' });
-      toast('Rapprochement écarté : il ne sera plus proposé.');
+      toast('Mise en relation écartée : elle ne sera plus proposée.');
       load();
     } catch (e) { setError((e as Error).message); }
   }
@@ -48,9 +48,9 @@ export default function Maillage({ onCount }: { onCount?: (n: number) => void })
     <>
       {error && <div className="err">{error}</div>}
       <section className="new-zone">
-        <div className="row between"><span className="new-label">Rapprochements pertinents{sugg && sugg.length > 0 && ` · ${sugg.length}`}</span>
-          {sugg && sugg.length > 0 && <span className="small muted">Seulement quand un membre a exprimé un besoin qu’un autre membre propose. 3 rapprochements au plus par membre.</span>}</div>
-        {sugg !== null && sugg.length === 0 ? <p className="small muted">Pas de rapprochement pertinent pour l’instant. Renseignez ce que chaque membre recherche et propose pour en voir apparaître.</p> : (
+        <div className="row between"><span className="new-label">Mises en relation suggérées{sugg && sugg.length > 0 && ` · ${sugg.length}`}</span>
+          {sugg && sugg.length > 0 && <span className="small muted">Seulement quand un membre a exprimé un besoin qu’un autre membre propose. 3 suggestions au plus par membre.</span>}</div>
+        {sugg !== null && sugg.length === 0 ? <p className="small muted">Pas de mise en relation à suggérer pour l’instant. Renseignez ce que chaque membre recherche et propose pour en voir apparaître.</p> : (
           <div className="mgrid2">
             {ordered.slice(0, nSugg).map(s => {
               const nom = (id: number) => (id === s.a.id ? s.a.nom : s.b.nom);
@@ -91,7 +91,7 @@ export default function Maillage({ onCount }: { onCount?: (n: number) => void })
             })}
           </div>
         )}
-        {ordered.length > nSugg && <button type="button" className="btn sm" onClick={() => setNSugg(n => n + 6)}>Voir d’autres rapprochements ({ordered.length - nSugg})</button>}
+        {ordered.length > nSugg && <button type="button" className="btn sm" onClick={() => setNSugg(n => n + 6)}>Voir d’autres suggestions ({ordered.length - nSugg})</button>}
       </section>
       {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); toast(t); load(); }} />}
     </>

@@ -1,5 +1,6 @@
 'use client';
 import { useCallback, useEffect, useState } from 'react';
+import { Pager, usePage } from './Pagination';
 import { RESOURCES } from '@/lib/resources';
 import { api, type Row } from '@/lib/format';
 import { downloadCsv } from '@/lib/ui-actions';
@@ -7,7 +8,6 @@ import Icon from './Icon';
 
 const R = RESOURCES.journal;
 const CATS: Record<string, string> = { 'Adhésions': 'users', Paiements: 'coin', Contenus: 'news', 'Événements': 'cal', Communication: 'chat', 'Équipe': 'team', 'Système': 'gear' };
-const PAGE = 60;
 const dayKey = (v: string) => new Date(v).toDateString();
 // « Aujourd'hui », « Hier », « Mardi 3 novembre »
 function dayLabel(v: string) {
@@ -24,7 +24,6 @@ export default function Journal() {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [cat, setCat] = useState('');
   const [term, setTerm] = useState('');
-  const [n, setN] = useState(PAGE);
   const [connexions, setConnexions] = useState(false);   // les simples connexions noient les vraies actions : masquées par défaut
   const [error, setError] = useState('');
 
@@ -34,7 +33,8 @@ export default function Journal() {
   const all = (rows ?? []).filter(r => connexions || r.titre !== 'Connexion');
   const cats = Object.keys(CATS).filter(c => all.some(r => r.categorie === c));
   const shown = all.filter(r => (!cat || r.categorie === cat) && (!term || [r.titre, r.detail, r.par].join(' ').toLowerCase().includes(term.toLowerCase())));
-  const page = shown.slice(0, n);
+  const pg = usePage(shown, [cat, term, connexions]);
+  const page = pg.items;
   const groups: [string, Row[]][] = [];
   for (const r of page) {
     const k = dayKey(r.created_at), last = groups.at(-1);
@@ -46,7 +46,7 @@ export default function Journal() {
   return (
     <>
       <div className="head og-head"><div><h1>Journal d’activité</h1><p className="muted">Qui a fait quoi, et quand.</p></div><div className="actions">
-        <label className="fs-switch jr-cnx"><input type="checkbox" className="switch" checked={connexions} onChange={e => { setConnexions(e.target.checked); setN(PAGE); }} /><span><b>Afficher aussi les connexions</b></span></label>
+        <label className="fs-switch jr-cnx"><input type="checkbox" className="switch" checked={connexions} onChange={e => { setConnexions(e.target.checked); }} /><span><b>Afficher aussi les connexions</b></span></label>
         <button className="btn" onClick={exportCsv} disabled={!shown.length}><Icon name="download" size={16} /> Exporter</button>
       </div></div>
       {error && <div className="err">{error}</div>}
@@ -55,12 +55,12 @@ export default function Journal() {
         <section className="card jr">
           <div className="dir-tools">
             <label className="search-inp dir-search"><Icon name="search" size={16} />
-              <input className="inp" placeholder="Rechercher une action, un détail, une personne…" aria-label="Rechercher dans le journal" value={term} onChange={e => { setTerm(e.target.value); setN(PAGE); }} /></label>
+              <input className="inp" placeholder="Rechercher une action, un détail, une personne…" aria-label="Rechercher dans le journal" value={term} onChange={e => { setTerm(e.target.value); }} /></label>
             <span className="small muted dir-count">{shown.length} action{shown.length > 1 ? 's' : ''}</span>
           </div>
           <div className="jr-cats" role="group" aria-label="Catégorie">
-            <button type="button" className={!cat ? 'on' : ''} aria-pressed={!cat} onClick={() => { setCat(''); setN(PAGE); }}>Tout · {all.length}</button>
-            {cats.map(c => <button type="button" key={c} className={cat === c ? 'on' : ''} aria-pressed={cat === c} onClick={() => { setCat(cat === c ? '' : c); setN(PAGE); }}>
+            <button type="button" className={!cat ? 'on' : ''} aria-pressed={!cat} onClick={() => { setCat(''); }}>Tout · {all.length}</button>
+            {cats.map(c => <button type="button" key={c} className={cat === c ? 'on' : ''} aria-pressed={cat === c} onClick={() => { setCat(cat === c ? '' : c); }}>
               <Icon name={CATS[c]} size={14} />{c} · {all.filter(r => r.categorie === c).length}</button>)}
           </div>
 
@@ -81,7 +81,7 @@ export default function Journal() {
               </ol>
             </div>
           ))}
-          {shown.length > n && <button type="button" className="btn sm" style={{ alignSelf: 'center' }} onClick={() => setN(x => x + PAGE)}>Voir plus ({shown.length - n} restantes)</button>}
+          <Pager p={pg} quoi="actions" />
         </section>
       )}
     </>

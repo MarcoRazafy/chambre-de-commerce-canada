@@ -21,6 +21,14 @@ export default function InvoicePreview({ id }: { id: number }) {
     } catch (e) { setError((e as Error).message); }
   }, [id]);
   useEffect(() => { load(); }, [load]);
+  // « PDF » depuis la liste : ouvre la facture puis la fenêtre d'impression (Enregistrer en PDF)
+  const pret = !!d;
+  useEffect(() => {
+    if (!pret || new URLSearchParams(window.location.search).get('imprimer') !== '1') return;
+    const url = new URL(window.location.href); url.searchParams.delete('imprimer'); window.history.replaceState(null, '', url);
+    const t = setTimeout(() => window.print(), 300);
+    return () => clearTimeout(t);
+  }, [pret]);
 
   async function act(action: string, question?: string, ask?: string) {
     if (question && !confirm(question)) return;
@@ -37,7 +45,7 @@ export default function InvoicePreview({ id }: { id: number }) {
         <div><h1>Facture <em>{inv.numero}</em></h1></div>
         <div className="actions">
           {ROW_ACTIONS.invoices.filter(a => a.show(inv)).map(a => <button key={a.action} className="btn" onClick={() => act(a.action, a.confirm, a.ask)}>{a.label}</button>)}
-          <button className="btn cta" onClick={() => window.print()}>Imprimer / PDF</button>
+          <button className="btn cta" onClick={() => window.print()}>Télécharger en PDF</button>
         </div>
       </div>
       {error && <div className="err no-print">{error}</div>}

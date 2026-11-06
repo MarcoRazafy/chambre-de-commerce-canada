@@ -1,5 +1,6 @@
 import { q, fail } from '@/lib/db';
 import { guard } from '@/lib/auth';
+import { texteDemande, type Reponses } from '@/lib/maillage';
 
 type Member = { id: number; nom: string; pays: string; besoins: string[]; offres: string[]; interets: string[]; texte: string };
 
@@ -49,9 +50,12 @@ export async function GET(req: Request) {
   if (u instanceof Response) return u;
   const only = Number(new URL(req.url).searchParams.get('member')) || null;
   try {
-    const ms = await q<Member>(`select id, nom, pays, besoins, offres, interets,
-                                       concat_ws(' ', recherche, motivation) as texte
-                                from members where statut in ('a_jour', 'attente', 'retard') order by id`);
+    // Ce que le membre cherche : sa fiche, et ses réponses au questionnaire de maillage (section C)
+    const ms = (await q<Member & { reponses: Reponses | null }>(`select m.id, m.nom, m.pays, m.besoins, m.offres, m.interets,
+                                       concat_ws(' ', m.recherche, m.motivation) as texte, mg.reponses
+                                from members m left join maillage mg on mg.member_id = m.id
+                                where m.statut in ('a_jour', 'attente', 'retard') order by m.id`))
+      .map(({ reponses, ...m }) => ({ ...m, texte: [m.texte, reponses ? texteDemande(reponses) : ''].join(' ') }));
     const done = new Set((await q<{ a: number; b: number }>('select member_a as a, member_b as b from connections')).map(c => [c.a, c.b].sort().join('|')));
     const all = [];
     for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) {

@@ -100,7 +100,7 @@ async function Content() {
   }
   if (nonLus) todo.push({ icon: 'chat', tone: 'violet', titre: `${pl(nonLus, 'conversation')} non lue${nonLus > 1 ? 's' : ''}`, detail: 'Dans la messagerie', href: '/messagerie' });
   if (jamais.length) todo.push({ icon: 'user', tone: 'grey', titre: `${pl(jamais.length, 'compte')} d’équipe jamais connecté${jamais.length > 1 ? 's' : ''}`,
-    detail: jamais.slice(0, 3).map(j => j.fonction || j.nom).join(', ') + (jamais.length > 3 ? '…' : ''), href: '/equipe' });
+    detail: jamais.slice(0, 3).map(j => j.fonction || j.nom).join(', ') + (jamais.length > 3 ? '…' : ''), href: '/abonnement' });
 
   const months = last12();
   const encData: Point[] = months.map(mo => {

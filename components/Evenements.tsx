@@ -1,5 +1,6 @@
 'use client';
 import { useNouveau } from '@/lib/useNouveau';
+import { Pager, usePage } from './Pagination';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
 import { RESOURCES } from '@/lib/resources';
@@ -69,7 +70,8 @@ export default function Evenements() {
   const past = all.filter(isPast).sort((a, b) => d(b.date_debut).getTime() - d(a.date_debut).getTime());
   const base = period === 'avenir' ? upcoming : period === 'passes' ? past : [...upcoming, ...past];
   const shown = base.filter(e => (!format || e.format === format) && (!term || [e.titre, e.lieu, e.description].join(' ').toLowerCase().includes(term.toLowerCase())));
-  const cards = shown;
+  const pg = usePage(shown, [period, format, term]);
+  const cards = pg.items;
   const cols = R.fields.filter(f => f.list);
   const exportCsv = () => downloadCsv(R.title, cols.map(f => f.label), shown.map(e => cols.map(f => display(f, e, {}, t => RESOURCES[t].label))));
 
@@ -135,6 +137,7 @@ export default function Evenements() {
               })}
             </div>
           )}
+          <Pager p={pg} quoi="événements" />
         </>
       )}
       {editing && <EditModal table="events" row={editing} refs={{}} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}

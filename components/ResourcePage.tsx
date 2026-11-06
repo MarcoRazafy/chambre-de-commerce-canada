@@ -1,5 +1,6 @@
 'use client';
 import { useNouveau } from '@/lib/useNouveau';
+import { Pager, usePage } from './Pagination';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -14,6 +15,25 @@ import FieldInput from './FieldInput';
 import ModalBackdrop from './ModalBackdrop';
 
 const labelOf = (table: string) => RESOURCES[table].label;
+// État vide : ce que la page contiendra, et quoi faire
+const VIDE: Record<string, [string, string]> = {
+  rendez_vous: ['Aucun rendez-vous prévu', 'Les rendez-vous pris par les membres depuis leur espace, ou ceux que vous planifiez, apparaîtront ici avec leur date et leur lien de visio.'],
+  rdv_types: ['Aucun type de rendez-vous', 'Créez les rendez-vous que les membres peuvent réserver (ex. « Diagnostic export, 30 min ») : durée, lieu ou visio.'],
+  connections: ['Aucune mise en relation envoyée', 'Ouvrez l’onglet « Suggestions » : quand vous présentez deux membres, la mise en relation est gardée ici.'],
+  outbox: ['Aucun envoi programmé', 'Les courriels programmés (newsletters, rappels d’événements, relances) attendent ici leur date d’envoi.'],
+  services: ['Aucun service', 'Ajoutez les services que la chambre propose aux membres ; laissez le prix vide s’il est inclus dans l’adhésion.'],
+  formules: ['Aucune formule', 'Créez les formules d’adhésion et leur cotisation annuelle.'],
+  secteurs: ['Aucun secteur', 'Ajoutez les secteurs d’activité utilisés dans l’annuaire et pour cibler la newsletter.'],
+  event_registrations: ['Aucune inscription', 'Les inscriptions aux événements, faites par les membres ou ajoutées par l’équipe, apparaîtront ici.'],
+};
+// Le bouton d'ajout dit ce qu'il crée (au lieu d'un « + Ajouter » générique)
+const AJOUT: Record<string, string> = {
+  members: 'Ajouter un membre', contacts: 'Ajouter un contact', connections: 'Nouvelle mise en relation', formules: 'Ajouter une formule',
+  secteurs: 'Ajouter un secteur', events: 'Nouvel événement', event_registrations: 'Ajouter une inscription', agenda_rappels: 'Ajouter un rappel',
+  rdv_types: 'Ajouter un type de rendez-vous', rendez_vous: 'Nouveau rendez-vous', news: 'Nouvelle actualité', services: 'Ajouter un service',
+  campaigns: 'Nouvelle newsletter', subscribers: 'Ajouter un abonné', outbox: 'Programmer un envoi', invoices: 'Nouvelle facture',
+  reglements: 'Ajouter un règlement', team_users: 'Ajouter un utilisateur', platform_invoices: 'Ajouter une facture',
+};
 
 // Valeur de tri d'une cellule : nombre pour les montants, dates et cases à cocher, texte affiché sinon
 function sortKey(f: Field, row: Row, refs: Record<string, Row[]>): number | string | null {
@@ -98,13 +118,14 @@ export default function ResourcePage({ table, bare, preset }: Props) {
         : sort.dir * (typeof a.k === 'number' && typeof b.k === 'number' ? a.k - b.k : String(a.k).localeCompare(String(b.k), 'fr', { numeric: true })),
     ).map(x => x.row);
   }, [rows, sel, term, refs, cols, filterFields, sort]);
+  const pg = usePage(shown, [term, sel, sort]);
   const filtered = !!term || Object.values(sel).some(Boolean);
   const toggleSort = (col: string) => setSort(s => (s?.col === col ? { col, dir: s.dir === 1 ? -1 : 1 } : { col, dir: 1 }));
   const open = (row: Row) => (DETAIL[table] ? router.push(`/${DETAIL[table]}/${row.id}`) : setEditing(row));
 
   const exportCsv = () => downloadCsv(r.title, cols.map(f => f.label), shown.map(row => cols.map(f => display(f, row, refs, labelOf))));
   const actions = ROW_ACTIONS[table] ?? [];
-  const add = <button className={bare ? 'btn sm' : 'btn cta'} onClick={() => setEditing({ ...preset })}>+ Ajouter</button>;
+  const add = <button className={bare ? 'btn sm' : 'btn cta'} onClick={() => setEditing({ ...preset })}><Icon name="plus" size={bare ? 14 : 16} /> {AJOUT[table] ?? 'Ajouter'}</button>;
   const tools = (
     <>
       {!bare && RELATED[table]?.map(([href, label]) => <Link key={href} className="btn" href={href}>{label}</Link>)}
@@ -150,8 +171,9 @@ export default function ResourcePage({ table, bare, preset }: Props) {
               <b>Aucun résultat{term ? ` pour « ${term} »` : ''}</b>
               <button className="btn sm" onClick={() => { setTerm(''); setSel({}); }}>Effacer la recherche et les filtres</button>
             </> : <>
-              <b>Rien ici pour le moment</b>
-              <button className="btn sm cta" onClick={() => setEditing({ ...preset })}>+ Ajouter</button>
+              <b>{VIDE[table]?.[0] ?? `Aucun élément dans « ${r.title} »`}</b>
+              <p className="small muted" style={{ maxWidth: '52ch' }}>{VIDE[table]?.[1] ?? 'Ajoutez le premier : il apparaîtra ici.'}</p>
+              <button className="btn sm cta" onClick={() => setEditing({ ...preset })}><Icon name="plus" size={14} /> {AJOUT[table] ?? 'Ajouter'}</button>
             </>}
           </div>
         ) : (
@@ -168,7 +190,7 @@ export default function ResourcePage({ table, bare, preset }: Props) {
                 <th><span className="sr-only">Actions</span></th>
               </tr></thead>
               <tbody>
-                {shown.map((row, n) => (
+                {pg.items.map((row, n) => (
                   // Un clic sur la ligne ouvre la fiche, ou le formulaire s'il n'y a pas de fiche (les boutons et liens gardent leur rôle)
                   // Au clavier : Tab jusqu'à la ligne puis Entrée
                   <tr key={row.id} style={{ '--i': Math.min(n, 14) } as React.CSSProperties} className="clickable" tabIndex={0}
@@ -191,6 +213,7 @@ export default function ResourcePage({ table, bare, preset }: Props) {
             </table>
           </div>
         )}
+        <Pager p={pg} />
       </div>
       {editing && <EditModal table={table} row={editing} refs={refs} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); window.dispatchEvent(new Event('cc:refresh')); }}
         onDelete={editing.id ? () => { const row = editing; setEditing(null); remove(row); } : undefined} />}

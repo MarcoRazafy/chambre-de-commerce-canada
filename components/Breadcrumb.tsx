@@ -2,8 +2,7 @@
 import Link from 'next/link';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { Fragment } from 'react';
-import { GROUP_ICON, NAV, type NavItem } from '@/lib/resources';
-import Icon from './Icon';
+import { NAV, type NavItem } from '@/lib/resources';
 
 // Pages hors menu
 const EXTRA: Record<string, { label: string; icon: string }> = { profil: { label: 'Mon profil', icon: 'user' }, recherche: { label: 'Recherche', icon: 'search' }, messagerie: { label: 'Messagerie', icon: 'chat' } };
@@ -25,7 +24,6 @@ function trail(path: string, q: string | null): { icon: string; crumbs: Crumb[] 
     return { icon: extra?.icon ?? 'dash', crumbs };
   }
   const out: Crumb[] = [];
-  if (GROUP_ICON[hit.group]) out.push({ label: hit.group });      // rubrique dépliable du menu : simple repère, sans lien
   const parent = hit.item.parent && ITEMS.get(hit.item.parent);
   if (parent) out.push({ label: parent.item.label, href: `/${parent.item.slug}` });
   out.push({ label: hit.item.label, href: slug ? `/${slug}` : '/' });
@@ -38,10 +36,11 @@ function trail(path: string, q: string | null): { icon: string; crumbs: Crumb[] 
 export default function Breadcrumb() {
   const path = usePathname();
   const q = useSearchParams().get('q');
-  const { icon, crumbs } = trail(path, q);
+  const { crumbs } = trail(path, q);
+  // Comme la maquette : pas de fil d'Ariane sur les pages du menu, seulement sur les fiches et sous-pages (un maillon cliquable)
+  if (!crumbs.some(c => c.href)) return null;
   return (
     <nav className="crumbs" aria-label="Fil d’Ariane">
-      <span className="tile-ic xs crumb-ic"><Icon name={icon} size={14} fill /></span>
       {crumbs.map((c, i) => (
         <Fragment key={i}>
           {i > 0 && <span className="crumb-sep" aria-hidden="true">›</span>}

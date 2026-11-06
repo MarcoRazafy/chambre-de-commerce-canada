@@ -5,7 +5,8 @@ import { api, type Row } from '@/lib/format';
 import { toast } from '@/lib/toast';
 import Icon from './Icon';
 import Onglets from './Onglets';
-import Paiements from './Paiements';
+import Paiements, { FacturesKpis, NouvelleFacture, exporterFactures, useFactures } from './Paiements';
+import { useNouveau } from '@/lib/useNouveau';
 import Reglements from './Reglements';
 import Newsletter from './Newsletter';
 import Abonnes from './Abonnes';
@@ -13,6 +14,7 @@ import Calendar from './Calendar';
 import ResourcePage from './ResourcePage';
 import Bibliotheque from './ressources/Bibliotheque';
 import Maillage from './Maillage';
+import MaillageSuivi from './maillage/MaillageSuivi';
 import { GestionEtiquettes, Pastille, useEtiquettes } from './etiquettes/Etiquettes';
 
 // Pages réunies par la maquette « Propositions UX » : une entrée du menu, plusieurs onglets.
@@ -26,7 +28,7 @@ function Relances() {
   if (!r) return <div className="card"><div className="skeleton"><span /><span /></div></div>;
   return (
     <section className="card">
-      <div className="card-h"><h2>Calendrier des relances</h2><Link className="btn sm" href="/facturation"><Icon name="gear" size={14} /> Modifier</Link></div>
+      <div className="card-h"><h2>Calendrier des relances</h2><Link className="btn sm" href="/parametres"><Icon name="gear" size={14} /> Modifier</Link></div>
       <div className="steps" aria-label="Relances actives">
         {ETAPES.map(([k, l]) => <span key={k} className={r[k] ? 'on' : ''} title={r[k] ? 'Relance envoyée' : 'Relance désactivée'}>{l}</span>)}
       </div>
@@ -37,14 +39,25 @@ function Relances() {
 }
 
 export function FacturesPaiements() {
+  const f = useFactures();
   const [n, setN] = useState<number | undefined>(undefined);
+  const [nouvelle, setNouvelle] = useState<Row | null>(null);
+  useNouveau(() => setNouvelle({ objet: 'cotisation', devise: 'MGA' }));
   useEffect(() => { api<Row[]>('/api/reglements').then(l => setN(l.filter(x => x.statut === 'annoncé').length)).catch(() => {}); }, []);
+  const retard = f.rows?.filter(x => x.statut === 'retard').length;
   return (
-    <Onglets titre="Factures & paiements" description="Factures, règlements annoncés par les membres et relances automatiques." onglets={[
-      { cle: 'factures', label: 'Factures', icon: 'file', contenu: () => <Paiements /> },
-      { cle: 'reglements', label: 'Règlements à vérifier', icon: 'coin', n, alerte: true, contenu: () => <Reglements /> },
-      { cle: 'relances', label: 'Relances', icon: 'bell', contenu: () => <Relances /> },
-    ]} />
+    <>
+      <Onglets titre="Factures & paiements" entete={<FacturesKpis rows={f.rows} />} actions={<>
+        <button className="btn" onClick={() => exporterFactures(f)} disabled={!f.rows?.length}><Icon name="download" size={16} /> Exporter</button>
+        <button className="btn cta" onClick={() => setNouvelle({ objet: 'cotisation', devise: 'MGA' })}><Icon name="plus" size={16} /> Nouvelle facture</button>
+      </>} onglets={[
+        { cle: 'factures', label: 'Factures', n: f.rows?.length, contenu: () => <Paiements f={f} /> },
+        { cle: 'reglements', label: 'Règlements à vérifier', n, alerte: true, contenu: () => <Reglements /> },
+        { cle: 'retard', label: 'En retard', n: retard, alerte: true, contenu: () => <Paiements f={f} filtre="retard" /> },
+        { cle: 'relances', label: 'Relances', contenu: () => <Relances /> },
+      ]} />
+      {nouvelle && <NouvelleFacture f={f} row={nouvelle} onClose={() => setNouvelle(null)} />}
+    </>
   );
 }
 
@@ -121,9 +134,10 @@ export function RessourcesGroupe() {
 export function MisesEnRelation() {
   const [n, setN] = useState<number | undefined>(undefined);
   return (
-    <Onglets titre="Mises en relation" description="Des rapprochements entre membres, seulement quand l’un a exprimé un besoin que l’autre propose." onglets={[
+    <Onglets titre="Mises en relation" description="Des mises en relation entre membres, seulement quand l’un a exprimé un besoin que l’autre propose." onglets={[
       { cle: 'suggestions', label: 'Suggestions', icon: 'spark', n, contenu: () => <Maillage onCount={setN} /> },
       { cle: 'envoyees', label: 'Envoyées et écartées', icon: 'send', contenu: () => <ResourcePage table="connections" /> },
+      { cle: 'questionnaire', label: 'Questionnaire de maillage', icon: 'list', contenu: () => <MaillageSuivi /> },
     ]} actions={<Link className="btn" href="/annuaire"><Icon name="book" size={16} /> Annuaire</Link>} />
   );
 }

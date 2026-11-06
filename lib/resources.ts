@@ -48,7 +48,7 @@ const list: Resource[] = [
     { name: 'couverture_url', label: 'Image de couverture (adresse)', hint: 'https://… Affichée en haut de la carte dans l’annuaire.' },
     { name: 'couverture_x', label: 'Cadrage horizontal de la couverture (%)', type: 'number', hint: '0 = gauche, 50 = centre, 100 = droite. Se règle aussi en faisant glisser la couverture sur la fiche.' },
     { name: 'couverture_y', label: 'Cadrage vertical de la couverture (%)', type: 'number', hint: '0 = haut de l’image, 50 = centre, 100 = bas.' },
-    { name: 'besoins', label: 'Besoins', type: 'tags', hint: 'Séparés par des virgules. Servent à suggérer des rapprochements.' },
+    { name: 'besoins', label: 'Besoins', type: 'tags', hint: 'Séparés par des virgules. Servent à suggérer des mises en relation.' },
     { name: 'offres', label: 'Produits & services proposés', type: 'tags', hint: 'Séparés par des virgules.' },
     { name: 'interets', label: 'Centres d’intérêt', type: 'tags', hint: 'Séparés par des virgules.' },
     { name: 'renouvellement_auto', label: 'Renouvellement automatique', type: 'bool' },
@@ -151,7 +151,7 @@ const list: Resource[] = [
     { name: 'taux_clic', label: 'Clics (%)', type: 'number', list: true },
     { name: 'contenu', label: 'Contenu', type: 'textarea', hint: 'Texte de la lettre. Un lien de désabonnement est ajouté automatiquement pour les abonnés.' },
   ] },
-  { table: 'subscribers', title: 'Abonnés à la lettre', label: 'email', orderBy: 'date_inscription desc', fields: [
+  { table: 'subscribers', title: 'Abonnés à la newsletter', label: 'email', orderBy: 'date_inscription desc', fields: [
     { name: 'email', label: 'Courriel', required: true, list: true },
     { name: 'nom', label: 'Nom', list: true },
     { name: 'source', label: 'Source', list: true },
@@ -222,7 +222,7 @@ export const RESOURCES: Record<string, Resource> = Object.fromEntries(list.map(r
 // Menu. table vide = page dédiée ; icon = clé de components/Icon.tsx ;
 // badge : 'demandes' affiche le nombre de demandes d'adhésion à traiter
 // parent : page absente du menu (comme dans la maquette), accessible depuis la page parente qui reste surlignée
-export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes' | 'reglements' | 'messages'; parent?: string };
+export type NavItem = { slug: string; label: string; icon: string; table?: string; badge?: 'demandes' | 'reglements' | 'messages'; parent?: string; admin?: boolean };
 // Menu, comme dans la maquette « Propositions UX » : sections titrées, sans accordéon.
 // parent : page rattachée, absente du menu (elle allume son parent). La section « Plateforme » s'affiche en bas du menu.
 export const NAV: [string, NavItem[]][] = [
@@ -259,6 +259,7 @@ export const NAV: [string, NavItem[]][] = [
   ['Plateforme', [
     { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star' },
     { slug: 'parametres', label: 'Paramètres', icon: 'gear' },
+    { slug: 'diagnostic', label: 'Diagnostic complet', icon: 'bulb', admin: true },
     { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users', parent: 'parametres' },
     { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal', parent: 'parametres' },
     { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear', parent: 'parametres' },

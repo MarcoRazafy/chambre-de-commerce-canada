@@ -15,9 +15,10 @@ import Notes from './member/Notes';
 import Contacts from './member/Contacts';
 import Adhesion, { Factures, Historique } from './member/Adhesion';
 import { Choix, Menu } from '../ressources/Fenetres';
+import MaillageMembre from '../maillage/MaillageMembre';
 
 // Onglets de la fiche (maquette « Propositions UX ») : 15 blocs sur une seule page → 4 onglets
-const ONGLETS = [['profil', 'Profil'], ['adhesion', 'Adhésion & factures'], ['activite', 'Activité'], ['notes', 'Notes de l’équipe']] as const;
+const ONGLETS = [['profil', 'Profil'], ['adhesion', 'Adhésion & factures'], ['activite', 'Activité'], ['maillage', 'Maillage'], ['notes', 'Notes de l’équipe']] as const;
 type Onglet = typeof ONGLETS[number][0];
 
 type Flow = { tag: string; from: number; to: number };
@@ -252,7 +253,7 @@ export default function MemberDetail({ id }: { id: number }) {
         <aside className="mdetail-side">
           <Adhesion m={m} formules={refs.formules ?? []} invoices={invoices} onChanged={load} />
           <section className="card">
-            <div className="row between"><h2>Rapprochements suggérés</h2>{sugg.length > 0 && <span className="chip c-green">{sugg.length}</span>}</div>
+            <div className="row between"><h2>Mises en relation suggérées</h2>{sugg.length > 0 && <span className="chip c-green">{sugg.length}</span>}</div>
             {sugg.length === 0 ? <p className="small muted">Aucune suggestion pour ce membre. Renseignez ce qu’il propose et recherche pour en obtenir.</p> : (
               <ul className="msugg-list">
                 {sugg.slice(0, nSugg).map(s => {
@@ -311,6 +312,7 @@ export default function MemberDetail({ id }: { id: number }) {
         </>
       )}
 
+      {onglet === 'maillage' && <MaillageMembre memberId={id} />}
       {onglet === 'notes' && <div className="mnotes-tab"><Notes memberId={id} meId={meId} version={v} /></div>}
 
       {editing && <EditModal table="members" row={m} refs={refs} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}

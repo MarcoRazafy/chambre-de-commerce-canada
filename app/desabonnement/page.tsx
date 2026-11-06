@@ -15,9 +15,9 @@ export default function DesabonnementPage() {
 
   return (
     <PublicCard title={<>Se <em>désabonner</em></>}>
-      {state === 'ok' ? <p>C’est fait : vous ne recevrez plus la lettre d’information.</p> : (
+      {state === 'ok' ? <p>C’est fait : vous ne recevrez plus la newsletter.</p> : (
         <>
-          <p className="small muted">Vous ne recevrez plus la lettre d’information de la Chambre.</p>
+          <p className="small muted">Vous ne recevrez plus la newsletter de la Chambre.</p>
           {state && <div className="err">{state}</div>}
           <button className="btn cta" onClick={confirm} style={{ justifyContent: 'center' }}>Confirmer le désabonnement</button>
         </>

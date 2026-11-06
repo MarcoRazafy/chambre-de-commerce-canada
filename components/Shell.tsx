@@ -36,7 +36,7 @@ function Menu({ path, me, pied }: { path: string | null; me: Me | null; pied?: b
   return NAV.filter(([g]) => (g === PIED) === !!pied).map(([group, items]) => (
     <div key={group || 'accueil'} className="nav-sec">
       {group && !pied && <div className="nav-eyebrow">{group}</div>}
-      {items.filter(i => i.parent === undefined).map(i => <Lien key={i.slug} i={i} on={isOn(i)} n={compte(i)} />)}
+      {items.filter(i => i.parent === undefined && (!i.admin || me?.user.role === 'Administrateur')).map(i => <Lien key={i.slug} i={i} on={isOn(i)} n={compte(i)} />)}
     </div>
   ));
 }
@@ -94,15 +94,12 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   }
 
   const org = me?.org ?? 'CanCham Madagascar';
-  // Sigle du logo : les majuscules du premier mot (« CanCham » → CC), sinon les initiales
-  const premier = org.split(/\s+/)[0] ?? '', majs = premier.replace(/[^A-ZÀ-Ý]/g, '');
-  const sigle = (majs.length >= 2 ? majs : org.split(/\s+/).map(w => w[0]).join('')).slice(0, 2).toUpperCase() || 'CC';
   return (
     <div className={`shell${collapsed ? ' collapsed' : ''}`}>
       <div className="app">
         <aside className={`side${open ? ' open' : ''}`} id="side" aria-label="Menu principal">
           <div className="org" title={org}>
-            <span className="org-logo" aria-hidden="true">{sigle}</span>
+            <img className="org-mark" src="/logo-mark.png" alt="L’Alliée Virtuelle" width={34} height={24} />
             <div className="lbl"><b>{org}</b><span>propulsé par L’Alliée Virtuelle</span></div>
           </div>
           <nav className="nav" aria-label="Pages">

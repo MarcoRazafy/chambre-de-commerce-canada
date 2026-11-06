@@ -34,7 +34,7 @@ export function isoLocal(v: string) {
 export function display(f: Field, row: Row, refs: Record<string, Row[]>, labelOf: (table: string) => string) {
   const v = row[f.name];
   if (f.type === 'lignes') return money(total(v), row.devise);
-  if (v == null || v === '') return '—';
+  if (v == null || v === '') return f.name === 'prix' ? 'Inclus' : '—';   // service sans prix : inclus dans l'adhésion
   switch (f.type) {
     case 'bool': return v ? 'Oui' : 'Non';
     case 'date': return new Date(v + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });

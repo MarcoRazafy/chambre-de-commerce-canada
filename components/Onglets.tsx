@@ -6,7 +6,8 @@ export type Onglet = { cle: string; label: string; icon?: string; n?: number; al
 
 // Page à onglets de la maquette « Propositions UX » : titre, description, onglets.
 // L'onglet ouvert est gardé dans l'adresse (?onglet=…) ; seul son contenu est chargé.
-export default function Onglets({ titre, description, onglets, actions }: { titre: string; description?: string; onglets: Onglet[]; actions?: ReactNode }) {
+// « entete » : contenu commun à tous les onglets, entre le titre et les onglets (chiffres clés…)
+export default function Onglets({ titre, description, onglets, actions, entete }: { titre: string; description?: string; onglets: Onglet[]; actions?: ReactNode; entete?: ReactNode }) {
   const [cur, setCur] = useState(onglets[0].cle);
   const lire = useCallback(() => {
     const o = new URLSearchParams(window.location.search).get('onglet');
@@ -28,6 +29,7 @@ export default function Onglets({ titre, description, onglets, actions }: { titr
   return (
     <>
       <div className="head og-head"><div><h1>{titre}</h1>{description && <p className="muted">{description}</p>}</div>{actions && <div className="actions">{actions}</div>}</div>
+      {entete}
       <div className="tabs og-tabs" role="tablist" aria-label={titre}>
         {onglets.map(o => (
           <button key={o.cle} type="button" role="tab" aria-selected={o.cle === actif.cle} className={o.cle === actif.cle ? 'on' : ''} onClick={() => ouvrir(o.cle)}>

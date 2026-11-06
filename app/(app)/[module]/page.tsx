@@ -22,6 +22,7 @@ const CUSTOM: Record<string, () => React.ReactNode> = {
 const ONGLET: Record<string, string> = {
   reglements: '/paiements?onglet=reglements', lettre: '/newsletter?onglet=abonnes', envois: '/newsletter?onglet=envois',
   'types-rendez-vous': '/rendez-vous?onglet=types', services: '/ressources?onglet=services',
+  equipe: '/abonnement', journal: '/parametres?onglet=journal', formules: '/parametres?onglet=formules', secteurs: '/parametres?onglet=secteurs',
 };
 
 // Les paramètres d'URL sont lus dans un composant sous <Suspense> : l'enveloppe de la page s'affiche tout de suite

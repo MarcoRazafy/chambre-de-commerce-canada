@@ -5,7 +5,7 @@ import {
   FolderLock, FolderPlus, FolderOpen, Copy, Scissors, ClipboardText, ArrowUp, ArrowDown, DotsSixVertical, TextAlignLeft, TextAlignCenter, TextAlignRight,
   TextB, TextItalic, TextUnderline, LinkSimple, ListBullets, ListNumbers, TextH, TextT, Palette, Eye, Books, Rows, Lock, CaretRight, UploadSimple,
   House, Pause, SpeakerHigh, SpeakerSlash, FilePdf, FileDoc, FileVideo, FileImage, Article, ArrowLineUp, ArrowLineDown, CheckSquare, ArrowSquareOut,
-  MapPin, PaperPlaneTilt, Play, ShareFat, ThumbsUp, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
+  Lightbulb, MapPin, PaperPlaneTilt, Play, ShareFat, ThumbsUp, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 
@@ -15,7 +15,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   chat: ChatCircle, mail: EnvelopeSimple, list: UserList, file: Receipt, coin: Coins, gear: GearSix,
   star: CreditCard, spark: Handshake, send: PaperPlaneTilt, bell: Bell, plus: Plus, userplus: UserPlus,
   alert: WarningCircle, card: IdentificationCard, tag: Tag, menu: List, search: MagnifyingGlass,
-  ok: CheckCircle, new: PlusCircle, minus: MinusCircle, close: X,
+  bulb: Lightbulb, ok: CheckCircle, new: PlusCircle, minus: MinusCircle, close: X,
   compose: NotePencil, fav: Star, info: Info, image: ImageIcon, video: VideoCamera, attach: Paperclip, smile: Smiley, more: DotsThree,
   minimize: Minus, open: ArrowsOut, back: ArrowLeft, archive: Archive, trash: Trash, doc: FileText, download: DownloadSimple,
   inbound: ArrowBendDownLeft, group: UsersThree, edit: PencilSimple, logout: SignOut,

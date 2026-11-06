@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 // Première barrière : sans cookie de session, on renvoie vers /connexion.
 // La validité de la session est vérifiée ensuite par chaque route (lib/auth.ts).
-const PUBLIC = ['/connexion', '/inscription', '/desabonnement', '/api/auth/', '/api/public/', '/api/cron'];
+const PUBLIC = ['/connexion', '/inscription', '/desabonnement', '/questionnaire', '/api/auth/', '/api/public/', '/api/cron'];
 
 export function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
