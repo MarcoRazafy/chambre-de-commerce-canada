@@ -122,7 +122,7 @@ export default function ResourcePage({ table, bare, preset }: Props) {
   return (
     <>
       {!bare && (
-        <div className="head page-tools"><div className="actions">{tools}</div></div>
+        <div className="head og-head"><div><h1>{r.title}</h1></div><div className="actions">{tools}</div></div>
       )}
       {error && <div className="err">{error}</div>}
       <div className="card">

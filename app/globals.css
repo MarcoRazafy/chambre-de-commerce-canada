@@ -2185,3 +2185,54 @@ kbd{font:600 .7rem var(--f);border:1px solid var(--line);border-radius:5px;paddi
 .shell.collapsed .side{align-items:stretch;padding:14px 0 12px}
 .shell.collapsed .side>.nav,.shell.collapsed .side-foot{padding-inline:10px}
 .shell.collapsed .nav-i.has-cnt::after{right:8px;top:5px}
+/* Pages à onglets */
+.og-head{align-items:flex-end}
+.og-tabs{margin-top:-4px}
+.og-panel{display:flex;flex-direction:column;gap:18px;min-width:0}
+.og-panel .page-tools{margin-top:0!important;padding-bottom:0;pointer-events:auto}
+/* Dans un onglet, seul le titre de la page regroupée s'affiche ; les actions de la page incluse restent */
+.og-panel .og-head>div:first-child:not(.actions){display:none}
+.og-panel .og-head{justify-content:flex-end}
+.steps{display:flex;gap:6px;flex-wrap:wrap}
+.steps span{font-size:.74rem;font-weight:700;padding:3px 10px;border-radius:99px;border:1px solid var(--line);color:var(--muted)}
+.steps span.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.etq-table li{display:grid;grid-template-columns:minmax(0,1fr) 100px 100px;gap:12px;align-items:center;padding:10px;border-bottom:1px solid var(--line)}
+.etq-table li:last-child{border-bottom:0}
+.tabs{overflow-y:hidden}
+.nav-i{gap:10px;padding-right:8px}
+.cnt{min-width:18px;height:18px;padding:0 5px;margin-left:4px}
+/* Pagination des listes */
+.pager{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);padding-top:4px}
+.pager .row{gap:6px}
+.ftabs{margin-top:-4px}
+.mnotes-tab{max-width:820px}
+.mhero-actions .rmenu .nl-icon{width:36px;min-height:36px;border:1px solid var(--line);background:var(--surface)}
+/* Le menu « ⋯ » de la fiche dépasse du bandeau : le bandeau ne coupe plus ce qui dépasse, la couverture garde ses coins arrondis */
+.mhero{overflow:visible}
+.mhero-cover{border-radius:var(--r) var(--r) 0 0}
+.ev-rappels{display:flex;flex-direction:column;gap:5px;padding:0 16px 12px}
+.ev-rappels-l{display:flex;flex-wrap:wrap;gap:5px}
+.ev-rap{font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;background:var(--green-soft);color:var(--green);white-space:nowrap}
+.ev-rap.sent{background:var(--surface-2);color:var(--muted);border:1px solid var(--line)}
+.fplus{position:relative;display:inline-flex}
+.fplus .fchip{display:inline-flex;align-items:center;gap:4px}
+.fplus-pop{position:absolute;top:calc(100% + 6px);left:0;z-index:30;display:flex;flex-direction:column;min-width:170px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg)}
+.fplus-pop button{border:0;background:none;text-align:left;padding:8px 10px;border-radius:8px;font:inherit;font-size:.86rem;color:var(--ink);cursor:pointer}
+.fplus-pop button:hover{background:var(--surface-2)}
+
+.jr-cnx{padding:0;border:0;background:none;gap:8px}
+.jr-cnx b{font-size:.84rem;font-weight:600}
+.tbl{position:relative}   /* les textes réservés aux lecteurs d’écran restent dans la zone qui défile */
+/* Infobulles des graphiques : absentes tant qu'on ne survole pas (invisibles, elles débordaient sur mobile), calées au bord pour les barres extrêmes */
+.cc-tip{display:none}
+.cc-col:hover .cc-tip,.cc-col:focus-visible .cc-tip{display:flex}
+.cc-col:first-child .cc-tip,.cc-col:nth-child(2) .cc-tip{left:0;transform:translateY(-110%)}
+.cc-col:last-child .cc-tip,.cc-col:nth-last-child(2) .cc-tip{left:auto;right:0;transform:translateY(-110%)}
+@media (max-width:620px){
+  .seg{max-width:100%;overflow-x:auto;scrollbar-width:none}
+  .seg::-webkit-scrollbar{display:none}
+  .seg button{flex:none}
+  .nl-top{flex-wrap:wrap}
+  .nl-when{white-space:normal}
+}
+.side>.nav .nav-i .lbl{white-space:normal;line-height:1.25}

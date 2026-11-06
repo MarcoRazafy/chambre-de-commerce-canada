@@ -19,6 +19,16 @@ const money = (n: unknown) => `${Number(n).toLocaleString('fr-FR')} Ar`;
 const price = (e: Row) => !Number(e.tarif_membre) && !Number(e.tarif_public) ? 'Gratuit'
   : !Number(e.tarif_membre) ? `Gratuit pour les membres · ${money(e.tarif_public)} public` : `${money(e.tarif_membre)} membres`;
 // « Aujourd'hui », « Demain », « Dans 8 jours », « Il y a 3 jours »
+// Rappels automatiques réglés sur l'événement : [libellé, date d'envoi, déjà parti]
+// (envoyés par la tâche planifiée 7 jours, 1 jour et 2 heures avant le début)
+function rappels(e: Row): [string, string, boolean][] {
+  const debut = d(e.date_debut).getTime(), out: [string, string, boolean][] = [];
+  const quand = (ms: number) => new Date(debut - ms).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }).replace('.', '');
+  for (const [on, l, ms] of [[e.rappel_j7, 'J−7', 7 * 864e5], [e.rappel_j1, 'J−1', 864e5], [e.rappel_h2, '2 h avant', 2 * 36e5]] as [boolean, string, number][])
+    if (on) out.push([l, l === '2 h avant' ? hour(new Date(debut - ms).toISOString()) : quand(ms), Date.now() >= debut - ms]);
+  return out;
+}
+
 function countdown(v: string) {
   const days = Math.round((new Date(d(v).toDateString()).getTime() - new Date(new Date().toDateString()).getTime()) / 864e5);
   return days === 0 ? 'Aujourd’hui' : days === 1 ? 'Demain' : days > 0 ? `Dans ${days} jours` : days === -1 ? 'Hier' : `Il y a ${-days} jours`;
@@ -65,7 +75,9 @@ export default function Evenements() {
 
   return (
     <>
-      <div className="head page-tools"><div className="actions">
+      <div className="head og-head"><div><h1>Événements</h1>
+        <p className="muted">{rows ? `${upcoming.length} à venir · ${upcoming.reduce((a, e) => a + Number(e.inscrits ?? 0), 0)} inscrits · rappels automatiques aux inscrits` : 'Les rendez-vous de la chambre'}</p></div>
+        <div className="actions">
         {RELATED.events?.map(([href, label]) => <Link key={href} className="btn" href={href}>{label}</Link>)}
         <button className="btn" onClick={exportCsv} disabled={!shown.length}>Exporter</button>
         <button className="btn cta" onClick={() => setEditing({})}><Icon name="plus" size={16} /> Ajouter</button>
@@ -113,6 +125,10 @@ export default function Evenements() {
                         <li><span className="tile-ic xxs"><Icon name="coin" size={12} fill /></span>{price(e)}</li>
                       </ul>
                     </div>
+                    {!done && (e.rappel_j7 || e.rappel_j1 || e.rappel_h2) && (
+                      <div className="ev-rappels"><span className="eyebrow">Rappels automatiques</span>
+                        <span className="ev-rappels-l">{rappels(e).map(([l, d, parti]) => <span key={l} className={`ev-rap${parti ? ' sent' : ''}`}>{l}{parti ? ' envoyé' : ` · ${d}`}</span>)}</span></div>
+                    )}
                     <div className="ev-card-foot"><Fill e={e} past={done} /></div>
                   </Link>
                 );

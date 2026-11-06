@@ -37,7 +37,7 @@ export default function Equipe() {
 
   return (
     <>
-      <div className="head page-tools"><div className="actions">
+      <div className="head og-head"><div><h1>Équipe & accès</h1><p className="muted">Les comptes de l’équipe, leurs rôles et leurs accès au back-office.</p></div><div className="actions">
         <button className="btn" onClick={exportCsv} disabled={!shown.length}>Exporter</button>
         <button className="btn cta" onClick={() => setEditing({ role: 'Manager', actif: true })}><Icon name="userplus" size={16} /> Inviter un membre de l’équipe</button>
       </div></div>

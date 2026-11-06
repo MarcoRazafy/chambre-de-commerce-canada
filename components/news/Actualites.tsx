@@ -69,7 +69,7 @@ export default function Actualites() {
 
   return (
     <>
-      <div className="head page-tools"><div className="actions"><button className="btn cta" onClick={() => setEditing('new')}><Icon name="plus" size={16} /> Nouvelle actualité</button></div></div>
+      <div className="head og-head"><div><h1>Actualités</h1><p className="muted">Les nouvelles de la chambre, publiées pour les membres.</p></div><div className="actions"><button className="btn cta" onClick={() => setEditing('new')}><Icon name="plus" size={16} /> Nouvelle actualité</button></div></div>
       {error && <div className="err">{error}</div>}
       <div className="news-layout">
         <div className="news-main">

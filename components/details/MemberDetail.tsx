@@ -14,6 +14,11 @@ import Produits from './member/Produits';
 import Notes from './member/Notes';
 import Contacts from './member/Contacts';
 import Adhesion, { Factures, Historique } from './member/Adhesion';
+import { Choix, Menu } from '../ressources/Fenetres';
+
+// Onglets de la fiche (maquette « Propositions UX ») : 15 blocs sur une seule page → 4 onglets
+const ONGLETS = [['profil', 'Profil'], ['adhesion', 'Adhésion & factures'], ['activite', 'Activité'], ['notes', 'Notes de l’équipe']] as const;
+type Onglet = typeof ONGLETS[number][0];
 
 type Flow = { tag: string; from: number; to: number };
 type Sugg = { a: Row; b: Row; score: number; why: string[]; flows: Flow[] };
@@ -37,6 +42,14 @@ async function sendImage(kind: 'member' | 'cover', id: number, f: File) {
 // Fiche membre : couverture et logo, présentation, ce qu'il propose et recherche, adhésion, suggestions, puis contacts, factures, rendez-vous, inscriptions
 export default function MemberDetail({ id }: { id: number }) {
   const [m, setM] = useState<Row | null>(null);
+  const [onglet, setOnglet] = useState<Onglet>('profil');
+  useEffect(() => { const o = new URLSearchParams(window.location.search).get('onglet'); if (ONGLETS.some(([k]) => k === o)) setOnglet(o as Onglet); }, []);
+  function ouvrir(o: Onglet) {
+    setOnglet(o);
+    const url = new URL(window.location.href);
+    if (o === 'profil') url.searchParams.delete('onglet'); else url.searchParams.set('onglet', o);
+    window.history.replaceState(null, '', url);
+  }
   const [refs, setRefs] = useState<Record<string, Row[]>>({});
   const [threads, setThreads] = useState<Row[]>([]);
   const [sugg, setSugg] = useState<Sugg[]>([]);
@@ -169,10 +182,24 @@ export default function MemberDetail({ id }: { id: number }) {
           <div className="mhero-actions">
             <Link className="btn" href={`/messagerie?a=member:${id}&nom=${encodeURIComponent(m.nom)}`}><Icon name="chat" size={16} /> Écrire</Link>
             <button className="btn cta" onClick={() => setEditing(true)}><Icon name="edit" size={16} /> Modifier</button>
+            {/* Suppression rangée dans « ⋯ » pour éviter les clics accidentels */}
+            <Menu libelle="Autres actions">
+              {fermer => <Choix icone="trash" danger onClick={() => { fermer(); removeMember(); }}>Supprimer ce membre…</Choix>}
+            </Menu>
           </div>
         </div>
       </section>
 
+      <div className="tabs ftabs" role="tablist" aria-label="Fiche du membre">
+        {ONGLETS.map(([k, l]) => (
+          <button key={k} type="button" role="tab" aria-selected={onglet === k} className={onglet === k ? 'on' : ''} onClick={() => ouvrir(k)}>
+            {l}{k === 'adhesion' && invoices.length > 0 && <span className="tab-n">{invoices.length}</span>}
+            {k === 'activite' && (histo?.length ?? 0) > 0 && <span className="tab-n">{histo?.length}</span>}
+          </button>
+        ))}
+      </div>
+
+      {onglet === 'profil' && (
       <div className="mdetail">
         <div className="mdetail-main">
           <section className="card">
@@ -224,7 +251,6 @@ export default function MemberDetail({ id }: { id: number }) {
 
         <aside className="mdetail-side">
           <Adhesion m={m} formules={refs.formules ?? []} invoices={invoices} onChanged={load} />
-          <Factures m={m} invoices={invoices} />
           <section className="card">
             <div className="row between"><h2>Rapprochements suggérés</h2>{sugg.length > 0 && <span className="chip c-green">{sugg.length}</span>}</div>
             {sugg.length === 0 ? <p className="small muted">Aucune suggestion pour ce membre. Renseignez ce qu’il propose et recherche pour en obtenir.</p> : (
@@ -253,28 +279,40 @@ export default function MemberDetail({ id }: { id: number }) {
             {sugg.length > nSugg && <button type="button" className="btn sm ghost" onClick={() => setNSugg(n => n + 4)}>Voir {Math.min(4, sugg.length - nSugg)} autres suggestions ({sugg.length - nSugg} restantes)</button>}
           </section>
 
-          <Historique list={histo} />
-          <Notes memberId={id} meId={meId} version={v} />
-
-          <section className="card">
-            <h2>Conversations</h2>
-            {threads.length === 0 ? <p className="small muted">Aucune conversation avec ce membre.</p> : (
-              <div className="list">{threads.map(t => (
-                <Link key={t.id} href={`/messagerie?c=${t.id}`} className="it" style={{ textDecoration: 'none' }}>
-                  <div className="grow small"><b>{t.sujet || t.titre}</b><div className="muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.dernier ?? ''}</div></div>
-                </Link>))}</div>
-            )}
-          </section>
-          <section className="card mdanger">
-            <h2>Zone sensible</h2>
-            <p className="small muted">La suppression retire le membre, ses contacts, ses produits et ses inscriptions. Ses factures restent dans les paiements, à son nom.</p>
-            <button type="button" className="btn rg-reject" onClick={removeMember}><Icon name="trash" size={15} /> Supprimer ce membre</button>
-          </section>
         </aside>
       </div>
+      )}
 
-      <ResourcePage key={'r' + v} table="rendez_vous" bare preset={{ member_id: id }} />
-      <ResourcePage key={'e' + v} table="event_registrations" bare preset={{ member_id: id }} />
+      {onglet === 'adhesion' && (
+        <div className="mdetail">
+          <div className="mdetail-main"><Factures m={m} invoices={invoices} /></div>
+          <aside className="mdetail-side"><Adhesion m={m} formules={refs.formules ?? []} invoices={invoices} onChanged={load} /></aside>
+        </div>
+      )}
+
+      {onglet === 'activite' && (
+        <>
+          <div className="mdetail">
+            <div className="mdetail-main"><Historique list={histo} /></div>
+            <aside className="mdetail-side">
+              <section className="card">
+                <h2>Conversations</h2>
+                {threads.length === 0 ? <p className="small muted">Aucune conversation avec ce membre.</p> : (
+                  <div className="list">{threads.map(t => (
+                    <Link key={t.id} href={`/messagerie?c=${t.id}`} className="it" style={{ textDecoration: 'none' }}>
+                      <div className="grow small"><b>{t.sujet || t.titre}</b><div className="muted" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.dernier ?? ''}</div></div>
+                    </Link>))}</div>
+                )}
+              </section>
+            </aside>
+          </div>
+          <ResourcePage key={'r' + v} table="rendez_vous" bare preset={{ member_id: id }} />
+          <ResourcePage key={'e' + v} table="event_registrations" bare preset={{ member_id: id }} />
+        </>
+      )}
+
+      {onglet === 'notes' && <div className="mnotes-tab"><Notes memberId={id} meId={meId} version={v} /></div>}
+
       {editing && <EditModal table="members" row={m} refs={refs} onClose={() => setEditing(false)} onSaved={() => { setEditing(false); load(); }} />}
       {intro && <IntroModal a={intro.a as never} b={intro.b as never} why={intro.why} onClose={() => setIntro(null)} onDone={t => { setIntro(null); toast(t); load(); }} />}
     </>

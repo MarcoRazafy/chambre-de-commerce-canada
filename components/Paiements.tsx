@@ -100,7 +100,6 @@ export default function Paiements() {
   return (
     <>
       <div className="head page-tools"><div className="actions">
-        <Link className="btn" href="/reglements">Règlements annoncés</Link>
         <button className="btn" onClick={exportCsv} disabled={!shown.length}>Exporter</button>
         <button className="btn cta" onClick={() => setEditing({ objet: 'cotisation', devise: 'MGA' })}><Icon name="plus" size={16} /> Nouvelle facture</button>
       </div></div>

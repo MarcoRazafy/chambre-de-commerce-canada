@@ -11,10 +11,11 @@ import { EditModal } from './ResourcePage';
 import { useNouveau } from '@/lib/useNouveau';
 import { GestionEtiquettes, PastillesDe, PoserEtiquette, useEtiquettes } from './etiquettes/Etiquettes';
 
-// Onglets de statut, comme dans CanCham Connect
+// Onglets dans l'ordre du travail (maquette « Propositions UX ») : d'abord ce qui demande une action
 const TABS = [
-  ['', 'Tous'], ['a_jour', 'À jour'], ['retard', 'En retard'], ['attente', 'Paiement attendu'], ['demande', 'Demandes'], ['refusee', 'Refusées'],
+  ['demande', 'Demandes'], ['attente', 'Paiement attendu'], ['retard', 'En retard'], ['a_jour', 'À jour'], ['', 'Tous'], ['refusee', 'Refusées'],
 ] as const;
+const PAR_PAGE = 25;
 const STATUT: Record<string, string> = { a_jour: 'À jour', retard: 'En retard', attente: 'En attente de paiement', demande: 'Nouvelle demande', refusee: 'Refusée' };
 const ACCES: Record<string, [string, string]> = { actif: ['Accès actif', 'on'], lien: ['Lien envoyé', 'wait'], aucun: ['Sans accès', ''] };
 const fold = (s: unknown) => String(s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -57,11 +58,13 @@ export default function Membres() {
   useNouveau(() => setAdding(true));
   const [error, setError] = useState('');
   const [sel, setSel] = useState<number[]>([]);
+  const [page, setPage] = useState(0);
   const [tag, setTag] = useState('');
   const [poser, setPoser] = useState(false);
   const [gestion, setGestion] = useState(false);
   const { cat, load: loadCat } = useEtiquettes();
   const tagsDe = (id: number) => cat?.posees.membres[id] ?? [];
+  useEffect(() => setPage(0), [tab, term, formule, tag]);   // nouvel onglet ou filtre : retour à la première page
 
   const load = useCallback(() => Promise.all(['members', 'formules', 'secteurs', 'invoices', 'contacts'].map(t => api<Row[]>('/api/' + t)))
     .then(([m, f, s, i, c]) => {
@@ -86,6 +89,7 @@ export default function Membres() {
     && (!term || fold([m.nom, secteurs[m.secteur_id], m.ville, m.pays === 'CA' ? 'Canada' : 'Madagascar'].join(' ')).includes(fold(term))));
   const count = (k: string) => base.filter(m => !k || m.statut === k).length;
   const shown = base.filter(m => !tab || m.statut === tab);
+  const adherents = all.filter(m => ['a_jour', 'retard', 'attente'].includes(m.statut));
   const toutCoche = shown.length > 0 && shown.every(m => sel.includes(m.id));
   const invOf = (id: number) => invoices.filter(i => i.member_id === id);
   const principal = (id: number) => contacts.filter(c => c.member_id === id).sort((a, b) => Number(b.principal) - Number(a.principal) || a.id - b.id)[0];
@@ -102,7 +106,9 @@ export default function Membres() {
 
   return (
     <>
-      <div className="head page-tools"><div className="actions">
+      <div className="head og-head"><div><h1>Membres</h1>
+        <p className="muted">{rows ? `${adherents.length} adhérents · ${adherents.filter(m => m.pays !== 'CA').length} à Madagascar, ${adherents.filter(m => m.pays === 'CA').length} au Canada` : 'Les entreprises membres de la chambre'}</p></div>
+        <div className="actions">
         <Link className="btn" href="/contacts">Contacts</Link>
         <button className="btn" onClick={() => setGestion(true)} disabled={!cat}><Icon name="tag" size={16} /> Étiquettes</button>
         <button className="btn" onClick={exportCsv} disabled={!shown.length}><Icon name="download" size={16} /> Exporter</button>
@@ -111,9 +117,9 @@ export default function Membres() {
       {error && <div className="err">{error}</div>}
 
       <div className="tabs" role="tablist" aria-label="Statut des membres">
-        {TABS.map(([k, l]) => (
+        {TABS.filter(([k]) => k !== 'refusee' || count(k) > 0 || tab === k).map(([k, l]) => (
           <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'on' : ''} onClick={() => openTab(k)}>
-            {l}<span className={`tab-n${k === 'demande' && count(k) > 0 ? ' hot' : ''}`}>{rows ? count(k) : '…'}</span></button>
+            {l}<span className={`tab-n${(k === 'demande' || k === 'retard') && count(k) > 0 ? ' hot' : ''}`}>{rows ? count(k) : '…'}</span></button>
         ))}
       </div>
 
@@ -147,7 +153,7 @@ export default function Membres() {
             <ul className="sub-list" aria-label="Membres">
               <li className="mb-row sub-head"><span className="sub-who"><input type="checkbox" className="sub-check" checked={toutCoche} aria-label="Tout sélectionner"
                 onChange={() => setSel(toutCoche ? sel.filter(id => !shown.some(m => m.id === id)) : [...new Set([...sel, ...shown.map(m => m.id)])])} />Membre</span><span>Formule</span><span>Situation</span><span>Accès</span><span /></li>
-              {shown.map(m => {
+              {shown.slice(page * PAR_PAGE, (page + 1) * PAR_PAGE).map(m => {
                 const f = formules[m.formule_id], s = situation(m, f, invOf(m.id)), [accL, accC] = ACCES[m.acces] ?? ACCES.aucun;
                 return (
                   <li key={m.id} className={`mb-row clickable${s.urgent ? ' is-late' : ''}`} onClick={() => router.push(`/membres/${m.id}`)}>
@@ -166,6 +172,16 @@ export default function Membres() {
                 );
               })}
             </ul>
+          )}
+          {shown.length > PAR_PAGE && (
+            <div className="pager">
+              <span>{page * PAR_PAGE + 1}–{Math.min(shown.length, (page + 1) * PAR_PAGE)} sur {shown.length}</span>
+              <span className="row">
+                <button type="button" className="btn sm" disabled={page === 0} onClick={() => { setPage(p => p - 1); window.scrollTo({ top: 0 }); }}>‹ Précédent</button>
+                <span>Page {page + 1} / {Math.ceil(shown.length / PAR_PAGE)}</span>
+                <button type="button" className="btn sm" disabled={(page + 1) * PAR_PAGE >= shown.length} onClick={() => { setPage(p => p + 1); window.scrollTo({ top: 0 }); }}>Suivant ›</button>
+              </span>
+            </div>
           )}
           <p className="small muted">L’export reprend la liste affichée (onglet et filtres), au format tableur.</p>
         </section>

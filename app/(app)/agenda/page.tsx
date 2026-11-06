@@ -1,6 +1,6 @@
-import Calendar from '@/components/Calendar';
+import { redirect } from 'next/navigation';
 
-// Le calendrier affiche aussi, en dessous, la liste des rappels de l'équipe
+// L'agenda est devenu un onglet de « Agenda & rendez-vous »
 export default function AgendaPage() {
-  return <Calendar />;
+  redirect('/rendez-vous?onglet=agenda');
 }

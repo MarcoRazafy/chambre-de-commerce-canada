@@ -238,21 +238,21 @@ export const NAV: [string, NavItem[]][] = [
   ['Activités', [
     { slug: 'evenements', label: 'Événements', icon: 'cal', table: 'events' },
     { slug: 'inscriptions', label: 'Inscriptions', icon: 'userplus', table: 'event_registrations', parent: 'evenements' },
-    { slug: 'agenda', label: 'Agenda', icon: 'agenda' },
-    { slug: 'rendez-vous', label: 'Rendez-vous', icon: 'clock', table: 'rendez_vous' },
+    { slug: 'rendez-vous', label: 'Agenda & rendez-vous', icon: 'agenda', table: 'rendez_vous' },
+    { slug: 'agenda', label: 'Agenda', icon: 'agenda', parent: 'rendez-vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
     { slug: 'actualites', label: 'Actualités', icon: 'news' },
-    { slug: 'ressources', label: 'Ressources', icon: 'folder', table: 'res_ressources' },
-    { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services' },
+    { slug: 'ressources', label: 'Ressources & services', icon: 'folder', table: 'res_ressources' },
+    { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services', parent: 'ressources' },
   ]],
   ['Communication', [
     { slug: 'newsletter', label: 'Newsletter', icon: 'mail', table: 'campaigns' },
-    { slug: 'lettre', label: 'Abonnés', icon: 'list', table: 'subscribers' },
+    { slug: 'lettre', label: 'Abonnés', icon: 'list', table: 'subscribers', parent: 'newsletter' },
     { slug: 'envois', label: 'Envois programmés', icon: 'send', table: 'outbox', parent: 'newsletter' },
   ]],
   ['Finances', [
-    { slug: 'paiements', label: 'Factures & paiements', icon: 'file', table: 'invoices' },
-    { slug: 'reglements', label: 'Règlements', icon: 'coin', table: 'reglements', badge: 'reglements' },
+    { slug: 'paiements', label: 'Factures & paiements', icon: 'file', table: 'invoices', badge: 'reglements' },
+    { slug: 'reglements', label: 'Règlements à vérifier', icon: 'coin', table: 'reglements', parent: 'paiements' },
   ]],
   ['Plateforme', [
     { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star' },

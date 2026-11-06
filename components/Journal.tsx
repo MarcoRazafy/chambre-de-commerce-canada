@@ -25,12 +25,13 @@ export default function Journal() {
   const [cat, setCat] = useState('');
   const [term, setTerm] = useState('');
   const [n, setN] = useState(PAGE);
+  const [connexions, setConnexions] = useState(false);   // les simples connexions noient les vraies actions : masquées par défaut
   const [error, setError] = useState('');
 
   const load = useCallback(() => api<Row[]>('/api/journal').then(r => { setRows(r); setError(''); }).catch(e => setError(e.message)), []);
   useEffect(() => { load(); }, [load]);
 
-  const all = rows ?? [];
+  const all = (rows ?? []).filter(r => connexions || r.titre !== 'Connexion');
   const cats = Object.keys(CATS).filter(c => all.some(r => r.categorie === c));
   const shown = all.filter(r => (!cat || r.categorie === cat) && (!term || [r.titre, r.detail, r.par].join(' ').toLowerCase().includes(term.toLowerCase())));
   const page = shown.slice(0, n);
@@ -44,7 +45,8 @@ export default function Journal() {
 
   return (
     <>
-      <div className="head page-tools"><div className="actions">
+      <div className="head og-head"><div><h1>Journal d’activité</h1><p className="muted">Qui a fait quoi, et quand.</p></div><div className="actions">
+        <label className="fs-switch jr-cnx"><input type="checkbox" className="switch" checked={connexions} onChange={e => { setConnexions(e.target.checked); setN(PAGE); }} /><span><b>Afficher aussi les connexions</b></span></label>
         <button className="btn" onClick={exportCsv} disabled={!shown.length}><Icon name="download" size={16} /> Exporter</button>
       </div></div>
       {error && <div className="err">{error}</div>}

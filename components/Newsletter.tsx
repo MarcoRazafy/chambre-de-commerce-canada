@@ -124,8 +124,6 @@ export default function Newsletter() {
   return (
     <>
       <div className="head page-tools"><div className="actions">
-        <Link className="btn" href="/envois">Envois programmés</Link>
-        <Link className="btn" href="/lettre">Abonnés</Link>
         <button className="btn" onClick={() => setGestion(true)} disabled={!cat}><Icon name="tag" size={16} /> Étiquettes</button>
         <button className="btn cta" onClick={() => setEditing({ statut: 'Brouillon' })}><Icon name="plus" size={16} /> Nouvelle lettre</button>
       </div></div>

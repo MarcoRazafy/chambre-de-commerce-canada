@@ -31,8 +31,6 @@ export const ROW_ACTIONS: Record<string, RowAction[]> = {
 export const RELATED: Record<string, [href: string, label: string][]> = {
   members: [['/contacts', 'Contacts'], ['/formules', 'Formules'], ['/secteurs', 'Secteurs']],
   events: [['/inscriptions', 'Inscriptions']],
-  rendez_vous: [['/types-rendez-vous', 'Types de rendez-vous']],
-  campaigns: [['/envois', 'Envois programmés']],
 };
 
 // Tables dont la première colonne ouvre une fiche : /<slug>/<id>

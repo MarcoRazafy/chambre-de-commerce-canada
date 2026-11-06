@@ -4,6 +4,8 @@ import { Suspense, useCallback, useEffect, useState } from 'react';
 import type { Row } from '@/lib/format';
 import { FILTRES, chat, type Person, type Thread } from '@/lib/chat';
 import Icon from './Icon';
+
+const PRINCIPAUX = ['tous', 'non-lus', 'membres', 'equipe'];
 import ConversationList from './chat/ConversationList';
 import ConversationView from './chat/ConversationView';
 import InfoPanel from './chat/InfoPanel';
@@ -17,6 +19,7 @@ function Inbox() {
   const sp = useSearchParams();
   const [me, setMe] = useState<Me | null>(null);
   const [filtre, setFiltre] = useState('tous');
+  const [plus, setPlus] = useState(false);
   const [term, setTerm] = useState('');
   const [threads, setThreads] = useState<Thread[] | null>(null);
   const [cur, setCur] = useState<number | null>(Number(sp.get('c')) || null);
@@ -72,7 +75,17 @@ function Inbox() {
         <button className="tb-btn" title="Nouveau message" aria-label="Nouveau message" onClick={() => { setCur(null); setNouveau([]); }}><Icon name="compose" size={22} /></button>
       </div>
       <div className="inbox-filters" role="tablist" aria-label="Filtrer les conversations">
-        {FILTRES.map(([k, l]) => <button key={k} role="tab" aria-selected={filtre === k} className={`fchip${filtre === k ? ' on' : ''}`} onClick={() => setFiltre(k)}>{l}</button>)}
+        {/* Filtres réduits à l'essentiel (maquette) : les autres passent dans « Plus » */}
+        {FILTRES.filter(([k]) => PRINCIPAUX.includes(k)).map(([k, l]) => <button key={k} role="tab" aria-selected={filtre === k} className={`fchip${filtre === k ? ' on' : ''}`} onClick={() => setFiltre(k)}>{l}</button>)}
+        <span className="fplus">
+          <button type="button" className={`fchip${PRINCIPAUX.includes(filtre) ? '' : ' on'}`} aria-expanded={plus} onClick={() => setPlus(p => !p)}>
+            {PRINCIPAUX.includes(filtre) ? 'Plus' : FILTRES.find(([k]) => k === filtre)?.[1]} <Icon name="down" size={14} /></button>
+          {plus && (
+            <span className="fplus-pop" role="menu">
+              {FILTRES.filter(([k]) => !PRINCIPAUX.includes(k)).map(([k, l]) => <button key={k} type="button" role="menuitem" onClick={() => { setFiltre(k); setPlus(false); }}>{l}</button>)}
+            </span>
+          )}
+        </span>
       </div>
       {error && <div className="err">{error}</div>}
       <div className={`inbox-body${info && data ? ' with-info' : ''}${open ? ' has-open' : ''}`}>
