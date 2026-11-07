@@ -71,7 +71,7 @@ export default function ResourcePage({ table, bare, preset }: Props) {
     try {
       setRows(await api(`/api/${table}${qs}`));
       const tables = [...new Set(r.fields.filter(f => f.ref).map(f => f.ref!))];
-      const lists = await Promise.all(tables.map(t => api<Row[]>(`/api/${t}`)));
+      const lists = await Promise.all(tables.map(t => api<Row[]>(`/api/${t}?leger=1`)));   // noms seulement
       setRefs(Object.fromEntries(tables.map((t, i) => [t, lists[i]])));
       setError('');
     } catch (e) {

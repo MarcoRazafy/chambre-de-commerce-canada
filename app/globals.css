@@ -2372,16 +2372,6 @@ tr.u-off td{opacity:.55}
 .abo-alert .grow{flex:1 1 220px}
 .org-mark{width:34px;height:auto;flex:none;display:block}
 .shell.collapsed .org-mark{margin:0 auto}
-/* Diagnostic complet */
-.diag-red{color:var(--red)} .diag-amber{color:var(--amber)} .diag-blue{color:var(--accent)}
-.diag-compare{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
-.diag-compare .eyebrow{display:block;margin-bottom:6px}
-.diag-compare pre{margin:0;font:500 .8rem/1.6 ui-monospace,Menlo,monospace;background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:14px;overflow-x:auto;white-space:pre;color:var(--ink)}
-.prio{font-size:.7rem;font-weight:800;padding:2px 8px;border-radius:6px;white-space:nowrap}
-.prio.p1{background:var(--red-soft);color:var(--red)} .prio.p2{background:var(--amber-soft);color:var(--amber)} .prio.p3{background:var(--accent-soft);color:var(--accent)}
-.diag-table td:nth-child(4){min-width:260px}
-.diag-table td:nth-child(5){min-width:220px}
-@media (max-width:900px){.diag-compare{grid-template-columns:minmax(0,1fr)}}
 /* Questionnaire de maillage */
 .mq{display:flex;flex-direction:column;gap:16px;min-width:0}
 .mq-top{display:flex;flex-direction:column;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;position:sticky;top:72px;z-index:5}

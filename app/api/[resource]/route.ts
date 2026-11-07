@@ -13,7 +13,10 @@ export async function GET(req: Request, { params }: Ctx) {
   if (u instanceof Response) return u;
   try {
     const f = filters(r, req.url);
-    return Response.json((await q(`${baseSelect(r)}${f.where} order by ${r.orderBy}`, f.vals)).map(strip));
+    const rows = await q(`${baseSelect(r)}${f.where} order by ${r.orderBy}`, f.vals);
+    // ?leger=1 : seulement l'identifiant et le libellé (listes de choix, noms à afficher) : 115 Ko → quelques Ko pour les membres
+    if (new URL(req.url).searchParams.get('leger') === '1') return Response.json(rows.map(x => ({ id: x.id, [r.label]: x[r.label] })));
+    return Response.json(rows.map(strip));
   } catch (e) {
     return fail(e);
   }

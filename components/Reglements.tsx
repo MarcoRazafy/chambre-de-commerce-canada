@@ -26,7 +26,7 @@ export default function Reglements() {
   const [editing, setEditing] = useState<Row | null>(null);
   const [error, setError] = useState('');
 
-  const load = useCallback(() => Promise.all([api<Row[]>('/api/reglements'), api<Row[]>('/api/invoices'), api<Row[]>('/api/members')])
+  const load = useCallback(() => Promise.all([api<Row[]>('/api/reglements'), api<Row[]>('/api/invoices'), api<Row[]>('/api/members?leger=1')])
     .then(([r, i, m]) => {
       setRows(r);
       setInvoices(Object.fromEntries(i.map(x => [x.id, x])));

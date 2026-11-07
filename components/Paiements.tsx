@@ -73,7 +73,7 @@ export function useFactures(): Factures {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [members, setMembers] = useState<Record<number, string>>({});
   const [error, setError] = useState('');
-  const load = useCallback(() => { Promise.all([api<Row[]>('/api/invoices'), api<Row[]>('/api/members')])
+  const load = useCallback(() => { Promise.all([api<Row[]>('/api/invoices'), api<Row[]>('/api/members?leger=1')])
     .then(([i, m]) => { setRows(i); setMembers(Object.fromEntries(m.map(x => [x.id, x.nom]))); setError(''); })
     .catch(e => setError(e.message)); }, []);
   useEffect(() => { load(); }, [load]);

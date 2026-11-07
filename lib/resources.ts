@@ -242,7 +242,7 @@ export const NAV: [string, NavItem[]][] = [
     { slug: 'rendez-vous', label: 'Agenda & rendez-vous', icon: 'agenda', table: 'rendez_vous' },
     { slug: 'agenda', label: 'Agenda', icon: 'agenda', parent: 'rendez-vous' },
     { slug: 'types-rendez-vous', label: 'Types de rendez-vous', icon: 'list', table: 'rdv_types', parent: 'rendez-vous' },
-    { slug: 'actualites', label: 'Actualités', icon: 'news' },
+    { slug: 'actualites', label: 'Actualités', icon: 'news', parent: 'newsletter' },
     { slug: 'ressources', label: 'Ressources & services', icon: 'folder', table: 'res_ressources' },
     { slug: 'services', label: 'Services CanCham', icon: 'gift', table: 'services', parent: 'ressources' },
   ]],
@@ -260,7 +260,6 @@ export const NAV: [string, NavItem[]][] = [
   ['Plateforme', [
     { slug: 'abonnement', label: 'Abonnement & utilisateurs', icon: 'star' },
     { slug: 'parametres', label: 'Paramètres', icon: 'gear' },
-    { slug: 'diagnostic', label: 'Diagnostic complet', icon: 'bulb', admin: true },
     { slug: 'equipe', label: 'Équipe & accès', icon: 'team', table: 'team_users', parent: 'parametres' },
     { slug: 'journal', label: 'Journal d’activité', icon: 'log', table: 'journal', parent: 'parametres' },
     { slug: 'facturation', label: 'Réglages de facturation', icon: 'gear', parent: 'parametres' },

@@ -100,7 +100,7 @@ function FormulairePublic() {
 
 export function NewsletterGroupe() {
   return (
-    <Onglets titre="Newsletter" description="Les lettres, leurs destinataires et les personnes abonnées." onglets={[
+    <Onglets titre="Newsletter" description="Les lettres, leurs destinataires et les personnes abonnées." actions={<Link className="btn" href="/actualites"><Icon name="news" size={16} /> Actualités</Link>} onglets={[
       { cle: 'lettres', label: 'Lettres', icon: 'mail', contenu: () => <Newsletter /> },
       { cle: 'abonnes', label: 'Abonnés', icon: 'list', contenu: () => <Abonnes /> },
       { cle: 'envois', label: 'Envois programmés', icon: 'send', contenu: () => <ResourcePage table="outbox" /> },
