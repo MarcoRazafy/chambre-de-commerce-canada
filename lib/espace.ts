@@ -2,7 +2,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { cookies } from 'next/headers';
 import { q } from './db';
 import { MsgError } from './messaging';
-import { verifyPassword } from './auth';
+import { enHttps, verifyPassword } from './auth';
 
 // Espace membre : connexion d'un contact d'une entreprise membre. Cookie et sessions séparés de l'équipe :
 // une session membre ne donne jamais accès au back-office.
@@ -23,7 +23,7 @@ export async function connecter(email: string, password: string) {
   await q(`insert into membre_sessions (id, contact_id, expires_at) values ($1, $2, now() + interval '${DAYS} days')`, [digest(token), c.id]);
   await q('update contacts set derniere_connexion = now() where id = $1', [c.id]);
   await q('delete from membre_sessions where expires_at < now()');
-  (await cookies()).set(COOKIE_MEMBRE, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: DAYS * 86400 });
+  (await cookies()).set(COOKIE_MEMBRE, token, { httpOnly: true, sameSite: 'lax', secure: await enHttps(), path: '/', maxAge: DAYS * 86400 });
   return c;
 }
 

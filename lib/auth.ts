@@ -1,6 +1,6 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
-import { cookies } from 'next/headers';
+import { cookies, headers } from 'next/headers';
 import { q } from './db';
 
 const scryptAsync = promisify(scrypt) as (pw: string, salt: string, len: number) => Promise<Buffer>;
@@ -21,6 +21,15 @@ export async function verifyPassword(pw: string, stored: string | null) {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+// Cookie « sécurisé » seulement si la page est vraiment en https : sur une page http, le navigateur refuserait
+// d'enregistrer un cookie sécurisé, et la personne reviendrait sur la connexion juste après s'être connectée.
+export async function enHttps() {
+  const h = await headers();
+  const proto = (h.get('x-forwarded-proto') ?? '').split(',')[0].trim();
+  if (proto) return proto === 'https';
+  return (h.get('origin') ?? h.get('referer') ?? '').startsWith('https://');
+}
+
 const digest = (token: string) => createHash('sha256').update(token).digest('hex');
 
 // Crée la session et pose le cookie (à appeler depuis un Route Handler)
@@ -29,7 +38,7 @@ export async function openSession(userId: number) {
   await q(`insert into sessions (id, user_id, expires_at) values ($1, $2, now() + interval '${DAYS} days')`, [digest(token), userId]);
   await q('update team_users set derniere_connexion = now() where id = $1', [userId]);
   await q('delete from sessions where expires_at < now()');
-  (await cookies()).set(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: process.env.NODE_ENV === 'production', path: '/', maxAge: DAYS * 86400 });
+  (await cookies()).set(COOKIE, token, { httpOnly: true, sameSite: 'lax', secure: await enHttps(), path: '/', maxAge: DAYS * 86400 });
 }
 
 // Connexion d'un membre de l'équipe : ouvre la session si le compte existe, est actif et le mot de passe juste

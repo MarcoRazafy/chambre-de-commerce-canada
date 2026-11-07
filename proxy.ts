@@ -9,6 +9,13 @@ const ESPACE_LIBRE = ['/espace/connexion', '/api/espace/connexion'];
 
 export function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
+  // En ligne, tout passe en https : le cookie de session (sécurisé) n'est pas gardé sur une page http
+  const proto = req.headers.get('x-forwarded-proto')?.split(',')[0].trim();
+  const hote = req.headers.get('host') ?? '';
+  if (proto === 'http' && !/^(localhost|127\.0\.0\.1|\[::1\])(:\d+)?$/.test(hote)) {
+    const url = new URL(req.url); url.protocol = 'https:'; url.host = hote; url.port = '';
+    return NextResponse.redirect(url, 308);
+  }
   if (path === '/espace' || path.startsWith('/espace/') || path.startsWith('/api/espace/')) {
     if (ESPACE_LIBRE.includes(path) || req.cookies.has('cc_membre')) return NextResponse.next();
     if (path.startsWith('/api/')) return NextResponse.json({ error: 'Connexion requise' }, { status: 401 });
