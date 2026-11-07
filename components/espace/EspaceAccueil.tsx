@@ -19,7 +19,14 @@ export default function EspaceAccueil() {
   const [st, ton] = STATUT[moi.statut] ?? ['Membre', 'off'];
   return (
     <>
-      <div className="head"><div><h1>Bonjour {prenom}</h1><p className="muted">Bienvenue dans l’espace membre de {moi.entreprise}.</p></div></div>
+      <div className="hero">
+        <div style={{ position: 'relative', zIndex: 1 }}><div className="eyebrow">{moi.entreprise}</div><h1>Bonjour <em>{prenom}</em>,</h1><p>Bienvenue dans votre espace membre de la CanCham.</p></div>
+        <div className="hero-stats">
+          <span><b className="num">{q.faites}/{q.total}</b>questionnaire</span>
+          <span><b className="num">{moi.messages}</b>message{moi.messages > 1 ? 's' : ''} non lu{moi.messages > 1 ? 's' : ''}</span>
+          <span><b className="num">{moi.factures}</b>facture{moi.factures > 1 ? 's' : ''} à régler</span>
+        </div>
+      </div>
 
       <div className="grid g21">
         <section className={`card es-quest${q.pct === 100 ? ' fini' : ''}`}>

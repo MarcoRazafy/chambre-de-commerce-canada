@@ -89,7 +89,8 @@ export default function AbonnementSummary() {
   const { saas, users, history, moi } = d;
   const s = { base: Number(saas.base) || 0, per: Number(saas.parUser) || 0, tps: Number(saas.tpsRate) || 0, tvq: Number(saas.tvqRate) || 0 };
   const actifs = users.filter(u => u.actif), n = actifs.length, c = calcul(s, n), apres = calcul(s, n + 1);
-  const jamais = actifs.filter(u => !u.derniere_connexion && u.id !== moi);
+  const sansMdp = actifs.filter(u => !u.a_mot_de_passe && u.id !== moi);
+  const jamais = actifs.filter(u => !u.derniere_connexion && u.a_mot_de_passe && u.id !== moi);
   const jours = saas.prochaine ? daysTo(saas.prochaine) : null;
   const liste = users.filter(u => filtre === 'tous' || (filtre === 'actifs' ? u.actif : !u.actif))
     .sort((a, b) => Number(b.id === moi) - Number(a.id === moi) || Number(b.actif) - Number(a.actif) || String(b.derniere_connexion ?? '').localeCompare(String(a.derniere_connexion ?? '')));
@@ -119,6 +120,11 @@ export default function AbonnementSummary() {
           <button className="btn sm" style={{ alignSelf: 'flex-start' }} onClick={() => setReglages(true)}>Changer de carte</button></div>
       </div>
 
+      {sansMdp.length > 0 && (
+        <div className="abo-alert"><Icon name="alert" size={18} />
+          <span className="grow"><b>{sansMdp.length} compte{sansMdp.length > 1 ? 's' : ''} sans mot de passe</b> ({sansMdp.slice(0, 3).map(u => u.nom).join(', ')}{sansMdp.length > 3 ? '…' : ''}) : {sansMdp.length > 1 ? 'ces personnes ne peuvent' : 'cette personne ne peut'} pas se connecter. Définissez un mot de passe et communiquez-le.</span>
+          <button className="btn sm" onClick={() => setModif(sansMdp[0])}>Définir le mot de passe</button></div>
+      )}
       {jamais.length > 0 && (
         <div className="abo-alert"><Icon name="alert" size={18} />
           <span className="grow"><b>{jamais[0].nom} ne s’est jamais connecté{jamais.length > 1 ? ` (et ${jamais.length - 1} autre${jamais.length > 2 ? 's' : ''})` : ''}</b> mais son compte vous coûte {$(s.per)} par mois.</span>
@@ -161,7 +167,9 @@ export default function AbonnementSummary() {
                     <td>{vous ? <span className="pchip info">{u.role}</span>
                       : <select className="rolesel" aria-label={`Rôle de ${u.nom}`} value={u.role} disabled={!u.actif} onChange={e => changer(u, { role: e.target.value }, `${u.nom} est maintenant ${e.target.value}.`)}>
                         <option>Manager</option><option>Administrateur</option></select>}</td>
-                    <td className={`small${!u.derniere_connexion && u.actif ? ' warnt' : ''}`}>{u.derniere_connexion ? relative(u.derniere_connexion) : u.actif ? '⚠ Jamais connecté' : '—'}</td>
+                    <td className={`small${(!u.derniere_connexion || !u.a_mot_de_passe) && u.actif ? ' warnt' : ''}`}>
+                      {u.actif && !u.a_mot_de_passe ? <button type="button" className="linkish warnt" onClick={() => setModif(u)} title="Sans mot de passe, ce compte ne peut pas se connecter">⚠ Pas de mot de passe : le définir</button>
+                        : u.derniere_connexion ? relative(u.derniere_connexion) : u.actif ? '⚠ Jamais connecté' : '—'}</td>
                     <td className="r small num">{u.actif ? $(s.per) : <span className="muted">—</span>}</td>
                     <td className="r"><span className="inv-btns">{vous ? <span className="small muted">Vous</span>
                       : u.actif ? <button className="btn sm ghost" onClick={() => changer(u, { actif: false }, `${u.nom} est désactivé : il n’est plus facturé.`)}>Désactiver</button>

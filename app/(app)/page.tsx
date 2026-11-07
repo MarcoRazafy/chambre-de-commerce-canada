@@ -10,7 +10,7 @@ import Avatar from '@/components/Avatar';
 import { ColumnChart, HBarList, SegmentBar, type Point } from '@/components/Charts';
 
 type K = {
-  adherents: number; a_jour: number; nouveaux_mois: number;
+  adherents: number; a_jour: number; nouveaux_mois: number; ev_avenir: number;
   enc_annee_mga: number; enc_annee_cad: number; enc_mois_mga: number;
   du_mga: number; du_cad: number; nb_du: number; payees_12m: number; emises_12m: number;
   abonnes: number; ouverture: number | null; nouveaux_abonnes: number;
@@ -54,6 +54,7 @@ async function Content() {
   const [[k], encMois, adhMois, statuts, secteurs, events, messages, demandes, reglements, retards, jamais, nonLus] = await Promise.all([
     q<K>(`
       select (select count(*) from members where statut in ('a_jour', 'retard', 'attente'))::int as adherents,
+             (select count(*) from events where date_debut >= now())::int as ev_avenir,
              (select count(*) from members where statut = 'a_jour')::int as a_jour,
              (select count(*) from members where membre_depuis >= date_trunc('month', now()))::int as nouveaux_mois,
              (select coalesce(sum(mt), 0) from (${PAID}) p where devise = 'MGA' and d >= date_trunc('year', now()))::float as enc_annee_mga,
@@ -125,7 +126,15 @@ async function Content() {
 
   return (
     <>
-      <div className="head"><div><h1>Bonjour {prenom}</h1><p className="muted">{jour[0].toUpperCase() + jour.slice(1)} · voici ce qui demande votre attention.</p></div></div>
+      {/* Bandeau de la charte : marine et dégradé orange, trois chiffres en un coup d'œil */}
+      <div className="hero">
+        <div style={{ position: 'relative', zIndex: 1 }}><div className="eyebrow">{jour}</div><h1>Bonjour <em>{prenom}</em>,</h1><p>Voici ce qui demande votre attention aujourd’hui.</p></div>
+        <div className="hero-stats">
+          <span><b className="num">{k.adherents}</b>adhérents</span>
+          <span><b className="num">{money(k.enc_annee_mga)}</b>encaissés en {new Date().getFullYear()}</span>
+          <span><b className="num">{k.ev_avenir}</b>événement{k.ev_avenir > 1 ? 's' : ''} à venir</span>
+        </div>
+      </div>
 
       <div className="grid g21">
         <section className="card">

@@ -1,42 +1,67 @@
+/* Plus Jakarta Sans dessine l'espace fine insécable (séparateur des milliers en français : « 10 100 000 Ar ») presque sans largeur :
+   ce seul caractère est pris dans une police du système */
+@font-face{font-family:'Espace fine';src:local('Arial'),local('Helvetica'),local('Liberation Sans'),local('DejaVu Sans'),local('Segoe UI');unicode-range:U+202F,U+00A0}
 /* L’Alliée Virtuelle : palette claire et police de la charte (frontend/src/styles/tokens.css).
    Graisses Montserrat : 400 texte, 500 libellés, 600 titres et boutons, 700 éléments importants et badges.
    Mise en page sobre façon Stripe, menu façon GoDaddy. L'accent se change avec --accent. */
 :root{
   color-scheme:light;
-  /* Palette de la maquette « Propositions UX » : fond gris bleuté, menu marine, accent bleu */
-  --accent:#3D6BF5; --accent-light:#5B83F7; --accent-hover:#2F5BE0; --accent-soft:#E8EEFE; --on-accent:#FFFFFF;
-  --bg:#F4F6FB; --side:#0E1A2F; --surface:#FFFFFF; --surface-2:#F7F9FC; --hover:#EEF2FA;
-  --ink:#111A2E; --ink-2:#2E3B55; --muted:#5F6B82; --line:#E3E8F0; --line-strong:#CDD5E3;
+  /* Charte L'Alliée Virtuelle (maquette « Propositions UX ») : marine profond, dégradé ambre → orange, crème, bleu ciel */
+  --accent:#E27F0A; --accent-light:#F4960B; --accent-hover:#C96F06; --accent-soft:#FFF1DC; --on-accent:#0B1B34;
+  --bg:#F7F3EC; --side:#0B1B34; --surface:#FFFFFF; --surface-2:#FBF7F0; --hover:#F4EDE1;
+  --ink:#0B1B34; --ink-2:#2C3E5C; --muted:#5E6A80; --line:#ECE4D6; --line-strong:#DDD2BF;
   --green:#1F8A55; --green-soft:#E3F4EA; --amber:#B26A00; --amber-soft:#FDF1DC;
-  --red:#D13B3B; --red-soft:#FDE8E8; --blue:#3D6BF5; --blue-soft:#E8EEFE; --violet:#6B4BD8; --violet-soft:#EFEAFD;
-  --green-xs:#EFF8F3; --amber-xs:#FEF7EA; --red-xs:#FEF2F2; --blue-xs:#F0F4FE;
-  --focus:#3D6BF5; --link:#3D6BF5;
-  --primary:#111A2E; --primary-hover:#22304D; --on-primary:#FFFFFF;
-  --side-line:rgba(255,255,255,.08); --side-text:#B9C4D6; --side-text-hover:#FFFFFF; --side-hover:#17263F; --side-open:rgba(255,255,255,.04);
-  --nav-dot:#D13B3B;
-  --scroll-thumb:#AEBBD0; --scroll-thumb-hover:#7F8DA3; --scroll-track:#EEF2F8;
-  --f:var(--font-brand), 'Montserrat', -apple-system, BlinkMacSystemFont, sans-serif;
+  --red:#D13B3B; --red-soft:#FDE8E8; --blue:#2F86AE; --blue-soft:#E4F2F8; --violet:#6B4BD8; --violet-soft:#EFEAFD;
+  --sky:#2F86AE; --sky-soft:#E4F2F8;
+  --green-xs:#EFF8F3; --amber-xs:#FEF7EA; --red-xs:#FEF2F2; --blue-xs:#EEF7FB;
+  --focus:#F4960B; --link:#C96F06;
+  --primary:#0B1B34; --primary-hover:#16325A; --on-primary:#FFFFFF;
+  --grad:linear-gradient(120deg,#FFB53D 0%,#F4960B 50%,#F26A21 100%);
+  --grad-navy:radial-gradient(120% 90% at 100% 0,rgba(244,150,11,.38),transparent 55%),linear-gradient(160deg,#16325A,#0B1B34 70%);
+  --side-line:rgba(255,255,255,.08); --side-text:#C9D3E2; --side-text-hover:#FFFFFF; --side-hover:rgba(251,243,230,.08); --side-open:rgba(255,255,255,.04);
+  --nav-dot:#F26A21;
+  --scroll-thumb:#CDBFA8; --scroll-thumb-hover:#A8977C; --scroll-track:#F1EADD;
+  --f:'Espace fine', var(--font-brand), 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --mono:var(--font-mono), "JetBrains Mono", ui-monospace, Menlo, monospace;
   --r:14px; --r-sm:10px;
-  --shadow:0 1px 2px rgba(17,26,46,.05);
-  --shadow-lg:0 24px 60px rgba(17,26,46,.16), 0 2px 6px rgba(17,26,46,.06);
+  --shadow:0 1px 2px rgba(11,27,52,.05);
+  --shadow-lg:0 24px 60px rgba(11,27,52,.16), 0 2px 6px rgba(11,27,52,.06);
 }
-/* Thème sombre façon Facebook : prêt mais désactivé (ajouter data-theme="dark" sur <html> dans app/layout.tsx) */
-:root[data-theme="dark"]{
-  /* Mode sombre façon Facebook : gris neutres (pas de bleu nuit), bleu de la marque pour les actions */
+/* Thème sombre de la maquette « Propositions UX » : suit le réglage de l'ordinateur (clair ou sombre),
+   comme la maquette ; data-theme="light" ou "dark" sur <html> l'impose */
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   color-scheme:dark;
-  --accent:#2374E1; --accent-light:#4599FF; --accent-hover:#3A86F0; --accent-soft:#263951; --on-accent:#FFFFFF;
-  --bg:#18191A; --side:#1C1D1F; --surface:#242526; --surface-2:#2F3031; --hover:#3A3B3C;   /* survol plus clair que les en-têtes, étiquettes visibles */
-  --ink:#E4E6EB; --ink-2:#B0B3B8; --muted:#8A8D91; --line:#3E4042; --line-strong:#4E4F50;
-  --green:#45BD62; --green-soft:#1F3326; --amber:#F7B928; --amber-soft:#3A3120;
-  --red:#F02849; --red-soft:#3D1F25; --blue:#4599FF; --blue-soft:#263951; --violet:#A891F0; --violet-soft:#2E2A3D;
-  --green-xs:#22332A; --amber-xs:#3A3222; --red-xs:#3D2328; --blue-xs:#263951;
-  --focus:#4599FF; --link:#4599FF;
-  --primary:#2374E1; --primary-hover:#3A86F0; --on-primary:#FFFFFF;
-  --side-line:#3E4042; --side-text:#B0B3B8; --side-text-hover:#E4E6EB; --side-hover:rgba(255,255,255,.06); --side-open:rgba(255,255,255,.03);
-  --nav-dot:#4599FF;
-  --scroll-thumb:#4E4F50; --scroll-thumb-hover:#6A6B6C; --scroll-track:#242526;
-  --shadow-lg:0 22px 48px rgba(0,0,0,.45), 0 2px 6px rgba(0,0,0,.3);
+  --accent:#FFB53D; --accent-light:#FFC766; --accent-hover:#F4960B; --accent-soft:#3A2A12; --on-accent:#0B1B34;
+  --bg:#07111F; --side:#07111F; --surface:#0E1D33; --surface-2:#13253F; --hover:#18304F;
+  --ink:#FBF3E6; --ink-2:#D6DCE6; --muted:#A9B4C6; --line:#22344F; --line-strong:#304766;
+  --green:#4CC48A; --green-soft:#12301F; --amber:#E7AE52; --amber-soft:#35281A;
+  --red:#F07272; --red-soft:#3A1C1F; --blue:#7AB8D6; --blue-soft:#12304A; --violet:#A893FF; --violet-soft:#241D44;
+  --sky:#7AB8D6; --sky-soft:#12304A;
+  --green-xs:#10261A; --amber-xs:#2C2116; --red-xs:#2E171A; --blue-xs:#102538;
+  --focus:#FFB53D; --link:#FFC766;
+  --primary:#FBF3E6; --primary-hover:#FFFFFF; --on-primary:#0B1B34;
+  --side-line:rgba(255,255,255,.07); --side-text:#C9D3E2; --side-text-hover:#FFFFFF; --side-hover:rgba(251,243,230,.08); --side-open:rgba(255,255,255,.03);
+  --nav-dot:#F26A21;
+  --scroll-thumb:#304766; --scroll-thumb-hover:#46618A; --scroll-track:#0B1828;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+  --shadow-lg:0 22px 48px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --accent:#FFB53D; --accent-light:#FFC766; --accent-hover:#F4960B; --accent-soft:#3A2A12; --on-accent:#0B1B34;
+  --bg:#07111F; --side:#07111F; --surface:#0E1D33; --surface-2:#13253F; --hover:#18304F;
+  --ink:#FBF3E6; --ink-2:#D6DCE6; --muted:#A9B4C6; --line:#22344F; --line-strong:#304766;
+  --green:#4CC48A; --green-soft:#12301F; --amber:#E7AE52; --amber-soft:#35281A;
+  --red:#F07272; --red-soft:#3A1C1F; --blue:#7AB8D6; --blue-soft:#12304A; --violet:#A893FF; --violet-soft:#241D44;
+  --sky:#7AB8D6; --sky-soft:#12304A;
+  --green-xs:#10261A; --amber-xs:#2C2116; --red-xs:#2E171A; --blue-xs:#102538;
+  --focus:#FFB53D; --link:#FFC766;
+  --primary:#FBF3E6; --primary-hover:#FFFFFF; --on-primary:#0B1B34;
+  --side-line:rgba(255,255,255,.07); --side-text:#C9D3E2; --side-text-hover:#FFFFFF; --side-hover:rgba(251,243,230,.08); --side-open:rgba(255,255,255,.03);
+  --nav-dot:#F26A21;
+  --scroll-thumb:#304766; --scroll-thumb-hover:#46618A; --scroll-track:#0B1828;
+  --shadow:0 1px 2px rgba(0,0,0,.3);
+  --shadow-lg:0 22px 48px rgba(0,0,0,.5), 0 2px 6px rgba(0,0,0,.35);
 }
 
 *{box-sizing:border-box}
@@ -2285,7 +2310,7 @@ kbd{font:600 .7rem var(--f);border:1px solid var(--line);border-radius:5px;paddi
 .mtbl .nw,.mtbl .inv-sub.due{white-space:nowrap}
 .nl-qui{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden;max-width:520px}
 .inv-table .inv-who b{max-width:170px}
-.inv-table td,.inv-table th{padding-inline:8px}
+.inv-table td,.inv-table th{padding-inline:7px}
 .inv-table .inv-btns .btn.sm{padding-inline:9px}
 @media (max-width:1439px){.inv-table .inv-btns .lbl{display:none}.inv-table .inv-who b{max-width:120px;white-space:normal;line-height:1.25}}
 @media (max-width:1599px){.inv-table .inv-btns .lbl-pay{display:none}}
@@ -2342,8 +2367,8 @@ tr.u-off td{opacity:.55}
 .rg-none{color:var(--amber);font-weight:600}
 .rg-lier{width:auto;max-width:260px}
 .rg-search{width:220px}
-.inv-table td:nth-child(2){max-width:84px;white-space:normal;word-break:break-word}
-.inv-table td:nth-child(3){min-width:190px}
+.inv-table td:nth-child(2){white-space:nowrap}
+.inv-table td:nth-child(3){min-width:130px}
 .abo-alert .grow{flex:1 1 220px}
 .org-mark{width:34px;height:auto;flex:none;display:block}
 .shell.collapsed .org-mark{margin:0 auto}
@@ -2550,3 +2575,75 @@ button.kpi4{text-align:left;cursor:pointer;font:inherit;color:inherit}
 @media (max-width:760px){.es-mx{grid-template-columns:minmax(0,1fr);height:auto}.es-mx-liste{max-height:220px;border-right:0;border-bottom:1px solid var(--line)}.es-mx-msgs{min-height:300px}}
 @media (max-width:620px){.es-raccourcis{grid-template-columns:minmax(0,1fr)}.es-ecrire .lbl2{display:none}.es-top-titre span{display:none}.es-evs,.es-cartes{grid-template-columns:minmax(0,1fr)}}
 .es-facture .stamp{top:auto;right:auto;bottom:70px;left:36px}
+/* Mode sombre : pastilles et tampons en teintes sombres */
+@media (prefers-color-scheme: dark){
+:root:not([data-theme="light"]) .pchip{background:var(--surface-2);border-color:var(--line)}
+:root:not([data-theme="light"]) .pchip.ok{color:#5FD39A;border-color:#1F5A3B;background:#0F2A1C}
+:root:not([data-theme="light"]) .pchip.late{color:#FF8F8F;border-color:#5A2326;background:#2E1416}
+:root:not([data-theme="light"]) .pchip.warn{color:#F0BE6A;border-color:#5A4220;background:#2C2112}
+:root:not([data-theme="light"]) .pchip.info{color:#FFC766;background:#3A2A12}
+:root:not([data-theme="light"]) .m-mvola.rg-tag{color:#F0C44D;background:#3A3010}
+:root:not([data-theme="light"]) .stamp{border-color:#5FD39A;color:#5FD39A}
+:root:not([data-theme="light"]) .invtbl th,.mtbl th{background:var(--surface)}
+}
+:root[data-theme="dark"] .pchip{background:var(--surface-2);border-color:var(--line)}
+:root[data-theme="dark"] .pchip.ok{color:#5FD39A;border-color:#1F5A3B;background:#0F2A1C}
+:root[data-theme="dark"] .pchip.late{color:#FF8F8F;border-color:#5A2326;background:#2E1416}
+:root[data-theme="dark"] .pchip.warn{color:#F0BE6A;border-color:#5A4220;background:#2C2112}
+:root[data-theme="dark"] .pchip.info{color:#FFC766;background:#3A2A12}
+:root[data-theme="dark"] .m-mvola.rg-tag{color:#F0C44D;background:#3A3010}
+:root[data-theme="dark"] .stamp{border-color:#5FD39A;color:#5FD39A}
+:root[data-theme="dark"] .invtbl th,.mtbl th{background:var(--surface)}
+.es-etapes{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:10px}
+.es-etapes pre{margin:6px 0 0;font:500 .78rem/1.6 var(--mono);background:var(--surface-2);border:1px solid var(--line);border-radius:10px;padding:10px 12px;overflow-x:auto;white-space:pre}
+
+/* ===== Charte L'Alliée Virtuelle (maquette) : dégradé ambre → orange sur marine, cartes de chiffres en couleurs ===== */
+body{background:var(--bg) radial-gradient(60% 40% at 100% 0,rgba(244,150,11,.10),transparent 60%) no-repeat}
+h1{letter-spacing:-.025em}
+/* menu */
+.side,.shell .side{background:radial-gradient(130% 50% at 100% 0,rgba(244,150,11,.28),transparent 55%),radial-gradient(90% 40% at 0 100%,rgba(122,184,214,.16),transparent 60%),linear-gradient(170deg,#16325A,#0B1B34 55%,#07111F)}
+.nav-i.on{background:var(--grad);color:#0B1B34;font-weight:700;box-shadow:0 8px 20px -6px rgba(244,150,11,.6)}
+.nav-i.on .nav-ic,.nav-i.on svg{color:#0B1B34;opacity:1}
+.nav-eyebrow{color:#F4B868}
+.cnt,.tb-btn.ring .bell-dot,.bell-dot{background:#F26A21;color:#fff}
+.nav-i.on .cnt{background:#0B1B34;color:#fff}
+.top{background:color-mix(in srgb,var(--bg) 85%,transparent)}
+/* boutons principaux en dégradé */
+.btn.cta{background:var(--grad);border-color:transparent;color:#0B1B34;font-weight:700;box-shadow:0 8px 20px -8px rgba(242,106,33,.7)}
+.btn.cta:hover{background:var(--grad);border-color:transparent;filter:brightness(1.05)}
+.btn.cta:disabled{filter:grayscale(.4);opacity:.6;box-shadow:none}
+.btn.green{background:linear-gradient(120deg,#2BB673,#1F8A55);border-color:transparent;color:#fff}
+/* onglets : soulignés du dégradé */
+.tabs button.on{color:var(--ink)}
+.tabs button.on::after{background:var(--grad)}
+.tabs button.on .tab-n{color:#0B1B34;background:var(--grad)}
+.fchip.on{background:var(--grad);color:#0B1B34}
+/* cartes de chiffres : liseré et halo de couleur, comme la maquette */
+.grid.g4>.card,.grid.g3>.card.kpi4{position:relative;overflow:hidden;border-color:transparent;box-shadow:0 1px 2px rgba(11,27,52,.05),0 10px 30px -18px rgba(11,27,52,.35)}
+.grid.g4>.card:nth-child(4n+1){background:radial-gradient(120% 120% at 100% 0,rgba(244,150,11,.22),transparent 60%),var(--surface)}
+.grid.g4>.card:nth-child(4n+2){background:radial-gradient(120% 120% at 100% 0,rgba(122,184,214,.28),transparent 60%),var(--surface)}
+.grid.g4>.card:nth-child(4n+3){background:radial-gradient(120% 120% at 100% 0,rgba(43,182,115,.20),transparent 60%),var(--surface)}
+.grid.g4>.card:nth-child(4n+4){background:radial-gradient(120% 120% at 100% 0,rgba(139,92,246,.18),transparent 60%),var(--surface)}
+.grid.g4>.card::before,.grid.g3>.card.kpi4::before{content:"";position:absolute;inset:0 0 auto;height:4px;background:var(--grad)}
+.grid.g4>.card:nth-child(4n+2)::before,.grid.g3>.card.kpi4:nth-child(3n+2)::before{background:linear-gradient(90deg,#7AB8D6,#2F86AE)}
+.grid.g4>.card:nth-child(4n+3)::before,.grid.g3>.card.kpi4:nth-child(3n+3)::before{background:linear-gradient(90deg,#5ED39A,#1F8A55)}
+.grid.g4>.card:nth-child(4n+4)::before{background:linear-gradient(90deg,#B79BFF,#7C4DDB)}
+.grid.g4>.card:hover{border-color:transparent}
+/* dates, barres, pastilles */
+.dt-cal span{background:var(--grad);color:#0B1B34}
+.ev-bar i,.es-quest .bar i,.mq-prog .bar i,.abo-box .bar i{background:var(--grad)}
+.c-blue{background:var(--sky-soft)}
+.qletter{background:var(--grad);color:#0B1B34}
+.invdoc-top,.sub-hero{background:var(--grad-navy)!important}
+.invdoc-top .big{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+/* bandeau d'accueil */
+.hero{background:var(--grad-navy);color:#fff;border-radius:20px;padding:26px 30px;display:flex;justify-content:space-between;gap:20px;flex-wrap:wrap;align-items:flex-end;position:relative;overflow:hidden}
+.hero::after{content:"";position:absolute;right:-60px;top:-60px;width:260px;height:260px;border-radius:50%;background:radial-gradient(circle,rgba(255,190,96,.35),transparent 65%)}
+.hero .eyebrow{color:#F4B868}
+.hero h1{color:#fff;font-size:2rem}
+.hero h1 em{font-style:normal;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.hero p{color:#C9D3E2;margin-top:4px}
+.hero-stats{display:flex;gap:10px;flex-wrap:wrap;position:relative;z-index:1}
+.hero-stats span{background:rgba(251,243,230,.08);border:1px solid rgba(251,243,230,.14);border-radius:12px;padding:8px 14px;font-size:.8rem;color:#C9D3E2}
+.hero-stats b{display:block;color:#fff;font-size:1.1rem}
+@media (max-width:620px){.hero{padding:20px}.hero h1{font-size:1.5rem}}
