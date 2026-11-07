@@ -13,10 +13,10 @@ import RichText from './RichText';
 
 type Me = { id: number; role: string };
 const fail = (e: unknown) => toast((e as Error).message, 'error');
-const LONG = 420;   // au-delà, le texte est replié avec « Voir plus »
+export const LONG = 420;   // au-delà, le texte est replié avec « Voir plus »
 
 // Grille des médias façon Facebook : 1 en grand, 2 côte à côte, 3 (un grand + deux), 4 et plus (2 × 2, « +N » sur le dernier)
-function Gallery({ medias, onOpen }: { medias: Media[]; onOpen: (i: number) => void }) {
+export function Gallery({ medias, onOpen, url = mediaUrl }: { medias: Media[]; onOpen: (i: number) => void; url?: (id: number) => string }) {
   if (!medias.length) return null;
   const shown = medias.slice(0, 4);
   return (
@@ -24,8 +24,8 @@ function Gallery({ medias, onOpen }: { medias: Media[]; onOpen: (i: number) => v
       {shown.map((m, i) => (
         <button type="button" key={m.id} className="np-cell" onClick={() => onOpen(i)} aria-label={`Ouvrir ${m.nom}`}>
           {isVideo(m.type)
-            ? <><video src={mediaUrl(m.id) + '#t=0.5'} preload="metadata" muted playsInline /><span className="np-play"><Icon name="play" size={26} fill /></span></>
-            : <img src={mediaUrl(m.id)} alt="" loading="lazy" />}
+            ? <><video src={url(m.id) + '#t=0.5'} preload="metadata" muted playsInline /><span className="np-play"><Icon name="play" size={26} fill /></span></>
+            : <img src={url(m.id)} alt="" loading="lazy" />}
           {i === 3 && medias.length > 4 && <span className="np-more">+{medias.length - 4}</span>}
         </button>
       ))}
@@ -34,7 +34,7 @@ function Gallery({ medias, onOpen }: { medias: Media[]; onOpen: (i: number) => v
 }
 
 // Visionneuse plein écran : flèches du clavier, Échap pour fermer
-function Lightbox({ medias, start, onClose }: { medias: Media[]; start: number; onClose: () => void }) {
+export function Lightbox({ medias, start, onClose, url = mediaUrl }: { medias: Media[]; start: number; onClose: () => void; url?: (id: number) => string }) {
   const [i, setI] = useState(start);
   const m = medias[i];
   useEffect(() => {
@@ -50,7 +50,7 @@ function Lightbox({ medias, start, onClose }: { medias: Media[]; start: number; 
       <div className="lightbox" role="dialog" aria-label="Photos et vidéos">
         <button type="button" className="lb-close tb-btn" aria-label="Fermer" onClick={onClose}><Icon name="close" size={22} /></button>
         {medias.length > 1 && <button type="button" className="lb-nav prev" aria-label="Précédente" onClick={() => setI(x => (x - 1 + medias.length) % medias.length)}><Icon name="back" size={22} /></button>}
-        {isVideo(m.type) ? <video key={m.id} src={mediaUrl(m.id)} controls autoPlay playsInline /> : <img key={m.id} src={mediaUrl(m.id)} alt={m.nom} />}
+        {isVideo(m.type) ? <video key={m.id} src={url(m.id)} controls autoPlay playsInline /> : <img key={m.id} src={url(m.id)} alt={m.nom} />}
         {medias.length > 1 && <button type="button" className="lb-nav next" aria-label="Suivante" onClick={() => setI(x => (x + 1) % medias.length)}><Icon name="back" size={22} /></button>}
         {medias.length > 1 && <span className="lb-count">{i + 1} / {medias.length}</span>}
       </div>

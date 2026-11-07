@@ -14,7 +14,7 @@ export async function POST(req: Request) {
     try {
       const c = await connecter(e, p);
       await journal('Adhésions', 'Connexion', 'Espace membre', c.nom);
-      return Response.json({ ok: true, vers: '/espace/demarrage' });
+      return Response.json({ ok: true, vers: c.vers });
     } catch (x) {
       if (x instanceof MsgError) return Response.json({ error: 'Courriel ou mot de passe incorrect. Nouveau compte ? Demandez à un administrateur de définir votre mot de passe.' }, { status: 401 });
       throw x;

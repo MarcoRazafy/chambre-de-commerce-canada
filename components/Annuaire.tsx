@@ -24,7 +24,8 @@ function Chips({ label, items, need }: { label: string; items: string[]; need?: 
   );
 }
 
-export default function Annuaire() {
+// espace : la même page dans l'espace membre (données de l'espace, fiches /espace/annuaire/…)
+export default function Annuaire({ espace = false }: { espace?: boolean }) {
   const [members, setMembers] = useState<Row[] | null>(null);
   const [term, setTerm] = useState('');
   const [pays, setPays] = useState('');
@@ -36,11 +37,13 @@ export default function Annuaire() {
 
   const load = useCallback(async () => {
     try {
-      const [m, sect] = await Promise.all([api<Row[]>('/api/members'), api<Row[]>('/api/secteurs')]);
+      const [m, sect] = espace
+        ? await api<{ membres: Row[]; secteurs: Row[] }>('/api/espace/annuaire').then(d => [d.membres, d.secteurs] as const)
+        : await Promise.all([api<Row[]>('/api/members'), api<Row[]>('/api/secteurs')]);
       setSecteurs(Object.fromEntries(sect.map(x => [x.id, x.nom])));
       setMembers(m.filter(x => ['a_jour', 'retard', 'attente'].includes(x.statut)));
     } catch (e) { setError((e as Error).message); }
-  }, []);
+  }, [espace]);
   useEffect(() => { load(); }, [load]);
   // L'ancien onglet « Maillage » est devenu la page Mises en relation
   useEffect(() => { if (new URLSearchParams(window.location.search).get('onglet') === 'maillage') window.location.replace('/mises-en-relation'); }, []);
@@ -51,8 +54,8 @@ export default function Annuaire() {
   return (
     <>
       {error && <div className="err">{error}</div>}
-      <div className="head og-head"><div><h1>Annuaire</h1><p className="muted">{members ? `${members.length} membres adhérents · ce que chacun propose et recherche` : 'Les membres adhérents'}</p></div>
-        <div className="actions"><Link className="btn" href="/mises-en-relation"><Icon name="spark" size={16} /> Mises en relation</Link></div></div>
+      <div className="head og-head"><div><h1>{espace ? 'Annuaire des membres' : 'Annuaire'}</h1><p className="muted">{members ? `${members.length} membres adhérents · ce que chacun propose et recherche` : 'Les membres adhérents'}</p></div>
+        <div className="actions"><Link className="btn" href={espace ? '/espace/relations' : '/mises-en-relation'}><Icon name="spark" size={16} /> Mises en relation</Link></div></div>
       <div>
       {(members?.length ?? 0) > 0 && (
         <div className="dir-tools">
@@ -77,7 +80,7 @@ export default function Annuaire() {
           const desc = m.activite || m.description;
           return (
             // Carte de l'annuaire : couverture (ou logo flouté), logo carré qui la chevauche, secteur, nom, lieu, accroche, puis ce que le membre propose et recherche
-            <Link href={`/membres/${m.id}`} className="dcard" key={m.id} aria-label={`${m.nom}, ${secteurs[m.secteur_id] ?? ''} — voir la fiche`}>
+            <Link href={espace ? `/espace/annuaire/${m.id}` : `/membres/${m.id}`} className="dcard" key={m.id} aria-label={`${m.nom}, ${secteurs[m.secteur_id] ?? ''} — voir la fiche`}>
               <div className={`dcard-cover${cover ? '' : ' blurred'}`}>
                 {cover ? <img src={cover} alt="" loading="lazy" referrerPolicy="no-referrer" style={!m.couverture_deposee && m.couverture_y != null ? { objectPosition: `50% ${m.couverture_y}%` } : undefined} />
                   : <img className="cover-blur" src={`/api/avatar/member/${m.id}`} alt="" loading="lazy" />}

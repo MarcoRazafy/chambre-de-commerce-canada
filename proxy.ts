@@ -22,7 +22,7 @@ export function proxy(req: NextRequest) {
     return NextResponse.redirect(new URL('/connexion', req.url));
   }
   // Logos et photos : lisibles aussi depuis l'espace membre (la route vérifie la session)
-  if (path.startsWith('/api/avatar/') && req.cookies.has('cc_membre')) return NextResponse.next();
+  if ((path.startsWith('/api/avatar/') || path.startsWith('/api/produits/photos/') || path === '/api/membres/vignettes') && req.cookies.has('cc_membre')) return NextResponse.next();
   if (PUBLIC.some(p => path === p || path.startsWith(p.endsWith('/') ? p : p + '/')) || req.cookies.has('cc_session'))
     return NextResponse.next();
   if (path.startsWith('/api/')) return NextResponse.json({ error: 'Connexion requise' }, { status: 401 });

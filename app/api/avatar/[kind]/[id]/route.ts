@@ -32,7 +32,11 @@ export async function GET(_req: Request, { params }: Ctx) {
   const t = await target(params);
   if (!t) return notFound();
   // Espace membre : les logos des membres et les photos de l'équipe sont lisibles aussi par un membre connecté
-  if (!(await currentUser()) && t.kind !== 'contact' && await membreConnecte()) return lire(t);
+  // (portraits de contacts : seulement ceux de sa propre entreprise)
+  if (!(await currentUser())) {
+    const m = await membreConnecte();
+    if (m && (t.kind !== 'contact' || await contactDe(m.member_id, t.id))) return lire(t);
+  }
   return withUser(async () => lire(t));
 }
 
@@ -45,26 +49,44 @@ async function lire(t: { kind: keyof typeof KINDS; id: number }) {
   return new Response(initialsSvg(r?.nom ?? '?'), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=300' } });
 }
 
+const contactDe = async (memberId: number, id: number) => (await q('select 1 from contacts where id = $1 and member_id = $2', [id, memberId])).length > 0;
+
 // Nouvelle photo (formulaire multipart, champ « file ») : sa propre photo, ou n'importe laquelle pour un administrateur ; tout logo de membre
+// Espace membre : un contact connecté ne peut changer que le logo, la couverture et les portraits des contacts de sa propre entreprise
+async function membreProprietaire(t: { kind: keyof typeof KINDS; id: number }) {
+  if (await currentUser()) return null;
+  const m = await membreConnecte();
+  if (!m) return null;
+  if (t.kind === 'member' || t.kind === 'cover') return t.id === m.member_id ? m : null;
+  return t.kind === 'contact' && await contactDe(m.member_id, t.id) ? m : null;
+}
+
 export async function PUT(req: Request, { params }: Ctx) {
   const t = await target(params);
   if (!t) return notFound();
+  const proprio = await membreProprietaire(t);
+  if (proprio) return enregistrerImage(req, t, `${proprio.nom} (espace membre)`).catch(e => Response.json({ error: (e as Error).message }, { status: 400 }));
   return withUser(async u => {
     if (t.kind === 'user' && t.id !== u.id && u.role !== 'Administrateur') throw new MsgError('Vous ne pouvez changer que votre propre photo');
-    const f = (await req.formData()).get('file');
-    if (!(f instanceof File) || !/^image\/(png|jpe?g|webp|gif)$/.test(f.type)) throw new MsgError('Choisissez une image PNG, JPEG, WebP ou GIF');
-    if (f.size > (t.kind === 'cover' ? MAX_COVER : MAX)) throw new MsgError(`L’image dépasse ${t.kind === 'cover' ? 6 : 3} Mo`);
-    await q(`insert into avatars (kind, ref_id, type, contenu) values ($1, $2, $3, $4)
-             on conflict (kind, ref_id) do update set type = excluded.type, contenu = excluded.contenu, updated_at = now()`,
-      [t.kind, t.id, f.type, Buffer.from(await f.arrayBuffer())]);
-    await journal(t.kind === 'user' ? 'Équipe' : 'Adhésions', { user: 'Photo de profil modifiée', member: 'Logo de membre modifié', cover: 'Couverture de membre modifiée', contact: 'Portrait de contact modifié' }[t.kind], `#${t.id}`, u.nom);
-    return Response.json({ ok: true, v: Date.now() });
+    return enregistrerImage(req, t, u.nom);
   });
+}
+
+async function enregistrerImage(req: Request, t: { kind: keyof typeof KINDS; id: number }, par: string) {
+  const f = (await req.formData()).get('file');
+  if (!(f instanceof File) || !/^image\/(png|jpe?g|webp|gif)$/.test(f.type)) throw new MsgError('Choisissez une image PNG, JPEG, WebP ou GIF');
+  if (f.size > (t.kind === 'cover' ? MAX_COVER : MAX)) throw new MsgError(`L’image dépasse ${t.kind === 'cover' ? 6 : 3} Mo`);
+  await q(`insert into avatars (kind, ref_id, type, contenu) values ($1, $2, $3, $4)
+           on conflict (kind, ref_id) do update set type = excluded.type, contenu = excluded.contenu, updated_at = now()`,
+    [t.kind, t.id, f.type, Buffer.from(await f.arrayBuffer())]);
+  await journal(t.kind === 'user' ? 'Équipe' : 'Adhésions', { user: 'Photo de profil modifiée', member: 'Logo de membre modifié', cover: 'Couverture de membre modifiée', contact: 'Portrait de contact modifié' }[t.kind], `#${t.id}`, par);
+  return Response.json({ ok: true, v: Date.now() });
 }
 
 export async function DELETE(_req: Request, { params }: Ctx) {
   const t = await target(params);
   if (!t) return notFound();
+  if (await membreProprietaire(t)) { await q('delete from avatars where kind = $1 and ref_id = $2', [t.kind, t.id]); return new Response(null, { status: 204 }); }
   return withUser(async u => {
     if (t.kind === 'user' && t.id !== u.id && u.role !== 'Administrateur') throw new MsgError('Vous ne pouvez retirer que votre propre photo');
     await q('delete from avatars where kind = $1 and ref_id = $2', [t.kind, t.id]);

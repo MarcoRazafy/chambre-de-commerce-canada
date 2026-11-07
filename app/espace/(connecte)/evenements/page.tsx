@@ -1,5 +1,6 @@
-import { EspaceEvenements } from '@/components/espace/EspaceActivites';
+import Evenements from '@/components/Evenements';
 
+// Les événements de l'équipe, en mode membre
 export default function Page() {
-  return <EspaceEvenements />;
+  return <Evenements espace />;
 }

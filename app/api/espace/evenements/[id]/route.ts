@@ -1,12 +1,17 @@
 import { notFound } from '@/lib/crud';
 import { num } from '@/lib/api-helpers';
 import { avecMembre } from '@/lib/espace';
-import { desinscrire, inscrire } from '@/lib/espace-donnees';
+import { desinscrire, evenement, inscrire } from '@/lib/espace-donnees';
 import { journal } from '@/lib/hooks';
 
 type Ctx = { params: Promise<{ id: string }> };
 
-// POST : s'inscrire ; DELETE : se désinscrire (le contact connecté)
+// GET : l'événement ; POST : s'inscrire ; DELETE : se désinscrire (le contact connecté)
+export async function GET(_req: Request, { params }: Ctx) {
+  const id = num((await params).id);
+  if (Number.isNaN(id)) return notFound();
+  return avecMembre(async m => Response.json(await evenement(m, id)));
+}
 export async function POST(_req: Request, { params }: Ctx) {
   const id = num((await params).id);
   if (Number.isNaN(id)) return notFound();

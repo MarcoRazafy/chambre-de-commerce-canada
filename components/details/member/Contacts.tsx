@@ -7,7 +7,7 @@ import Icon from '../../Icon';
 import ModalBackdrop from '../../ModalBackdrop';
 
 // Ajout ou modification d'un contact : portrait, nom, fonction, courriel, téléphone, contact principal
-function ContactForm({ memberId, c, only, onClose, onSaved }: { memberId: number; c: Row | null; only: boolean; onClose: () => void; onSaved: () => void }) {
+function ContactForm({ memberId, espace, c, only, onClose, onSaved }: { memberId?: number; espace?: boolean; c: Row | null; only: boolean; onClose: () => void; onSaved: () => void }) {
   const [v, setV] = useState<Row>({ nom: c?.nom ?? '', fonction: c?.fonction ?? '', email: c?.email ?? '', tel: c?.tel ?? '', principal: c?.principal ?? only });
   const [photo, setPhoto] = useState<File | null>(null);
   const [busy, setBusy] = useState(false);
@@ -19,7 +19,8 @@ function ContactForm({ memberId, c, only, onClose, onSaved }: { memberId: number
     setBusy(true);
     try {
       const body = { ...v, member_id: memberId, principal: only && c ? true : !!v.principal };
-      const saved = c ? await api<Row>(`/api/contacts/${c.id}`, 'PATCH', body) : await api<Row>('/api/contacts', 'POST', body);
+      const base = espace ? '/api/espace/contacts' : '/api/contacts';
+      const saved = c ? await api<Row>(`${base}/${c.id}`, 'PATCH', body) : await api<Row>(base, 'POST', body);
       if (photo) {
         const f = new FormData(); f.set('file', photo);
         const res = await fetch(`/api/avatar/contact/${saved.id ?? c?.id}`, { method: 'PUT', body: f });
@@ -46,7 +47,7 @@ function ContactForm({ memberId, c, only, onClose, onSaved }: { memberId: number
           <div className="field"><label htmlFor="ct-n">Nom et prénom *</label><input id="ct-n" className="inp" required value={v.nom} onChange={e => setV({ ...v, nom: e.target.value })} /></div>
           <div className="field"><label htmlFor="ct-f">Fonction</label><input id="ct-f" className="inp" value={v.fonction} onChange={e => setV({ ...v, fonction: e.target.value })} placeholder="Par exemple : Responsable export" /></div>
           <div className="form-grid">
-            <div className="field"><label htmlFor="ct-e">Courriel *</label><input id="ct-e" type="email" className="inp" required value={v.email} onChange={e => setV({ ...v, email: e.target.value })} /></div>
+            <div className="field"><label htmlFor="ct-e">Courriel *</label><input id="ct-e" type="email" className="inp" required disabled={espace && !!c?.acces} title={espace && c?.acces ? 'Identifiant de connexion : seule la Chambre le change' : undefined} value={v.email} onChange={e => setV({ ...v, email: e.target.value })} /></div>
             <div className="field"><label htmlFor="ct-t">Téléphone</label><input id="ct-t" type="tel" className="inp" value={v.tel} onChange={e => setV({ ...v, tel: e.target.value })} placeholder="+261 34 00 000 00" /></div>
           </div>
           <label className="fs-switch">
@@ -61,22 +62,23 @@ function ContactForm({ memberId, c, only, onClose, onSaved }: { memberId: number
 }
 
 // Section « Contacts » : les personnes déclarées par le membre, le contact principal en premier
-export default function Contacts({ memberId, physique }: { memberId: number; physique?: boolean }) {
+// espace : le membre gère les contacts de sa propre entreprise (moi : son contact, qu'il ne peut pas retirer)
+export default function Contacts({ memberId, physique, espace, moi }: { memberId?: number; physique?: boolean; espace?: boolean; moi?: number }) {
   const [list, setList] = useState<Row[] | null>(null);
   const [editing, setEditing] = useState<Row | null | 'new'>(null);
-  const load = useCallback(() => api<Row[]>(`/api/contacts?member_id=${memberId}`)
-    .then(r => setList(r.sort((a, b) => Number(b.principal) - Number(a.principal) || a.id - b.id))).catch(() => setList([])), [memberId]);
+  const load = useCallback(() => api<Row[]>(espace ? '/api/espace/contacts' : `/api/contacts?member_id=${memberId}`)
+    .then(r => setList(r.sort((a, b) => Number(b.principal) - Number(a.principal) || a.id - b.id))).catch(() => setList([])), [memberId, espace]);
   useEffect(() => { load(); }, [load]);
 
   async function remove(c: Row) {
     if ((list?.length ?? 0) <= 1) return toast('Une entreprise doit garder au moins un contact.', 'error');
     if (!confirm(`Retirer ${c.nom} des contacts de l’entreprise ?`)) return;
-    try { await api(`/api/contacts/${c.id}`, 'DELETE'); toast('Contact retiré.'); load(); } catch (e) { toast((e as Error).message, 'error'); }
+    try { await api(`${espace ? '/api/espace/contacts' : '/api/contacts'}/${c.id}`, 'DELETE'); toast('Contact retiré.'); load(); } catch (e) { toast((e as Error).message, 'error'); }
   }
 
   return (
     <section className="card">
-      <div className="row between"><div><h2>{physique ? 'Contact' : 'Contacts'}</h2><p className="small muted">Les personnes déclarées par le membre. Le contact principal est joint en premier.</p></div>
+      <div className="row between"><div><h2>{physique ? 'Contact' : 'Contacts'}</h2><p className="small muted">{espace ? 'Les personnes que la Chambre peut joindre, le contact principal en premier.' : 'Les personnes déclarées par le membre. Le contact principal est joint en premier.'}</p></div>
         <button className="btn sm" onClick={() => setEditing('new')}><Icon name="userplus" size={14} /> Ajouter un contact</button></div>
       {list && list.length === 0 && <p className="small muted">Aucun contact déclaré par ce membre.</p>}
       {list && list.length > 0 && (
@@ -92,13 +94,13 @@ export default function Contacts({ memberId, physique }: { memberId: number; phy
               </div>
               <div className="ct-act">
                 <button type="button" className="btn sm ghost nl-icon" aria-label={`Modifier ${c.nom}`} title="Modifier" onClick={() => setEditing(c)}><Icon name="edit" size={15} /></button>
-                {list.length > 1 && <button type="button" className="btn sm ghost nl-icon" aria-label={`Retirer ${c.nom}`} title="Retirer" onClick={() => remove(c)}><Icon name="trash" size={15} /></button>}
+                {list.length > 1 && c.id !== moi && <button type="button" className="btn sm ghost nl-icon" aria-label={`Retirer ${c.nom}`} title="Retirer" onClick={() => remove(c)}><Icon name="trash" size={15} /></button>}
               </div>
             </li>
           ))}
         </ul>
       )}
-      {editing && <ContactForm memberId={memberId} c={editing === 'new' ? null : editing} only={(list?.length ?? 0) <= (editing === 'new' ? 0 : 1)} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {editing && <ContactForm memberId={memberId} espace={espace} c={editing === 'new' ? null : editing} only={(list?.length ?? 0) <= (editing === 'new' ? 0 : 1)} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
     </section>
   );
 }

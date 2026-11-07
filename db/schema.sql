@@ -597,3 +597,5 @@ create table if not exists membre_lectures (
   last_read_at timestamptz not null default now(),
   primary key (thread_id, contact_id)
 );
+-- Espace membre : le questionnaire de maillage s'ouvre d'abord une seule fois, à la première connexion du contact
+alter table contacts add column if not exists premiere_connexion timestamptz;

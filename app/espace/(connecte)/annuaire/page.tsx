@@ -1,5 +1,6 @@
-import { EspaceAnnuaire } from '@/components/espace/EspaceReseau';
+import Annuaire from '@/components/Annuaire';
 
+// L'annuaire de l'équipe, en mode membre
 export default function Page() {
-  return <EspaceAnnuaire />;
+  return <Annuaire espace />;
 }

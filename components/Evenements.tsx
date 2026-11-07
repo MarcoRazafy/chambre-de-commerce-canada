@@ -51,16 +51,17 @@ function Fill({ e, past }: { e: Row; past: boolean }) {
 }
 
 // Page Événements : les cartes des événements (à venir ou passés), sur trois colonnes
-export default function Evenements() {
+// espace : la même page dans l'espace membre (lecture, inscription depuis la fiche /espace/evenements/…)
+export default function Evenements({ espace = false }: { espace?: boolean }) {
   const [rows, setRows] = useState<Row[] | null>(null);
   const [error, setError] = useState('');
   const [period, setPeriod] = useState<'avenir' | 'passes' | 'tous'>('avenir');
   const [format, setFormat] = useState('');
   const [term, setTerm] = useState('');
   const [editing, setEditing] = useState<Row | null>(null);
-  useNouveau(() => setEditing({}));
+  useNouveau(() => setEditing({}), !espace);
 
-  const load = useCallback(() => api<Row[]>('/api/events').then(r => { setRows(r); setError(''); }).catch(e => setError(e.message)), []);
+  const load = useCallback(() => api<Row[]>(espace ? '/api/espace/evenements' : '/api/events').then(r => { setRows(r); setError(''); }).catch(e => setError(e.message)), [espace]);
   useEffect(() => { load(); }, [load]);
 
   const now = rows ? Date.now() : 0;   // seulement après le chargement (pas pendant le pré-rendu)
@@ -78,12 +79,13 @@ export default function Evenements() {
   return (
     <>
       <div className="head og-head"><div><h1>Événements</h1>
-        <p className="muted">{rows ? `${upcoming.length} à venir · ${upcoming.reduce((a, e) => a + Number(e.inscrits ?? 0), 0)} inscrits · rappels automatiques aux inscrits` : 'Les rendez-vous de la chambre'}</p></div>
-        <div className="actions">
+        <p className="muted">{espace ? 'Les rendez-vous de la Chambre. Ouvrez un événement pour vous inscrire.'
+          : rows ? `${upcoming.length} à venir · ${upcoming.reduce((a, e) => a + Number(e.inscrits ?? 0), 0)} inscrits · rappels automatiques aux inscrits` : 'Les rendez-vous de la chambre'}</p></div>
+        {!espace && <div className="actions">
         {RELATED.events?.map(([href, label]) => <Link key={href} className="btn" href={href}>{label}</Link>)}
         <button className="btn" onClick={exportCsv} disabled={!shown.length}>Exporter</button>
         <button className="btn cta" onClick={() => setEditing({})}><Icon name="plus" size={16} /> Ajouter</button>
-      </div></div>
+      </div>}</div>
       {error && <div className="err">{error}</div>}
 
       {rows === null ? <div className="card"><div className="skeleton"><span /><span /><span /></div></div> : (
@@ -103,7 +105,7 @@ export default function Evenements() {
 
           {all.length === 0 ? (
             <div className="card empty-state"><span className="tile-ic"><Icon name="cal" size={18} fill /></span><b>Aucun événement pour le moment</b>
-              <button className="btn sm cta" onClick={() => setEditing({})}>Créer le premier</button></div>
+              {!espace && <button className="btn sm cta" onClick={() => setEditing({})}>Créer le premier</button>}</div>
           ) : cards.length === 0 ? (
             <div className="card empty-state"><b>Aucun événement ne correspond</b>
               <button className="btn sm" onClick={() => { setTerm(''); setFormat(''); setPeriod('tous'); }}>Voir tous les événements</button></div>
@@ -112,12 +114,13 @@ export default function Evenements() {
               {cards.map(e => {
                 const done = isPast(e);
                 return (
-                  <Link key={e.id} href={`/evenements/${e.id}`} className={`ev-card${done ? ' past' : ''}`}>
+                  <Link key={e.id} href={espace ? `/espace/evenements/${e.id}` : `/evenements/${e.id}`} className={`ev-card${done ? ' past' : ''}${e.inscrit ? ' inscrit' : ''}`}>
                     <div className="ev-card-cover">
                       {imageUrl(e.couverture_url) ? <img src={imageUrl(e.couverture_url)!} alt="" loading="lazy" referrerPolicy="no-referrer" /> : <span className="ev-cover-empty"><Icon name="cal" size={28} /></span>}
                       <span className="ev-date"><b>{day(e.date_debut)}</b><small>{month(e.date_debut)}</small></span>
                       <span className={`ev-format on-img ${FORMAT_CLASS[e.format] ?? ''}`}>{e.format}</span>
                       {done && <span className="ev-done">Terminé</span>}
+                      {espace && e.inscrit && <span className="ev-inscrit">✓ Inscrit</span>}
                     </div>
                     <div className="ev-card-body">
                       <span className="ev-when">{countdown(e.date_debut)} · {hours(e)}</span>
@@ -127,11 +130,11 @@ export default function Evenements() {
                         <li><span className="tile-ic xxs"><Icon name="coin" size={12} fill /></span>{price(e)}</li>
                       </ul>
                     </div>
-                    {!done && (e.rappel_j7 || e.rappel_j1 || e.rappel_h2) && (
+                    {!espace && !done && (e.rappel_j7 || e.rappel_j1 || e.rappel_h2) && (
                       <div className="ev-rappels"><span className="eyebrow">Rappels automatiques</span>
                         <span className="ev-rappels-l">{rappels(e).map(([l, d, parti]) => <span key={l} className={`ev-rap${parti ? ' sent' : ''}`}>{l}{parti ? ' envoyé' : ` · ${d}`}</span>)}</span></div>
                     )}
-                    <div className="ev-card-foot"><Fill e={e} past={done} /></div>
+                    {!(espace && done) && <div className="ev-card-foot"><Fill e={e} past={done} /></div>}
                   </Link>
                 );
               })}

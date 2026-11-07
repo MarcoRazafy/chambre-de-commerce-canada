@@ -9,7 +9,7 @@ const MAX = 5;
 const photoUrl = (id: number) => `/api/produits/photos/${id}`;
 
 // Ajout ou modification d'une offre : titre, nature, prix en clair, description, jusqu'à 5 photos (la première sert de vignette)
-function OffreForm({ memberId, p, onClose, onSaved }: { memberId: number; p: Row | null; onClose: () => void; onSaved: () => void }) {
+function OffreForm({ memberId, espace, p, onClose, onSaved }: { memberId?: number; espace?: boolean; p: Row | null; onClose: () => void; onSaved: () => void }) {
   const [label, setLabel] = useState(p?.label ?? '');
   const [type, setType] = useState(p?.type ?? 'service');
   const [prix, setPrix] = useState(p?.prix ?? '');
@@ -30,7 +30,7 @@ function OffreForm({ memberId, p, onClose, onSaved }: { memberId: number; p: Row
     f.set('label', label); f.set('type', type); f.set('prix', prix); f.set('description', description);
     f.set('retirer', JSON.stringify(retirer));
     files.slice(0, room).forEach(x => f.append('photos', x));
-    const res = await fetch(p ? `/api/produits/${p.id}` : `/api/membres/${memberId}/produits`, { method: p ? 'PATCH' : 'POST', body: f });
+    const res = await fetch(espace ? (p ? `/api/espace/produits/${p.id}` : '/api/espace/produits') : p ? `/api/produits/${p.id}` : `/api/membres/${memberId}/produits`, { method: p ? 'PATCH' : 'POST', body: f });
     if (!res.ok) { setError((await res.json().catch(() => ({}))).error || 'Enregistrement impossible'); setBusy(false); return; }
     toast(p ? 'Offre modifiée.' : 'Offre ajoutée au catalogue.');
     onSaved();
@@ -100,24 +100,26 @@ function OffreView({ p, onClose }: { p: Row; onClose: () => void }) {
   );
 }
 
-// Section « Produits & services » de la fiche membre : cartes défilantes, ajout, modification, retrait
-export default function Produits({ memberId }: { memberId: number }) {
-  const [list, setList] = useState<Row[] | null>(null);
+// Section « Produits & services » de la fiche membre : cartes défilantes, ajout, modification, retrait.
+// espace : le membre gère son propre catalogue ; liste : catalogue d'un autre membre, en lecture seule (annuaire)
+export default function Produits({ memberId, espace, liste }: { memberId?: number; espace?: boolean; liste?: Row[] }) {
+  const [list, setList] = useState<Row[] | null>(liste ?? null);
+  const lecture = !!liste;
   const [editing, setEditing] = useState<Row | null | 'new'>(null);
   const [view, setView] = useState<Row | null>(null);
-  const load = useCallback(() => api<Row[]>(`/api/membres/${memberId}/produits`).then(setList).catch(() => setList([])), [memberId]);
+  const load = useCallback(() => { if (!lecture) api<Row[]>(espace ? '/api/espace/produits' : `/api/membres/${memberId}/produits`).then(setList).catch(() => setList([])); }, [memberId, espace, lecture]);
   useEffect(() => { load(); }, [load]);
 
   async function remove(p: Row) {
     if (!confirm(`Retirer « ${p.label} » du catalogue ? Elle disparaîtra de la fiche et de l’annuaire.`)) return;
-    try { await api(`/api/produits/${p.id}`, 'DELETE'); toast('Offre retirée.'); load(); } catch (e) { toast((e as Error).message, 'error'); }
+    try { await api(espace ? `/api/espace/produits/${p.id}` : `/api/produits/${p.id}`, 'DELETE'); toast('Offre retirée.'); load(); } catch (e) { toast((e as Error).message, 'error'); }
   }
 
   return (
     <section className="card">
-      <div className="row between"><div><h2>Produits &amp; services</h2><p className="small muted">{list ? `${list.length} offre${list.length > 1 ? 's' : ''} au catalogue du membre` : '…'}</p></div>
-        <button className="btn sm" onClick={() => setEditing('new')}><Icon name="plus" size={14} /> Ajouter</button></div>
-      {list && list.length === 0 && <p className="small muted">Aucune offre au catalogue pour le moment.</p>}
+      <div className="row between"><div><h2>Produits &amp; services</h2><p className="small muted">{list ? `${list.length} offre${list.length > 1 ? 's' : ''} au catalogue${espace ? ' · visibles par les autres membres dans l’annuaire' : lecture ? '' : ' du membre'}` : '…'}</p></div>
+        {!lecture && <button className="btn sm" onClick={() => setEditing('new')}><Icon name="plus" size={14} /> {espace ? 'Ajouter un service' : 'Ajouter'}</button>}</div>
+      {list && list.length === 0 && <p className="small muted">{espace ? 'Aucune offre au catalogue. Ajoutez vos produits et services : les autres membres les voient dans l’annuaire.' : 'Aucune offre au catalogue pour le moment.'}</p>}
       {list && list.length > 0 && (
         <div className="of-rail">
           {list.map(p => (
@@ -130,16 +132,18 @@ export default function Produits({ memberId }: { memberId: number }) {
                 <span className="dcard-sector">{p.type === 'produit' ? 'Produit' : 'Service'}</span>
                 <b>{p.label}</b>
                 {p.prix && <span className="of-p">{p.prix}</span>}
+                {p.description && <p className="of-desc">{p.description}</p>}
+                <button type="button" className="of-more" onClick={() => setView(p)}>Voir le détail</button>
               </div>
-              <div className="of-act">
+              {!lecture && <div className="of-act">
                 <button type="button" className="btn sm ghost" onClick={() => setEditing(p)}><Icon name="edit" size={14} /> Modifier</button>
                 <button type="button" className="btn sm ghost rg-reject" onClick={() => remove(p)}>Retirer</button>
-              </div>
+              </div>}
             </article>
           ))}
         </div>
       )}
-      {editing && <OffreForm memberId={memberId} p={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
+      {editing && <OffreForm memberId={memberId} espace={espace} p={editing === 'new' ? null : editing} onClose={() => setEditing(null)} onSaved={() => { setEditing(null); load(); }} />}
       {view && <OffreView p={view} onClose={() => setView(null)} />}
     </section>
   );

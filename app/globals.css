@@ -2637,3 +2637,21 @@ h1{letter-spacing:-.025em}
 .hero-stats span{background:rgba(251,243,230,.08);border:1px solid rgba(251,243,230,.14);border-radius:12px;padding:8px 14px;font-size:.8rem;color:#C9D3E2}
 .hero-stats b{display:block;color:#fff;font-size:1.1rem}
 @media (max-width:620px){.hero{padding:20px}.hero h1{font-size:1.5rem}}
+/* Espace membre : cartes d'événement « inscrit », catalogue d'une fiche membre */
+.ev-card.inscrit{box-shadow:inset 0 0 0 2px var(--green)}
+.ev-inscrit{position:absolute;right:10px;bottom:10px;z-index:1;font-size:.74rem;font-weight:700;padding:3px 10px;border-radius:99px;background:var(--green);color:#fff}
+.es-prods{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+.es-prod{border:1px solid var(--line);border-radius:12px;overflow:hidden;display:flex;flex-direction:column;background:var(--surface)}
+.es-prod img{width:100%;height:130px;object-fit:cover}
+.es-prod>div{padding:10px 12px;display:flex;flex-direction:column;gap:3px}
+.es-prix{color:var(--link);font-weight:600}
+
+/* Mon entreprise : titres de la fenêtre « Modifier » */
+.es-modal-t{margin:4px 0 10px;font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.es-modal-t:not(:first-child){margin-top:20px}
+
+/* Produits & services : description limitée à 3 lignes, le détail s'ouvre en fenêtre */
+.of-desc{margin:2px 0 0;font-size:.82rem;line-height:1.45;color:var(--muted);display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.of-more{align-self:flex-start;padding:0;border:0;background:none;color:var(--accent);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
+.of-more:hover{text-decoration:underline}
+.of-body:last-child{padding-bottom:14px}

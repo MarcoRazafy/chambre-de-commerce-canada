@@ -2,14 +2,32 @@ import { q } from './db';
 import type { Row } from './format';
 import { MsgError } from './messaging';
 import type { Membre } from './espace';
+import type { User } from './auth';
+import { journal } from './hooks';
 
 // Données de l'espace membre. Chaque fonction ne renvoie que ce que l'entreprise du membre connecté a le droit de voir.
 const ACTIFS = `('a_jour', 'attente', 'retard')`;
 
 /* ===== Annuaire et mises en relation ===== */
-export const annuaire = () => q<Row>(`
-  select m.id, m.nom, m.pays, m.ville, m.activite, m.description, m.site_web, m.offres, m.besoins, s.nom as secteur
-  from members m left join secteurs s on s.id = m.secteur_id where m.statut in ${ACTIFS} order by m.nom`);
+// Mêmes champs que l'annuaire de l'équipe (couverture, logo, propose / recherche), sans les données internes
+const PUBLIC = `m.id, m.nom, m.pays, m.ville, m.statut, m.secteur_id, m.activite, m.description, m.recherche, m.offres, m.besoins, m.site_web,
+  m.couverture_url, m.couverture_x, m.couverture_y, m.membre_depuis, exists (select 1 from avatars a where a.kind = 'cover' and a.ref_id = m.id) as couverture_deposee`;
+export async function annuaire() {
+  const [membres, secteurs] = await Promise.all([
+    q<Row>(`select ${PUBLIC} from members m where m.statut in ${ACTIFS} order by m.nom`),
+    q<Row>('select id, nom from secteurs order by nom'),
+  ]);
+  return { membres, secteurs };
+}
+// Fiche d'un membre vue depuis l'annuaire : présentation et catalogue
+export async function ficheMembre(id: number) {
+  const [m] = await q<Row>(`select ${PUBLIC}, s.nom as secteur from members m left join secteurs s on s.id = m.secteur_id where m.id = $1 and m.statut in ${ACTIFS}`, [id]);
+  if (!m) throw new MsgError('Membre introuvable');
+  const produits = await q<Row>(`select p.id, p.label, p.type, p.prix, p.description,
+      coalesce((select json_agg(f.id order by f.position, f.id) from produit_photos f where f.produit_id = p.id), '[]') as photos
+    from produits p where p.member_id = $1 order by p.ordre, p.id`, [id]);
+  return { ...m, produits };
+}
 
 export const relations = (m: Membre) => q<Row>(`
   select c.id, c.created_at, c.note, o.id as membre_id, o.nom, o.ville, o.pays, o.activite, o.description, o.site_web, s.nom as secteur,
@@ -20,13 +38,16 @@ export const relations = (m: Membre) => q<Row>(`
   where (c.member_a = $1 or c.member_b = $1) and c.statut = 'relation' order by c.created_at desc`, [m.member_id]);
 
 /* ===== Événements ===== */
-export const evenements = (m: Membre) => q<Row>(`
-  select e.id, e.titre, e.date_debut, e.date_fin, e.format, e.lieu, e.capacite, e.tarif_membre, e.description, e.couverture_url,
-         case when exists (select 1 from event_registrations r where r.event_id = e.id and r.member_id = $1 and lower(r.email) = lower($2))
-              then e.lien_visio end as lien_visio,
-         (select count(*) from event_registrations r where r.event_id = e.id)::int as inscrits,
-         exists (select 1 from event_registrations r where r.event_id = e.id and r.member_id = $1 and lower(r.email) = lower($2)) as inscrit
-  from events e where coalesce(e.date_fin, e.date_debut) >= now() - interval '1 day' order by e.date_debut`, [m.member_id, m.email]);
+const EV = `e.id, e.titre, e.date_debut, e.date_fin, e.format, e.lieu, e.capacite, e.tarif_membre, e.tarif_public, e.description, e.couverture_url,
+  e.deroulement, e.intervenants, (select count(*) from event_registrations r where r.event_id = e.id)::int as inscrits,
+  exists (select 1 from event_registrations r where r.event_id = e.id and r.member_id = $1 and lower(r.email) = lower($2)) as inscrit,
+  case when exists (select 1 from event_registrations r where r.event_id = e.id and r.member_id = $1 and lower(r.email) = lower($2)) then e.lien_visio end as lien_visio`;
+export const evenements = (m: Membre) => q<Row>(`select ${EV} from events e where e.date_debut >= now() - interval '12 months' order by e.date_debut`, [m.member_id, m.email]);
+export async function evenement(m: Membre, id: number) {
+  const [e] = await q<Row>(`select ${EV} from events e where e.id = $3`, [m.member_id, m.email, id]);
+  if (!e) throw new MsgError('Événement introuvable');
+  return e;
+}
 
 export async function inscrire(m: Membre, eventId: number) {
   const [e] = await q<Row>(`select id, titre, capacite, (select count(*) from event_registrations r where r.event_id = e.id)::int as n
@@ -44,9 +65,10 @@ export const desinscrire = (m: Membre, eventId: number) =>
 
 /* ===== Actualités ===== */
 export const actualites = () => q<Row>(`
-  select n.id, n.titre, n.categorie, n.date_pub, n.contenu,
-         (select coalesce(json_agg(json_build_object('id', x.id, 'type', x.type) order by x.position, x.id), '[]') from news_media x where x.news_id = n.id) as medias
-  from news n where n.publie order by n.date_pub desc, n.id desc limit 60`);
+  select n.id, n.titre, n.categorie, n.date_pub, n.contenu, n.tags, n.created_at, n.updated_at,
+         case when a.id is null then null else json_build_object('id', a.id, 'nom', a.nom, 'fonction', a.fonction) end as auteur,
+         (select coalesce(json_agg(json_build_object('id', x.id, 'nom', x.nom, 'type', x.type, 'taille', x.taille) order by x.position, x.id), '[]') from news_media x where x.news_id = n.id) as medias
+  from news n left join team_users a on a.id = n.auteur_id where n.publie order by n.date_pub desc, n.id desc limit 100`);
 export async function mediaActualite(mid: number) {
   const [f] = await q<{ nom: string; type: string; contenu: Buffer }>(
     'select x.nom, x.type, x.contenu from news_media x join news n on n.id = x.news_id where x.id = $1 and n.publie', [mid]);
@@ -202,4 +224,51 @@ export async function fichierMessage(m: Membre, fid: number) {
   if (!f) return null;
   await acces(m, f.thread_id);
   return f;
+}
+
+/* ===== Mon entreprise : catalogue et contacts ===== */
+// Auteur inscrit au journal quand le membre modifie lui-même son catalogue
+export const auteur = (m: Membre) => ({ nom: `${m.nom} (espace membre)` }) as User;
+
+const CONTACT = 'c.id, c.nom, c.fonction, c.email, c.tel, c.principal, (c.password_hash is not null) as acces';
+export const contacts = (m: Membre) =>
+  q<Row>(`select ${CONTACT} from contacts c where c.member_id = $1 order by c.principal desc, c.id`, [m.member_id]);
+
+function champsContact(b: Row) {
+  const t = (v: unknown, n: number) => String(v ?? '').trim().slice(0, n) || null;
+  const nom = t(b.nom, 160), email = t(b.email, 200)?.toLowerCase() ?? null;
+  if (!nom) throw new MsgError('Le nom est obligatoire');
+  if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) throw new MsgError('Courriel invalide');
+  return { nom, email, fonction: t(b.fonction, 160), tel: t(b.tel, 60), principal: !!b.principal };
+}
+// Un seul contact principal par entreprise
+async function unPrincipal(memberId: number, id: number, principal: boolean) {
+  if (principal) await q('update contacts set principal = false where member_id = $1 and id <> $2 and principal', [memberId, id]);
+}
+export async function ajouterContact(m: Membre, b: Row) {
+  const c = champsContact(b);
+  const [r] = await q<Row>('insert into contacts (member_id, nom, email, fonction, tel, principal) values ($1, $2, $3, $4, $5, $6) returning id',
+    [m.member_id, c.nom, c.email, c.fonction, c.tel, c.principal]);
+  await unPrincipal(m.member_id, r.id, c.principal);
+  await journal('Adhésions', 'Contact ajouté depuis l’espace membre', `${c.nom} · ${m.entreprise}`, m.nom);
+  return r.id as number;
+}
+export async function modifierContact(m: Membre, id: number, b: Row) {
+  const [avant] = await q<Row>('select id, email, principal, (password_hash is not null) as acces from contacts where id = $1 and member_id = $2', [id, m.member_id]);
+  if (!avant) throw new MsgError('Contact introuvable');
+  const c = champsContact(b);
+  // Le courriel d'une personne qui a accès à l'espace est son identifiant : seule la Chambre le change
+  if (avant.acces && c.email !== String(avant.email ?? '').toLowerCase()) throw new MsgError('Ce courriel sert à se connecter à l’espace membre : demandez à la Chambre de le changer.');
+  // Le contact principal reste tant qu'aucun autre n'est désigné
+  const principal = c.principal || avant.principal;
+  await q('update contacts set nom = $2, email = $3, fonction = $4, tel = $5, principal = $6 where id = $1', [id, c.nom, c.email, c.fonction, c.tel, principal]);
+  await unPrincipal(m.member_id, id, principal && !avant.principal);
+  await journal('Adhésions', 'Contact modifié depuis l’espace membre', `${c.nom} · ${m.entreprise}`, m.nom);
+}
+export async function retirerContact(m: Membre, id: number) {
+  if (id === m.contact_id) throw new MsgError('Vous ne pouvez pas vous retirer vous-même.');
+  const [c] = await q<Row>('delete from contacts where id = $1 and member_id = $2 returning nom, principal', [id, m.member_id]);
+  if (!c) throw new MsgError('Contact introuvable');
+  if (c.principal) await q('update contacts set principal = true where id = (select id from contacts where member_id = $1 order by id limit 1)', [m.member_id]);
+  await journal('Adhésions', 'Contact retiré depuis l’espace membre', `${c.nom} · ${m.entreprise}`, m.nom);
 }

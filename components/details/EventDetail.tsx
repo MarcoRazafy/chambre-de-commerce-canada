@@ -10,22 +10,22 @@ const field = (name: string) => R.fields.find(f => f.name === name)!;
 const lines = (t: string | null) => (t ?? '').split('\n').map(l => l.trim()).filter(Boolean);
 
 // « 09:00 Accueil », « 9h30 - Ouverture » → heure + étape ; une ligne sans heure reste une étape simple
-const steps = (t: string | null) => lines(t).map(l => {
+export const steps = (t: string | null) => lines(t).map(l => {
   const m = l.match(/^(\d{1,2}\s*[:h]\s*\d{2})\s*[-–—:]?\s*(.+)$/i);
   return m ? { heure: m[1].replace(/\s/g, '').replace('h', ':').padStart(5, '0'), texte: m[2] } : { heure: '', texte: l };
 });
 // « Nom — fonction » (tiret long, court ou virgule)
-const people = (t: string | null) => lines(t).map(l => {
+export const people = (t: string | null) => lines(t).map(l => {
   const [nom, ...rest] = l.split(/\s+[—–-]\s+|,\s+/);
   return { nom, fonction: rest.join(', ') };
 });
 
-const day = (v: string) => new Date(v).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
-const hour = (v: string) => new Date(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
-const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
+export const day = (v: string) => new Date(v).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+export const hour = (v: string) => new Date(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+export const sameDay = (a: string, b: string) => new Date(a).toDateString() === new Date(b).toDateString();
 
 // Fichier .ics pour l'ajouter à Google Agenda, Outlook ou au téléphone (fin par défaut : 2 heures après le début)
-function downloadIcs(e: Row) {
+export function downloadIcs(e: Row) {
   const stamp = (v: string | Date) => new Date(v).toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, '');
   const esc = (s: string) => s.replace(/[\\,;]/g, m => '\\' + m).replace(/\n/g, '\\n');
   const fin = e.date_fin ?? new Date(new Date(e.date_debut).getTime() + 2 * 3600_000);

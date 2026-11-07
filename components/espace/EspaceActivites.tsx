@@ -4,87 +4,95 @@ import { useParams } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { CATS, FMTS, FMT_ICON } from '@/lib/bibliotheque';
 import { lireBlocs } from '@/lib/blocs';
-import type { Row } from '@/lib/format';
+import { relative, type Row } from '@/lib/format';
+import { isVideo } from '@/lib/news-client';
 import { toast } from '@/lib/toast';
+import Avatar from '../Avatar';
 import Icon from '../Icon';
+import { Gallery, LONG, Lightbox } from '../news/NewsPost';
+import RichText from '../news/RichText';
 import PageRessource, { PieceJointe } from '../ressources/PageRessource';
 import { appel, argent, jour } from './api';
 
-const dateCourte = (v: string) => { const d = new Date(v); return { m: d.toLocaleDateString('fr-FR', { month: 'short' }).replace('.', ''), j: d.getDate() }; };
-const heure = (v: string) => new Date(v).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
 
-/* ===== Événements ===== */
-export function EspaceEvenements() {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [busy, setBusy] = useState<number | null>(null);
-  const charger = useCallback(() => appel<Row[]>('/api/espace/evenements').then(setRows).catch(e => toast(e.message, 'error')), []);
-  useEffect(() => { charger(); }, [charger]);
-  async function basculer(e: Row) {
-    if (e.inscrit && !confirm(`Annuler votre inscription à « ${e.titre} » ?`)) return;
-    setBusy(e.id);
-    try { await appel(`/api/espace/evenements/${e.id}`, e.inscrit ? 'DELETE' : 'POST'); toast(e.inscrit ? 'Inscription annulée.' : 'Vous êtes inscrit. À bientôt !'); charger(); }
-    catch (x) { toast((x as Error).message, 'error'); } finally { setBusy(null); }
-  }
+/* ===== Actualités : même mise en page que le back-office (fil + colonne de droite), en lecture ===== */
+const mediaNews = (id: number) => `/api/espace/actualites/medias/${id}`;
+const courte = (v: string) => new Date(String(v).slice(0, 10) + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+
+function PostLu({ n, onTag }: { n: Row; onTag: (t: string) => void }) {
+  const [plus, setPlus] = useState(false);
+  const [vue, setVue] = useState<number | null>(null);
+  const texte: string = n.contenu ?? '';
+  const long = texte.length > LONG && !plus;
+  const date = n.created_at && relative(n.created_at) ? relative(n.created_at)! : courte(n.date_pub);
   return (
-    <>
-      <div className="head"><div><h1>Événements</h1><p className="muted">Les rendez-vous de la Chambre à venir. Inscrivez-vous en un clic.</p></div></div>
-      {rows === null ? <div className="card"><div className="skeleton"><span /><span /></div></div>
-        : rows.length === 0 ? <div className="card empty-state"><Icon name="cal" size={24} /><b>Aucun événement à venir pour le moment</b></div> : (
-          <div className="es-evs">
-            {rows.map(e => {
-              const d = dateCourte(e.date_debut), plein = e.capacite && e.inscrits >= e.capacite;
-              return (
-                <article key={e.id} className={`card es-ev${e.inscrit ? ' inscrit' : ''}`}>
-                  <div className="row" style={{ flexWrap: 'nowrap', alignItems: 'flex-start' }}>
-                    <div className="dt-cal"><span>{d.m}</span><b>{d.j}</b></div>
-                    <div className="grow"><b className="es-nom">{e.titre}</b>
-                      <small className="muted">{jour(e.date_debut)} à {heure(e.date_debut)} · {e.format}{e.lieu ? ` · ${e.lieu}` : ''}</small></div>
-                  </div>
-                  {e.description && <p className="small es-desc">{e.description}</p>}
-                  <div className="row small muted">
-                    <span>{e.tarif_membre ? `${argent(Number(e.tarif_membre), 'MGA')} pour les membres` : 'Gratuit pour les membres'}</span>
-                    {e.capacite ? <span>· {Math.max(0, e.capacite - e.inscrits)} place{e.capacite - e.inscrits > 1 ? 's' : ''} restante{e.capacite - e.inscrits > 1 ? 's' : ''}</span> : null}
-                  </div>
-                  {e.inscrit && e.lien_visio && <a className="small" href={e.lien_visio} target="_blank" rel="noopener noreferrer"><Icon name="external" size={13} /> Lien de connexion</a>}
-                  <div className="row">
-                    {e.inscrit ? <><span className="pchip ok">✓ Inscrit</span><button className="btn sm ghost" disabled={busy === e.id} onClick={() => basculer(e)}>Annuler</button></>
-                      : <button className="btn sm cta" disabled={busy === e.id || !!plein} onClick={() => basculer(e)}>{plein ? 'Complet' : 'S’inscrire'}</button>}
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-    </>
+    <article className="card np" id={`post-${n.id}`}>
+      <header className="np-h">
+        {n.auteur ? <Avatar kind="user" id={n.auteur.id} size={42} /> : <img className="np-org" src="/logo-app.png" alt="" width={42} height={42} />}
+        <div className="grow"><b>{n.auteur?.nom ?? 'CanCham Madagascar'}</b><span className="small muted"><time dateTime={n.created_at}>{date}</time></span></div>
+        {n.categorie && <span className="np-cat">{n.categorie}</span>}
+      </header>
+      <div className="np-body">
+        <h2>{n.titre}</h2>
+        {texte && <p className="np-text"><RichText text={long ? texte.slice(0, LONG).replace(/\s+\S*$/, '') + '… ' : texte} onTag={onTag} />
+          {long && <button type="button" className="linkish" onClick={() => setPlus(true)}>Voir plus</button>}</p>}
+        {n.tags?.length > 0 && <div className="np-tags">{n.tags.map((t: string) => <button type="button" key={t} className="hashtag" onClick={() => onTag(t)}>#{t}</button>)}</div>}
+      </div>
+      <Gallery medias={n.medias ?? []} onOpen={setVue} url={mediaNews} />
+      {vue !== null && <Lightbox medias={n.medias} start={vue} onClose={() => setVue(null)} url={mediaNews} />}
+    </article>
   );
 }
 
-/* ===== Actualités ===== */
 export function EspaceActualites() {
-  const [rows, setRows] = useState<Row[] | null>(null);
-  const [ouvert, setOuvert] = useState<number | null>(null);
-  useEffect(() => { appel<Row[]>('/api/espace/actualites').then(setRows).catch(e => toast(e.message, 'error')); }, []);
+  const [posts, setPosts] = useState<Row[] | null>(null);
+  const [term, setTerm] = useState('');
+  const [tag, setTag] = useState<string | null>(null);
+  const [active, setActive] = useState<number | null>(null);
+  useEffect(() => { appel<Row[]>('/api/espace/actualites').then(setPosts).catch(e => toast(e.message, 'error')); }, []);
+  const shown = (posts ?? []).filter(n => (!tag || n.tags?.includes(tag)) && (!term || [n.titre, n.contenu].join(' ').toLowerCase().includes(term.toLowerCase())));
+  const tags = [...new Set((posts ?? []).flatMap(n => n.tags ?? []))].sort() as string[];
+  const aller = (id: number) => { setActive(id); document.getElementById(`post-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
+  useEffect(() => {
+    if (!posts?.length) return;
+    const io = new IntersectionObserver(entries => {
+      const top = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
+      if (top) setActive(Number(top.target.id.slice(5)));
+    }, { rootMargin: '-80px 0px -55% 0px' });
+    document.querySelectorAll('.news-main .np').forEach(el => io.observe(el));
+    return () => io.disconnect();
+  }, [posts, tag, term]);
   return (
     <>
-      <div className="head"><div><h1>Actualités</h1><p className="muted">Les nouvelles de la Chambre et de ses membres.</p></div></div>
-      {rows === null ? <div className="card"><div className="skeleton"><span /><span /></div></div>
-        : rows.length === 0 ? <div className="card empty-state"><Icon name="news" size={24} /><b>Aucune actualité pour le moment</b></div> : (
-          <div className="es-news">
-            {rows.map(n => {
-              const img = n.medias?.find((x: Row) => String(x.type).startsWith('image/'));
-              const long = String(n.contenu ?? '').length > 320;
+      <div className="head og-head"><div><h1>Actualités</h1><p className="muted">Les nouvelles de la Chambre, publiées pour les membres.</p></div></div>
+      <div className="news-layout">
+        <div className="news-main">
+          {posts === null ? <div className="card"><div className="skeleton"><span /><span /><span /></div></div>
+            : shown.length === 0 ? <div className="card empty-state"><span className="tile-ic"><Icon name="news" size={18} fill /></span><b>{posts.length ? 'Aucune actualité ne correspond' : 'Aucune actualité pour le moment'}</b>
+              {posts.length > 0 && <button className="btn sm" onClick={() => { setTag(null); setTerm(''); }}>Voir toutes les actualités</button>}</div>
+            : shown.map(n => <PostLu key={n.id} n={n} onTag={t => { setTag(t); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />)}
+        </div>
+        <aside className="card news-side">
+          <div className="news-side-h"><h2>Actualités</h2><span className="small muted">{posts?.length ?? 0}</span></div>
+          <label className="search-inp" style={{ maxWidth: 'none' }}><Icon name="search" size={16} />
+            <input className="inp" placeholder="Rechercher une actualité…" aria-label="Rechercher une actualité" value={term} onChange={e => setTerm(e.target.value)} /></label>
+          {tags.length > 0 && <div className="np-tags">{tags.map(t => <button type="button" key={t} className={`hashtag${tag === t ? ' on' : ''}`} aria-pressed={tag === t} onClick={() => setTag(tag === t ? null : t)}>#{t}</button>)}</div>}
+          {tag && <button type="button" className="linkish small" onClick={() => setTag(null)}>Voir toutes les actualités</button>}
+          <ul className="news-list">
+            {shown.map(n => {
+              const m = n.medias?.[0];
               return (
-                <article key={n.id} className="card es-post">
-                  {img && <img className="es-post-img" src={`/api/espace/actualites/medias/${img.id}`} alt="" loading="lazy" />}
-                  <span className="eyebrow">{[n.categorie, jour(n.date_pub)].filter(Boolean).join(' · ')}</span>
-                  <h2>{n.titre}</h2>
-                  <p className={`small es-post-txt${long && ouvert !== n.id ? ' coupe' : ''}`}>{n.contenu}</p>
-                  {long && <button type="button" className="btn sm ghost" style={{ alignSelf: 'flex-start' }} onClick={() => setOuvert(ouvert === n.id ? null : n.id)}>{ouvert === n.id ? 'Réduire' : 'Lire la suite'}</button>}
-                </article>
+                <li key={n.id}>
+                  <button type="button" className={n.id === active ? 'on' : ''} aria-current={n.id === active ? 'true' : undefined} onClick={() => aller(n.id)}>
+                    <span className="nl-thumb">{m ? (isVideo(m.type) ? <><video src={mediaNews(m.id) + '#t=0.5'} preload="metadata" muted /><Icon name="play" size={14} fill /></> : <img src={mediaNews(m.id)} alt="" loading="lazy" />) : <Icon name="news" size={20} />}</span>
+                    <span className="nl-txt"><b>{n.titre}</b><span className="small muted">{courte(n.date_pub)}{n.categorie ? ` · ${n.categorie}` : ''}</span></span>
+                  </button>
+                </li>
               );
             })}
-          </div>
-        )}
+          </ul>
+        </aside>
+      </div>
     </>
   );
 }

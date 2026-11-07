@@ -21,10 +21,13 @@ export async function connecter(email: string, password: string) {
   if (!c || !ok || !['a_jour', 'attente', 'retard'].includes(c.statut)) throw new MsgError('Courriel ou mot de passe incorrect');
   const token = randomBytes(32).toString('hex');
   await q(`insert into membre_sessions (id, contact_id, expires_at) values ($1, $2, now() + interval '${DAYS} days')`, [digest(token), c.id]);
-  await q('update contacts set derniere_connexion = now() where id = $1', [c.id]);
+  // Première connexion du contact : on lui propose d'abord le questionnaire (une seule fois)
+  const [{ premiere }] = await q<{ premiere: boolean }>(
+    `update contacts c set derniere_connexion = now(), premiere_connexion = coalesce(c.premiere_connexion, now())
+     from contacts avant where c.id = $1 and avant.id = c.id returning avant.premiere_connexion is null as premiere`, [c.id]);
   await q('delete from membre_sessions where expires_at < now()');
   (await cookies()).set(COOKIE_MEMBRE, token, { httpOnly: true, sameSite: 'lax', secure: await enHttps(), path: '/', maxAge: DAYS * 86400 });
-  return c;
+  return { ...c, vers: premiere ? '/espace/demarrage' : '/espace' };
 }
 
 export async function deconnecter() {

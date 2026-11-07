@@ -24,7 +24,11 @@ export default function EspaceMessagerie() {
     setCur(c => c ?? (new URLSearchParams(window.location.search).get('ecrire') ? null : l[0]?.id ?? null));
   }).catch(e => toast(e.message, 'error')), []);
   useEffect(() => { charger(); }, [charger]);
-  useEffect(() => { if (new URLSearchParams(window.location.search).get('ecrire')) zone.current?.focus(); }, [liste]);
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search);
+    if (p.get('texte')) setTexte(t => t || p.get('texte')!);
+    if (p.get('ecrire')) zone.current?.focus();
+  }, [liste]);
   useEffect(() => {
     if (!cur) { setFil(null); return; }
     appel<Row>(`/api/espace/messages/${cur}`).then(f => { setFil(f); recharger(); setListe(l => l?.map(t => (t.id === cur ? { ...t, non_lu: false } : t)) ?? l); })

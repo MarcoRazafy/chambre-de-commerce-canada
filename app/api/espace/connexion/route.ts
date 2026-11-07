@@ -10,7 +10,7 @@ export async function POST(req: Request) {
   try {
     const c = await connecter(e, p);
     await journal('Adhésions', 'Connexion', 'Espace membre', c.nom);
-    return Response.json({ ok: true, vers: '/espace/demarrage' });
+    return Response.json({ ok: true, vers: c.vers });
   } catch (x) {
     if (!(x instanceof MsgError)) return Response.json({ error: 'Connexion impossible pour le moment' }, { status: 500 });
     const u = await connecterEquipe(e, p).catch(() => null);
