@@ -14,7 +14,7 @@ const count = (n: News) => n.reactions.reduce((a, r) => a + r.n, 0);
 export default function Actualites() {
   const router = useRouter();
   const sp = useSearchParams();
-  const [me, setMe] = useState<{ id: number; role: string } | null>(null);
+  const [me, setMe] = useState<{ kind: 'user'; id: number; role: string } | null>(null);
   const [posts, setPosts] = useState<News[] | null>(null);
   const [term, setTerm] = useState('');
   const [tag, setTag] = useState<string | null>(null);
@@ -25,7 +25,7 @@ export default function Actualites() {
   const highlight = Number(sp.get('c')) || null;
   const jumped = useRef<string | null>(null);
 
-  useEffect(() => { fetch('/api/auth/me').then(r => r.json()).then(d => d.user && setMe(d.user)); }, []);
+  useEffect(() => { fetch('/api/auth/me').then(r => r.json()).then(d => d.user && setMe({ ...d.user, kind: 'user' })); }, []);
   const load = useCallback(() => news.feed().then(p => { setPosts(p); setError(''); }).catch(e => setError(e.message)), []);
   useEffect(() => { load(); }, [load]);
   // Réactions et commentaires des collègues : mis à jour toutes les 20 secondes quand la page est visible

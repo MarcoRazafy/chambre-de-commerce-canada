@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { chat, chatChanged, type Thread } from '@/lib/chat';
 import { relative } from '@/lib/format';
-import { isVideo, mediaUrl, news, type Media, type News } from '@/lib/news-client';
+import { estMoi, isVideo, mediaUrl, type Me, type Media, type News } from '@/lib/news-client';
 import { toast } from '@/lib/toast';
 import Avatar from '../Avatar';
 import Icon from '../Icon';
@@ -10,8 +10,7 @@ import ModalBackdrop from '../ModalBackdrop';
 import Comments, { type CommentsHandle } from './Comments';
 import { ReactButton, ReactionSummary } from './Reactions';
 import RichText from './RichText';
-
-type Me = { id: number; role: string };
+import { useNewsCtx } from './contexte';
 const fail = (e: unknown) => toast((e as Error).message, 'error');
 export const LONG = 420;   // au-delà, le texte est replié avec « Voir plus »
 
@@ -93,6 +92,7 @@ function ShareModal({ n, onClose }: { n: News; onClose: () => void }) {
 export default function NewsPost({ n, me, onChanged, onEdit, onDeleted, onTag, highlight }: {
   n: News; me: Me; onChanged: () => void; onEdit: () => void; onDeleted: () => void; onTag: (t: string) => void; highlight: number | null;
 }) {
+  const { api, media, espace, ficheMembre, sansAuteur } = useNewsCtx();
   const [more, setMore] = useState(false);
   const [menu, setMenu] = useState(false);
   const [view, setView] = useState<number | null>(null);
@@ -115,58 +115,65 @@ export default function NewsPost({ n, me, onChanged, onEdit, onDeleted, onTag, h
   async function remove() {
     setMenu(false);
     if (!confirm(`Supprimer « ${n.titre} » avec ses photos, réactions et commentaires ?`)) return;
-    try { await news.remove(n.id); toast('Actualité supprimée'); onDeleted(); } catch (e) { fail(e); }
+    try { await api.remove(n.id); toast('Actualité supprimée'); onDeleted(); } catch (e) { fail(e); }
   }
   async function publish() {
     setMenu(false);
-    try { await news.publish(n.id, !n.publie); toast(n.publie ? 'Actualité repassée en brouillon' : 'Actualité publiée'); onChanged(); } catch (e) { fail(e); }
+    try { await api.publish(n.id, !n.publie); toast(n.publie ? 'Actualité repassée en brouillon' : 'Actualité publiée'); onChanged(); } catch (e) { fail(e); }
   }
 
+  // Espace membre : on ne gère que ses propres publications ; l'équipe gère tout
+  const mienne = estMoi(n.auteur, me);
+  const gerer = !espace || mienne;
+  const a = n.auteur;
   return (
     <article className="card np" id={`post-${n.id}`}>
       <header className="np-h">
-        {/* Sans auteur (actualités créées avant l'ajout de l'auteur) : publiée au nom de la plateforme */}
-        {n.auteur ? <Avatar kind="user" id={n.auteur.id} size={42} /> : <img className="np-org" src="/logo-app.png" alt="" width={42} height={42} />}
+        {/* Publication d'un membre : logo de son entreprise ; sans auteur (anciennes actualités) : au nom de la plateforme */}
+        {a?.kind === 'contact' && a.member_id ? <a href={ficheMembre(a.member_id)} className="np-av-lien" aria-label={a.entreprise ?? ''}><Avatar kind="member" id={a.member_id} size={42} nom={a.entreprise ?? a.nom} /></a>
+          : a ? <Avatar kind="user" id={a.id ?? 0} size={42} /> : <img className="np-org" src="/logo-app.png" alt="" width={42} height={42} />}
         <div className="grow">
-          <b>{n.auteur?.nom ?? 'L’Alliée Virtuelle'}</b>
+          {a?.kind === 'contact' ? <b>{a.member_id ? <a className="np-auteur" href={ficheMembre(a.member_id)}>{a.entreprise}</a> : a.entreprise}<span className="np-qui"> · {a.nom}</span></b>
+            : <b>{a?.nom ?? sansAuteur}</b>}
           <span className="small muted"><time dateTime={n.created_at}>{date}</time>{n.updated_at && ' · modifié'}</span>
         </div>
-        {n.categorie && <span className="np-cat">{n.categorie}</span>}
+        {n.categorie ? <span className="np-cat">{n.categorie}</span> : n.member_id ? <span className="np-cat membre">Publication de membre</span> : null}
         {!n.publie && <span className="chip c-amber"><Icon name="clock" size={14} />Brouillon</span>}
-        <div className="np-menu" ref={menuRef}>
+        {gerer && <div className="np-menu" ref={menuRef}>
           <button type="button" className="tb-btn" aria-label="Plus d’actions" aria-expanded={menu} onClick={() => setMenu(m => !m)}><Icon name="more" size={20} /></button>
           {menu && (
             <div className="np-pop pop" role="menu">
               <button type="button" role="menuitem" onClick={() => { setMenu(false); onEdit(); }}><Icon name="edit" size={16} />Modifier</button>
-              <button type="button" role="menuitem" onClick={publish}><Icon name={n.publie ? 'archive' : 'send'} size={16} />{n.publie ? 'Repasser en brouillon' : 'Publier'}</button>
-              <button type="button" role="menuitem" onClick={() => { setMenu(false); setShare(true); }}><Icon name="share" size={16} />Partager</button>
+              {!espace && <button type="button" role="menuitem" onClick={publish}><Icon name={n.publie ? 'archive' : 'send'} size={16} />{n.publie ? 'Repasser en brouillon' : 'Publier'}</button>}
+              {!espace && <button type="button" role="menuitem" onClick={() => { setMenu(false); setShare(true); }}><Icon name="share" size={16} />Partager</button>}
               <button type="button" role="menuitem" className="danger" onClick={remove}><Icon name="trash" size={16} />Supprimer</button>
             </div>
           )}
-        </div>
+        </div>}
       </header>
 
       <div className="np-body">
-        <h2>{n.titre}</h2>
+        {/* Publication d'un membre : le titre est la première ligne du texte, on ne le répète pas */}
+        {!n.member_id && <h2>{n.titre}</h2>}
         {texte && <p className="np-text"><RichText text={long ? texte.slice(0, LONG).replace(/\s+\S*$/, '') + '… ' : texte} onTag={onTag} />
           {long && <button type="button" className="linkish" onClick={() => setMore(true)}>Voir plus</button>}</p>}
         {n.tags.length > 0 && <div className="np-tags">{n.tags.map(t => <button type="button" key={t} className="hashtag" onClick={() => onTag(t)}>#{t}</button>)}</div>}
       </div>
 
-      <Gallery medias={n.medias} onOpen={setView} />
+      <Gallery medias={n.medias} onOpen={setView} url={media} />
 
       <div className="np-stats">
         <ReactionSummary reactions={n.reactions} />
         {n.commentaires.length > 0 && <button type="button" className="linkish" onClick={() => setShowComments(s => !s)}>{n.commentaires.length} commentaire{n.commentaires.length > 1 ? 's' : ''}</button>}
       </div>
       <div className="np-actions">
-        <ReactButton reactions={n.reactions} onReact={e => news.react(n.id, e).then(onChanged, fail)} />
+        <ReactButton reactions={n.reactions} onReact={e => api.react(n.id, e).then(onChanged, fail)} />
         <button type="button" className="np-act" onClick={() => { setShowComments(true); setTimeout(() => comments.current?.focus(), 0); }}><Icon name="chat" size={18} />Commenter</button>
-        <button type="button" className="np-act" onClick={() => setShare(true)}><Icon name="share" size={18} />Partager</button>
+        {!espace && <button type="button" className="np-act" onClick={() => setShare(true)}><Icon name="share" size={18} />Partager</button>}
       </div>
 
-      {showComments && <Comments ref={comments} newsId={n.id} comments={n.commentaires} me={me} onChanged={onChanged} highlight={highlight} />}
-      {view !== null && <Lightbox medias={n.medias} start={view} onClose={() => setView(null)} />}
+      {showComments && <Comments ref={comments} newsId={n.id} comments={n.commentaires} me={me} proprio={espace && mienne} onChanged={onChanged} highlight={highlight} />}
+      {view !== null && <Lightbox medias={n.medias} start={view} onClose={() => setView(null)} url={media} />}
       {share && <ShareModal n={n} onClose={() => setShare(false)} />}
     </article>
   );

@@ -2,10 +2,15 @@ import type { Person } from './chat';
 
 export type Reaction = { emoji: string; n: number; noms: string; moi: boolean };
 export type Media = { id: number; nom: string; type: string; taille: number };
-export type Comment = { id: number; parent_id: number | null; texte: string; created_at: string; edited_at: string | null; auteur: { id: number; nom: string } | null; reactions: Reaction[] };
+// Auteur : un collègue (kind « user ») ou un contact d'une entreprise membre (kind « contact », avec son entreprise)
+export type Auteur = { kind?: 'user' | 'contact'; id: number | null; nom: string; fonction?: string | null; member_id?: number | null; entreprise?: string | null };
+// Lecteur connecté : un collègue (rôle) ou un contact de l'espace membre (son entreprise)
+export type Me = { kind?: 'user' | 'contact'; id: number; role?: string; member_id?: number };
+export const estMoi = (a: Auteur | null | undefined, me: Me) => !!a && a.id != null && (a.kind ?? 'user') === (me.kind ?? 'user') && a.id === me.id;
+export type Comment = { id: number; parent_id: number | null; texte: string; created_at: string; edited_at: string | null; auteur: Auteur | null; reactions: Reaction[] };
 export type News = {
   id: number; titre: string; categorie: string | null; date_pub: string; publie: boolean; contenu: string | null; tags: string[];
-  created_at: string; updated_at: string | null; auteur: { id: number; nom: string; fonction: string | null } | null;
+  created_at: string; updated_at: string | null; auteur: Auteur | null; member_id?: number | null;
   medias: Media[]; reactions: Reaction[]; commentaires: Comment[];
 };
 export type NewsItem = Pick<News, 'id' | 'titre' | 'categorie' | 'date_pub' | 'publie' | 'tags'> & { media: { id: number; type: string } | null; nb_reactions: number; nb_commentaires: number };
@@ -21,6 +26,20 @@ const send = (url: string, method: string, body?: unknown) =>
   fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) }).then(r => json<any>(r));
 
 export const mediaUrl = (id: number) => `/api/actualites/medias/${id}`;
+
+// Mêmes opérations depuis l'espace membre (publier remplace « save » ; pas de brouillon)
+export const mediaMembre = (id: number) => `/api/espace/actualites/medias/${id}`;
+export const newsMembre = {
+  feed: () => fetch('/api/espace/actualites').then(r => json<News[]>(r)),
+  save: (id: number | null, form: FormData) => fetch(id ? `/api/espace/actualites/${id}` : '/api/espace/actualites', { method: id ? 'PATCH' : 'POST', body: form }).then(r => json<{ id: number }>(r)),
+  publish: (_id: number, _publie: boolean): Promise<unknown> => Promise.reject(new Error('Action réservée à la Chambre')),
+  remove: (id: number) => send(`/api/espace/actualites/${id}`, 'DELETE'),
+  react: (id: number, emoji: string) => send(`/api/espace/actualites/${id}/reaction`, 'POST', { emoji }),
+  comment: (id: number, texte: string, parent_id?: number | null) => send(`/api/espace/actualites/${id}/commentaires`, 'POST', { texte, parent_id }),
+  editComment: (cid: number, texte: string) => send(`/api/espace/actualites/commentaires/${cid}`, 'PATCH', { texte }),
+  deleteComment: (cid: number) => send(`/api/espace/actualites/commentaires/${cid}`, 'DELETE'),
+  reactComment: (cid: number, emoji: string) => send(`/api/espace/actualites/commentaires/${cid}/reaction`, 'POST', { emoji }),
+};
 
 export const news = {
   list: () => fetch('/api/actualites').then(r => json<NewsItem[]>(r)),

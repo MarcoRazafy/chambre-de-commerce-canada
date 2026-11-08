@@ -2655,3 +2655,36 @@ h1{letter-spacing:-.025em}
 .of-more{align-self:flex-start;padding:0;border:0;background:none;color:var(--accent);font:inherit;font-size:.8rem;font-weight:600;cursor:pointer}
 .of-more:hover{text-decoration:underline}
 .of-body:last-child{padding-bottom:14px}
+
+/* Actualités de l'espace membre : zone « publier », onglets, colonne de droite à deux cartes (fil + offres des membres) */
+.es-pub{flex-direction:row;align-items:center;gap:12px;padding:14px 16px}
+.es-pub-faux{flex:1;min-width:0;text-align:left;border:1px solid var(--line);background:var(--surface-2);color:var(--muted);border-radius:999px;padding:11px 18px;font:inherit;font-size:.9rem;cursor:pointer;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;transition:border-color .15s,background .15s}
+.es-pub-faux:hover{border-color:var(--accent);background:var(--surface)}
+.es-pub-photo{flex:none}
+.es-pub-tabs{margin:2px 0 -4px}
+.es-pub-ta{min-height:120px;resize:none;font-size:.95rem;line-height:1.55}
+.news-side-col{position:sticky;top:76px;display:flex;flex-direction:column;gap:16px;max-height:calc(100dvh - 96px);min-height:0}
+.news-side-col .news-side{position:static;max-height:none;flex:1 1 auto;min-height:180px}
+.es-offres{flex:none;gap:8px}
+.es-offres ul{list-style:none;margin:0 -12px;padding:0;display:flex;flex-direction:column;gap:2px}
+.es-offres a{display:flex;gap:10px;padding:7px 12px;border-radius:var(--r-sm);color:var(--ink);text-decoration:none}
+.es-offres a:hover{background:var(--surface-2)}
+.es-offres .nl-thumb{width:44px;height:44px}
+.np-cat.membre{color:var(--sky,#2F86AE);background:color-mix(in srgb,var(--sky,#2F86AE) 12%,transparent)}
+.np-auteur{color:inherit;text-decoration:none}.np-auteur:hover{text-decoration:underline}
+.np-qui{font-weight:400;color:var(--muted)}
+.np-av-lien{display:inline-flex;border-radius:50%}
+.cm-ent{font-weight:400;color:var(--muted)}
+@media (max-width:1100px){.news-side-col{position:static;max-height:none;order:-1}.es-offres{display:none}}
+
+/* Mon entreprise : étiquettes « Propose / Recherche » saisies dans la fenêtre Modifier ; contacts sur la fiche annuaire */
+.es-tags-in{display:flex;flex-wrap:wrap;gap:6px;align-items:center;min-height:42px;padding:6px 8px;border:1px solid var(--line);border-radius:var(--r-sm,10px);background:var(--surface)}
+.es-tags-in:focus-within{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.es-tags-in input{flex:1;min-width:140px;border:0;outline:0;background:none;font:inherit;font-size:.88rem;color:var(--ink);padding:4px}
+.es-tags-in .dchip{display:inline-flex;align-items:center;gap:4px}
+.es-tags-in .dchip button{border:0;background:none;padding:0 2px;font-size:1rem;line-height:1;cursor:pointer;color:inherit;opacity:.65}
+.es-tags-in .dchip button:hover{opacity:1}
+.es-fiche-ct{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:14px}
+.es-fiche-ct li{display:flex;gap:12px;align-items:flex-start}
+.es-fiche-ct .ct-id{display:flex;flex-direction:column;gap:3px;min-width:0;font-size:.86rem}
+.es-fiche-ct .ct-id a{display:inline-flex;align-items:center;gap:6px;color:var(--link,var(--accent));overflow-wrap:anywhere}

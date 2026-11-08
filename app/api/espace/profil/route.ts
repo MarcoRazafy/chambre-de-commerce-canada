@@ -10,11 +10,12 @@ const CONTACT = ['fonction', 'tel'] as const;
 
 export const GET = () => avecMembre(async m => {
   const [e] = await q(`select m.id, m.nom, m.pays, m.ville, m.activite, m.description, m.site_web, m.recherche, m.statut_juridique, m.statut,
-                              m.membre_depuis, m.renouvellement, m.offres, m.besoins, s.nom as secteur, f.nom as formule, m.couverture_url, m.couverture_x, m.couverture_y,
+                              m.membre_depuis, m.renouvellement, m.offres, m.besoins, m.secteur_id, s.nom as secteur, f.nom as formule, m.couverture_url, m.couverture_x, m.couverture_y,
                               exists (select 1 from avatars a where a.kind = 'cover' and a.ref_id = m.id) as couverture_deposee
                        from members m left join secteurs s on s.id = m.secteur_id left join formules f on f.id = m.formule_id where m.id = $1`, [m.member_id]);
   const [moi] = await q('select id, nom, fonction, email, tel from contacts where id = $1', [m.contact_id]);
-  return Response.json({ entreprise: e, moi });
+  const secteurs = await q('select id, nom from secteurs order by nom');
+  return Response.json({ entreprise: e, moi, secteurs });
 });
 
 export const PATCH = (req: Request) => avecMembre(async m => {
@@ -24,7 +25,20 @@ export const PATCH = (req: Request) => avecMembre(async m => {
     return [k, v || null] as const;
   });
   const cadre = CADRAGE.filter(k => k in (b.entreprise ?? {})).map(k => [k, Math.max(0, Math.min(100, Math.round(Number(b.entreprise[k]) || 0)))] as const);
-  const e = [...champs(ENTREPRISE, b.entreprise ?? {}), ...cadre], c = champs(CONTACT, b.moi ?? {});
+  const src = b.entreprise ?? {};
+  // Secteur (parmi la liste de la Chambre), pays, et ce que l'entreprise propose / recherche (étiquettes, 15 au plus)
+  const autres: (readonly [string, unknown])[] = [];
+  if ('secteur_id' in src) {
+    const id = src.secteur_id == null || src.secteur_id === '' ? null : Number(src.secteur_id);
+    if (id != null && !(await q('select 1 from secteurs where id = $1', [id])).length) throw new MsgError('Secteur inconnu');
+    autres.push(['secteur_id', id]);
+  }
+  if ('pays' in src) autres.push(['pays', src.pays === 'CA' ? 'CA' : 'MG']);
+  for (const k of ['offres', 'besoins'] as const) if (k in src) {
+    const l = (Array.isArray(src[k]) ? src[k] : []).map((x: unknown) => String(x ?? '').trim().slice(0, 80)).filter(Boolean);
+    autres.push([k, [...new Set(l)].slice(0, 15)]);
+  }
+  const e = [...champs(ENTREPRISE, src), ...cadre, ...autres], c = champs(CONTACT, b.moi ?? {});
   if (!e.length && !c.length) throw new MsgError('Aucune modification');
   // Noms de colonnes tirés des listes ci-dessus, jamais de la requête
   if (e.length) await q(`update members set ${e.map(([k], i) => `${k} = $${i + 2}`).join(', ')} where id = $1`, [m.member_id, ...e.map(([, v]) => v)]);

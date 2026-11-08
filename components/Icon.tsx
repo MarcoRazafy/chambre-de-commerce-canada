@@ -5,7 +5,7 @@ import {
   FolderLock, FolderPlus, FolderOpen, Copy, Scissors, ClipboardText, ArrowUp, ArrowDown, DotsSixVertical, TextAlignLeft, TextAlignCenter, TextAlignRight,
   TextB, TextItalic, TextUnderline, LinkSimple, ListBullets, ListNumbers, TextH, TextT, Palette, Eye, Books, Rows, Lock, CaretRight, UploadSimple,
   House, Pause, SpeakerHigh, SpeakerSlash, FilePdf, FileDoc, FileVideo, FileImage, Article, ArrowLineUp, ArrowLineDown, CheckSquare, ArrowSquareOut,
-  Lightbulb, MapPin, PaperPlaneTilt, Play, ShareFat, ThumbsUp, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
+  Certificate, Lightbulb, MapPin, PaperPlaneTilt, Play, ShareFat, ThumbsUp, User, Plus, Receipt, ShieldCheck, SquaresFour, Tag, UserList, UserPlus, Users, WarningCircle,
 } from '@phosphor-icons/react/ssr';
 import type { Icon as PhosphorIcon } from '@phosphor-icons/react';
 
@@ -23,7 +23,7 @@ const ICONS: Record<string, PhosphorIcon> = {
   folderlock: FolderLock, folderplus: FolderPlus, folderopen: FolderOpen, copy: Copy, cut: Scissors, paste: ClipboardText,
   arrowup: ArrowUp, arrowdown: ArrowDown, grip: DotsSixVertical, alignleft: TextAlignLeft, aligncenter: TextAlignCenter, alignright: TextAlignRight,
   bold: TextB, italic: TextItalic, underline: TextUnderline, link: LinkSimple, ul: ListBullets, ol: ListNumbers, heading: TextH, text: TextT,
-  palette: Palette, eye: Eye, books: Books, rows: Rows, lock: Lock, caret: CaretRight, upload: UploadSimple,
+  award: Certificate, palette: Palette, eye: Eye, books: Books, rows: Rows, lock: Lock, caret: CaretRight, upload: UploadSimple,
   pdf: FilePdf, docx: FileDoc, filevideo: FileVideo, fileimage: FileImage, article: Article, first: ArrowLineUp, last: ArrowLineDown,
   checks: CheckSquare, external: ArrowSquareOut, home: House, pause: Pause, son: SpeakerHigh, muet: SpeakerSlash,
   user: User, pin: MapPin, like: ThumbsUp, play: Play, share: ShareFat,

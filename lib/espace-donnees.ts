@@ -26,7 +26,9 @@ export async function ficheMembre(id: number) {
   const produits = await q<Row>(`select p.id, p.label, p.type, p.prix, p.description,
       coalesce((select json_agg(f.id order by f.position, f.id) from produit_photos f where f.produit_id = p.id), '[]') as photos
     from produits p where p.member_id = $1 order by p.ordre, p.id`, [id]);
-  return { ...m, produits };
+  // Les personnes à joindre, comme sur l'annuaire CanCham : contact principal en premier
+  const contacts = await q<Row>('select id, nom, fonction, email, tel, principal from contacts where member_id = $1 order by principal desc, id', [id]);
+  return { ...m, produits, contacts };
 }
 
 export const relations = (m: Membre) => q<Row>(`
@@ -64,11 +66,6 @@ export const desinscrire = (m: Membre, eventId: number) =>
   q('delete from event_registrations where event_id = $1 and member_id = $2 and lower(email) = lower($3)', [eventId, m.member_id, m.email]);
 
 /* ===== Actualités ===== */
-export const actualites = () => q<Row>(`
-  select n.id, n.titre, n.categorie, n.date_pub, n.contenu, n.tags, n.created_at, n.updated_at,
-         case when a.id is null then null else json_build_object('id', a.id, 'nom', a.nom, 'fonction', a.fonction) end as auteur,
-         (select coalesce(json_agg(json_build_object('id', x.id, 'nom', x.nom, 'type', x.type, 'taille', x.taille) order by x.position, x.id), '[]') from news_media x where x.news_id = n.id) as medias
-  from news n left join team_users a on a.id = n.auteur_id where n.publie order by n.date_pub desc, n.id desc limit 100`);
 export async function mediaActualite(mid: number) {
   const [f] = await q<{ nom: string; type: string; contenu: Buffer }>(
     'select x.nom, x.type, x.contenu from news_media x join news n on n.id = x.news_id where x.id = $1 and n.publie', [mid]);

@@ -599,3 +599,23 @@ create table if not exists membre_lectures (
 );
 -- Espace membre : le questionnaire de maillage s'ouvre d'abord une seule fois, à la première connexion du contact
 alter table contacts add column if not exists premiere_connexion timestamptz;
+
+-- Espace membre : les membres publient dans les actualités, réagissent et commentent (publications visibles des seuls membres connectés)
+alter table news add column if not exists contact_id int references contacts(id) on delete set null,
+  add column if not exists member_id int references members(id) on delete cascade;
+alter table news_comments add column if not exists contact_id int references contacts(id) on delete cascade;
+create table if not exists news_reactions_membres (
+  news_id    int not null references news(id) on delete cascade,
+  contact_id int not null references contacts(id) on delete cascade,
+  emoji      text not null,
+  created_at timestamptz not null default now(),
+  primary key (news_id, contact_id)
+);
+create table if not exists news_comment_reactions_membres (
+  comment_id int not null references news_comments(id) on delete cascade,
+  contact_id int not null references contacts(id) on delete cascade,
+  emoji      text not null,
+  created_at timestamptz not null default now(),
+  primary key (comment_id, contact_id)
+);
+create index if not exists news_member on news (member_id) where member_id is not null;

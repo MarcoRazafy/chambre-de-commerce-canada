@@ -6,17 +6,19 @@ import Icon from './Icon';
 import ModalBackdrop from './ModalBackdrop';
 import { CREER } from '@/lib/creer';
 
-type Opt = { groupe: string; label: string; detail?: string; href: string; icon: string };
+export type Opt = { groupe: string; label: string; detail?: string; href: string; icon: string };
 const plier = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
-const ICONE: Record<string, string> = { Membre: 'users', Contact: 'user', Événement: 'cal', Facture: 'file', Actualité: 'news', Abonné: 'mail', Conversation: 'chat' };
+const ICONE: Record<string, string> = { Ressource: 'folder', Membre: 'users', Contact: 'user', Événement: 'cal', Facture: 'file', Actualité: 'news', Abonné: 'mail', Conversation: 'chat' };
 const PAGES: Opt[] = [
   ...NAV.flatMap(([, items]) => items).map(i => ({ groupe: 'Pages', label: i.label, href: '/' + i.slug, icon: i.icon })),
   { groupe: 'Pages', label: 'Mon profil', href: '/profil', icon: 'user' },
 ];
 const ACTIONS: Opt[] = CREER.map(([icon, l, href]) => ({ groupe: 'Actions', label: `Créer : ${l.toLowerCase()}`, href, icon: 'plus' }));
 
-// Recherche universelle (Ctrl K) : pages, actions, puis membres, factures, événements… depuis le serveur
-export default function Palette({ onClose }: { onClose: () => void }) {
+// Recherche universelle (Ctrl K) : pages, actions, puis membres, factures, événements… depuis le serveur.
+// L'espace membre passe ses propres pages, actions et adresse de recherche.
+export default function Palette({ onClose, pages = PAGES, actions = ACTIONS, source = '/api/recherche', invite = 'Rechercher un membre, une facture, une page, une action…' }:
+  { onClose: () => void; pages?: Opt[]; actions?: Opt[]; source?: string; invite?: string }) {
   const router = useRouter();
   const [q, setQ] = useState('');
   const [trouves, setTrouves] = useState<Opt[]>([]);
@@ -27,17 +29,17 @@ export default function Palette({ onClose }: { onClose: () => void }) {
     const t = q.trim();
     if (t.length < 2) { setTrouves([]); return; }
     let fini = false;
-    const h = setTimeout(() => fetch('/api/recherche?q=' + encodeURIComponent(t)).then(r => (r.ok ? r.json() : []))
+    const h = setTimeout(() => fetch(source + '?q=' + encodeURIComponent(t)).then(r => (r.ok ? r.json() : []))
       .then((rows: { type: string; titre: string; detail: string; href: string }[]) => !fini && setTrouves(rows.map(r => ({ groupe: r.type + 's', label: r.titre, detail: r.detail, href: r.href, icon: ICONE[r.type] ?? 'search' }))))
       .catch(() => {}), 180);
     return () => { fini = true; clearTimeout(h); };
-  }, [q]);
+  }, [q, source]);
 
   const opts = useMemo(() => {
     const t = plier(q.trim());
-    const locaux = [...PAGES, ...ACTIONS].filter(o => !t || plier(o.label).includes(t));
+    const locaux = [...pages, ...actions].filter(o => !t || plier(o.label).includes(t));
     return [...locaux.slice(0, t ? 8 : 14), ...trouves].slice(0, 40);
-  }, [q, trouves]);
+  }, [q, trouves, pages, actions]);
   useEffect(() => setSel(0), [q]);
   useEffect(() => { liste.current?.querySelector('.opt.sel')?.scrollIntoView({ block: 'nearest' }); }, [sel]);
 
@@ -47,7 +49,7 @@ export default function Palette({ onClose }: { onClose: () => void }) {
     <ModalBackdrop onClose={onClose}>
       <div className="palette" role="dialog" aria-label="Recherche">
         <div className="palette-in"><Icon name="search" size={18} />
-          <input autoFocus placeholder="Rechercher un membre, une facture, une page, une action…" aria-label="Rechercher" value={q} onChange={e => setQ(e.target.value)}
+          <input autoFocus placeholder={invite} aria-label="Rechercher" value={q} onChange={e => setQ(e.target.value)}
             onKeyDown={e => {
               if (e.key === 'ArrowDown') { e.preventDefault(); setSel(s => Math.min(s + 1, opts.length - 1)); }
               else if (e.key === 'ArrowUp') { e.preventDefault(); setSel(s => Math.max(s - 1, 0)); }

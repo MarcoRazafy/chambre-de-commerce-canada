@@ -32,10 +32,10 @@ export async function GET(_req: Request, { params }: Ctx) {
   const t = await target(params);
   if (!t) return notFound();
   // Espace membre : les logos des membres et les photos de l'équipe sont lisibles aussi par un membre connecté
-  // (portraits de contacts : seulement ceux de sa propre entreprise)
+  // (portraits de contacts : ceux des entreprises de l'annuaire, comme sur leur fiche)
   if (!(await currentUser())) {
     const m = await membreConnecte();
-    if (m && (t.kind !== 'contact' || await contactDe(m.member_id, t.id))) return lire(t);
+    if (m && (t.kind !== 'contact' || await contactVisible(t.id))) return lire(t);
   }
   return withUser(async () => lire(t));
 }
@@ -49,6 +49,7 @@ async function lire(t: { kind: keyof typeof KINDS; id: number }) {
   return new Response(initialsSvg(r?.nom ?? '?'), { headers: { 'Content-Type': 'image/svg+xml', 'Cache-Control': 'private, max-age=300' } });
 }
 
+const contactVisible = async (id: number) => (await q(`select 1 from contacts c join members m on m.id = c.member_id where c.id = $1 and m.statut in ('a_jour', 'attente', 'retard')`, [id])).length > 0;
 const contactDe = async (memberId: number, id: number) => (await q('select 1 from contacts where id = $1 and member_id = $2', [id, memberId])).length > 0;
 
 // Nouvelle photo (formulaire multipart, champ « file ») : sa propre photo, ou n'importe laquelle pour un administrateur ; tout logo de membre

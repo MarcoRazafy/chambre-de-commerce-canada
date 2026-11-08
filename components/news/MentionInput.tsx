@@ -9,6 +9,7 @@ type Props = {
   placeholder?: string; rows?: number; autoFocus?: boolean; className?: string;
   onSubmit?: () => void;   // Entrée envoie (commentaires) ; Maj + Entrée va à la ligne
   label: string;
+  sansMention?: boolean;   // espace membre : pas de liste de collègues
 };
 export type MentionInputHandle = { focus: () => void };
 
@@ -35,6 +36,7 @@ const MentionInput = forwardRef<MentionInputHandle, Props>(function MentionInput
   }, [p.value]);
 
   function detect(el: HTMLTextAreaElement) {
+    if (p.sansMention) return;
     const before = el.value.slice(0, el.selectionStart);
     const m = before.match(/(^|\s)@([\p{L}\d'’ -]{0,30})$/u);
     setQuery(m && !m[2].includes('  ') ? m[2] : null);

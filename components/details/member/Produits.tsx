@@ -109,6 +109,12 @@ export default function Produits({ memberId, espace, liste }: { memberId?: numbe
   const [view, setView] = useState<Row | null>(null);
   const load = useCallback(() => { if (!lecture) api<Row[]>(espace ? '/api/espace/produits' : `/api/membres/${memberId}/produits`).then(setList).catch(() => setList([])); }, [memberId, espace, lecture]);
   useEffect(() => { load(); }, [load]);
+  // Espace membre : /espace/profil#ajouter-service (depuis la recherche) ouvre directement le formulaire
+  useEffect(() => {
+    if (!espace || list === null || window.location.hash !== '#ajouter-service') return;
+    document.getElementById('produits')?.scrollIntoView({ block: 'start' });
+    setEditing('new'); history.replaceState(null, '', window.location.pathname);
+  }, [espace, list]);
 
   async function remove(p: Row) {
     if (!confirm(`Retirer « ${p.label} » du catalogue ? Elle disparaîtra de la fiche et de l’annuaire.`)) return;
@@ -116,7 +122,7 @@ export default function Produits({ memberId, espace, liste }: { memberId?: numbe
   }
 
   return (
-    <section className="card">
+    <section className="card" id={espace ? 'produits' : undefined}>
       <div className="row between"><div><h2>Produits &amp; services</h2><p className="small muted">{list ? `${list.length} offre${list.length > 1 ? 's' : ''} au catalogue${espace ? ' · visibles par les autres membres dans l’annuaire' : lecture ? '' : ' du membre'}` : '…'}</p></div>
         {!lecture && <button className="btn sm" onClick={() => setEditing('new')}><Icon name="plus" size={14} /> {espace ? 'Ajouter un service' : 'Ajouter'}</button>}</div>
       {list && list.length === 0 && <p className="small muted">{espace ? 'Aucune offre au catalogue. Ajoutez vos produits et services : les autres membres les voient dans l’annuaire.' : 'Aucune offre au catalogue pour le moment.'}</p>}

@@ -4,7 +4,9 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import type { Row } from '@/lib/format';
 import Icon from '../Icon';
+import Avatar from '../Avatar';
 import MembreHero from '../MembreHero';
+import TexteLie from '../TexteLie';
 import Produits from '../details/member/Produits';
 import { appel } from './api';
 
@@ -24,7 +26,8 @@ export default function EspaceFicheMembre() {
         <div className="col">
           <section className="card"><h2>Présentation</h2>
             {m.activite && <p className="flead">{m.activite}</p>}
-            {m.description ? <p className="prose">{m.description}</p> : !m.activite && <p className="small muted">Pas encore de présentation.</p>}</section>
+            {m.description ? <p className="mabout-text"><TexteLie texte={m.description} /></p> : !m.activite && <p className="small muted">Pas encore de présentation.</p>}
+            {m.recherche && <div className="mabout-block"><h3>Recherche actuellement</h3><p className="mabout-text"><TexteLie texte={m.recherche} /></p></div>}</section>
           {m.produits?.length > 0 && <Produits liste={m.produits} />}
         </div>
         <div className="col">
@@ -33,6 +36,16 @@ export default function EspaceFicheMembre() {
               {m.offres?.length > 0 && <><h2>Propose</h2><div className="es-chips">{m.offres.map((o: string) => <span key={o} className="dchip">{o}</span>)}</div></>}
               {m.besoins?.length > 0 && <><h2>Recherche</h2><div className="es-chips">{m.besoins.map((o: string) => <span key={o} className="dchip need">{o}</span>)}</div></>}
             </section>
+          )}
+          {m.contacts?.length > 0 && (
+            <section className="card"><h2>{m.contacts.length > 1 ? 'Contacts' : 'Contact'}</h2>
+              <ul className="es-fiche-ct">{m.contacts.map((c: Row) => (
+                <li key={c.id}><Avatar kind="contact" id={c.id} size={44} nom={c.nom} />
+                  <div className="ct-id"><b>{c.nom}</b>{c.principal && <span className="ct-main">Contact principal</span>}
+                    {c.fonction && <span className="ct-fn">{c.fonction}</span>}
+                    {c.email && <a href={`mailto:${c.email}`}><Icon name="mail" size={13} />{c.email}</a>}
+                    {c.tel && <a href={`tel:${String(c.tel).replace(/\s/g, '')}`}><Icon name="chat" size={13} />{c.tel}</a>}</div></li>
+              ))}</ul></section>
           )}
           <section className="card"><h2>Travailler ensemble</h2>
             <p className="small muted">La Chambre présente les membres entre eux quand l’un a besoin de ce que l’autre propose. Écrivez-lui pour être mis en relation avec {m.nom}.</p>

@@ -5,97 +5,11 @@ import { useCallback, useEffect, useState } from 'react';
 import { CATS, FMTS, FMT_ICON } from '@/lib/bibliotheque';
 import { lireBlocs } from '@/lib/blocs';
 import { relative, type Row } from '@/lib/format';
-import { isVideo } from '@/lib/news-client';
 import { toast } from '@/lib/toast';
-import Avatar from '../Avatar';
 import Icon from '../Icon';
-import { Gallery, LONG, Lightbox } from '../news/NewsPost';
-import RichText from '../news/RichText';
 import PageRessource, { PieceJointe } from '../ressources/PageRessource';
 import { appel, argent, jour } from './api';
 
-
-/* ===== Actualités : même mise en page que le back-office (fil + colonne de droite), en lecture ===== */
-const mediaNews = (id: number) => `/api/espace/actualites/medias/${id}`;
-const courte = (v: string) => new Date(String(v).slice(0, 10) + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
-
-function PostLu({ n, onTag }: { n: Row; onTag: (t: string) => void }) {
-  const [plus, setPlus] = useState(false);
-  const [vue, setVue] = useState<number | null>(null);
-  const texte: string = n.contenu ?? '';
-  const long = texte.length > LONG && !plus;
-  const date = n.created_at && relative(n.created_at) ? relative(n.created_at)! : courte(n.date_pub);
-  return (
-    <article className="card np" id={`post-${n.id}`}>
-      <header className="np-h">
-        {n.auteur ? <Avatar kind="user" id={n.auteur.id} size={42} /> : <img className="np-org" src="/logo-app.png" alt="" width={42} height={42} />}
-        <div className="grow"><b>{n.auteur?.nom ?? 'CanCham Madagascar'}</b><span className="small muted"><time dateTime={n.created_at}>{date}</time></span></div>
-        {n.categorie && <span className="np-cat">{n.categorie}</span>}
-      </header>
-      <div className="np-body">
-        <h2>{n.titre}</h2>
-        {texte && <p className="np-text"><RichText text={long ? texte.slice(0, LONG).replace(/\s+\S*$/, '') + '… ' : texte} onTag={onTag} />
-          {long && <button type="button" className="linkish" onClick={() => setPlus(true)}>Voir plus</button>}</p>}
-        {n.tags?.length > 0 && <div className="np-tags">{n.tags.map((t: string) => <button type="button" key={t} className="hashtag" onClick={() => onTag(t)}>#{t}</button>)}</div>}
-      </div>
-      <Gallery medias={n.medias ?? []} onOpen={setVue} url={mediaNews} />
-      {vue !== null && <Lightbox medias={n.medias} start={vue} onClose={() => setVue(null)} url={mediaNews} />}
-    </article>
-  );
-}
-
-export function EspaceActualites() {
-  const [posts, setPosts] = useState<Row[] | null>(null);
-  const [term, setTerm] = useState('');
-  const [tag, setTag] = useState<string | null>(null);
-  const [active, setActive] = useState<number | null>(null);
-  useEffect(() => { appel<Row[]>('/api/espace/actualites').then(setPosts).catch(e => toast(e.message, 'error')); }, []);
-  const shown = (posts ?? []).filter(n => (!tag || n.tags?.includes(tag)) && (!term || [n.titre, n.contenu].join(' ').toLowerCase().includes(term.toLowerCase())));
-  const tags = [...new Set((posts ?? []).flatMap(n => n.tags ?? []))].sort() as string[];
-  const aller = (id: number) => { setActive(id); document.getElementById(`post-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
-  useEffect(() => {
-    if (!posts?.length) return;
-    const io = new IntersectionObserver(entries => {
-      const top = entries.filter(e => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top)[0];
-      if (top) setActive(Number(top.target.id.slice(5)));
-    }, { rootMargin: '-80px 0px -55% 0px' });
-    document.querySelectorAll('.news-main .np').forEach(el => io.observe(el));
-    return () => io.disconnect();
-  }, [posts, tag, term]);
-  return (
-    <>
-      <div className="head og-head"><div><h1>Actualités</h1><p className="muted">Les nouvelles de la Chambre, publiées pour les membres.</p></div></div>
-      <div className="news-layout">
-        <div className="news-main">
-          {posts === null ? <div className="card"><div className="skeleton"><span /><span /><span /></div></div>
-            : shown.length === 0 ? <div className="card empty-state"><span className="tile-ic"><Icon name="news" size={18} fill /></span><b>{posts.length ? 'Aucune actualité ne correspond' : 'Aucune actualité pour le moment'}</b>
-              {posts.length > 0 && <button className="btn sm" onClick={() => { setTag(null); setTerm(''); }}>Voir toutes les actualités</button>}</div>
-            : shown.map(n => <PostLu key={n.id} n={n} onTag={t => { setTag(t); window.scrollTo({ top: 0, behavior: 'smooth' }); }} />)}
-        </div>
-        <aside className="card news-side">
-          <div className="news-side-h"><h2>Actualités</h2><span className="small muted">{posts?.length ?? 0}</span></div>
-          <label className="search-inp" style={{ maxWidth: 'none' }}><Icon name="search" size={16} />
-            <input className="inp" placeholder="Rechercher une actualité…" aria-label="Rechercher une actualité" value={term} onChange={e => setTerm(e.target.value)} /></label>
-          {tags.length > 0 && <div className="np-tags">{tags.map(t => <button type="button" key={t} className={`hashtag${tag === t ? ' on' : ''}`} aria-pressed={tag === t} onClick={() => setTag(tag === t ? null : t)}>#{t}</button>)}</div>}
-          {tag && <button type="button" className="linkish small" onClick={() => setTag(null)}>Voir toutes les actualités</button>}
-          <ul className="news-list">
-            {shown.map(n => {
-              const m = n.medias?.[0];
-              return (
-                <li key={n.id}>
-                  <button type="button" className={n.id === active ? 'on' : ''} aria-current={n.id === active ? 'true' : undefined} onClick={() => aller(n.id)}>
-                    <span className="nl-thumb">{m ? (isVideo(m.type) ? <><video src={mediaNews(m.id) + '#t=0.5'} preload="metadata" muted /><Icon name="play" size={14} fill /></> : <img src={mediaNews(m.id)} alt="" loading="lazy" />) : <Icon name="news" size={20} />}</span>
-                    <span className="nl-txt"><b>{n.titre}</b><span className="small muted">{courte(n.date_pub)}{n.categorie ? ` · ${n.categorie}` : ''}</span></span>
-                  </button>
-                </li>
-              );
-            })}
-          </ul>
-        </aside>
-      </div>
-    </>
-  );
-}
 
 /* ===== Ressources ===== */
 const blocsDe = (v: unknown) => { const l = lireBlocs(v); return 'blocs' in l && l.blocs ? l.blocs : []; };

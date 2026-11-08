@@ -21,42 +21,58 @@ async function notifyMentions(u: User, before: string | null, after: string, lie
   for (const n of names) await notify(`${u.nom} a mentionné ${n.nom} ${ou}`, lien, { user: u.id, icon: 'chat' });
 }
 
-const reactionsOf = (table: string, key: string) => `
+// Qui regarde : un collègue (team_users) ou un contact d'une entreprise membre (espace membre)
+export type Lecteur = { kind: 'user' | 'contact'; id: number };
+const equipe = (u: User): Lecteur => ({ kind: 'user', id: u.id });
+
+// Réactions de l'équipe et des membres réunies ; « moi » selon le lecteur ($1)
+const reactionsOf = (table: string, key: string, v: Lecteur) => `
   (select coalesce(json_agg(r order by r.n desc, r.emoji), '[]') from (
-     select x.emoji, count(*)::int as n, string_agg(t.nom, ', ' order by t.nom) as noms, bool_or(x.user_id = $1) as moi
-     from ${table} x join team_users t on t.id = x.user_id where x.${key} group by x.emoji) r)`;
+     select z.emoji, count(*)::int as n, string_agg(z.nom, ', ' order by z.nom) as noms, bool_or(z.moi) as moi from (
+       select x.emoji, t.nom, ${v.kind === 'user' ? 'x.user_id = $1' : 'false'} as moi from ${table} x join team_users t on t.id = x.user_id where x.${key}
+       union all
+       select x.emoji, ct.nom, ${v.kind === 'contact' ? 'x.contact_id = $1' : 'false'} as moi from ${table}_membres x join contacts ct on ct.id = x.contact_id where x.${key}
+     ) z group by z.emoji) r)`;
+// Auteur d'une publication ou d'un commentaire : collègue, ou contact d'une entreprise membre (son logo sert d'avatar)
+const auteurDe = (t: string, ct: string, mb: string) => `case when ${ct}.id is not null or ${mb}.id is not null
+    then json_build_object('kind', 'contact', 'id', ${ct}.id, 'nom', coalesce(${ct}.nom, ${mb}.nom), 'fonction', ${ct}.fonction, 'member_id', ${mb}.id, 'entreprise', ${mb}.nom)
+  when ${t}.id is not null then json_build_object('kind', 'user', 'id', ${t}.id, 'nom', ${t}.nom, 'fonction', ${t}.fonction) end`;
 
 // Liste de droite : vignette (premier média), compteurs
 export function listNews() {
   return q<Row>(`select n.id, n.titre, n.categorie, n.date_pub, n.publie, n.tags,
                         (select json_build_object('id', m.id, 'type', m.type) from news_media m where m.news_id = n.id order by m.position, m.id limit 1) as media,
-                        (select count(*) from news_reactions r where r.news_id = n.id)::int as nb_reactions,
+                        ((select count(*) from news_reactions r where r.news_id = n.id) + (select count(*) from news_reactions_membres r where r.news_id = n.id))::int as nb_reactions,
                         (select count(*) from news_comments c where c.news_id = n.id)::int as nb_commentaires
                  from news n order by n.date_pub desc, n.id desc`);
 }
 
 // Publications complètes : auteur, médias, réactions, commentaires (à plat, triés ; parent_id pour les réponses).
-// $1 = utilisateur courant (« moi » dans les réactions), les paramètres suivants servent au filtre
-function posts(u: User, where: string, params: unknown[] = [], limit = 100) {
+// $1 = lecteur courant (« moi » dans les réactions), les paramètres suivants servent au filtre
+function posts(v: Lecteur, where: string, params: unknown[] = [], limit = 100) {
   return q<Row>(`
-    select n.id, n.titre, n.categorie, n.date_pub, n.publie, n.contenu, n.tags, n.created_at, n.updated_at,
-           case when a.id is null then null else json_build_object('id', a.id, 'nom', a.nom, 'fonction', a.fonction) end as auteur,
+    select n.id, n.titre, n.categorie, n.date_pub, n.publie, n.contenu, n.tags, n.created_at, n.updated_at, n.member_id,
+           ${auteurDe('a', 'act', 'amb')} as auteur,
            (select coalesce(json_agg(json_build_object('id', m.id, 'nom', m.nom, 'type', m.type, 'taille', m.taille) order by m.position, m.id), '[]')
               from news_media m where m.news_id = n.id) as medias,
-           ${reactionsOf('news_reactions', 'news_id = n.id')} as reactions,
+           ${reactionsOf('news_reactions', 'news_id = n.id', v)} as reactions,
            (select coalesce(json_agg(json_build_object('id', c.id, 'parent_id', c.parent_id, 'texte', c.texte, 'created_at', c.created_at,
-                     'edited_at', c.edited_at, 'auteur', case when t.id is null then null else json_build_object('id', t.id, 'nom', t.nom) end,
-                     'reactions', ${reactionsOf('news_comment_reactions', 'comment_id = c.id')}) order by c.created_at, c.id), '[]')
-              from news_comments c left join team_users t on t.id = c.user_id where c.news_id = n.id) as commentaires
-    from news n left join team_users a on a.id = n.auteur_id where ${where}
-    order by n.date_pub desc, n.id desc limit ${limit}`, [u.id, ...params]);
+                     'edited_at', c.edited_at, 'auteur', ${auteurDe('t', 'cct', 'cmb')},
+                     'reactions', ${reactionsOf('news_comment_reactions', 'comment_id = c.id', v)}) order by c.created_at, c.id), '[]')
+              from news_comments c left join team_users t on t.id = c.user_id left join contacts cct on cct.id = c.contact_id left join members cmb on cmb.id = cct.member_id
+              where c.news_id = n.id) as commentaires
+    from news n left join team_users a on a.id = n.auteur_id left join contacts act on act.id = n.contact_id left join members amb on amb.id = n.member_id
+    where ${where}
+    order by n.date_pub desc, n.created_at desc, n.id desc limit ${limit}`, [v.id, ...params]);
 }
 
 // Fil : toutes les actualités, une sous l'autre (les 100 plus récentes)
-export const feed = (u: User) => posts(u, 'true');
+export const feed = (u: User) => posts(equipe(u), 'true');
+// Fil de l'espace membre : seulement les actualités publiées
+export const feedMembre = (contactId: number) => posts({ kind: 'contact', id: contactId }, 'n.publie');
 
 export async function getNews(u: User, id: number) {
-  const [n] = await posts(u, 'n.id = $2', [id], 1);
+  const [n] = await posts(equipe(u), 'n.id = $2', [id], 1);
   if (!n) throw new MsgError('Actualité introuvable');
   return n;
 }
@@ -122,13 +138,16 @@ export async function setPublished(u: User, id: number, publie: boolean) {
   await journal('Contenus', publie ? 'Actualité publiée' : 'Actualité dépubliée', n.titre, u.nom);
 }
 
-// Réaction (sur la publication ou un commentaire) : le même émoji la retire, un autre la remplace
-async function toggle(table: string, key: string, ref: number, u: User, emoji: string) {
+// Réaction (sur la publication ou un commentaire) : le même émoji la retire, un autre la remplace.
+// Un membre réagit dans la table « _membres » (son contact), un collègue dans la table d'origine
+export async function toggle(table: string, key: string, ref: number, v: User | Lecteur, emoji: string) {
   if (!emoji || [...emoji].length > 8) throw new MsgError('Réaction invalide');
-  const [cur] = await q<{ emoji: string }>(`select emoji from ${table} where ${key} = $1 and user_id = $2`, [ref, u.id]);
-  if (cur?.emoji === emoji) await q(`delete from ${table} where ${key} = $1 and user_id = $2`, [ref, u.id]);
-  else await q(`insert into ${table} (${key}, user_id, emoji) values ($1, $2, $3)
-                on conflict (${key}, user_id) do update set emoji = excluded.emoji, created_at = now()`, [ref, u.id, emoji]);
+  const membre = 'kind' in v && v.kind === 'contact';
+  const [t, col] = membre ? [`${table}_membres`, 'contact_id'] : [table, 'user_id'];
+  const [cur] = await q<{ emoji: string }>(`select emoji from ${t} where ${key} = $1 and ${col} = $2`, [ref, v.id]);
+  if (cur?.emoji === emoji) await q(`delete from ${t} where ${key} = $1 and ${col} = $2`, [ref, v.id]);
+  else await q(`insert into ${t} (${key}, ${col}, emoji) values ($1, $2, $3)
+                on conflict (${key}, ${col}) do update set emoji = excluded.emoji, created_at = now()`, [ref, v.id, emoji]);
 }
 
 export async function reactNews(u: User, id: number, emoji: string) {

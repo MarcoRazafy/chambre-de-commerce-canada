@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Icon from '../Icon';
 import MembreHero from '../MembreHero';
 import ModalBackdrop from '../ModalBackdrop';
+import TexteLie from '../TexteLie';
 import { useMoi } from './EspaceShell';
 import Contacts from '../details/member/Contacts';
 import Produits from '../details/member/Produits';
@@ -19,8 +20,23 @@ async function appel(url: string, method: string, body: unknown) {
 const date = (v?: string | null) => (v ? new Date(String(v).slice(0, 10) + 'T12:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '—');
 const STATUT: Record<string, [string, string]> = { a_jour: ['ok', '✓ À jour'], retard: ['late', 'Cotisation en retard'] };
 
+// Étiquettes « Propose » / « Recherche » : on tape puis Entrée (ou virgule) ; × retire
+function Etiquettes({ id, label, aide, valeur, onChange, besoin }: { id: string; label: string; aide: string; valeur: string[]; onChange: (v: string[]) => void; besoin?: boolean }) {
+  const [t, setT] = useState('');
+  const ajouter = () => { const x = t.trim().replace(/,$/, ''); if (x && !valeur.includes(x) && valeur.length < 15) onChange([...valeur, x.slice(0, 80)]); setT(''); };
+  return (
+    <div className="field es-large"><label htmlFor={id}>{label}</label>
+      <div className="es-tags-in">
+        {valeur.map(v => <span key={v} className={`dchip${besoin ? ' need' : ''}`}>{v}<button type="button" aria-label={`Retirer ${v}`} onClick={() => onChange(valeur.filter(x => x !== v))}>×</button></span>)}
+        <input id={id} value={t} onChange={e => setT(e.target.value)} placeholder={valeur.length >= 15 ? '15 au plus' : 'Ajouter puis Entrée'} disabled={valeur.length >= 15}
+          onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); ajouter(); } else if (e.key === 'Backspace' && !t && valeur.length) onChange(valeur.slice(0, -1)); }} onBlur={ajouter} />
+      </div>
+      <span className="hint">{aide}</span></div>
+  );
+}
+
 // « Modifier » : la présentation de l'entreprise et mes coordonnées, comme la fenêtre de la fiche de l'équipe
-function Modifier({ d, onClose, onDone }: { d: { entreprise: Obj; moi: Obj }; onClose: () => void; onDone: () => void }) {
+function Modifier({ d, onClose, onDone }: { d: { entreprise: Obj; moi: Obj; secteurs: Obj[] }; onClose: () => void; onDone: () => void }) {
   const [e, setE] = useState<Obj>(d.entreprise);
   const [moi, setMoi] = useState<Obj>(d.moi);
   const [busy, setBusy] = useState(false);
@@ -34,8 +50,8 @@ function Modifier({ d, onClose, onDone }: { d: { entreprise: Obj; moi: Obj }; on
     ev.preventDefault();
     setBusy(true);
     try {
-      const { activite, description, site_web, ville, recherche, statut_juridique } = e;
-      await appel('/api/espace/profil', 'PATCH', { entreprise: { activite, description, site_web, ville, recherche, statut_juridique }, moi: { fonction: moi.fonction, tel: moi.tel } });
+      const { activite, description, site_web, ville, recherche, statut_juridique, secteur_id, pays, offres, besoins } = e;
+      await appel('/api/espace/profil', 'PATCH', { entreprise: { activite, description, site_web, ville, recherche, statut_juridique, secteur_id, pays, offres: offres ?? [], besoins: besoins ?? [] }, moi: { fonction: moi.fonction, tel: moi.tel } });
       toast('Modifications enregistrées.'); onDone();
     } catch (x) { toast((x as Error).message, 'error'); setBusy(false); }
   }
@@ -46,6 +62,11 @@ function Modifier({ d, onClose, onDone }: { d: { entreprise: Obj; moi: Obj }; on
         <div className="modal-b">
           <h3 className="es-modal-t">Présentation de l’entreprise</h3>
           <div className="es-champs">
+            <div className="field"><label htmlFor="es-secteur">Secteur</label>
+              <select id="es-secteur" className="inp" value={e.secteur_id ?? ''} onChange={x => setE({ ...e, secteur_id: x.target.value ? Number(x.target.value) : null })}>
+                <option value="">—</option>{d.secteurs.map(x => <option key={x.id} value={x.id}>{x.nom}</option>)}</select></div>
+            <div className="field"><label htmlFor="es-pays">Pays</label>
+              <select id="es-pays" className="inp" value={e.pays === 'CA' ? 'CA' : 'MG'} onChange={x => setE({ ...e, pays: x.target.value })}><option value="MG">Madagascar</option><option value="CA">Canada</option></select></div>
             {champ('activite', 'Accroche', { placeholder: 'Ce que vous faites, en une phrase', large: true })}
             {champ('description', 'Description', { long: true })}
             {champ('recherche', 'Ce que vous recherchez', { long: true, aide: 'Partenaires, fournisseurs, clients… La Chambre s’en sert pour vous mettre en relation.' })}
@@ -53,12 +74,17 @@ function Modifier({ d, onClose, onDone }: { d: { entreprise: Obj; moi: Obj }; on
             {champ('ville', 'Ville')}
             {champ('statut_juridique', 'Forme juridique', { placeholder: 'SARL, SA, entreprise individuelle…' })}
           </div>
+          <h3 className="es-modal-t">Propose &amp; recherche</h3>
+          <div className="es-champs">
+            <Etiquettes id="es-offres" label="Ce que vous proposez" aide="Vos domaines, en quelques mots : « Transport », « Conseil fiscal »…" valeur={e.offres ?? []} onChange={v => setE({ ...e, offres: v })} />
+            <Etiquettes id="es-besoins" besoin label="Ce que vous recherchez" aide="Ce dont vous avez besoin : la Chambre vous présente les membres qui le proposent." valeur={e.besoins ?? []} onChange={v => setE({ ...e, besoins: v })} />
+          </div>
           <h3 className="es-modal-t">Mes coordonnées</h3>
           <div className="es-champs">
             <div className="field"><label htmlFor="es-fonction">Fonction</label><input id="es-fonction" className="inp" value={moi.fonction ?? ''} onChange={x => setMoi({ ...moi, fonction: x.target.value })} /></div>
             <div className="field"><label htmlFor="es-tel">Téléphone</label><input id="es-tel" className="inp" value={moi.tel ?? ''} onChange={x => setMoi({ ...moi, tel: x.target.value })} /></div>
           </div>
-          <p className="small muted">Pour changer le nom, le secteur ou la formule d’adhésion, écrivez à la Chambre.</p>
+          <p className="small muted">Pour changer le nom de l’entreprise ou la formule d’adhésion, écrivez à la Chambre.</p>
         </div>
         <div className="modal-f"><button type="button" className="btn" onClick={onClose}>Annuler</button>
           <button className="btn cta" disabled={busy}><Icon name="ok" size={16} /> {busy ? 'Enregistrement…' : 'Enregistrer'}</button></div>
@@ -94,7 +120,7 @@ function MotDePasse({ onClose }: { onClose: () => void }) {
 // « Mon entreprise » : la même fiche que celle de l'équipe (en-tête, présentation, catalogue), avec « Modifier »
 export default function EspaceProfil() {
   const { recharger } = useMoi();
-  const [d, setD] = useState<{ entreprise: Obj; moi: Obj } | null>(null);
+  const [d, setD] = useState<{ entreprise: Obj; moi: Obj; secteurs: Obj[] } | null>(null);
   const [fenetre, setFenetre] = useState<'modifier' | 'mdp' | null>(null);
   const charger = () => fetch('/api/espace/profil').then(r => r.json()).then(setD).catch(() => {});
   useEffect(() => { charger(); }, []);
@@ -116,12 +142,12 @@ export default function EspaceProfil() {
           <section className="card">
             <h2>Présentation</h2>
             {m.activite && <p className="mabout-lead">{m.activite}</p>}
-            {m.description && m.description !== m.activite && <p className="mabout-text">{m.description}</p>}
+            {m.description && m.description !== m.activite && <p className="mabout-text"><TexteLie texte={m.description} /></p>}
             {!m.activite && !m.description && <p className="small muted">Pas encore de présentation. « Modifier » permet de la rédiger : c’est ce que les autres membres lisent dans l’annuaire.</p>}
             <div className="mabout-block">
               <h3>Recherche actuellement</h3>
               {besoins.length > 0 && <ul className="mneeds">{besoins.map(t => <li key={t}>{t}</li>)}</ul>}
-              {m.recherche ? <p className="mabout-text">{m.recherche}</p> : besoins.length === 0 && <p className="small muted">Rien d’indiqué. Dites ce que vous cherchez : la Chambre s’en sert pour vous présenter des partenaires.</p>}
+              {m.recherche ? <p className="mabout-text"><TexteLie texte={m.recherche} /></p> : besoins.length === 0 && <p className="small muted">Rien d’indiqué. Dites ce que vous cherchez : la Chambre s’en sert pour vous présenter des partenaires.</p>}
             </div>
           </section>
 
@@ -149,7 +175,11 @@ export default function EspaceProfil() {
               <dt>Renouvellement</dt><dd>{date(m.renouvellement)}</dd>
               <dt>Forme juridique</dt><dd>{m.statut_juridique || '—'}</dd>
             </dl>
-            <Link className="btn sm" style={{ alignSelf: 'flex-start' }} href="/espace/factures"><Icon name="doc" size={14} /> Mes factures</Link>
+            <div className="row">
+              <Link className="btn sm" href="/espace/factures"><Icon name="doc" size={14} /> Mes factures</Link>
+              {m.statut === 'a_jour' ? <a className="btn sm" href="/espace/certificat" target="_blank" rel="noopener"><Icon name="award" size={14} /> Mon certificat</a>
+                : <button type="button" className="btn sm" disabled title="Disponible dès que la cotisation est réglée"><Icon name="award" size={14} /> Mon certificat</button>}
+            </div>
           </section>
           <section className="card">
             <div className="row between"><h2>Mes coordonnées</h2><button type="button" className="btn sm ghost" onClick={() => setFenetre('modifier')}><Icon name="edit" size={14} /> Modifier</button></div>
