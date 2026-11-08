@@ -4,13 +4,12 @@ import {
   Building2,
   CheckCircle2,
   X,
-  ExternalLink,
   Globe,
   User as UserIcon,
   MapPin,
 } from "lucide-react";
 import { EtatAcces } from "@/components/admin/EtatAcces";
-import { Jauge, LienFleche, Onglets, Panneau, Vide } from "@/components/admin/ui";
+import { Jauge, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { EtiquettesMembre } from "@/components/maillage/EtiquettesMembre";
 import { EtatQuestionnaireAdmin, ListeRelations, ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
 import { chargerMaillage, relations, suggestions } from "@/lib/maillage-donnees";
@@ -111,7 +110,6 @@ export default async function AdminMembreDetail({
   const fiche = `/admin/membres/${m.id}`;
 
   const s = situation(m);
-  const dansAnnuaire = m.statut === "a_jour" || m.statut === "en_retard";
   const jours = joursDeRetard(m);
   const dossier = m.motivation || m.statutJuridique || m.pays;
 
@@ -233,13 +231,6 @@ export default async function AdminMembreDetail({
               member={m}
               action={<AjouterBesoinButton memberId={m.id} retour={fiche} />}
             />
-            {dansAnnuaire ? (
-              <div className="mt-5">
-                <LienFleche href={`/admin/annuaire/${m.id}`}>
-                  Voir la fiche telle que la voient les membres
-                </LienFleche>
-              </div>
-            ) : null}
           </Panneau>
 
           {dossier ? (
@@ -387,15 +378,6 @@ export default async function AdminMembreDetail({
             </p>
             <DeleteMemberButton memberId={m.id} nom={m.nom} />
           </Card>
-
-          {dansAnnuaire ? (
-            <Link
-              href={`/admin/annuaire/${m.id}`}
-              className="inline-flex items-center justify-center gap-1.5 text-[12.8px] font-semibold text-muted no-underline hover:text-accent"
-            >
-              Fiche publique dans l’annuaire <ExternalLink size={13} />
-            </Link>
-          ) : null}
         </div>
       </div>
       ) : null}

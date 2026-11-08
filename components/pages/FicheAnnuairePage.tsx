@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { Partage } from "@/components/Partage";
 import {
   Building2,
-  Settings2,
   Globe,
   User as UserIcon,
 } from "lucide-react";
@@ -19,17 +18,15 @@ import { TexteLie } from "@/components/TexteLie";
 import { CarrouselSection } from "@/components/CarrouselSection";
 import { CarteService } from "@/components/CarteService";
 import { BoutonMessage } from "@/components/forms/MessageMembre";
-import { BtnLink, Card, Pill } from "@/components/ui";
+import { Card, Pill } from "@/components/ui";
 import { getContacts, getMember } from "@/lib/queries";
 import { fmtDate } from "@/lib/format";
 import { affichageSite } from "@/lib/liens";
 import { positionObjet } from "@/lib/cadrage";
 
 export async function FicheAnnuairePage({
-  espace,
   params,
 }: {
-  espace: "membre" | "admin";
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
@@ -42,12 +39,7 @@ export async function FicheAnnuairePage({
       {/* Le bouton « Retour » de la barre du haut ramène à l'annuaire */}
       <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
         <div className="flex gap-2 flex-wrap">
-          {espace === "admin" ? (
-            <BtnLink href={`/admin/membres/${m.id}`} variant="line" sm>
-              <Settings2 size={14} /> Gérer ce membre
-            </BtnLink>
-          ) : null}
-          <BoutonMessage memberId={m.id} space={espace} />
+          <BoutonMessage memberId={m.id} space="membre" />
         </div>
       </div>
 

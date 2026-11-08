@@ -1,5 +1,5 @@
 import { FicheAnnuairePage } from "@/components/pages/FicheAnnuairePage";
 
 export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  return <FicheAnnuairePage espace="membre" params={params} />;
+  return <FicheAnnuairePage params={params} />;
 }
