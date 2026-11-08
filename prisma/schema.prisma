@@ -806,6 +806,11 @@ model Abonne {
 
   synchroniseLe DateTime?
 
+  // Adresse refusée par le serveur du destinataire (rebond définitif) : plus aucune lettre ne part
+  erreurLe DateTime?
+  // Dernière invitation à adhérer envoyée par l'équipe
+  inviteLe DateTime?
+
   createdAt DateTime @default(now())
 
   @@map("abonnes")
@@ -903,17 +908,38 @@ model MiseEnRelation {
 // Newsletter : une lettre écrite par l'équipe, envoyée par courriel à une audience choisie
 // (contacts des membres selon leur statut et leurs étiquettes, abonnés à la lettre)
 model Lettre {
-  id            String    @id @default(cuid())
+  id            String        @id @default(cuid())
   sujet         String
   contenu       String
-  audience      Json      @default("{}")
-  statut        String    @default("brouillon")
-  destinataires Int       @default(0)
-  envoyes       Int       @default(0)
+  audience      Json          @default("{}")
+  statut        String        @default("brouillon")
+  destinataires Int           @default(0)
+  envoyes       Int           @default(0)
   envoyeeLe     DateTime?
+  // Envoi programmé : les courriels attendent chez Resend jusqu'à cette date (statut « programmee »)
+  programmeeLe  DateTime?
   auteur        String
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  envois        EnvoiLettre[]
 
   @@map("lettres")
+}
+
+// Un courriel d'une lettre, suivi grâce aux webhooks de Resend (remise, ouverture, clic, rebond)
+model EnvoiLettre {
+  id        String    @id @default(cuid())
+  lettreId  String
+  lettre    Lettre    @relation(fields: [lettreId], references: [id], onDelete: Cascade)
+  email     String
+  resendId  String?   @unique
+  livreLe   DateTime?
+  ouvertLe  DateTime?
+  clicLe    DateTime?
+  erreurLe  DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([lettreId])
+  @@index([email])
+  @@map("envois_lettres")
 }

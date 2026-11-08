@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { Search } from "lucide-react";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { MemberCard } from "@/components/domain";
@@ -14,9 +15,14 @@ export interface ParametresAnnuaire {
 export async function AnnuairePage({
   espace,
   searchParams,
+  action,
+  onglets,
 }: {
   espace: "membre" | "admin";
   searchParams: Promise<ParametresAnnuaire>;
+  action?: ReactNode;
+  /** Onglets affichés sous le titre (back-office) */
+  onglets?: ReactNode;
 }) {
   const [{ q = "", secteur = "" }, visibles] = await Promise.all([
     searchParams,
@@ -38,7 +44,8 @@ export async function AnnuairePage({
 
   return (
     <>
-      <ViewHead title={<>Annuaire des {<Saillant>membres</Saillant>}</>} />
+      <ViewHead title={<>Annuaire des {<Saillant>membres</Saillant>}</>} action={action} />
+      {onglets}
 
       <FiltresAuto className="flex gap-3 flex-wrap mb-[18px]">
         <div className="relative w-full sm:max-w-[340px] sm:flex-1 sm:min-w-[240px]">
@@ -79,7 +86,11 @@ export async function AnnuairePage({
             <MemberCard
               key={m.id}
               member={m}
-              href={`/${espace}/annuaire/${m.id}`}
+              href={
+                espace === "admin"
+                  ? `/admin/membres/${m.id}`
+                  : `/membre/annuaire/${m.id}`
+              }
             />
           ))}
         </div>

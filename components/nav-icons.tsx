@@ -13,6 +13,8 @@ import {
   Handshake,
   HelpCircle,
   Mail,
+  MailCheck,
+  Star,
   Tag,
   Contact,
   History,
@@ -47,6 +49,8 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   lock: Lock,
   maillage: Handshake,
   newsletter: Mail,
+  abonnes: MailCheck,
+  abonnement: Star,
   tag: Tag,
   contacts: Contact,
 };

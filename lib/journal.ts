@@ -83,6 +83,26 @@ export const ACTIONS_JOURNAL: Record<string, ActionJournal> = {
     famille: "contenu",
     ton: "ok",
   },
+  lettre_programmee: {
+    libelle: "Newsletter programmée",
+    famille: "contenu",
+    ton: "info",
+  },
+  lettre_deprogrammee: {
+    libelle: "Programmation de newsletter annulée",
+    famille: "contenu",
+    ton: "info",
+  },
+  abonnes_importes: {
+    libelle: "Abonnés importés",
+    famille: "programme",
+    ton: "ok",
+  },
+  abonne_invite: {
+    libelle: "Abonné invité à adhérer",
+    famille: "adhesion",
+    ton: "info",
+  },
   maillage_relance: {
     libelle: "Relance du questionnaire de maillage",
     famille: "adhesion",

@@ -1,5 +1,4 @@
 import { AlertTriangle, CalendarClock, Clock } from "lucide-react";
-import { OngletsAgenda } from "@/components/OngletsAgenda";
 import { CarteRendezvous } from "@/components/rendezvous/CarteRendezvous";
 import {
   LienRendezvous,
@@ -46,7 +45,6 @@ export default async function RendezvousEquipePage() {
 
   return (
     <>
-      <OngletsAgenda espace="admin" actif="rdv" />
       <ViewHead title="Rendez-vous" action={<NouveauType />} />
 
       {manque ? (

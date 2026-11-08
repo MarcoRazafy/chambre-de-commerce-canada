@@ -53,13 +53,14 @@ export function ViewHead({
   );
 }
 
-type PillTone = "ok" | "warn" | "bad" | "muted";
+type PillTone = "ok" | "warn" | "bad" | "muted" | "info";
 
 const PILL_TONES: Record<PillTone, string> = {
   ok: "bg-success-soft text-success-strong",
   warn: "bg-warn-soft text-warn",
   bad: "bg-bad-soft text-bad",
   muted: "bg-surface-3 text-muted",
+  info: "bg-navy-soft text-navy",
 };
 
 export function Pill({

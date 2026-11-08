@@ -29,6 +29,15 @@ export function courrielsActifs(): boolean {
 }
 
 export async function envoyerCourriel(c: Courriel): Promise<boolean> {
+  return (await envoyerCourrielSuivi(c)) !== null;
+}
+
+// Envoie (ou programme, avec « programmeLe ») et renvoie l'identifiant Resend du courriel,
+// qui sert à le suivre (webhooks) ou à annuler un envoi programmé ; null si rien n'est parti
+export async function envoyerCourrielSuivi(
+  c: Courriel,
+  { programmeLe }: { programmeLe?: Date } = {},
+): Promise<string | null> {
   const cle = process.env.RESEND_API_KEY;
   if (!cle) {
     const jointes = c.pieces?.length
@@ -37,9 +46,10 @@ export async function envoyerCourriel(c: Courriel): Promise<boolean> {
     console.info(
       `[courriel] non envoyé (RESEND_API_KEY absente) — à ${c.a} — « ${c.sujet} »\n${c.texte}${jointes}`,
     );
-    return false;
+    return null;
   }
   const idempotence = randomUUID();
+  let limites = 0;
   for (let essai = 1; essai <= ESSAIS_ENVOI; essai++) {
     try {
       const reponse = await fetch("https://api.resend.com/emails", {
@@ -66,15 +76,24 @@ export async function envoyerCourriel(c: Courriel): Promise<boolean> {
               }
             : {}),
           reply_to: COURRIEL_EQUIPE,
+          ...(programmeLe ? { scheduled_at: programmeLe.toISOString() } : {}),
         }),
       });
+      // Trop de courriels à la seconde (envoi d'une lettre) : on attend et on recommence, sans compter l'essai
+      if (reponse.status === 429 && limites < LIMITES_TOLEREES) {
+        limites++;
+        essai--;
+        await new Promise((r) => setTimeout(r, 1100));
+        continue;
+      }
       if (!reponse.ok) {
         console.error(
           `[courriel] échec ${reponse.status} — à ${c.a} — « ${c.sujet} » : ${await reponse.text()}`,
         );
-        return false;
+        return null;
       }
-      return true;
+      const { id } = (await reponse.json().catch(() => ({}))) as { id?: string };
+      return id ?? "";
     } catch (e) {
       if (essai < ESSAIS_ENVOI) {
         await new Promise((r) => setTimeout(r, 800));
@@ -83,8 +102,27 @@ export async function envoyerCourriel(c: Courriel): Promise<boolean> {
       console.error(`[courriel] échec réseau — à ${c.a} — « ${c.sujet} »`, e);
     }
   }
-  return false;
+  return null;
 }
+
+// Annule un courriel programmé (avant son heure d'envoi) ; true si Resend l'a bien retiré
+export async function annulerCourrielProgramme(id: string): Promise<boolean> {
+  const cle = process.env.RESEND_API_KEY;
+  if (!cle || !id) return false;
+  try {
+    const r = await fetch(`https://api.resend.com/emails/${encodeURIComponent(id)}/cancel`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${cle}` },
+    });
+    if (!r.ok) console.error(`[courriel] annulation refusée (${r.status}) — ${id} : ${await r.text()}`);
+    return r.ok;
+  } catch (e) {
+    console.error(`[courriel] annulation impossible — ${id}`, e);
+    return false;
+  }
+}
+
+const LIMITES_TOLEREES = 20;
 
 const ESSAIS_ENVOI = 2;
 

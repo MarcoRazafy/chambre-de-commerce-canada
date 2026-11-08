@@ -20,6 +20,11 @@ export function register() {
       "COURRIEL_EXPEDITEUR manquant : l'adresse de test de Resend n'écrit qu'au propriétaire du compte.",
     );
   }
+  if (process.env.RESEND_API_KEY && !process.env.RESEND_WEBHOOK_SECRET) {
+    alertes.push(
+      "RESEND_WEBHOOK_SECRET manquant : la newsletter part, mais ses ouvertures, clics et adresses en erreur ne sont pas suivis.",
+    );
+  }
   const appUrl = process.env.APP_URL?.trim();
   if (!appUrl) {
     alertes.push(

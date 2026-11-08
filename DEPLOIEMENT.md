@@ -55,6 +55,11 @@ Sur le service de l'application, onglet **Variables** :
 | `VANILLAPAY_MOBILE_MONEY` | `1` une fois « l'offre mobile money » (MVola, Orange Money, Airtel Money) ouverte sur le compte marchand. Vide : seule la carte bancaire se paie en ligne. |
 | `VANILLAPAY_MARCHAND` | Le nom que leur page affiche au payeur, s'il n'est pas celui de la chambre. Vide avec le compte de la chambre : leur page affiche « Chambre de commerce et de coopération Canada MDG ». Sinon, le membre en est prévenu avant de payer. |
 | `TRAVERSEE_PLATEFORME_URL` | L'adresse de la plateforme d'inscription de La Traversée, en `https`, sans chemin. Le bouton « Réserver mon billet » de `/la-traversee` y envoie le visiteur, sur `/inscription`, avec ses coordonnées préremplies. Vide : `https://impact261.com`. |
+| `RESEND_WEBHOOK_SECRET` | Le secret de signature du webhook Resend (`whsec_…`, étape 3). Sans lui, la newsletter part mais ses ouvertures, clics et adresses en erreur restent inconnus. |
+| `PLATEFORME_FORFAIT` | Forfait mensuel de la Chambre pour la plateforme, en $ CAD, affiché sur « Abonnement & utilisateurs ». Vide : `150`. |
+| `PLATEFORME_PRIX_UTILISATEUR` | Prix mensuel de chaque compte de l'équipe, en $ CAD. Vide : `15`. |
+| `PLATEFORME_TPS` / `PLATEFORME_TVQ` | Taux des taxes en %, appliqués à l'abonnement. Vides : `5` et `9.975`. |
+| `PLATEFORME_JOUR_FACTURATION` | Jour du mois de la facture de l'abonnement (1 à 28). Vide : `1`. |
 
 Générer `AUTH_SECRET` :
 
@@ -81,8 +86,17 @@ de ces lignes est complet.
 3. Resend affiche des enregistrements DNS (SPF, DKIM, et un MX pour les
    retours). Ajoutez-les tels quels chez le gestionnaire du domaine, puis
    attendez le statut **Verified**, de quelques minutes à quelques heures.
-4. **API Keys → Create** avec la permission *Sending access*. Copiez la clé
-   dans `RESEND_API_KEY`.
+4. **API Keys → Create**. Copiez la clé dans `RESEND_API_KEY`. Choisissez
+   *Full access* : une clé *Sending access* suffit pour envoyer, mais Resend
+   ne la laisse sans doute pas annuler une newsletter programmée.
+5. **Domains → (votre domaine) → Configuration** : activez *Open tracking* et
+   *Click tracking*. C'est ce qui permet de mesurer l'ouverture et les clics de
+   la newsletter.
+6. **Webhooks → Add endpoint** : l'adresse `https://…/api/courriels/resend`
+   (celle d'`APP_URL`), avec les événements `email.delivered`,
+   `email.opened`, `email.clicked`, `email.bounced`, `email.complained`,
+   `email.failed` et `email.suppressed`. Copiez le *Signing secret* dans
+   `RESEND_WEBHOOK_SECRET`.
 
 Tant que le domaine n'est pas vérifié, Resend n'accepte d'écrire qu'à
 l'adresse du propriétaire du compte : les membres ne reçoivent rien.
@@ -94,7 +108,16 @@ Ce qui part par e-mail :
   sept jours ;
 - l'accusé de réception d'une demande d'adhésion, et l'alerte à l'équipe ;
 - la validation de la demande, qui ouvre la connexion ;
-- la relance de cotisation, envoyée depuis la fiche d'un membre.
+- la relance de cotisation, envoyée depuis la fiche d'un membre ;
+- la newsletter, tout de suite ou programmée (jusqu'à 30 jours à l'avance :
+  les courriels attendent chez Resend, aucune tâche planifiée n'est
+  nécessaire), et l'invitation à adhérer envoyée à un abonné.
+
+Le webhook tient le suivi de la newsletter : remise, ouverture, clics. Une
+adresse refusée définitivement passe « en erreur » et ne reçoit plus la
+lettre ; un signalement comme indésirable désabonne la personne. Les taux
+d'ouverture sont indicatifs : certaines messageries (Apple Mail) ouvrent les
+images à la place du lecteur, d'autres les bloquent.
 
 ## 4. Premier déploiement
 

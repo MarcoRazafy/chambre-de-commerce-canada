@@ -79,12 +79,8 @@ export const NAV_ADMIN: NavGroup[] = [
     label: "Activités",
     items: [
       { href: "/admin/evenements", label: "Événements", icon: "calendar" },
-      {
-        href: "/admin/agenda",
-        label: "Agenda & rendez-vous",
-        icon: "agenda",
-        aussi: ["/admin/rendez-vous"],
-      },
+      { href: "/admin/agenda", label: "Agenda", icon: "agenda" },
+      { href: "/admin/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
       { href: "/admin/actualites", label: "Actualités", icon: "news" },
       {
         href: "/admin/ressources",
@@ -99,6 +95,7 @@ export const NAV_ADMIN: NavGroup[] = [
     items: [
       { href: "/admin/messagerie", label: "Messagerie", icon: "chat" },
       { href: "/admin/newsletter", label: "Newsletter", icon: "newsletter" },
+      { href: "/admin/abonnes", label: "Abonnés à la lettre", icon: "abonnes" },
       { href: "/admin/etiquettes", label: "Étiquettes", icon: "tag" },
     ],
   },
@@ -118,6 +115,12 @@ export const NAV_ADMIN: NavGroup[] = [
     items: [
       { href: "/admin/equipe", label: "Équipe & accès", icon: "shield" },
       { href: "/admin/journal", label: "Journal d’activité", icon: "history" },
+    ],
+  },
+  {
+    label: "Plateforme",
+    items: [
+      { href: "/admin/abonnement", label: "Abonnement & utilisateurs", icon: "abonnement" },
     ],
   },
 ];
@@ -154,6 +157,8 @@ export const TITLES: Record<string, [string, string]> = {
   "/admin/maillage": ["Back-office", "Maillage"],
   "/admin/newsletter": ["Back-office", "Newsletter"],
   "/admin/newsletter/nouvelle": ["Back-office", "Nouvelle lettre"],
+  "/admin/abonnes": ["Back-office", "Abonnés à la lettre"],
+  "/admin/abonnement": ["Back-office", "Abonnement & utilisateurs"],
   "/admin/etiquettes": ["Back-office", "Étiquettes"],
   "/admin/evenements": ["Back-office", "Événements"],
   "/admin/agenda": ["Back-office", "Agenda"],

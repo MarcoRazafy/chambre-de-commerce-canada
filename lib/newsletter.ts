@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
-import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
+import { annulerCourrielProgramme, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
 
 // Audience d'une lettre : les contacts des membres (selon leur statut, leurs étiquettes, principal ou tous)
 // et, si coché, les abonnés à la lettre d'information.
@@ -50,7 +50,7 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
     for (const c of contacts) parAdresse.set(c.email.toLowerCase(), { email: c.email, nom: c.nom, abonne: false });
   }
   if (a.abonnes) {
-    const abonnes = await prisma.abonne.findMany({ where: { desabonneLe: null }, select: { email: true, prenom: true } });
+    const abonnes = await prisma.abonne.findMany({ where: { desabonneLe: null, erreurLe: null }, select: { email: true, prenom: true } });
     for (const x of abonnes) if (!parAdresse.has(x.email.toLowerCase())) parAdresse.set(x.email.toLowerCase(), { email: x.email, nom: x.prenom, abonne: true });
   }
   return [...parAdresse.values()];
@@ -82,11 +82,47 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
   };
 }
 
-// Envoi à toute l'audience ; renvoie le nombre de courriels partis
-export async function envoyerLettre(sujet: string, contenu: string, liste: Destinataire[]) {
+// Envoi (ou programmation) à toute l'audience : chaque courriel parti est noté pour suivre
+// sa remise, son ouverture et ses clics ; renvoie le nombre de courriels partis
+export async function envoyerLettre(
+  lettreId: string,
+  sujet: string,
+  contenu: string,
+  liste: Destinataire[],
+  programmeLe?: Date,
+) {
   let partis = 0;
-  for (const d of liste) if (await envoyerCourriel(await courrielLettre(sujet, contenu, d))) partis++;
+  for (const d of liste) {
+    const id = await envoyerCourrielSuivi(await courrielLettre(sujet, contenu, d), { programmeLe });
+    if (id === null) continue;
+    partis++;
+    await prisma.envoiLettre.create({ data: { lettreId, email: d.email.toLowerCase(), resendId: id || null } });
+  }
   return partis;
+}
+
+// Annule les courriels encore en attente chez Resend ; renvoie ceux qui n'ont pas pu l'être
+export async function annulerEnvois(envois: { id: string; resendId: string | null }[]) {
+  let restants = 0;
+  for (const e of envois) {
+    if (!e.resendId || (await annulerCourrielProgramme(e.resendId))) {
+      await prisma.envoiLettre.delete({ where: { id: e.id } });
+    } else restants++;
+  }
+  return restants;
+}
+
+// Une adresse qui se désabonne ne doit pas recevoir une lettre déjà programmée
+export async function annulerEnvoisProgrammesPour(email: string) {
+  const envois = await prisma.envoiLettre.findMany({
+    where: { email: email.toLowerCase(), lettre: { statut: "programmee", programmeeLe: { gt: new Date() } } },
+    select: { id: true, resendId: true, lettreId: true },
+  });
+  await annulerEnvois(envois);
+  for (const lettreId of new Set(envois.map((e) => e.lettreId))) {
+    const n = await prisma.envoiLettre.count({ where: { lettreId } });
+    await prisma.lettre.update({ where: { id: lettreId }, data: { envoyes: n } });
+  }
 }
 
 export async function envoyerTest(sujet: string, contenu: string, email: string, nom: string) {

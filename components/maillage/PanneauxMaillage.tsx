@@ -143,6 +143,55 @@ export function ListeSuggestions({
   );
 }
 
+// Suggestions en cartes (onglet « Suggestions IA » de l'annuaire) : les deux entreprises, le score, les raisons
+export function GrilleSuggestions({ suggestions, retour }: { suggestions: Suggestion[]; retour: string }) {
+  if (!suggestions.length) return <Vide>Aucune nouvelle suggestion.</Vide>;
+  const pays = (p: string) => (/canada/i.test(p) ? "Canada" : p);
+  return (
+    <ul className="list-none m-0 p-0 grid gap-4 grid-cols-1 lg:grid-cols-2">
+      {suggestions.map((s) => (
+        <li key={`${s.a.id}-${s.b.id}`} className="rounded-[var(--radius-l)] border border-line bg-surface p-4 flex flex-col gap-3 min-w-0">
+          <div className="grid items-center gap-3 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)]">
+            {[s.a, s.b].map((m, i) => (
+              <Link
+                key={m.id}
+                href={fiche("admin", m.id)}
+                className={`flex items-center gap-2.5 min-w-0 no-underline group ${i ? "sm:order-3" : ""}`}
+              >
+                <Pastille nom={m.nom} />
+                <span className="min-w-0">
+                  <span className="block font-semibold text-ink truncate group-hover:text-accent">{m.nom}</span>
+                  <span className="block text-[12px] text-muted truncate">{pays(m.pays)}</span>
+                </span>
+              </Link>
+            ))}
+            <span className="sm:order-2 justify-self-start sm:justify-self-center text-[13px] font-bold text-success-strong border-[1.5px] border-success rounded-full px-2.5 py-0.5 tabular-nums whitespace-nowrap">
+              {s.score} %
+            </span>
+          </div>
+          <ul className="m-0 pl-3 border-l-2 border-success list-none flex flex-col gap-1 text-[13px] text-ink">
+            {s.why.map((w) => <li key={w}>{w}</li>)}
+          </ul>
+          <div className="flex flex-wrap gap-2 mt-auto">
+            <form action={mettreEnRelation}>
+              <input type="hidden" name="a" value={s.a.id} />
+              <input type="hidden" name="b" value={s.b.id} />
+              <input type="hidden" name="retour" value={retour} />
+              <button type="submit" className="btn-action btn-action-sm">Mettre en relation <ArrowRight size={14} /></button>
+            </form>
+            <form action={ecarterSuggestion}>
+              <input type="hidden" name="a" value={s.a.id} />
+              <input type="hidden" name="b" value={s.b.id} />
+              <input type="hidden" name="retour" value={retour} />
+              <button type="submit" className="btn-contour btn-contour-sm text-muted"><X size={14} /> Écarter</button>
+            </form>
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 // Mises en relation faites par la Chambre
 export function ListeRelations({ relations, espace }: { relations: Relation[]; espace: Espace }) {
   if (!relations.length) return <Vide>Aucune mise en relation pour l’instant.</Vide>;

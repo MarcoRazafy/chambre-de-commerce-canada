@@ -100,7 +100,8 @@ export async function AgendaPage({
 
   return (
     <>
-      <OngletsAgenda espace={espace} actif="agenda" />
+      {/* Dans le back-office, Agenda et Rendez-vous ont chacun leur entrée de menu */}
+      {espace === "membre" ? <OngletsAgenda espace="membre" actif="agenda" /> : null}
       <ViewHead
         title="Agenda"
         action={
