@@ -37,3 +37,6 @@ lib/generated/
 /public/televersements/
 
 /stockage/
+
+# Documents du client (cahier des charges, questionnaires) : gardés en local, pas sur GitHub
+/docs/*.pdf
