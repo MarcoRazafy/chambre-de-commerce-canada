@@ -1,13 +1,6 @@
 import type { MetadataRoute } from "next";
-import { baseSite } from "@/lib/site";
 
+// Plateforme privée : rien à indexer
 export default function robots(): MetadataRoute.Robots {
-  return {
-    rules: {
-      userAgent: "*",
-      allow: ["/", "/auth/inscription"],
-      disallow: ["/membre/", "/admin/", "/auth/", "/api/", "/televersements/"],
-    },
-    sitemap: `${baseSite()}/sitemap.xml`,
-  };
+  return { rules: { userAgent: "*", disallow: "/" } };
 }

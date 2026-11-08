@@ -161,9 +161,19 @@ model Member {
   logo   String?
   video  String?
 
+  // Maillage (repris de la plateforme L'Alliée Virtuelle) : étiquettes de ce que le membre propose,
+  // recherche et ce qui l'intéresse ; elles servent aux suggestions. « etiquettes » : repères internes de l'équipe.
+  offresTags   String[] @default([]) @map("offres_tags")
+  besoinsTags  String[] @default([]) @map("besoins_tags")
+  interetsTags String[] @default([]) @map("interets_tags")
+  etiquettes   String[] @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  maillage      Maillage?
+  relationsA    MiseEnRelation[] @relation("relationA")
+  relationsB    MiseEnRelation[] @relation("relationB")
   users         User[]
   produits      Produit[]
   offres        Offer[]
@@ -600,7 +610,7 @@ model Invoice {
   date    DateTime      @db.Date
   objet   String
   montant Int
-  devise  Devise        @default(MGA)
+  devise  Devise        @default(CAD)
   statut  InvoiceStatus @default(envoyee)
   payeeLe DateTime?     @db.Date
 
@@ -630,7 +640,7 @@ model Paiement {
   statut    PaiementStatut @default(en_cours)
 
   montant Int
-  devise  Devise @default(MGA)
+  devise  Devise @default(CAD)
 
   mode ModeReglement
 
@@ -859,4 +869,51 @@ model Rendezvous {
   @@index([jour])
   @@index([userId])
   @@map("rendezvous")
+}
+
+// Questionnaire de maillage d'un membre (16 questions essentielles) : réponses, avancement, relance
+model Maillage {
+  memberId   String    @id
+  member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  reponses   Json      @default("{}")
+  rempliPar  String?
+  commenceLe DateTime?
+  completeLe DateTime?
+  relanceLe  DateTime?
+  majLe      DateTime  @default(now()) @updatedAt
+
+  @@map("maillage")
+}
+
+// Mise en relation faite par la Chambre entre deux membres (ou suggestion écartée)
+model MiseEnRelation {
+  id        String   @id @default(cuid())
+  memberAId String
+  memberA   Member   @relation("relationA", fields: [memberAId], references: [id], onDelete: Cascade)
+  memberBId String
+  memberB   Member   @relation("relationB", fields: [memberBId], references: [id], onDelete: Cascade)
+  statut    String   @default("relation")
+  note      String?
+  createdAt DateTime @default(now())
+
+  @@unique([memberAId, memberBId])
+  @@map("mises_en_relation")
+}
+
+// Newsletter : une lettre écrite par l'équipe, envoyée par courriel à une audience choisie
+// (contacts des membres selon leur statut et leurs étiquettes, abonnés à la lettre)
+model Lettre {
+  id            String    @id @default(cuid())
+  sujet         String
+  contenu       String
+  audience      Json      @default("{}")
+  statut        String    @default("brouillon")
+  destinataires Int       @default(0)
+  envoyes       Int       @default(0)
+  envoyeeLe     DateTime?
+  auteur        String
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@map("lettres")
 }

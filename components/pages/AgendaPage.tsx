@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { OngletsAgenda } from "@/components/OngletsAgenda";
 import { CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import { PointType } from "@/components/agenda/ElementAgenda";
 import { NouveauRappel } from "@/components/agenda/Rappels";
@@ -99,6 +100,7 @@ export async function AgendaPage({
 
   return (
     <>
+      <OngletsAgenda espace={espace} actif="agenda" />
       <ViewHead
         title="Agenda"
         action={

@@ -15,9 +15,11 @@ function schemaDe(adresse: string | undefined): string | undefined {
 }
 
 function createClient() {
+  const schema = schemaDe(process.env.DATABASE_URL);
+  // Schéma dédié (?schema=) : les requêtes SQL brutes ($queryRaw) le cherchent aussi en premier
   const adapter = new PrismaPg(
-    { connectionString: process.env.DATABASE_URL },
-    { schema: schemaDe(process.env.DATABASE_URL) },
+    { connectionString: process.env.DATABASE_URL, options: schema ? `-c search_path="${schema}",public` : undefined },
+    { schema },
   );
   return new PrismaClient({ adapter });
 }

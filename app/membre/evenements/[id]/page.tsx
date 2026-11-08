@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   ArrowRight,
   CalendarDays,
   CheckCheck,
@@ -16,7 +15,7 @@ import { Agrandir } from "@/components/Agrandir";
 import { Partage } from "@/components/Partage";
 import { CodeAccueil } from "@/components/CodeAccueil";
 import { TexteLie } from "@/components/TexteLie";
-import { Banner, BtnLink, Card, Kicker, Saillant, Stat } from "@/components/ui";
+import { Banner, Card, Kicker, Saillant, Stat } from "@/components/ui";
 import {
   CancelRegistrationButton,
   RegisterButton,
@@ -98,12 +97,6 @@ export default async function EvenementDetailPage({
           ouverteAuDepart
         />
       ) : null}
-      <div className="mb-4">
-        <BtnLink href="/membre/evenements" variant="ghost" sm>
-          <ArrowLeft size={14} /> Retour aux événements
-        </BtnLink>
-      </div>
-
       <div className="relative rounded-[var(--radius-l)] overflow-hidden mb-4">
         <Agrandir
           src={e.photo}

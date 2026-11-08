@@ -1,4 +1,5 @@
 import { CalendarClock } from "lucide-react";
+import { OngletsAgenda } from "@/components/OngletsAgenda";
 import { CarteRendezvous } from "@/components/rendezvous/CarteRendezvous";
 import { Reservation } from "@/components/rendezvous/Reservation";
 import { Banner, EmptyState, SectionTitle, ViewHead } from "@/components/ui";
@@ -32,6 +33,7 @@ export default async function RendezvousPage({
 
   return (
     <>
+      <OngletsAgenda espace="membre" actif="rdv" />
       <ViewHead title="Rendez-vous" />
 
       <SectionTitle>Vos rendez-vous à venir</SectionTitle>

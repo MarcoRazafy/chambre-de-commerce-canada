@@ -495,7 +495,7 @@ export function FormulaireRessource({
         </Field>
         {payant ? (
           <Field
-            label="Prix (Ariary)"
+            label="Prix ($ CAD)"
             hint="Le paiement en ligne n’est pas branché : les membres envoient une demande d’achat, visible au tableau de bord."
           >
             <input

@@ -29,19 +29,19 @@ export const FORMULES: Record<FormuleId, Formule> = {
   mg_consultant: {
     pays: "Madagascar",
     profil: "Consultant, groupement et ONG",
-    montant: 250_000,
-    devise: "MGA",
+    montant: 75,
+    devise: "CAD",
   },
   mg_entreprise: {
     pays: "Madagascar",
     profil: "Entreprise",
-    montant: 500_000,
-    devise: "MGA",
+    montant: 150,
+    devise: "CAD",
   },
   ca_diaspora: {
     pays: "Canada",
     profil: "Diaspora & travailleur autonome",
-    montant: 100,
+    montant: 150,
     devise: "CAD",
   },
   ca_entreprise: {
@@ -66,6 +66,7 @@ export function libelleFormule(id: FormuleId | null): string {
   return `${f.pays} — ${f.profil}`;
 }
 
+// Tarifs en dollars canadiens ; « Ar » ne sert plus qu'aux anciennes factures en Ariary
 export function fmtMontant(montant: number, devise: Devise): string {
   const nombre = montant.toLocaleString("fr-FR");
   return devise === "CAD" ? `${nombre} $` : `${nombre} Ar`;

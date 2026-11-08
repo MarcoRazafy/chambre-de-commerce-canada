@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
-  ArrowLeft,
   Building2,
   CheckCircle2,
   X,
@@ -11,7 +10,11 @@ import {
   MapPin,
 } from "lucide-react";
 import { EtatAcces } from "@/components/admin/EtatAcces";
-import { Jauge, LienFleche, Panneau, Vide } from "@/components/admin/ui";
+import { Jauge, LienFleche, Onglets, Panneau, Vide } from "@/components/admin/ui";
+import { EtiquettesMembre } from "@/components/maillage/EtiquettesMembre";
+import { EtatQuestionnaireAdmin, ListeRelations, ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
+import { chargerMaillage, relations, suggestions } from "@/lib/maillage-donnees";
+import { prisma } from "@/lib/db";
 import { LigneJournal } from "@/components/admin/LigneJournal";
 import { Agrandir } from "@/components/Agrandir";
 import { CouvertureReglable } from "@/components/CouvertureReglable";
@@ -70,22 +73,33 @@ import { getContacts, getInvoices, getMember } from "@/lib/queries";
 import { getHistoriqueMembre, getNotesMembre } from "@/lib/queries-admin";
 import { situation } from "@/lib/situation";
 
+const ONGLETS = ["profil", "factures", "activite", "maillage"] as const;
+type Onglet = (typeof ONGLETS)[number];
+
 export default async function AdminMembreDetail({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ onglet?: string }>;
 }) {
   const { id } = await params;
+  const demande = (await searchParams).onglet;
+  const onglet: Onglet = ONGLETS.includes(demande as Onglet) ? (demande as Onglet) : "profil";
   const m = await getMember(id);
   if (!m) notFound();
 
-  const [contacts, factures, historique, acces, commentaires] =
+  const [contacts, factures, historique, acces, commentaires, maillage, sugg, rels, etiquettes] =
     await Promise.all([
       getContacts(m.id),
       getInvoices(m.id),
       getHistoriqueMembre(m.id),
       getAccesMembre(m.id),
       getNotesMembre(m.id),
+      chargerMaillage(m.id),
+      suggestions(m.id),
+      relations(m.id),
+      prisma.member.findUnique({ where: { id: m.id }, select: { etiquettes: true, offresTags: true, besoinsTags: true, interetsTags: true } }),
     ]);
   const candidature = m.statut === "candidature";
   const dernierReglement = dernierReglementCotisation(factures);
@@ -103,15 +117,6 @@ export default async function AdminMembreDetail({
 
   return (
     <>
-      <div className="mb-4">
-        <Link
-          href="/admin/membres"
-          className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted no-underline hover:text-accent"
-        >
-          <ArrowLeft size={14} /> Tous les membres
-        </Link>
-      </div>
-
       <Card className="overflow-hidden p-0 mb-4">
         <CouvertureReglable
           memberId={m.id}
@@ -204,6 +209,17 @@ export default async function AdminMembreDetail({
         </div>
       </Card>
 
+      <Onglets
+        actif={onglet}
+        onglets={[
+          { cle: "profil", libelle: "Profil", href: fiche },
+          { cle: "factures", libelle: "Factures", href: `${fiche}?onglet=factures`, compte: factures.length },
+          { cle: "activite", libelle: "Activité", href: `${fiche}?onglet=activite` },
+          { cle: "maillage", libelle: "Maillage", href: `${fiche}?onglet=maillage` },
+        ]}
+      />
+
+      {onglet === "profil" ? (
       <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
         <div className="flex flex-col gap-4 min-w-0">
           <Panneau titre="Présentation" teinte="degrade">
@@ -213,14 +229,6 @@ export default async function AdminMembreDetail({
             <p className="m-0 mt-1.5 text-muted text-[14px] leading-relaxed max-w-[75ch] whitespace-pre-line">
               <TexteLie texte={m.desc} />
             </p>
-            <div className="mt-4">
-              <VideoPresentation
-                memberId={m.id}
-                nom={m.nom}
-                fichier={m.video}
-                gestion={fiche}
-              />
-            </div>
             <NeedsAndInterests
               member={m}
               action={<AjouterBesoinButton memberId={m.id} retour={fiche} />}
@@ -353,6 +361,99 @@ export default async function AdminMembreDetail({
           </Panneau>
         </div>
 
+        <div className="flex flex-col gap-4">
+          <Panneau titre="Vidéo de l’entreprise" teinte="bleu">
+            <div>
+              <VideoPresentation
+                memberId={m.id}
+                nom={m.nom}
+                fichier={m.video}
+                gestion={fiche}
+              />
+            </div>
+          </Panneau>
+
+          <Panneau titre="Étiquettes" sousTitre="Repères internes de l’équipe, invisibles pour le membre" teinte="degrade">
+            <EtiquettesMembre memberId={m.id} champ="etiquettes" valeurs={etiquettes?.etiquettes ?? []} />
+          </Panneau>
+
+          <NotesMembre memberId={m.id} notes={commentaires} />
+
+          <Card className="p-5 border-dashed">
+            <div className="surtitre text-faint mb-2">Zone sensible</div>
+            <p className="m-0 mb-3 text-[12.5px] text-muted">
+              La suppression retire le membre, ses contacts et ses inscriptions.
+              Ses factures restent dans les paiements, à son nom.
+            </p>
+            <DeleteMemberButton memberId={m.id} nom={m.nom} />
+          </Card>
+
+          {dansAnnuaire ? (
+            <Link
+              href={`/admin/annuaire/${m.id}`}
+              className="inline-flex items-center justify-center gap-1.5 text-[12.8px] font-semibold text-muted no-underline hover:text-accent"
+            >
+              Fiche publique dans l’annuaire <ExternalLink size={13} />
+            </Link>
+          ) : null}
+        </div>
+      </div>
+      ) : null}
+
+      {onglet === "factures" ? (
+      <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="flex flex-col gap-4 min-w-0">
+          <Panneau
+            titre="Factures"
+            teinte="bleu"
+            lien={
+              factures.length
+                ? {
+                    href: `/admin/paiements?q=${encodeURIComponent(m.nom)}`,
+                    libelle: "Toutes",
+                  }
+                : undefined
+            }
+            corpsClassName="px-6 pb-4"
+          >
+            {factures.length ? (
+              <ul className="list-none m-0 p-0">
+                {factures.map((f) => (
+                  <li key={f.id} className="border-t border-line">
+                    <Link
+                      href={`/admin/paiements/${f.id}`}
+                      className="flex items-center gap-3 py-2.5 no-underline group"
+                    >
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-[13px] font-semibold text-ink truncate group-hover:text-accent">
+                          {f.objet}
+                        </span>
+                        <span className="block text-[11.5px] text-muted font-[family-name:var(--font-mono)]">
+                          {f.numero} ·{" "}
+                          {fmtDate(f.date, {
+                            day: "numeric",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </span>
+                      <span className="text-right shrink-0">
+                        <span className="block text-[13px] font-semibold tabular-nums text-ink">
+                          {fmtMontant(f.montant, f.devise)}
+                        </span>
+                        <StatusPill status={f.statut} />
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="m-0 text-[13px] text-muted">
+                Aucune facture émise pour ce membre.
+              </p>
+            )}
+          </Panneau>
+        </div>
         <div className="flex flex-col gap-4">
           <Panneau
             titre="Adhésion & cotisation"
@@ -523,58 +624,12 @@ export default async function AdminMembreDetail({
               </div>
             )}
           </Panneau>
+        </div>
+      </div>
+      ) : null}
 
-          <Panneau
-            titre="Factures"
-            teinte="bleu"
-            lien={
-              factures.length
-                ? {
-                    href: `/admin/paiements?q=${encodeURIComponent(m.nom)}`,
-                    libelle: "Toutes",
-                  }
-                : undefined
-            }
-            corpsClassName="px-6 pb-4"
-          >
-            {factures.length ? (
-              <ul className="list-none m-0 p-0">
-                {factures.slice(0, 5).map((f) => (
-                  <li key={f.id} className="border-t border-line">
-                    <Link
-                      href={`/admin/paiements/${f.id}`}
-                      className="flex items-center gap-3 py-2.5 no-underline group"
-                    >
-                      <span className="min-w-0 flex-1">
-                        <span className="block text-[13px] font-semibold text-ink truncate group-hover:text-accent">
-                          {f.objet}
-                        </span>
-                        <span className="block text-[11.5px] text-muted font-[family-name:var(--font-mono)]">
-                          {f.numero} ·{" "}
-                          {fmtDate(f.date, {
-                            day: "numeric",
-                            month: "short",
-                            year: "numeric",
-                          })}
-                        </span>
-                      </span>
-                      <span className="text-right shrink-0">
-                        <span className="block text-[13px] font-semibold tabular-nums text-ink">
-                          {fmtMontant(f.montant, f.devise)}
-                        </span>
-                        <StatusPill status={f.statut} />
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="m-0 text-[13px] text-muted">
-                Aucune facture émise pour ce membre.
-              </p>
-            )}
-          </Panneau>
-
+      {onglet === "activite" ? (
+      <div className="flex flex-col gap-4">
           <Panneau
             titre="Historique"
             teinte="degrade"
@@ -582,34 +637,38 @@ export default async function AdminMembreDetail({
           >
             {historique.length ? (
               historique
-                .slice(0, 8)
-                .map((e) => <LigneJournal key={e.id} entree={e} compacte />)
+                                .map((e) => <LigneJournal key={e.id} entree={e} compacte />)
             ) : (
               <Vide>Aucune opération enregistrée.</Vide>
             )}
           </Panneau>
+      </div>
+      ) : null}
 
-          <NotesMembre memberId={m.id} notes={commentaires} />
-
-          <Card className="p-5 border-dashed">
-            <div className="surtitre text-faint mb-2">Zone sensible</div>
-            <p className="m-0 mb-3 text-[12.5px] text-muted">
-              La suppression retire le membre, ses contacts et ses inscriptions.
-              Ses factures restent dans les paiements, à son nom.
-            </p>
-            <DeleteMemberButton memberId={m.id} nom={m.nom} />
-          </Card>
-
-          {dansAnnuaire ? (
-            <Link
-              href={`/admin/annuaire/${m.id}`}
-              className="inline-flex items-center justify-center gap-1.5 text-[12.8px] font-semibold text-muted no-underline hover:text-accent"
-            >
-              Fiche publique dans l’annuaire <ExternalLink size={13} />
-            </Link>
-          ) : null}
+      {onglet === "maillage" ? (
+      <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px]">
+        <div className="flex flex-col gap-4 min-w-0">
+          {maillage ? <EtatQuestionnaireAdmin d={maillage} /> : null}
+          <Panneau titre="Suggestions de mises en relation" sousTitre="Rapprochements entre ce que le membre recherche et ce que d’autres proposent" teinte="rouge">
+            <ListeSuggestions suggestions={sugg} memberId={m.id} espace="admin" retour={`${fiche}?onglet=maillage`} />
+          </Panneau>
+          <Panneau titre="Mises en relation" teinte="bleu">
+            <ListeRelations relations={rels} espace="admin" />
+          </Panneau>
+        </div>
+        <div className="flex flex-col gap-4">
+          <Panneau titre="Ce qu’il propose" teinte="degrade">
+            <EtiquettesMembre memberId={m.id} champ="offresTags" valeurs={etiquettes?.offresTags ?? []} ton="bleu" />
+          </Panneau>
+          <Panneau titre="Ce qu’il recherche" teinte="rouge">
+            <EtiquettesMembre memberId={m.id} champ="besoinsTags" valeurs={etiquettes?.besoinsTags ?? []} />
+          </Panneau>
+          <Panneau titre="Ses centres d’intérêt" teinte="vert">
+            <EtiquettesMembre memberId={m.id} champ="interetsTags" valeurs={etiquettes?.interetsTags ?? []} ton="vert" />
+          </Panneau>
         </div>
       </div>
+      ) : null}
     </>
   );
 }

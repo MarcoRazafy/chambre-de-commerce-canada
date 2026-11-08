@@ -4,6 +4,8 @@ export interface NavItem {
   href: string;
   label: string;
   icon: string;
+  /** Autres adresses qui allument aussi cette entrée (ex. Rendez-vous sous « Agenda & rendez-vous ») */
+  aussi?: string[];
 }
 
 export interface NavGroup {
@@ -11,104 +13,116 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+// Menus construits comme ceux de la plateforme L'Alliée Virtuelle : Accueil, puis des rubriques
+// (surtitre en couleur), et en pied les réglages et l'aide.
 export const NAV_MEMBRE: NavGroup[] = [
+  { label: "", items: [{ href: "/membre", label: "Accueil", icon: "home" }] },
   {
-    label: "Espace membre",
-    items: [
-      { href: "/membre", label: "Vue d’ensemble", icon: "home" },
-      { href: "/membre/annuaire", label: "Annuaire", icon: "users" },
-      { href: "/membre/evenements", label: "Événements", icon: "calendar" },
-      { href: "/membre/agenda", label: "Agenda", icon: "agenda" },
-      {
-        href: "/membre/rendez-vous",
-        label: "Rendez-vous",
-        icon: "rendezvous",
-      },
-      { href: "/membre/actualites", label: "Actualités", icon: "news" },
-      { href: "/membre/messagerie", label: "Messagerie", icon: "chat" },
-      { href: "/membre/ressources", label: "Ressources", icon: "folder" },
-      {
-        href: "/membre/offres-cancham",
-        label: "Services CanCham",
-        icon: "briefcase",
-      },
-    ],
-  },
-  {
-    label: "",
+    label: "Mon entreprise",
     items: [
       { href: "/membre/profil", label: "Mon entreprise", icon: "building" },
+      { href: "/membre/cotisations", label: "Cotisations & factures", icon: "card" },
+    ],
+  },
+  {
+    label: "Réseau",
+    items: [
+      { href: "/membre/annuaire", label: "Annuaire des membres", icon: "annuaire" },
+      { href: "/membre/maillage", label: "Maillage", icon: "maillage" },
+    ],
+  },
+  {
+    label: "Activités",
+    items: [
+      { href: "/membre/evenements", label: "Événements", icon: "calendar" },
       {
-        href: "/membre/cotisations",
-        label: "Cotisations & factures",
-        icon: "card",
+        href: "/membre/agenda",
+        label: "Agenda & rendez-vous",
+        icon: "agenda",
+        aussi: ["/membre/rendez-vous"],
+      },
+      { href: "/membre/actualites", label: "Actualités", icon: "news" },
+      {
+        href: "/membre/ressources",
+        label: "Ressources & services",
+        icon: "folder",
+        aussi: ["/membre/offres-cancham"],
       },
     ],
   },
   {
-    label: "",
+    label: "Communication",
+    items: [{ href: "/membre/messagerie", label: "Messagerie", icon: "chat" }],
+  },
+  {
+    label: "Aide",
     items: [
-      {
-        href: "/membre/aide",
-        label: "Besoin d’aide ?",
-        icon: "help",
-      },
-      {
-        href: "/membre/contact",
-        label: "Contacter l’équipe",
-        icon: "support",
-      },
+      { href: "/membre/aide", label: "Besoin d’aide ?", icon: "help" },
+      { href: "/membre/contact", label: "Contacter l’équipe", icon: "support" },
     ],
   },
 ];
 
+
 export const NAV_ADMIN: NavGroup[] = [
+  { label: "", items: [{ href: "/admin", label: "Accueil", icon: "home" }] },
   {
-    label: "Pilotage",
-    items: [
-      { href: "/admin", label: "Tableau de bord", icon: "gauge" },
-      { href: "/admin/journal", label: "Journal d’activité", icon: "history" },
-      { href: "/admin/equipe", label: "Équipe & accès", icon: "shield" },
-    ],
-  },
-  {
-    label: "Adhérents",
+    label: "Membres",
     items: [
       { href: "/admin/membres", label: "Membres", icon: "users" },
+      { href: "/admin/contacts", label: "Contacts", icon: "contacts" },
       { href: "/admin/annuaire", label: "Annuaire", icon: "annuaire" },
+      { href: "/admin/maillage", label: "Maillage", icon: "maillage" },
     ],
   },
   {
-    label: "Programme",
+    label: "Activités",
     items: [
       { href: "/admin/evenements", label: "Événements", icon: "calendar" },
-      { href: "/admin/agenda", label: "Agenda", icon: "agenda" },
-      { href: "/admin/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
-      { href: "/admin/actualites", label: "Actualités", icon: "news" },
-      { href: "/admin/ressources", label: "Ressources", icon: "folder" },
       {
-        href: "/admin/offres-cancham",
-        label: "Services CanCham",
-        icon: "briefcase",
+        href: "/admin/agenda",
+        label: "Agenda & rendez-vous",
+        icon: "agenda",
+        aussi: ["/admin/rendez-vous"],
+      },
+      { href: "/admin/actualites", label: "Actualités", icon: "news" },
+      {
+        href: "/admin/ressources",
+        label: "Ressources & services",
+        icon: "folder",
+        aussi: ["/admin/offres-cancham"],
       },
     ],
   },
   {
-    label: "Échanges",
-    items: [{ href: "/admin/messagerie", label: "Messagerie", icon: "chat" }],
+    label: "Communication",
+    items: [
+      { href: "/admin/messagerie", label: "Messagerie", icon: "chat" },
+      { href: "/admin/newsletter", label: "Newsletter", icon: "newsletter" },
+      { href: "/admin/etiquettes", label: "Étiquettes", icon: "tag" },
+    ],
   },
   {
-    label: "Compta",
+    label: "Finances",
     items: [
-      { href: "/admin/paiements", label: "Paiements & factures", icon: "card" },
       {
-        href: "/admin/reglements",
-        label: "Règlements annoncés",
+        href: "/admin/paiements",
+        label: "Factures & paiements",
         icon: "card",
+        aussi: ["/admin/reglements"],
       },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { href: "/admin/equipe", label: "Équipe & accès", icon: "shield" },
+      { href: "/admin/journal", label: "Journal d’activité", icon: "history" },
     ],
   },
 ];
+
+
 
 export function navFor(space: Space): NavGroup[] {
   return space === "admin" ? NAV_ADMIN : NAV_MEMBRE;
@@ -136,6 +150,11 @@ export const TITLES: Record<string, [string, string]> = {
   "/admin/profil": ["Back-office", "Mon profil"],
   "/admin/membres": ["Back-office", "Membres"],
   "/admin/annuaire": ["Back-office", "Annuaire"],
+  "/admin/contacts": ["Back-office", "Contacts"],
+  "/admin/maillage": ["Back-office", "Maillage"],
+  "/admin/newsletter": ["Back-office", "Newsletter"],
+  "/admin/newsletter/nouvelle": ["Back-office", "Nouvelle lettre"],
+  "/admin/etiquettes": ["Back-office", "Étiquettes"],
   "/admin/evenements": ["Back-office", "Événements"],
   "/admin/agenda": ["Back-office", "Agenda"],
   "/admin/rendez-vous": ["Back-office", "Rendez-vous"],

@@ -427,3 +427,25 @@ export function courrielRendezvousAnnule(
     }),
   };
 }
+
+// Relance du questionnaire de maillage : le membre n'a pas encore répondu (ou pas tout)
+export function courrielRelanceMaillage(
+  a: string,
+  d: { nom: string; entreprise: string; faites: number; total: number; lien: string },
+): Courriel {
+  return {
+    a,
+    sujet: `Questionnaire de maillage — ${d.entreprise}`,
+    ...gabarit({
+      titre: "Votre questionnaire de maillage",
+      paragraphes: [
+        `Bonjour ${prenom(d.nom)},`,
+        d.faites
+          ? `Vous avez commencé le questionnaire de maillage de ${d.entreprise} (${d.faites} réponses sur ${d.total}). Il ne reste que quelques questions.`
+          : `La Chambre aimerait mieux connaître ${d.entreprise} pour vous présenter les bons partenaires parmi ses membres.`,
+        "Le questionnaire prend une quinzaine de minutes ; vos réponses s’enregistrent au fur et à mesure. Plus elles sont précises, plus les mises en relation sont utiles.",
+      ],
+      bouton: { libelle: "Répondre au questionnaire", url: d.lien },
+    }),
+  };
+}

@@ -502,7 +502,7 @@ export function EditeurPage({
             </select>
           </Field>
           {payant ? (
-            <Field label="Prix (Ariary)">
+            <Field label="Prix ($ CAD)">
               <input
                 type="number"
                 name="prix"

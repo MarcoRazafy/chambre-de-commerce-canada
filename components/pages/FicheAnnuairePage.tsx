@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { Partage } from "@/components/Partage";
 import {
-  ArrowLeft,
   Building2,
   Settings2,
   Globe,
@@ -40,10 +39,8 @@ export async function FicheAnnuairePage({
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-        <BtnLink href={`/${espace}/annuaire`} variant="ghost" sm>
-          <ArrowLeft size={14} /> Retour à l’annuaire
-        </BtnLink>
+      {/* Le bouton « Retour » de la barre du haut ramène à l'annuaire */}
+      <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           {espace === "admin" ? (
             <BtnLink href={`/admin/membres/${m.id}`} variant="line" sm>

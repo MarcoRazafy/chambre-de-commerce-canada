@@ -120,12 +120,12 @@ export default async function TableauDeBord() {
           libelle={`Encaissé en ${annee}`}
           valeur={
             <span className="text-[22px]">
-              {fmtMontant(finances.encaisse.MGA, "MGA")}
+              {fmtMontant(finances.encaisse.CAD, "CAD")}
             </span>
           }
           detail={
-            finances.encaisse.CAD
-              ? `+ ${fmtMontant(finances.encaisse.CAD, "CAD")}`
+            finances.encaisse.MGA
+              ? `+ ${fmtMontant(finances.encaisse.MGA, "MGA")} (anciennes factures)`
               : `${finances.factures} facture${finances.factures > 1 ? "s" : ""} émise${finances.factures > 1 ? "s" : ""}`
           }
           href={`/admin/paiements?annee=${annee}`}
@@ -236,7 +236,7 @@ export default async function TableauDeBord() {
             ))}
           </div>
           <p className="text-[12px] text-faint m-0 mt-4">
-            En vert les formules en Ariary, en bleu celles en dollars canadiens.
+            Toutes les cotisations sont en dollars canadiens.
           </p>
         </Panneau>
       </div>

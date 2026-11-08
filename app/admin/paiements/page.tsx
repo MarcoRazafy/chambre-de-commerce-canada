@@ -49,16 +49,17 @@ export default async function AdminPaiements({
     `/admin/paiements${parametresFactures(filtres, changes)}`;
   const periode = filtres.annee ? `en ${filtres.annee}` : "au total";
 
+  // Totaux en dollars canadiens ; les anciennes factures en Ariary s'ajoutent en dessous
   const montants = (m: { MGA: number; CAD: number }) =>
-    m.CAD ? (
+    m.MGA ? (
       <span className="flex flex-col leading-tight">
-        <span className="text-[22px]">{fmtMontant(m.MGA, "MGA")}</span>
+        <span className="text-[22px]">{fmtMontant(m.CAD, "CAD")}</span>
         <span className="text-[14px] text-muted">
-          + {fmtMontant(m.CAD, "CAD")}
+          + {fmtMontant(m.MGA, "MGA")} (anciennes factures)
         </span>
       </span>
     ) : (
-      <span className="text-[22px]">{fmtMontant(m.MGA, "MGA")}</span>
+      <span className="text-[22px]">{fmtMontant(m.CAD, "CAD")}</span>
     );
 
   return (
@@ -84,7 +85,7 @@ export default async function AdminPaiements({
                 .map((m) => ({
                   id: m.id,
                   nom: m.nom,
-                  devise: m.formule ? FORMULES[m.formule].devise : "MGA",
+                  devise: m.formule ? FORMULES[m.formule].devise : "CAD",
                 }))}
             />
           </>
@@ -188,8 +189,8 @@ export default async function AdminPaiements({
           className="rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent"
         >
           <option value="">Toutes devises</option>
-          <option value="MGA">Ariary</option>
           <option value="CAD">Dollars canadiens</option>
+          <option value="MGA">Ariary (anciennes factures)</option>
         </select>
         {filtres.recherche || filtres.annee || filtres.devise ? (
           <Link

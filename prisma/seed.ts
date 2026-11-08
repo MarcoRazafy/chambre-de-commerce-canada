@@ -12,8 +12,13 @@ import { THREADS } from "./fixtures/threads";
 import { CONTACTS, USERS } from "./fixtures/users";
 import { hacher } from "../lib/mots-de-passe";
 
+const SCHEMA = new URL(process.env.DATABASE_URL ?? "postgres://x/x").searchParams.get("schema") || undefined;
 const prisma = new PrismaClient({
-  adapter: new PrismaPg({ connectionString: process.env.DATABASE_URL }),
+  // Même schéma que l'application (?schema= dans DATABASE_URL), sinon « public »
+  adapter: new PrismaPg(
+    { connectionString: process.env.DATABASE_URL, options: SCHEMA ? `-c search_path="${SCHEMA}",public` : undefined },
+    { schema: SCHEMA },
+  ),
 });
 
 const MOT_DE_PASSE = hacher(process.env.MOT_DE_PASSE_DEMO ?? "12345678");

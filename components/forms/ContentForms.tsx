@@ -169,7 +169,7 @@ export function ServiceFormButton({
                 </select>
               </Field>
               <Field
-                label="Tarif (Ariary)"
+                label="Tarif ($ CAD)"
                 hint="Ignoré si le service est gratuit."
               >
                 <input

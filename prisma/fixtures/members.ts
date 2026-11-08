@@ -6,13 +6,13 @@ const DETAILS: Record<
 > = {
   "Ravintsara BIO": {
     type: "produit",
-    prix: "18 000 Ar le flacon de 10 ml · tarif export sur devis",
+    prix: "5 $ le flacon de 10 ml · tarif export sur devis",
     description:
       "Huile essentielle de ravintsara (Cinnamomum camphora, feuilles), distillée à la vapeur d’eau à Toliara à partir de feuilles récoltées en cueillette raisonnée.\n\nCertifiée biologique, livrée avec son bulletin d’analyse chromatographique. Conditionnement en flacons de 10 ml pour la revente, ou en bidons de 1 à 25 kg pour les formulateurs.",
   },
   "Coffret découverte": {
     type: "produit",
-    prix: "65 000 Ar le coffret",
+    prix: "20 $ le coffret",
     description:
       "Cinq huiles essentielles emblématiques de Madagascar — ravintsara, niaouli, girofle, géranium et saro — en flacons de 5 ml, présentées dans un coffret en raphia tressé.\n\nConçu comme cadeau d’entreprise : personnalisation du coffret possible à partir de 50 unités, délai de trois semaines.",
   },
@@ -24,19 +24,19 @@ const DETAILS: Record<
   },
   "Huile essentielle de niaouli": {
     type: "produit",
-    prix: "15 000 Ar le flacon de 10 ml",
+    prix: "5 $ le flacon de 10 ml",
     description:
       "Niaouli (Melaleuca quinquenervia) distillé à partir de feuilles fraîches, aux notes camphrées et fraîches.\n\nDisponible en flacons de 10 ml ou en vrac. Même traçabilité et même certification biologique que l’ensemble de la gamme.",
   },
   "Savons artisanaux aux huiles essentielles": {
     type: "produit",
-    prix: "8 000 Ar le savon · 42 000 Ar le lot de six",
+    prix: "2 $ le savon · 13 $ le lot de six",
     description:
       "Savons saponifiés à froid, parfumés uniquement aux huiles essentielles de la maison — ravintsara, girofle et géranium.\n\nFabriqués par petites séries à Toliara, emballés sans plastique. Idéal pour les boutiques bio et les hôtels.",
   },
   "Panier raphia XL": {
     type: "produit",
-    prix: "45 000 Ar pièce · remise dès 20 pièces",
+    prix: "14 $ pièce · remise dès 20 pièces",
     description:
       "Grand panier tressé à la main en raphia naturel, 50 cm de diamètre, par les artisanes de la coopérative sur les Hautes Terres.\n\nFinitions teintes aux pigments végétaux sur demande. Commandes groupées pour boutiques et décorateurs, délai de quatre semaines.",
   },
@@ -48,25 +48,25 @@ const DETAILS: Record<
   },
   "Textile lamba": {
     type: "produit",
-    prix: "70 000 Ar le lamba de deux mètres",
+    prix: "21 $ le lamba de deux mètres",
     description:
       "Lamba tissé à la main sur métier traditionnel, en coton et soie sauvage, aux motifs géométriques des Hautes Terres.\n\nUtilisé en étole, en nappe ou en tenture murale. Coloris et dimensions personnalisables pour les commandes de plus de dix pièces.",
   },
   "Circuit Andasibe 5j": {
     type: "service",
-    prix: "1 450 000 Ar par personne, base deux",
+    prix: "439 $ par personne, base deux",
     description:
       "Cinq jours dans le parc national d’Andasibe-Mantadia : visites diurnes et nocturnes guidées, rencontre avec l’indri, randonnée en forêt primaire.\n\nHébergement en lodge, pension complète, transport depuis Antananarivo et guide francophone certifié inclus.",
   },
   "Séjour Nosy Be": {
     type: "service",
-    prix: "À partir de 2 900 000 Ar par personne, 7 nuits",
+    prix: "À partir de 879 $ par personne, 7 nuits",
     description:
       "Une semaine à Nosy Be : excursions en bateau vers Nosy Komba et Nosy Tanikely, plongée avec masque et tuba, journée détente.\n\nVols intérieurs, transferts et hôtel en bord de mer compris. Formules pour groupes et séminaires d’entreprise sur demande.",
   },
   "Trek Isalo": {
     type: "service",
-    prix: "980 000 Ar par personne, trois jours",
+    prix: "297 $ par personne, trois jours",
     description:
       "Randonnée de trois jours dans les canyons du massif de l’Isalo, avec baignade dans les piscines naturelles et nuit en bivouac.\n\nGuide local, portage, repas et matériel de camping fournis. Niveau de difficulté modéré.",
   },
@@ -78,7 +78,7 @@ const DETAILS: Record<
   },
   "Confiture litchi": {
     type: "produit",
-    prix: "12 000 Ar le pot de 350 g",
+    prix: "4 $ le pot de 350 g",
     description:
       "Confiture de litchis de la côte Est, cuite en petites quantités avec 55 % de fruits et du sucre de canne local.\n\nConditionnée en pots de verre, conservation de dix-huit mois. Étiquetage bilingue français-anglais disponible pour l’export.",
   },
@@ -138,31 +138,31 @@ const DETAILS: Record<
   },
   "Audit financier": {
     type: "service",
-    prix: "À partir de 1 800 000 Ar",
+    prix: "À partir de 545 $",
     description:
       "Revue des comptes et du contrôle interne, préparation aux due diligences d’investisseurs ou de partenaires étrangers.\n\nRapport détaillé avec recommandations priorisées, restitution en présentiel.",
   },
   "Formation export": {
     type: "service",
-    prix: "350 000 Ar par participant, deux jours",
+    prix: "106 $ par participant, deux jours",
     description:
       "Deux jours pour préparer une démarche d’exportation vers le Canada : réglementation, normes, logistique, négociation.\n\nSessions mensuelles à Antananarivo, douze participants au plus, support et attestation remis.",
   },
   "Cours de français affaires": {
     type: "service",
-    prix: "180 000 Ar le module de vingt heures",
+    prix: "55 $ le module de vingt heures",
     description:
       "Français professionnel pour les échanges avec des partenaires québécois : courriels, réunions, présentations, négociation.\n\nGroupes de six personnes, en présentiel ou à distance, niveau évalué à l’entrée.",
   },
   "Atelier gestion de projet": {
     type: "service",
-    prix: "250 000 Ar par participant, une journée",
+    prix: "76 $ par participant, une journée",
     description:
       "Une journée pratique pour planifier et piloter un projet : découpage, calendrier, budget, suivi des risques.\n\nExercices sur les projets réels des participants, outils gratuits présentés et remis.",
   },
   "Accompagnement export": {
     type: "service",
-    prix: "Forfait diagnostic : 600 000 Ar",
+    prix: "Forfait diagnostic : 182 $",
     description:
       "Diagnostic de la capacité d’une entreprise à exporter vers le Canada, puis plan d’action chiffré sur douze mois.\n\nMise en relation avec les acteurs utiles au Québec et suivi des premières démarches.",
   },
@@ -174,13 +174,13 @@ const DETAILS: Record<
   },
   "Coaching porteur de projet": {
     type: "service",
-    prix: "120 000 Ar la séance de deux heures",
+    prix: "36 $ la séance de deux heures",
     description:
       "Séances individuelles pour structurer un projet d’entreprise : modèle d’affaires, positionnement, premières ventes.\n\nEn présentiel à Antananarivo ou en visioconférence, cycle recommandé de six séances.",
   },
   "Fauteuil raphia": {
     type: "produit",
-    prix: "320 000 Ar pièce",
+    prix: "97 $ pièce",
     description:
       "Fauteuil en rotin tressé de raphia, assise large et dossier enveloppant, fabriqué à la main dans notre atelier.\n\nCoussin en coton inclus. Fabrication à la commande, délai de cinq semaines.",
   },
@@ -192,7 +192,7 @@ const DETAILS: Record<
   },
   "Luminaire fibres": {
     type: "produit",
-    prix: "95 000 Ar pièce",
+    prix: "29 $ pièce",
     description:
       "Suspension tressée en fibres naturelles de raphia et de sisal, diffusant une lumière douce et chaleureuse.\n\nTrois diamètres disponibles. Compatible avec les normes électriques canadiennes sur demande.",
   },

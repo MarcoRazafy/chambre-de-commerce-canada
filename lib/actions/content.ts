@@ -1215,7 +1215,7 @@ export async function saveService(formData: FormData) {
     id ? "service_modifie" : "service_ajoute",
     "CanchamService",
     service.id,
-    `« ${titre} » · ${type === "payant" ? `${prix.toLocaleString("fr-FR")} Ar` : "inclus"}${lien ? ` · lien : ${lien}` : ""}.`,
+    `« ${titre} » · ${type === "payant" ? `${prix.toLocaleString("fr-FR")} $` : "inclus"}${lien ? ` · lien : ${lien}` : ""}.`,
   );
   revalideTout();
   redirectWithFlash(

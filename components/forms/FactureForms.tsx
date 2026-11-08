@@ -27,7 +27,7 @@ export function NouvelleFactureButton({
 }: {
   membres: { id: string; nom: string; devise: Devise }[];
 }) {
-  const [devise, setDevise] = useState<Devise>(membres[0]?.devise ?? "MGA");
+  const [devise, setDevise] = useState<Devise>(membres[0]?.devise ?? "CAD");
   const [payee, setPayee] = useState(false);
 
   return (
@@ -94,8 +94,8 @@ export function NouvelleFactureButton({
                   onChange={(e) => setDevise(e.target.value as Devise)}
                   className={INPUT}
                 >
+                  <option value="CAD">Dollars canadiens</option>
                   <option value="MGA">Ariary</option>
-                  <option value="CAD">Dollars CA</option>
                 </select>
               </Field>
             </div>

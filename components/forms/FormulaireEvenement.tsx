@@ -266,7 +266,7 @@ export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
             </Field>
             {payant ? (
               <Field
-                label="Prix membre (Ariary)"
+                label="Prix membre ($ CAD)"
                 hint="Une facture est générée à chaque inscription de membre."
               >
                 <input
@@ -296,7 +296,7 @@ export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
                 </Field>
                 {payantPublic ? (
                   <Field
-                    label="Prix public (Ariary)"
+                    label="Prix public ($ CAD)"
                     hint="Réglé auprès de l’équipe : le journal signale chaque inscription."
                   >
                     <input

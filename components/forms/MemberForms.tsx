@@ -269,7 +269,7 @@ export function RegisterPaymentButton({
             </Field>
             <div className="grid gap-3.5 md:grid-cols-2">
               <Field
-                label={`Montant (${devise === "CAD" ? "dollars canadiens" : "Ariary"})`}
+                label={`Montant (${devise === "CAD" ? "$ CAD" : "Ariary"})`}
                 hint={`${libelleFormule(formule)} : ${fmtMontant(montant, devise)} par an`}
               >
                 <input

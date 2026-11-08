@@ -1,72 +1,20 @@
-import Image from "next/image";
 import { LienSite } from "@/components/Application";
 import { LogoOfficiel } from "@/components/public/Marque";
 
+// photo, alt, accroche, sous : gardés pour les pages qui les passent encore ; la connexion n'affiche plus de photo
 export function CadreAuth({
-  photo,
-  alt,
-  accroche,
-  sous,
   large = false,
   children,
 }: {
-  photo: string;
-  alt: string;
-  accroche: React.ReactNode;
-  sous: string;
+  photo?: string;
+  alt?: string;
+  accroche?: React.ReactNode;
+  sous?: string;
   large?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-dvh overflow-hidden grid lg:grid-cols-[minmax(0,65fr)_minmax(440px,35fr)]">
-      <div className="relative hidden lg:block h-full overflow-hidden bg-marque-nuit">
-        <Image
-          src={photo}
-          alt={alt}
-          fill
-          priority
-          sizes="65vw"
-          className="zoom-lent object-cover saturate-[0.9] brightness-[1.05]"
-        />
-
-        <div
-          className="degrade-anime absolute inset-0 mix-blend-multiply opacity-[0.3]"
-          style={{
-            background:
-              "linear-gradient(135deg, #c41414 0%, #a3122a 26%, #1b3a6b 52%, #0a7a49 76%, #00a05b 100%)",
-          }}
-        />
-        <div className="absolute inset-0 bg-linear-to-t from-marque-nuit/80 from-0% via-marque-nuit/0 via-45% to-transparent" />
-        <div className="absolute inset-x-0 top-0 h-[28%] bg-linear-to-b from-marque-nuit/45 to-transparent" />
-
-        <div className="sur-sombre relative h-full flex flex-col justify-between p-10 xl:p-14">
-          <LienSite className="apparition inline-block">
-            <LogoOfficiel version="blanc" className="w-[250px] h-auto" />
-          </LienSite>
-
-          <div>
-            <span
-              className="apparition surtitre inline-block px-3.5 py-1.5 rounded-full border border-white/30 text-white/85"
-              style={{ animationDelay: "0.1s" }}
-            >
-              Le réseau Canada–Madagascar
-            </span>
-            <h2
-              className="apparition titre text-[clamp(28px,2.6vw,40px)] leading-[1.15] m-0 mt-5 max-w-[16ch] text-white"
-              style={{ animationDelay: "0.2s" }}
-            >
-              {accroche}
-            </h2>
-            <p
-              className="apparition text-[15px] leading-relaxed text-white/85 mt-4 mb-0 max-w-[42ch]"
-              style={{ animationDelay: "0.32s" }}
-            >
-              {sous}
-            </p>
-          </div>
-        </div>
-      </div>
-
+    <div className="h-dvh overflow-hidden">
       <div className="relative h-full overflow-hidden bg-[#fbfcfe]">
         <div aria-hidden className="grille-fine absolute inset-0" />
         <div
@@ -102,7 +50,7 @@ export function CadreAuth({
             }`}
           >
             <div className="carte-filet filet-fixe filet-degrade rounded-[var(--radius-l)] border border-line bg-surface shadow-[0_18px_44px_-24px_rgb(15_29_44/0.35)] px-6 py-8 sm:px-10 sm:py-11">
-              <LienSite className="lg:hidden block mb-6">
+              <LienSite className="block mb-6">
                 <LogoOfficiel className="w-[178px] h-auto" priority />
               </LienSite>
               {children}

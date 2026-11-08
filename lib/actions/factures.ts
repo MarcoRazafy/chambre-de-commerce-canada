@@ -27,7 +27,7 @@ export async function creerFacture(formData: FormData) {
   const memberId = texte(formData, "memberId");
   const objet = texte(formData, "objet");
   const montant = Math.round(Number(formData.get("montant")));
-  const devise: Devise = texte(formData, "devise") === "CAD" ? "CAD" : "MGA";
+  const devise: Devise = texte(formData, "devise") === "MGA" ? "MGA" : "CAD";
   const payee = texte(formData, "statut") === "payee";
   const mode = MODES.includes(texte(formData, "mode"))
     ? texte(formData, "mode")

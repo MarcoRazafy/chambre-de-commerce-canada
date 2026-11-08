@@ -59,7 +59,7 @@ export async function cotisationDue(m: {
   const ouverte = await factureCotisationOuverte(m.id);
   const tarif = m.formule ? FORMULES[m.formule] : null;
   const montant = ouverte?.montant ?? tarif?.montant ?? null;
-  const devise: Devise = ouverte?.devise ?? tarif?.devise ?? "MGA";
+  const devise: Devise = ouverte?.devise ?? tarif?.devise ?? "CAD";
 
   return {
     formule: m.formule ? libelleFormule(m.formule) : null,

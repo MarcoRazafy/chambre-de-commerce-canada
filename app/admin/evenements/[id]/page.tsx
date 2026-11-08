@@ -11,7 +11,6 @@ import {
   ChevronUp,
   Clock,
   Download,
-  ExternalLink,
   MapPin,
   Pencil,
   Search,
@@ -192,7 +191,7 @@ export default async function EvenementAdmin({
                   e.public ? <Globe size={11} /> : <LockKeyhole size={11} />
                 }
               >
-                {e.public ? "Page publique" : "Plateforme uniquement"}
+                {e.public ? "Ouvert au public" : "Membres uniquement"}
               </Pill>
             </div>
             <h1 className="text-[clamp(22px,2.6vw,30px)] m-0">{e.titre}</h1>
@@ -223,16 +222,6 @@ export default async function EvenementAdmin({
               >
                 <Pencil size={14} /> Modifier
               </Link>
-              {e.public ? (
-                <a
-                  href={`/evenements/${e.id}`}
-                  target="_blank"
-                  rel="noopener"
-                  className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2"
-                >
-                  Page publique <ExternalLink size={13} />
-                </a>
-              ) : null}
               <DeleteEventButton eventId={e.id} titre={e.titre} />
             </div>
           </div>

@@ -78,6 +78,26 @@ export const ACTIONS_JOURNAL: Record<string, ActionJournal> = {
     famille: "finance",
     ton: "bad",
   },
+  lettre_envoyee: {
+    libelle: "Newsletter envoyée",
+    famille: "contenu",
+    ton: "ok",
+  },
+  maillage_relance: {
+    libelle: "Relance du questionnaire de maillage",
+    famille: "adhesion",
+    ton: "info",
+  },
+  maillage_complete: {
+    libelle: "Questionnaire de maillage complété",
+    famille: "adhesion",
+    ton: "ok",
+  },
+  mise_en_relation: {
+    libelle: "Mise en relation",
+    famille: "adhesion",
+    ton: "ok",
+  },
   relance_envoyee: {
     libelle: "Relance de cotisation",
     famille: "finance",

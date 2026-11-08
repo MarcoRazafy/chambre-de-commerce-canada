@@ -3,6 +3,9 @@ import { BoutonCertificat } from "@/components/BoutonCertificat";
 import { CertificatAdhesion } from "@/components/Certificat";
 import {
   Building2,
+  CalendarClock,
+  CalendarDays,
+  Newspaper,
   Globe,
   CreditCard,
   User as UserIcon,
@@ -18,7 +21,14 @@ import {
 } from "@/components/domain";
 import { Agrandir } from "@/components/Agrandir";
 import { CouvertureReglable } from "@/components/CouvertureReglable";
-import { PresentationAvecVideo } from "@/components/VideoPresentation";
+import { VideoPresentation } from "@/components/VideoPresentation";
+import Link from "next/link";
+import { Onglets, Panneau, Vide } from "@/components/admin/ui";
+import { EtiquettesMembre } from "@/components/maillage/EtiquettesMembre";
+import { Avancement, ListeRelations, ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
+import { RepondreQuestionnaire } from "@/components/maillage/RepondreQuestionnaire";
+import { activiteMembre, chargerMaillage, relations, suggestions } from "@/lib/maillage-donnees";
+import { prisma } from "@/lib/db";
 import { TexteLie } from "@/components/TexteLie";
 import { CarrouselSection } from "@/components/CarrouselSection";
 import { CarteService } from "@/components/CarteService";
@@ -57,14 +67,30 @@ import { ADHESION_PENDING } from "@/lib/membership";
 
 const CADRE_COUVERTURE = "h-[190px] w-full sm:h-[260px]";
 
-export default async function ProfilPage() {
+const ONGLETS = ["profil", "factures", "activite", "maillage"] as const;
+type Onglet = (typeof ONGLETS)[number];
+const ICONES_ACTIVITE = { evenement: CalendarDays, rendezvous: CalendarClock, publication: Newspaper, relation: Sparkles };
+
+export default async function ProfilPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ onglet?: string }>;
+}) {
+  const demande = (await searchParams).onglet;
+  const onglet: Onglet = ONGLETS.includes(demande as Onglet) ? (demande as Onglet) : "profil";
   const user = await getCurrentUser("membre");
   const m = await getMember(user.memberId!);
   if (!m) notFound();
-  const [myInvoices, contacts] = await Promise.all([
+  const [myInvoices, contacts, maillage, sugg, rels, activite, tags] = await Promise.all([
     getInvoices(m.id),
     getContacts(m.id),
+    chargerMaillage(m.id),
+    suggestions(m.id),
+    relations(m.id),
+    activiteMembre(m.id),
+    prisma.member.findUnique({ where: { id: m.id }, select: { offresTags: true, besoinsTags: true, interetsTags: true } }),
   ]);
+  const page = "/membre/profil";
 
   const pending = ADHESION_PENDING.includes(m.statut);
   const renouvellement = renouvellementCotisation({
@@ -76,7 +102,7 @@ export default async function ProfilPage() {
   return (
     <>
       <ViewHead
-        title={<>Profil &amp; {<Saillant>adhésion</Saillant>}</>}
+        title={<>Mon <Saillant>entreprise</Saillant></>}
         action={
           <div className="flex gap-2 flex-wrap">
             <EditProfileButton
@@ -154,12 +180,7 @@ export default async function ProfilPage() {
           </Agrandir>
         </CouvertureReglable>
         <div className="flow-root p-[22px]">
-          <PresentationAvecVideo
-            memberId={m.id}
-            nom={m.nom}
-            fichier={m.video}
-            gestion="/membre/profil"
-          >
+          <div>
             <div className="flex gap-4">
               <LogoMark member={m} size={64} />
               <div>
@@ -202,8 +223,24 @@ export default async function ProfilPage() {
             <p className="mt-1.5 text-muted text-[14px] leading-relaxed max-w-[70ch] whitespace-pre-line">
               <TexteLie texte={m.desc} />
             </p>
-          </PresentationAvecVideo>
+          </div>
 
+        </div>
+      </Card>
+
+      <Onglets
+        actif={onglet}
+        onglets={[
+          { cle: "profil", libelle: "Profil", href: page },
+          { cle: "factures", libelle: "Factures", href: `${page}?onglet=factures`, compte: myInvoices.length },
+          { cle: "activite", libelle: "Activité", href: `${page}?onglet=activite` },
+          { cle: "maillage", libelle: "Maillage", href: `${page}?onglet=maillage` },
+        ]}
+      />
+
+      {onglet === "profil" ? (
+        <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
+          <Card className="p-[22px] min-w-0">
           <NeedsAndInterests member={m} aRemplir />
 
           {m.motivation ? (
@@ -268,9 +305,25 @@ export default async function ProfilPage() {
               </div>
             )}
           />
+          </Card>
+          <div className="flex flex-col gap-4">
+            <Panneau titre="Vidéo de l’entreprise" teinte="bleu">
+              <VideoPresentation memberId={m.id} nom={m.nom} fichier={m.video} gestion={page} />
+            </Panneau>
+            <Panneau
+              titre="Suggestions de maillage"
+              sousTitre="Les membres qui proposent ce que vous recherchez"
+              teinte="rouge"
+              lien={{ href: `${page}?onglet=maillage`, libelle: "Tout voir" }}
+            >
+              <ListeSuggestions suggestions={sugg} memberId={m.id} espace="membre" limite={3} />
+            </Panneau>
+          </div>
         </div>
-      </Card>
+      ) : null}
 
+      {onglet === "factures" ? (
+        <>
       <SectionTitle>Statut d’adhésion</SectionTitle>
       <div className="grid gap-4 mb-[22px] md:grid-cols-2 xl:grid-cols-4">
         <Stat
@@ -370,6 +423,64 @@ export default async function ProfilPage() {
         Paiement en ligne non branché : en V1 l’équipe CanCham enregistre les
         règlements depuis le back-office.
       </p>
+        </>
+      ) : null}
+
+      {onglet === "activite" ? (
+        <Panneau titre="Mon activité" sousTitre="Vos inscriptions, rendez-vous, publications et mises en relation" teinte="degrade" corpsClassName="px-6 pb-4">
+          {activite.length ? (
+            <ul className="list-none m-0 p-0">
+              {activite.map((a, i) => {
+                const Icone = ICONES_ACTIVITE[a.icone];
+                return (
+                  <li key={i} className="border-t border-line first:border-t-0">
+                    <Link href={a.lien} className="flex items-center gap-3 py-3 no-underline group">
+                      <span className="tuile tuile-sm tuile-bleue shrink-0"><Icone size={18} /></span>
+                      <span className="min-w-0 flex-1 text-[13.6px] text-ink group-hover:text-accent">{a.texte}</span>
+                      <span className="text-[12px] text-muted shrink-0">{fmtDate(a.quand.slice(0, 10))}</span>
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          ) : (
+            <Vide>Pas encore d’activité : inscrivez-vous à un événement ou prenez rendez-vous avec la Chambre.</Vide>
+          )}
+        </Panneau>
+      ) : null}
+
+      {onglet === "maillage" && maillage ? (
+        <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="flex flex-col gap-4 min-w-0">
+            <Panneau titre="Questionnaire de maillage" sousTitre="Seize questions pour que la Chambre vous présente les bons partenaires" teinte={maillage.pct === 100 ? "vert" : "rouge"}>
+              <Avancement d={maillage} />
+              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+                <p className="m-0 text-[13px] text-muted">
+                  {maillage.pct === 100 ? "Merci : vos réponses servent aux suggestions." : "Environ 15 minutes ; vos réponses s’enregistrent au fur et à mesure."}
+                </p>
+                <RepondreQuestionnaire memberId={m.id} reponses={maillage.reponses} secteurs={maillage.secteurs} commence={maillage.commence} fini={maillage.pct === 100} />
+              </div>
+            </Panneau>
+            <Panneau titre="Mes mises en relation" sousTitre="Les entreprises que la Chambre vous a présentées" teinte="bleu">
+              <ListeRelations relations={rels} espace="membre" />
+            </Panneau>
+            <Panneau titre="Suggestions" sousTitre="Membres qui proposent ce que vous recherchez : écrivez à la Chambre pour être présentés" teinte="rouge">
+              <ListeSuggestions suggestions={sugg} memberId={m.id} espace="membre" />
+            </Panneau>
+          </div>
+          <div className="flex flex-col gap-4">
+            <Panneau titre="Ce que vous proposez" teinte="degrade">
+              <EtiquettesMembre memberId={m.id} champ="offresTags" valeurs={tags?.offresTags ?? []} ton="bleu" />
+            </Panneau>
+            <Panneau titre="Ce que vous recherchez" teinte="rouge">
+              <EtiquettesMembre memberId={m.id} champ="besoinsTags" valeurs={tags?.besoinsTags ?? []} />
+            </Panneau>
+            <Panneau titre="Vos centres d’intérêt" teinte="vert">
+              <EtiquettesMembre memberId={m.id} champ="interetsTags" valeurs={tags?.interetsTags ?? []} ton="vert" />
+            </Panneau>
+          </div>
+        </div>
+      ) : null}
     </>
   );
 }
