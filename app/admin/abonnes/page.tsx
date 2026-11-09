@@ -31,10 +31,7 @@ export default async function AdminAbonnes({ searchParams }: { searchParams: Pro
       <EnTeteAdmin
         surtitre="Communication"
         titre={<>Abonnés à la <Saillant>lettre</Saillant></>}
-        actions={<><ImporterCsv /><AjouterAbonne /></>}
-      >
-        Les personnes inscrites à la lettre d’information sans être membres : depuis la page publique, un import ou un ajout de l’équipe. Elles reçoivent la newsletter, mais n’ont pas accès à l’espace membre.
-      </EnTeteAdmin>
+        actions={<><ImporterCsv /><AjouterAbonne /></>} />
 
       <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <Compteur icone={<Users size={20} />} libelle="Abonnés" valeur={compte("abonne")} href="/admin/abonnes?statut=abonne" actif={filtre === "abonne"} teinte="vert" />

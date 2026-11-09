@@ -1,98 +1,137 @@
 import Link from "next/link";
-import { Tag, Trash2, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Tag, Trash2, X } from "lucide-react";
+import { ChoixMembres, NouveauTag } from "@/components/admin/Tags";
 import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { Card, Saillant } from "@/components/ui";
 import { attribuerEtiquette, renommerEtiquette, retirerEtiquetteMembre, supprimerEtiquette } from "@/lib/actions/maillage";
 import { prisma } from "@/lib/db";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent";
+const APERCU = 4;
+
+const lienTag = (nom: string) => `/admin/etiquettes?e=${encodeURIComponent(nom)}`;
 
 // Tags : repères internes posés sur les membres (segments pour la newsletter, suivis…)
 export default async function AdminEtiquettes({ searchParams }: { searchParams: Promise<{ e?: string }> }) {
-  const choisie = (await searchParams).e ?? null;
+  const choisi = (await searchParams).e ?? null;
   const membres = await prisma.member.findMany({
     where: { statut: { notIn: ["refusee"] } },
     select: { id: true, nom: true, etiquettes: true },
     orderBy: { nom: "asc" },
   });
-  const compte = new Map<string, number>();
-  for (const m of membres) for (const e of m.etiquettes) compte.set(e, (compte.get(e) ?? 0) + 1);
-  const etiquettes = [...compte.entries()].sort((a, b) => a[0].localeCompare(b[0], "fr"));
-  const avec = choisie ? membres.filter((m) => m.etiquettes.includes(choisie)) : [];
-  const sans = choisie ? membres.filter((m) => !m.etiquettes.includes(choisie)) : membres;
 
-  return (
-    <>
-      <EnTeteAdmin surtitre="Communication" titre={<>Les <Saillant>tags</Saillant></>}>
-        Des repères internes sur les membres : ils servent à cibler une newsletter ou à suivre un groupe. Le membre ne les voit pas.
-      </EnTeteAdmin>
+  const parTag = new Map<string, { id: string; nom: string }[]>();
+  for (const m of membres) for (const e of m.etiquettes) parTag.set(e, [...(parTag.get(e) ?? []), { id: m.id, nom: m.nom }]);
+  const tags = [...parTag.entries()].sort((a, b) => a[0].localeCompare(b[0], "fr"));
+  const tousMembres = membres.map(({ id, nom }) => ({ id, nom }));
 
-      <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)]">
-        <Card className="p-0 overflow-hidden">
-          <div className="px-5 pt-4 pb-3 border-b border-line font-semibold">{etiquettes.length} tag{etiquettes.length > 1 ? "s" : ""}</div>
-          {etiquettes.length ? (
-            <ul className="list-none m-0 p-2">
-              {etiquettes.map(([nom, n]) => (
-                <li key={nom}>
-                  <Link href={`/admin/etiquettes?e=${encodeURIComponent(nom)}`}
-                    className={`flex items-center gap-2.5 rounded-[var(--radius-s)] px-3 py-2 no-underline text-[13.6px] ${nom === choisie ? "bg-accent-soft text-accent-strong font-semibold" : "text-ink hover:bg-surface-2"}`}>
-                    <Tag size={14} className="shrink-0" /><span className="flex-1 truncate">{nom}</span>
-                    <span className="text-[12px] text-muted">{n}</span>
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          ) : <Vide icone={<Tag size={24} />}>Aucun tag pour l’instant.</Vide>}
-        </Card>
+  const titre = <>Les <Saillant>tags</Saillant></>;
 
-        <div className="flex flex-col gap-4 min-w-0">
-          {choisie ? (
-            <Panneau
-              titre={<>« {choisie} »</>}
-              sousTitre={`${avec.length} membre${avec.length > 1 ? "s" : ""}`}
-              teinte="rouge"
-              action={
-                <form action={supprimerEtiquette}>
-                  <input type="hidden" name="nom" value={choisie} />
-                  <button type="submit" className="btn-contour btn-contour-sm text-bad"><Trash2 size={14} /> Supprimer le tag</button>
-                </form>
-              }
-            >
-              <form action={renommerEtiquette} className="flex gap-2 flex-wrap items-center mb-4">
-                <input type="hidden" name="ancien" value={choisie} />
-                <input name="nouveau" defaultValue={choisie} aria-label="Nouveau nom" className={`${CHAMP} max-w-[300px]`} />
-                <button type="submit" className="btn-contour btn-contour-sm text-ink">Renommer</button>
-              </form>
-              {avec.length ? (
-                <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
-                  {avec.map((m) => (
-                    <li key={m.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface pl-3 pr-1.5 py-1 text-[13px]">
-                      <Link href={`/admin/membres/${m.id}`} className="text-ink no-underline hover:text-accent font-semibold">{m.nom}</Link>
-                      <form action={retirerEtiquetteMembre}>
-                        <input type="hidden" name="nom" value={choisie} />
-                        <input type="hidden" name="memberId" value={m.id} />
-                        <button type="submit" aria-label={`Retirer ${m.nom}`} className="grid place-items-center w-6 h-6 rounded-full border-0 bg-transparent text-muted hover:text-bad cursor-pointer"><X size={13} /></button>
-                      </form>
-                    </li>
-                  ))}
-                </ul>
-              ) : <p className="m-0 text-[13px] text-muted">Aucun membre n’a ce tag.</p>}
-            </Panneau>
-          ) : null}
+  if (choisi) {
+    const avec = parTag.get(choisi) ?? [];
+    const sans = tousMembres.filter((m) => !avec.some((a) => a.id === m.id));
+    return (
+      <>
+        <Link href="/admin/etiquettes" className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted no-underline hover:text-accent mb-3">
+          <ChevronLeft size={15} /> Tous les tags
+        </Link>
+        <EnTeteAdmin
+          surtitre="Tag"
+          titre={<span className="inline-flex items-center gap-2.5"><Tag size={26} className="text-accent" /> {choisi}</span>}
+          actions={
+            <form action={supprimerEtiquette}>
+              <input type="hidden" name="nom" value={choisi} />
+              <button type="submit" className="btn-contour btn-contour-sm text-bad"><Trash2 size={14} /> Supprimer le tag</button>
+            </form>
+          }
+        />
 
-          <Panneau titre={choisie ? `Ajouter « ${choisie} » à des membres` : "Poser un tag"} sousTitre="Choisissez les membres (Ctrl ou Maj pour en sélectionner plusieurs)" teinte="bleu">
+        <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-2">
+          <Panneau titre={`${avec.length} membre${avec.length > 1 ? "s" : ""}`} teinte="rouge">
+            <form action={renommerEtiquette} className="flex gap-2 flex-wrap items-center mb-4">
+              <input type="hidden" name="ancien" value={choisi} />
+              <input name="nouveau" defaultValue={choisi} aria-label="Nom du tag" className={`${CHAMP} max-w-[300px]`} />
+              <button type="submit" className="btn-contour btn-contour-sm text-ink">Renommer</button>
+            </form>
+            {avec.length ? (
+              <ul className="list-none m-0 p-0 flex flex-wrap gap-2">
+                {avec.map((m) => (
+                  <li key={m.id} className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface pl-3 pr-1.5 py-1 text-[13px]">
+                    <Link href={`/admin/membres/${m.id}`} className="text-ink no-underline hover:text-accent font-semibold">{m.nom}</Link>
+                    <form action={retirerEtiquetteMembre}>
+                      <input type="hidden" name="nom" value={choisi} />
+                      <input type="hidden" name="memberId" value={m.id} />
+                      <button type="submit" aria-label={`Retirer ${m.nom}`} className="grid place-items-center w-6 h-6 rounded-full border-0 bg-transparent text-muted hover:text-bad cursor-pointer"><X size={13} /></button>
+                    </form>
+                  </li>
+                ))}
+              </ul>
+            ) : <p className="m-0 text-[13px] text-muted">Aucun membre n’a ce tag.</p>}
+          </Panneau>
+
+          <Panneau titre="Ajouter des membres" teinte="bleu">
             <form action={attribuerEtiquette} className="flex flex-col gap-3">
-              {choisie ? <input type="hidden" name="nom" value={choisie} /> : (
-                <input name="nom" required placeholder="Nom du tag, ex. « Exportateurs », « VIP gala »" aria-label="Nom du tag" className={CHAMP} />
-              )}
-              <select name="membres" multiple size={10} required aria-label="Membres" className={CHAMP}>
-                {sans.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
-              </select>
-              <button type="submit" className="btn-action btn-action-sm self-start"><Tag size={14} /> Ajouter le tag</button>
+              <input type="hidden" name="nom" value={choisi} />
+              <ChoixMembres membres={sans} />
+              {sans.length ? (
+                <button type="submit" className="btn-action btn-action-sm self-start"><Tag size={14} /> Ajouter au tag</button>
+              ) : null}
             </form>
           </Panneau>
         </div>
-      </div>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <EnTeteAdmin surtitre="Communication" titre={titre} actions={<NouveauTag membres={tousMembres} />} />
+
+      {tags.length ? (
+        <Card className="p-0 overflow-hidden">
+          <table className="w-full border-collapse text-[13.4px]">
+            <thead>
+              <tr className="bg-surface-2">
+                {["Tag", "Membres", ""].map((t, i) => (
+                  <th key={i} className={`text-left surtitre text-faint font-semibold px-5 py-3 border-b border-line ${i === 1 ? "hidden md:table-cell" : ""}`}>{t}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tags.map(([nom, ms]) => (
+                <tr key={nom} className="border-b border-line last:border-b-0 hover:bg-surface-2">
+                  <td className="px-5 py-3.5">
+                    <Link href={lienTag(nom)} className="flex items-center gap-3 no-underline">
+                      <span className="w-9 h-9 shrink-0 grid place-items-center rounded-full bg-accent-soft text-accent-strong"><Tag size={16} /></span>
+                      <span className="min-w-0">
+                        <span className="block font-semibold text-[14px] text-ink hover:text-accent truncate">{nom}</span>
+                        <span className="block text-[12.5px] text-muted">{ms.length} membre{ms.length > 1 ? "s" : ""}</span>
+                      </span>
+                    </Link>
+                  </td>
+                  <td className="px-5 py-3.5 hidden md:table-cell">
+                    <div className="flex flex-wrap gap-1.5">
+                      {ms.slice(0, APERCU).map((m) => (
+                        <span key={m.id} className="rounded-full border border-line bg-surface px-2.5 py-0.5 text-[12.5px] text-ink">{m.nom}</span>
+                      ))}
+                      {ms.length > APERCU ? <span className="px-1 py-0.5 text-[12.5px] text-muted">+{ms.length - APERCU}</span> : null}
+                    </div>
+                  </td>
+                  <td className="px-5 py-3.5 text-right">
+                    <Link href={lienTag(nom)} className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap">
+                      Gérer <ChevronRight size={15} />
+                    </Link>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </Card>
+      ) : (
+        <Card>
+          <Vide icone={<Tag size={26} />}>Aucun tag pour l’instant.</Vide>
+        </Card>
+      )}
     </>
   );
 }

@@ -55,9 +55,7 @@ export default async function NouvelleLettre({ searchParams }: { searchParams: P
     ].join("\n\n");
     return (
       <>
-        <EnTeteAdmin surtitre="Newsletter" titre={<>Annoncer <Saillant>l’événement</Saillant></>}>
-          Une lettre préremplie avec « {e.titre} », pour les membres et les abonnés. Relisez-la, puis envoyez-la ou programmez-la.
-        </EnTeteAdmin>
+        <EnTeteAdmin surtitre="Newsletter" titre={<>Annoncer <Saillant>l’événement</Saillant></>} />
         <EditeurLettre
           lettre={{ sujet: `À ne pas manquer : ${e.titre}`, contenu }}
           audience={AUDIENCE_DEFAUT}

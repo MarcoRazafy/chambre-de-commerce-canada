@@ -59,10 +59,7 @@ export default async function AdminNewsletter({ searchParams }: { searchParams: 
             <Link href="/admin/abonnes" className="btn-contour btn-contour-sm text-ink no-underline"><ListChecks size={15} /> Abonnés à la lettre</Link>
             <Link href="/admin/newsletter/nouvelle" className="btn-action btn-action-sm no-underline"><Plus size={15} /> Nouvelle lettre</Link>
           </>
-        }
-      >
-        La lettre d’information, envoyée aux membres et aux personnes inscrites depuis la page publique. Composez-la, puis envoyez-la tout de suite ou programmez-la.
-      </EnTeteAdmin>
+        } />
 
       <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <Compteur icone={<Users size={20} />} libelle="Audience" valeur={audience.length} detail={`${membres} contact${membres > 1 ? "s" : ""} de membres + ${abonnes} abonné${abonnes > 1 ? "s" : ""}`} teinte="bleu" />

@@ -40,9 +40,7 @@ export default async function RendezvousPage({
   return (
     <>
       <OngletsAgenda espace="membre" actif="rdv" />
-      <ViewHead title="Rendez-vous">
-        Réservez en ligne un créneau avec la bonne personne de l’équipe, selon votre besoin.
-      </ViewHead>
+      <ViewHead title="Rendez-vous" />
 
       {confirmation ? <ConfirmationRendezvous rdv={confirmation} base={BASE} /> : null}
 

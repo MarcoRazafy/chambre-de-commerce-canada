@@ -69,10 +69,7 @@ export default async function RendezvousEquipePage({
           ) : onglet === "rdv" ? (
             <BoutonCopierLien lien={pageReservation} libelle="Copier la page de réservation" />
           ) : null
-        }
-      >
-        Les membres réservent en ligne un créneau avec la bonne personne, selon sa spécialité. Chaque confirmation part avec une invitation à ajouter à leur agenda.
-      </EnTeteAdmin>
+        } />
 
       {proposes.length ? null : (
         <div className="mb-5">

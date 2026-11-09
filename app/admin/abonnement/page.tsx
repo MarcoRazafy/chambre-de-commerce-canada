@@ -19,9 +19,7 @@ export default async function AdminAbonnement() {
 
   return (
     <>
-      <EnTeteAdmin surtitre="Plateforme" titre={<>Abonnement &amp; <Saillant>utilisateurs</Saillant></>}>
-        L’abonnement de votre Chambre à la plateforme : un forfait mensuel, plus chaque compte actif de l’équipe. Les membres de la Chambre ne sont jamais facturés.
-      </EnTeteAdmin>
+      <EnTeteAdmin surtitre="Plateforme" titre={<>Abonnement &amp; <Saillant>utilisateurs</Saillant></>} />
 
       <div className="grid gap-4 mb-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Card className="p-6 flex flex-col gap-4">

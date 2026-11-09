@@ -24,10 +24,7 @@ export default async function AdminContacts({ searchParams }: { searchParams: Pr
           <a href={`/admin/contacts/export?${params}`} className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
             <Download size={14} /> Exporter
           </a>
-        }
-      >
-        Les personnes déclarées par les entreprises membres. Pour ajouter ou modifier un contact, ouvrez la fiche du membre.
-      </EnTeteAdmin>
+        } />
 
       <FiltresAuto action="/admin/contacts" className="flex gap-2.5 flex-wrap items-center mb-4">
         <select name="acces" defaultValue={f.acces} aria-label="Accès à la plateforme" className={CHAMP}>

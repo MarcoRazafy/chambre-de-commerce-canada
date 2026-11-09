@@ -15,9 +15,7 @@ export default async function MaillagePage({ searchParams }: { searchParams: Pro
 
   return (
     <>
-      <EnTeteAdmin surtitre="Membres" titre={<>Le <Saillant>maillage</Saillant></>}>
-        Des mises en relation entre membres, seulement quand l’un a exprimé un besoin que l’autre propose.
-      </EnTeteAdmin>
+      <EnTeteAdmin surtitre="Membres" titre={<>Le <Saillant>maillage</Saillant></>} />
       <Onglets
         actif={onglet}
         onglets={[

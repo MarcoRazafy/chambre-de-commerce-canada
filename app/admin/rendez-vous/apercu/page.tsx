@@ -32,9 +32,7 @@ export default async function ApercuReservation({
       <Link href="/admin/rendez-vous?onglet=types" className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted no-underline hover:text-accent mb-4">
         <ArrowLeft size={14} /> Types de rendez-vous
       </Link>
-      <EnTeteAdmin surtitre="Aperçu membre" titre="Page de réservation">
-        Ce que voient les membres. Vous pouvez parcourir les jours et les créneaux ; rien ne se réserve depuis cet aperçu.
-      </EnTeteAdmin>
+      <EnTeteAdmin surtitre="Aperçu membre" titre="Page de réservation" />
       {visible ? null : (
         <div className="mb-4">
           <Banner tone="warn" icon={<Eye size={17} />} title="Les membres ne voient pas encore ce rendez-vous">
