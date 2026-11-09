@@ -19,7 +19,7 @@ import {
   lireFiltresContacts,
   parametresContacts,
 } from "@/lib/contacts-admin";
-import { SANS_TAG, SITUATIONS } from "@/lib/filtres-contacts";
+import { SANS_TAG, SITUATIONS, TYPES_CONTACT } from "@/lib/filtres-contacts";
 
 // Contacts : une ligne par entreprise membre, avec son logo et son contact principal, à joindre, taguer ou exporter
 export default async function AdminContacts({
@@ -39,6 +39,10 @@ export default async function AdminContacts({
     getTousLesTags(),
   ]);
   const entreprises = filtre ? await getEntreprisesContacts(f) : toutes;
+  // Avec ou sans entreprise : les deux si aucun type n'est coché. Les situations et les tags ne concernent
+  // que les entreprises : un contact sans entreprise n'en a pas.
+  const voirAvec = !f.types.length || f.types.includes("avec");
+  const voirSans = (!f.types.length || f.types.includes("sans")) && !f.situations.length && !f.tags.length;
   // Les contacts sans entreprise (ajoutés par l'équipe ou inscrits à la newsletter depuis la page publique)
   const seuls = await prisma.abonne.findMany({
     where: { desabonneLe: null, ...(f.q ? { OR: [{ prenom: { contains: f.q, mode: "insensitive" } }, { email: { contains: f.q, mode: "insensitive" } }] } : {}) },
@@ -86,6 +90,13 @@ export default async function AdminContacts({
           />
         </div>
         <FiltreCoches
+          name="type"
+          libelle="Contacts"
+          tous="Tous les contacts"
+          choisis={f.types}
+          groupes={[{ options: [...TYPES_CONTACT] }]}
+        />
+        <FiltreCoches
           name="situation"
           libelle="Situations"
           tous="Toutes les situations"
@@ -120,7 +131,7 @@ export default async function AdminContacts({
         ) : null}
       </FiltresAuto>
 
-      {entreprises.length === 0 ? (
+      {!voirAvec ? null : entreprises.length === 0 ? (
         <Card>
           <Vide icone={<IconeContact size={26} />}>
             Aucune entreprise ne correspond à ces critères.
@@ -134,7 +145,7 @@ export default async function AdminContacts({
         />
       )}
 
-      {seuls.length > 0 && !f.situations.length && !f.tags.length ? (
+      {voirSans && seuls.length > 0 ? (
         <Panneau titre="Contacts sans entreprise" sousTitre={`${seuls.length} personne${seuls.length > 1 ? "s" : ""} · reçoivent la newsletter envoyée à tous`} teinte="bleu" className="mt-4" corpsClassName="px-0 pb-0">
           <ul className="list-none m-0 p-0">
             {seuls.map((a) => (
@@ -153,6 +164,11 @@ export default async function AdminContacts({
             ))}
           </ul>
         </Panneau>
+      ) : null}
+      {!voirAvec && (!voirSans || !seuls.length) ? (
+        <Card>
+          <Vide icone={<IconeContact size={26} />}>Aucun contact sans entreprise ne correspond à ces critères.</Vide>
+        </Card>
       ) : null}
     </>
   );

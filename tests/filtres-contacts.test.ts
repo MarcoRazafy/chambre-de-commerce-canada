@@ -4,7 +4,13 @@ import { conditionsContacts, lireFiltresContacts, parametresContacts, SANS_TAG }
 describe("filtres de la page Contacts (une ligne par entreprise)", () => {
   it("lit plusieurs situations et plusieurs tags, et ignore l'inconnu", () => {
     const f = lireFiltresContacts({ situation: ["a_jour", "en_retard", "principal", "pirate"], tag: ["VIP", " Décideurs ", "VIP"], q: " bio " });
-    expect(f).toEqual({ q: "bio", situations: ["a_jour", "en_retard"], tags: ["VIP", "Décideurs"] });
+    expect(f).toEqual({ q: "bio", situations: ["a_jour", "en_retard"], tags: ["VIP", "Décideurs"], types: [] });
+  });
+
+  it("lit le type de contact (avec ou sans entreprise) et le remet dans l'adresse", () => {
+    const f = lireFiltresContacts({ type: ["sans", "pirate", "sans"] });
+    expect(f.types).toEqual(["sans"]);
+    expect(parametresContacts(f).toString()).toBe("type=sans");
   });
 
   it("reprend l'ancienne adresse ?acces=", () => {
