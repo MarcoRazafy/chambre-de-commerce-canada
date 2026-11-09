@@ -2,6 +2,7 @@ import { EnTeteAdmin } from "@/components/admin/ui";
 import { EditeurLettre } from "@/components/newsletter/EditeurLettre";
 import { Saillant } from "@/components/ui";
 import { quandEvenement } from "@/lib/billets";
+import { getTagsContacts } from "@/lib/contacts-admin";
 import { urlPublique } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { AUDIENCE_DEFAUT, destinataires } from "@/lib/newsletter";
@@ -10,8 +11,8 @@ import { AUDIENCE_DEFAUT, destinataires } from "@/lib/newsletter";
 export default async function NouvelleLettre({ searchParams }: { searchParams: Promise<{ evenement?: string; annonce?: string }> }) {
   const p = await searchParams;
   const idEvenement = p.evenement || p.annonce;
-  const [ms, e] = await Promise.all([
-    prisma.member.findMany({ select: { etiquettes: true } }),
+  const [etiquettes, e] = await Promise.all([
+    getTagsContacts(),
     idEvenement
       ? prisma.event.findUnique({
           where: { id: idEvenement },
@@ -19,7 +20,6 @@ export default async function NouvelleLettre({ searchParams }: { searchParams: P
         })
       : null,
   ]);
-  const etiquettes = [...new Set(ms.flatMap((m) => m.etiquettes))].sort((a, b) => a.localeCompare(b, "fr"));
 
   if (e && p.evenement) {
     const audience = { ...AUDIENCE_DEFAUT, evenement: e.id };

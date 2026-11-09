@@ -1,19 +1,19 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { majEtiquettes, type ChampEtiquettes } from "@/lib/actions/maillage";
+import { majEtiquettes, majTagsContact, type ChampEtiquettes } from "@/lib/actions/maillage";
 
-// Liste d'étiquettes modifiable sur place : on tape puis Entrée ; × retire ; enregistré aussitôt
+// Liste d'étiquettes modifiable sur place : on tape puis Entrée ; × retire ; enregistré aussitôt.
+// Étiquettes de maillage d'un membre (memberId + champ), ou tags d'un contact (contactId).
 export function EtiquettesMembre({
   memberId,
   champ,
+  contactId,
   valeurs,
   ton = "accent",
   vide = "Aucun tag.",
   lectureSeule = false,
-}: {
-  memberId: string;
-  champ: ChampEtiquettes;
+}: ({ memberId: string; champ: ChampEtiquettes; contactId?: never } | { contactId: string; memberId?: never; champ?: never }) & {
   valeurs: string[];
   ton?: "accent" | "bleu" | "vert";
   vide?: string;
@@ -32,7 +32,7 @@ export function EtiquettesMembre({
   const enregistrer = (v: string[]) => {
     setListe(v);
     demarrer(async () => {
-      const r = await majEtiquettes(memberId, champ, v);
+      const r = contactId ? await majTagsContact(contactId, v) : await majEtiquettes(memberId!, champ!, v);
       if (r.ok) { setListe(r.valeurs); setErreur(""); } else setErreur(r.erreur);
     });
   };

@@ -162,11 +162,10 @@ model Member {
   video  String?
 
   // Maillage (repris de la plateforme L'Alliée Virtuelle) : étiquettes de ce que le membre propose,
-  // recherche et ce qui l'intéresse ; elles servent aux suggestions. « etiquettes » : repères internes de l'équipe.
+  // recherche et ce qui l'intéresse ; elles servent aux suggestions.
   offresTags   String[] @default([]) @map("offres_tags")
   besoinsTags  String[] @default([]) @map("besoins_tags")
   interetsTags String[] @default([]) @map("interets_tags")
-  etiquettes   String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -208,6 +207,9 @@ model User {
   member   Member? @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   contactPrincipal Boolean @default(false)
+
+  // Tags : repères internes de l'équipe posés sur le contact (cibler une newsletter, suivre un groupe)
+  etiquettes String[] @default([])
 
   jaimes             NewsLike[]
   participations     ParticipantFil[]
@@ -970,7 +972,7 @@ model MiseEnRelation {
 }
 
 // Newsletter : une lettre écrite par l'équipe, envoyée par courriel à une audience choisie
-// (contacts des membres selon leur statut et leurs étiquettes, abonnés à la lettre)
+// (contacts des membres selon leur statut et leurs tags, abonnés à la lettre)
 model Lettre {
   id            String        @id @default(cuid())
   sujet         String

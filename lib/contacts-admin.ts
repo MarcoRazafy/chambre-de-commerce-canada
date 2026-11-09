@@ -13,6 +13,15 @@ export function lireFiltresContacts(p: Record<string, string | undefined>): Filt
   };
 }
 
+// Tous les tags posés sur des contacts, dans l'ordre alphabétique
+export async function getTagsContacts(): Promise<string[]> {
+  const cs = await prisma.user.findMany({
+    where: { role: "membre", memberId: { not: null }, etiquettes: { isEmpty: false } },
+    select: { etiquettes: true },
+  });
+  return [...new Set(cs.flatMap((c) => c.etiquettes))].sort((a, b) => a.localeCompare(b, "fr"));
+}
+
 export async function getTousContacts(f: FiltresContacts) {
   const mots = f.q ? { contains: f.q, mode: "insensitive" as const } : undefined;
   const rows = await prisma.user.findMany({
