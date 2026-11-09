@@ -186,3 +186,43 @@ export function AjouterContactsTag({
     </Modal>
   );
 }
+
+// « Taguer ces N contacts » (page Contacts) : un tag existant ou nouveau, posé sur tous les contacts filtrés
+export function TaguerContacts({ ids, tousTags, retour }: { ids: string[]; tousTags: string[]; retour: string }) {
+  const n = ids.length;
+  return (
+    <Modal
+      title={`Taguer ${n} contact${n > 1 ? "s" : ""}`}
+      trigger={(ouvrir) => (
+        <button type="button" onClick={ouvrir} disabled={!n} className="btn-action btn-action-sm disabled:opacity-50">
+          <Tag size={14} /> Taguer ces {n} contact{n > 1 ? "s" : ""}
+        </button>
+      )}
+    >
+      {(fermer) => (
+        <form action={attribuerEtiquette}>
+          <input type="hidden" name="retour" value={retour} />
+          {ids.map((id) => (
+            <input key={id} type="hidden" name="contacts" value={id} />
+          ))}
+          <ModalBody>
+            <Field label="Tag" hint="Choisissez un tag existant ou tapez-en un nouveau.">
+              <input name="nom" required autoFocus maxLength={60} list="tags-existants" placeholder="Ex. Relance cotisation 2026" className={INPUT} />
+              <datalist id="tags-existants">
+                {tousTags.map((t) => (
+                  <option key={t} value={t} />
+                ))}
+              </datalist>
+            </Field>
+          </ModalBody>
+          <ModalFooter>
+            <CancelButton onClick={fermer} />
+            <SubmitButton pendingLabel="Ajout…">
+              <Tag size={14} /> Taguer {n} contact{n > 1 ? "s" : ""}
+            </SubmitButton>
+          </ModalFooter>
+        </form>
+      )}
+    </Modal>
+  );
+}

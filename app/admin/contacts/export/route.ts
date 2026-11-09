@@ -4,7 +4,8 @@ import { reponseCsv, versCsv } from "@/lib/csv";
 
 export async function GET(requete: Request) {
   await exigerEquipe();
-  const f = lireFiltresContacts(Object.fromEntries(new URL(requete.url).searchParams));
+  const sp = new URL(requete.url).searchParams;
+  const f = lireFiltresContacts(Object.fromEntries([...new Set(sp.keys())].map((k) => [k, sp.getAll(k)])));
   const contacts = await getTousContacts(f);
   return reponseCsv(
     "contacts",

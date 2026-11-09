@@ -1,18 +1,10 @@
 import "server-only";
 
 import { prisma } from "@/lib/db";
+import type { Prisma } from "@/lib/generated/prisma/client";
+import { conditionsContacts, type FiltresContacts } from "@/lib/filtres-contacts";
 
-// Tous les contacts des entreprises membres (comptes « membre »), pour la page Contacts de l'équipe
-export type FiltresContacts = { q: string; principal: boolean; acces: "" | "actif" | "invite"; tag: string };
-
-export function lireFiltresContacts(p: Record<string, string | undefined>): FiltresContacts {
-  return {
-    q: (p.q ?? "").trim(),
-    principal: p.principal === "1",
-    acces: p.acces === "actif" || p.acces === "invite" ? p.acces : "",
-    tag: (p.tag ?? "").trim().slice(0, 60),
-  };
-}
+export { lireFiltresContacts, parametresContacts, type FiltresContacts } from "@/lib/filtres-contacts";
 
 // Tous les tags posés sur des contacts, dans l'ordre alphabétique
 export async function getTagsContacts(): Promise<string[]> {
@@ -29,17 +21,10 @@ export async function getTousLesTags(): Promise<string[]> {
   return [...new Set([...crees.map((t) => t.nom), ...poses])].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
+// Tous les contacts des entreprises membres (comptes « membre »), pour la page Contacts de l'équipe
 export async function getTousContacts(f: FiltresContacts) {
-  const mots = f.q ? { contains: f.q, mode: "insensitive" as const } : undefined;
   const rows = await prisma.user.findMany({
-    where: {
-      role: "membre",
-      memberId: { not: null },
-      ...(f.principal ? { contactPrincipal: true } : {}),
-      ...(f.tag ? { etiquettes: { has: f.tag } } : {}),
-      ...(f.acces === "actif" ? { motDePasse: { not: null } } : f.acces === "invite" ? { motDePasse: null } : {}),
-      ...(mots ? { OR: [{ nom: mots }, { email: mots }, { fonction: mots }, { tel: mots }, { member: { nom: mots } }] } : {}),
-    },
+    where: { role: "membre", memberId: { not: null }, AND: conditionsContacts(f) as Prisma.UserWhereInput[] },
     select: {
       id: true, nom: true, fonction: true, email: true, tel: true, photo: true, contactPrincipal: true,
       motDePasse: true, etiquettes: true, member: { select: { id: true, nom: true, statut: true } },

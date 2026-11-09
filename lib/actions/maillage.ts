@@ -220,7 +220,10 @@ export async function attribuerEtiquette(formData: FormData) {
   const cs = await prisma.user.findMany({ where: { ...CONTACTS, id: { in: ids } }, select: { id: true, etiquettes: true } });
   for (const c of cs) if (!c.etiquettes.includes(nom)) await prisma.user.update({ where: { id: c.id }, data: { etiquettes: [...c.etiquettes, nom] } });
   revalidatePath("/admin", "layout");
-  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nom)}`, `« ${nom} » ajouté à ${pluriel(cs.length)}`);
+  // Depuis la page Contacts : on y revient, avec les mêmes filtres
+  const retour = texte(formData, "retour");
+  const destination = retour.startsWith("/admin/contacts") ? retour : `/admin/etiquettes?e=${encodeURIComponent(nom)}`;
+  redirectWithFlash(destination, `« ${nom} » ajouté à ${pluriel(cs.length)}`);
 }
 
 export async function retirerEtiquetteContact(formData: FormData) {

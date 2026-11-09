@@ -3,16 +3,19 @@ import { FiltresAuto } from "@/components/FiltresAuto";
 import { EnTeteAdmin, Vide } from "@/components/admin/ui";
 import { Card, Saillant } from "@/components/ui";
 import { LigneContact } from "@/components/admin/LigneContact";
-import { getTagsContacts, getTousContacts, getTousLesTags, lireFiltresContacts } from "@/lib/contacts-admin";
-
-const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent";
+import Link from "next/link";
+import { FiltreCoches } from "@/components/FiltreCoches";
+import { TaguerContacts } from "@/components/admin/Tags";
+import { getTagsContacts, getTousContacts, getTousLesTags, lireFiltresContacts, parametresContacts } from "@/lib/contacts-admin";
+import { SANS_TAG, SITUATIONS } from "@/lib/filtres-contacts";
 
 // Contacts : les personnes de toutes les entreprises membres, à joindre ou à exporter
-export default async function AdminContacts({ searchParams }: { searchParams: Promise<Record<string, string | undefined>> }) {
+export default async function AdminContacts({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const f = lireFiltresContacts(sp);
   const [contacts, tags, tousTags] = await Promise.all([getTousContacts(f), getTagsContacts(), getTousLesTags()]);
-  const params = new URLSearchParams(Object.entries({ q: f.q, principal: f.principal ? "1" : "", acces: f.acces, tag: f.tag }).filter(([, v]) => v) as [string, string][]);
+  const params = parametresContacts(f);
+  const filtre = params.size > 0;
 
   return (
     <>
@@ -20,34 +23,34 @@ export default async function AdminContacts({ searchParams }: { searchParams: Pr
         surtitre="Adhérents"
         titre={<>Les <Saillant>contacts</Saillant></>}
         actions={
-          <a href={`/admin/contacts/export?${params}`} className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
+          <a href={`/admin/contacts/export${filtre ? `?${params}` : ""}`} className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
             <Download size={14} /> Exporter
           </a>
         } />
 
-      <FiltresAuto action="/admin/contacts" className="flex gap-2.5 flex-wrap items-center mb-4">
-        <select name="acces" defaultValue={f.acces} aria-label="Accès à la plateforme" className={CHAMP}>
-          <option value="">Tous les accès</option>
-          <option value="actif">Accès actif</option>
-          <option value="invite">Invitation en attente</option>
-        </select>
-        {tags.length ? (
-          <select name="tag" defaultValue={f.tag} aria-label="Tag" className={CHAMP}>
-            <option value="">Tous les tags</option>
-            {tags.map((t) => <option key={t} value={t}>{t}</option>)}
-          </select>
-        ) : null}
-        <label className="inline-flex items-center gap-2 text-[13.5px] text-muted cursor-pointer">
-          <input type="checkbox" name="principal" value="1" defaultChecked={f.principal} className="w-4 h-4 accent-[var(--accent)]" />
-          Contacts principaux seulement
-        </label>
+      <FiltresAuto action="/admin/contacts" className="flex gap-2.5 flex-wrap items-center mb-3">
         <div className="relative flex-1 min-w-[220px] max-w-[420px]">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" aria-hidden />
           <input type="search" name="q" defaultValue={f.q} placeholder="Nom, entreprise, e-mail, fonction…" aria-label="Rechercher un contact"
             className="w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink pl-9 pr-3 py-2.5 text-[13.5px] outline-none focus:border-accent" />
         </div>
-        <span className="text-[13px] text-muted">{contacts.length} contact{contacts.length > 1 ? "s" : ""}</span>
+        <FiltreCoches name="situation" libelle="Situations" tous="Toutes les situations" choisis={f.situations}
+          groupes={SITUATIONS.map((g) => ({ famille: g.famille, options: [...g.options] }))} />
+        {tags.length ? (
+          <FiltreCoches name="tag" libelle="Tags" tous="Tous les tags" choisis={f.tags}
+            groupes={[{ options: [{ valeur: SANS_TAG, libelle: "Sans tag" }] }, { famille: "Tags", options: tags.map((t) => ({ valeur: t, libelle: t })) }]} />
+        ) : null}
+        {filtre ? (
+          <Link href="/admin/contacts" className="text-[13px] font-semibold text-muted no-underline hover:text-accent">Effacer les filtres</Link>
+        ) : null}
       </FiltresAuto>
+
+      <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
+        <span className="text-[13px] text-muted" aria-live="polite">
+          {contacts.length} contact{contacts.length > 1 ? "s" : ""}{filtre ? " correspondent aux filtres" : ""}
+        </span>
+        <TaguerContacts ids={contacts.map((c) => c.id)} tousTags={tousTags} retour={`/admin/contacts${params.size ? `?${params}` : ""}`} />
+      </div>
 
       {contacts.length === 0 ? (
         <Card><Vide icone={<IconeContact size={26} />}>Aucun contact ne correspond à ces critères.</Vide></Card>

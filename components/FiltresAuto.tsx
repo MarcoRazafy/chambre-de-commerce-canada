@@ -28,8 +28,9 @@ export function FiltresAuto({
     if (!form) return;
     const q = new URLSearchParams();
     for (const [cle, valeur] of new FormData(form)) {
-      if (typeof valeur === "string" && valeur.trim())
-        q.set(cle, valeur.trim());
+      // Plusieurs cases cochées sous le même nom : chacune garde sa valeur
+      if (typeof valeur === "string" && valeur.trim() && !q.getAll(cle).includes(valeur.trim()))
+        q.append(cle, valeur.trim());
     }
     const chaine = q.toString();
     soumis.current = chaine;
@@ -46,6 +47,10 @@ export function FiltresAuto({
     const form = formulaire.current;
     if (!form) return;
     for (const el of Array.from(form.elements)) {
+      if (el instanceof HTMLInputElement && (el.type === "checkbox" || el.type === "radio")) {
+        el.checked = params.getAll(el.name).includes(el.value);
+        continue;
+      }
       const saisie =
         (el instanceof HTMLInputElement &&
           el.type !== "hidden" &&
