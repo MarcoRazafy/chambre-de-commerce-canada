@@ -218,9 +218,16 @@ model User {
   notesMembres       NoteMembre[]
   abonnementsPush    AbonnementPush[]
 
+  // Rendez-vous : ce que la personne de l'équipe reçoit (spécialité, salle de visio fixe, ouverte ou non)
+  specialite String?
+  lienVisio  String?
+  recoitRdv  Boolean @default(false)
+
   createdAt  DateTime           @default(now())
   updatedAt  DateTime           @updatedAt
-  rendezvous Rendezvous[]
+  rendezvous Rendezvous[]       @relation("rdvPris")
+  rdvRecus   Rendezvous[]       @relation("rdvHote")
+  typesRdv   TypeRendezvous[]
   lectures   LectureRessource[]
 
   @@index([memberId])
@@ -864,6 +871,15 @@ model TypeRendezvous {
   actif  Boolean @default(true)
   ordre  Int     @default(0)
 
+  // La personne de l'équipe qui reçoit (vide : l'équipe CanCham), où (visio, bureau, téléphone),
+  // la couleur de repère, le prix affiché, et si chaque réservation attend la confirmation de l'équipe
+  hoteId     String?
+  hote       User?   @relation(fields: [hoteId], references: [id], onDelete: SetNull)
+  lieu       String  @default("bureau")
+  couleur    String?
+  prix       String?
+  aConfirmer Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -895,7 +911,7 @@ model Rendezvous {
   type   TypeRendezvous @relation(fields: [typeId], references: [id])
 
   userId   String
-  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user     User    @relation("rdvPris", fields: [userId], references: [id], onDelete: Cascade)
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
 
@@ -904,6 +920,14 @@ model Rendezvous {
   fin   String
 
   motif String?
+
+  // Qui reçoit (repris du type à la réservation), où, et l'état : « a_confirmer » ou « confirme »
+  hoteId     String?
+  hote       User?     @relation("rdvHote", fields: [hoteId], references: [id], onDelete: SetNull)
+  lieu       String    @default("bureau")
+  lienVisio  String?
+  statut     String    @default("confirme")
+  confirmeLe DateTime?
 
   annuleLe  DateTime?
   annulePar String?

@@ -203,6 +203,11 @@ export const ACTIONS_JOURNAL: Record<string, ActionJournal> = {
     famille: "programme",
     ton: "ok",
   },
+  rendezvous_confirme: {
+    libelle: "Rendez-vous confirmé",
+    famille: "programme",
+    ton: "ok",
+  },
   rendezvous_annule: {
     libelle: "Rendez-vous annulé",
     famille: "programme",

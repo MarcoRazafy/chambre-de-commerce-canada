@@ -362,28 +362,71 @@ interface RendezvousCourriel {
   entreprise: string | null;
   motif: string | null;
   lien: string;
+  /** Qui reçoit (sinon : l'équipe CanCham) */
+  avec?: string | null;
+  /** Où : « Bureau de la CanCham », « Téléphone », « Visio » */
+  lieu?: string;
+  lienVisio?: string | null;
+  aConfirmer?: boolean;
+  /** Invitation de calendrier (.ics) jointe */
+  ics?: string | null;
 }
 
+const ouLigne = (d: RendezvousCourriel) =>
+  d.lieu
+    ? [`Où : ${d.lieu}${d.lienVisio ? ` — ${d.lienVisio}` : d.lieu === "Visio" ? " (le lien vous sera communiqué avant la rencontre)" : ""}`]
+    : [];
+const piecesIcs = (d: RendezvousCourriel) =>
+  d.ics ? [{ nom: "rendez-vous.ics", contenu: Buffer.from(d.ics, "utf8"), type: "text/calendar; charset=utf-8" }] : undefined;
+
 export function courrielRendezvousPris(
+  a: string,
+  d: RendezvousCourriel,
+): Courriel {
+  const avec = d.avec ? `avec ${d.avec}` : "avec l’équipe CanCham";
+  return {
+    a,
+    sujet: d.aConfirmer ? `Demande de rendez-vous enregistrée — ${d.jour}` : `Rendez-vous confirmé — ${d.jour}`,
+    pieces: d.aConfirmer ? undefined : piecesIcs(d),
+    ...gabarit({
+      titre: d.aConfirmer ? "Votre demande de rendez-vous est enregistrée" : "Votre rendez-vous est confirmé",
+      paragraphes: [
+        `Bonjour ${prenom(d.personne)},`,
+        d.aConfirmer
+          ? `Votre demande de rendez-vous « ${d.type} » ${avec} est enregistrée. L’équipe la confirme rapidement : vous recevrez un second courriel.`
+          : `Votre rendez-vous « ${d.type} » ${avec} est confirmé.`,
+        `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
+        ...ouLigne(d),
+        ...(d.motif ? [`Ce que vous souhaitez aborder : ${d.motif}`] : []),
+        ...(d.ics && !d.aConfirmer ? ["L’invitation jointe (rendez-vous.ics) l’ajoute à votre agenda : Google Agenda, Outlook ou iPhone."] : []),
+      ],
+      bouton: { libelle: "Voir mes rendez-vous", url: d.lien },
+      apres: [
+        "Un empêchement ? Annulez depuis votre espace membre plutôt que de laisser le créneau vide : il repart aussitôt à quelqu’un d’autre.",
+      ],
+    }),
+  };
+}
+
+// L'équipe confirme une demande de rendez-vous
+export function courrielRendezvousConfirme(
   a: string,
   d: RendezvousCourriel,
 ): Courriel {
   return {
     a,
     sujet: `Rendez-vous confirmé — ${d.jour}`,
+    pieces: piecesIcs(d),
     ...gabarit({
       titre: "Votre rendez-vous est confirmé",
       paragraphes: [
         `Bonjour ${prenom(d.personne)},`,
-        `Votre rendez-vous « ${d.type} » avec l’équipe CanCham est confirmé.`,
+        `L’équipe CanCham confirme votre rendez-vous « ${d.type} »${d.avec ? ` avec ${d.avec}` : ""}.`,
         `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
-        ...(d.motif ? [`Ce que vous souhaitez aborder : ${d.motif}`] : []),
-        "L’équipe vous recontacte si elle a besoin d’une précision avant la rencontre.",
+        ...ouLigne(d),
+        ...(d.ics ? ["L’invitation jointe (rendez-vous.ics) l’ajoute à votre agenda."] : []),
       ],
       bouton: { libelle: "Voir mes rendez-vous", url: d.lien },
-      apres: [
-        "Un empêchement ? Annulez depuis votre espace membre plutôt que de laisser le créneau vide : il repart aussitôt à quelqu’un d’autre.",
-      ],
     }),
   };
 }
@@ -394,17 +437,20 @@ export function courrielRendezvousEquipe(
 ): Courriel {
   return {
     a,
-    sujet: `Nouveau rendez-vous : ${d.personne} — ${d.jour}`,
+    sujet: `${d.aConfirmer ? "Rendez-vous à confirmer" : "Nouveau rendez-vous"} : ${d.personne} — ${d.jour}`,
+    pieces: d.aConfirmer ? undefined : piecesIcs(d),
     ...gabarit({
-      titre: "Un membre a réservé un créneau",
+      titre: d.aConfirmer ? "Un membre demande un rendez-vous" : "Un membre a réservé un créneau",
       paragraphes: [
-        `${d.personne}${d.entreprise ? ` · ${d.entreprise}` : ""} vient de réserver « ${d.type} ».`,
+        `${d.personne}${d.entreprise ? ` · ${d.entreprise}` : ""} ${d.aConfirmer ? "demande" : "vient de réserver"} « ${d.type} »${d.avec ? `, avec ${d.avec}` : ""}.`,
         `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
+        ...ouLigne(d),
         ...(d.motif
           ? [`Motif indiqué : ${d.motif}`]
           : ["Aucun motif indiqué."]),
+        ...(d.aConfirmer ? ["Confirmez-le depuis la page Rendez-vous : le membre est prévenu aussitôt."] : []),
       ],
-      bouton: { libelle: "Voir les rendez-vous", url: d.lien },
+      bouton: { libelle: d.aConfirmer ? "Confirmer le rendez-vous" : "Voir les rendez-vous", url: d.lien },
     }),
   };
 }
@@ -416,6 +462,7 @@ export function courrielRendezvousAnnule(
   return {
     a,
     sujet: `Rendez-vous annulé — ${d.jour}`,
+    pieces: piecesIcs(d),
     ...gabarit({
       titre: "Un rendez-vous a été annulé",
       paragraphes: [

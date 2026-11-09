@@ -1,7 +1,9 @@
-import { Building2, Clock, Mail, Phone } from "lucide-react";
+import { Building2, CalendarPlus, Clock, Mail, Phone } from "lucide-react";
 import { AnnulerRendezvous } from "@/components/rendezvous/AnnulerRendezvous";
-import { Card } from "@/components/ui";
+import { ICONE_LIEU } from "@/components/rendezvous/CarteType";
+import { Card, Pill } from "@/components/ui";
 import { fmtJour, jourRelatif, plageHoraire } from "@/lib/agenda";
+import { libelleLieu } from "@/lib/rendezvous";
 import type { RendezvousPris } from "@/lib/rendezvous-donnees";
 
 export function CarteRendezvous({
@@ -19,7 +21,7 @@ export function CarteRendezvous({
 
   return (
     <Card className="p-3.5 flex flex-wrap items-start gap-3.5">
-      <div className="w-[58px] shrink-0 text-center rounded-[var(--radius-s)] bg-[#5b4b8a] text-white py-1.5">
+      <div className="w-[58px] shrink-0 text-center rounded-[var(--radius-s)] text-white py-1.5" style={{ background: rdv.type.couleur }}>
         <div className="text-[10.5px] font-bold uppercase tracking-[0.06em] text-white/75">
           {fmtJour(rdv.jour, { month: "short" }).replace(".", "")}
         </div>
@@ -32,8 +34,9 @@ export function CarteRendezvous({
       </div>
 
       <div className="min-w-0 flex-1 basis-[220px]">
-        <div className="text-[14.6px] font-semibold text-ink leading-snug">
-          {rdv.type.titre}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[14.6px] font-semibold text-ink leading-snug">{rdv.type.titre}</span>
+          {rdv.statut === "a_confirmer" ? <Pill tone="warn">À confirmer</Pill> : null}
         </div>
         <div className="text-[12.8px] text-muted mt-0.5 flex items-center gap-1.5 flex-wrap">
           <span className="inline-flex items-center gap-1 font-semibold tabular-nums">
@@ -43,6 +46,18 @@ export function CarteRendezvous({
           <span>{jourRelatif(rdv.jour, aujourdhui)}</span>
           <span aria-hidden>·</span>
           <span>{rdv.type.duree} min</span>
+        </div>
+        <div className="text-[12.8px] text-muted mt-1 flex items-center gap-1.5 flex-wrap">
+          {ICONE_LIEU[rdv.lieu]}
+          {rdv.lieu === "visio" && rdv.lienVisio ? (
+            <a href={rdv.lienVisio} target="_blank" rel="noopener noreferrer" className="text-accent font-semibold no-underline hover:underline break-all">
+              Rejoindre la visio
+            </a>
+          ) : (
+            <span>{libelleLieu(rdv.lieu).libelle}</span>
+          )}
+          <span aria-hidden>·</span>
+          <span>avec {rdv.hote?.nom ?? "l’équipe CanCham"}</span>
         </div>
 
         {cote === "equipe" ? (
@@ -79,7 +94,17 @@ export function CarteRendezvous({
         ) : null}
       </div>
 
-      <div className="ml-auto shrink-0">
+      <div className="ml-auto shrink-0 flex items-start gap-2">
+        {cote === "membre" && rdv.statut === "confirme" ? (
+          <a
+            href={`/membre/rendez-vous/${rdv.id}/ics`}
+            title="Ajouter à mon agenda"
+            aria-label="Ajouter à mon agenda"
+            className="w-9 h-9 grid place-items-center rounded-[var(--radius-s)] border border-line text-muted hover:text-ink hover:bg-surface-2"
+          >
+            <CalendarPlus size={15} />
+          </a>
+        ) : null}
         <AnnulerRendezvous
           id={rdv.id}
           quand={`${fmtJour(rdv.jour, {

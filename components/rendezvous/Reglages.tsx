@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Check, Copy, Link2, Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Copy, Link2, Pencil, Plus, Settings2, Trash2 } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import {
   CancelButton,
@@ -13,12 +13,21 @@ import {
   SubmitButton,
 } from "@/components/form-bits";
 import {
+  enregistrerPersonneRdv,
   enregistrerTypeRendezvous,
   supprimerTypeRendezvous,
 } from "@/lib/actions/rendezvous";
 import { enMinutes, estHeure } from "@/lib/agenda";
-import { JOURS_SEMAINE } from "@/lib/rendezvous";
+import { COULEURS_TYPE, JOURS_SEMAINE, LIEUX, PRIX_SUGGERES } from "@/lib/rendezvous";
 import type { TypeRendezvous } from "@/lib/rendezvous-donnees";
+
+// Les personnes de l'équipe qu'on peut choisir pour recevoir un type de rendez-vous
+export interface PersonneChoix {
+  id: string;
+  nom: string;
+  specialite: string | null;
+  recoit: boolean;
+}
 
 interface Ligne {
   jour: number;
@@ -83,26 +92,34 @@ export function LienRendezvous({
   );
 }
 
-export function NouveauType() {
+export function NouveauType({ personnes, carte = false }: { personnes: PersonneChoix[]; carte?: boolean }) {
   return (
     <Modal
-      title="Nouveau type de rendez-vous"
-      trigger={(ouvrir) => (
-        <button
-          type="button"
-          onClick={ouvrir}
-          className="btn-action btn-action-sm"
-        >
-          <Plus size={15} /> Nouveau type
-        </button>
-      )}
+      title="Créer un type de rendez-vous"
+      trigger={(ouvrir) =>
+        carte ? (
+          <button
+            type="button"
+            onClick={ouvrir}
+            className="min-h-[220px] w-full rounded-[var(--radius-m)] border-2 border-dashed border-line bg-transparent text-muted hover:text-accent hover:border-accent cursor-pointer flex flex-col items-center justify-center gap-1.5 p-5"
+          >
+            <Plus size={22} />
+            <b className="text-[14px]">Créer un type de rendez-vous</b>
+            <span className="text-[12.5px]">Durée, visio ou présentiel, heures d’accueil</span>
+          </button>
+        ) : (
+          <button type="button" onClick={ouvrir} className="btn-action btn-action-sm">
+            <Plus size={15} /> Créer un type de rendez-vous
+          </button>
+        )
+      }
     >
-      {(fermer) => <FormulaireType fermer={fermer} />}
+      {(fermer) => <FormulaireType fermer={fermer} personnes={personnes} />}
     </Modal>
   );
 }
 
-export function ModifierType({ type }: { type: TypeRendezvous }) {
+export function ModifierType({ type, personnes }: { type: TypeRendezvous; personnes: PersonneChoix[] }) {
   return (
     <Modal
       title="Modifier le type de rendez-vous"
@@ -118,7 +135,7 @@ export function ModifierType({ type }: { type: TypeRendezvous }) {
         </button>
       )}
     >
-      {(fermer) => <FormulaireType type={type} fermer={fermer} />}
+      {(fermer) => <FormulaireType type={type} fermer={fermer} personnes={personnes} />}
     </Modal>
   );
 }
@@ -126,10 +143,13 @@ export function ModifierType({ type }: { type: TypeRendezvous }) {
 function FormulaireType({
   type,
   fermer,
+  personnes,
 }: {
   type?: TypeRendezvous;
   fermer: () => void;
+  personnes: PersonneChoix[];
 }) {
+  const [couleur, setCouleur] = useState(type?.couleur ?? COULEURS_TYPE[0]);
   const [confirmer, setConfirmer] = useState(false);
   const [duree, setDuree] = useState(type?.duree ?? 30);
   const [plages, setPlages] = useState<Ligne[]>(
@@ -211,6 +231,54 @@ function FormulaireType({
             className={INPUT}
           />
         </Field>
+
+        <Field label="Personne qui reçoit" hint="Ses rendez-vous ne se chevauchent pas ; deux personnes peuvent recevoir à la même heure.">
+          <select name="hoteId" defaultValue={type?.hote?.id ?? ""} className={INPUT}>
+            <option value="">L’équipe CanCham</option>
+            {personnes.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nom}
+                {p.specialite ? ` — ${p.specialite}` : ""}
+                {p.recoit ? "" : " (ne reçoit pas encore)"}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Field label="Lieu">
+            <select name="lieu" defaultValue={type?.lieu ?? "bureau"} className={INPUT}>
+              {LIEUX.map((l) => (
+                <option key={l.cle} value={l.cle}>{l.libelle}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Prix affiché" hint="Facultatif.">
+            <input name="prix" maxLength={60} list="prix-rdv" defaultValue={type?.prix ?? ""} placeholder="Gratuit" className={INPUT} />
+            <datalist id="prix-rdv">
+              {PRIX_SUGGERES.map((p) => <option key={p} value={p} />)}
+            </datalist>
+          </Field>
+        </div>
+
+        <div>
+          <span className="block text-[12.3px] font-semibold text-muted mb-1.5">Couleur de repère</span>
+          <input type="hidden" name="couleur" value={couleur} />
+          <div className="flex gap-2 flex-wrap" role="radiogroup" aria-label="Couleur de repère">
+            {COULEURS_TYPE.map((c) => (
+              <button
+                key={c}
+                type="button"
+                role="radio"
+                aria-checked={couleur === c}
+                aria-label={c}
+                onClick={() => setCouleur(c)}
+                className={`w-8 h-8 rounded-full cursor-pointer border-2 ${couleur === c ? "border-ink" : "border-transparent"}`}
+                style={{ background: c, boxShadow: couleur === c ? "0 0 0 2px var(--surface) inset" : undefined }}
+              />
+            ))}
+          </div>
+        </div>
 
         <div>
           <span className="block text-[12.3px] font-semibold text-muted mb-1.5">
@@ -301,6 +369,16 @@ function FormulaireType({
           />
           Proposé aux membres
         </label>
+        <label className="flex items-center gap-2.5 text-[13.4px] cursor-pointer w-fit">
+          <input
+            type="checkbox"
+            name="aConfirmer"
+            value="1"
+            defaultChecked={type?.aConfirmer ?? false}
+            className="w-4 h-4 accent-[var(--accent)]"
+          />
+          Chaque réservation attend la confirmation de l’équipe
+        </label>
       </ModalBody>
       <ModalFooter>
         {type ? (
@@ -331,4 +409,67 @@ function resume(plages: Ligne[], duree: number): string {
   return total
     ? `${total} créneau${total > 1 ? "x" : ""} de ${duree} min par semaine`
     : "aucun créneau";
+}
+
+// Qui reçoit : spécialité, salle de visio fixe, et si la personne reçoit des rendez-vous
+export function ReglerPersonne({
+  personne,
+}: {
+  personne: { id: string; nom: string; specialite: string | null; lienVisio: string | null; recoit: boolean };
+}) {
+  return (
+    <Modal
+      title={`Rendez-vous de ${personne.nom}`}
+      trigger={(ouvrir) => (
+        <button type="button" onClick={ouvrir} className="btn-contour btn-contour-sm text-ink">
+          <Settings2 size={14} /> Régler
+        </button>
+      )}
+    >
+      {(fermer) => (
+        <form action={enregistrerPersonneRdv}>
+          <input type="hidden" name="userId" value={personne.id} />
+          <FermerApresEnvoi fermer={fermer} />
+          <ModalBody>
+            <Field label="Spécialité" hint="Ce que les membres lisent sous son nom : ce pour quoi la réserver.">
+              <input name="specialite" maxLength={80} defaultValue={personne.specialite ?? ""} placeholder="Ex. Partenariats & missions au Canada" className={INPUT} />
+            </Field>
+            <Field label="Salle de visio" hint="Un lien fixe (Google Meet, Zoom, Teams…), donné aux membres pour les rendez-vous en visio.">
+              <input name="lienVisio" type="url" inputMode="url" defaultValue={personne.lienVisio ?? ""} placeholder="https://meet.google.com/abc-defg-hij" className={INPUT} />
+            </Field>
+            <label className="flex items-center gap-2.5 text-[13.4px] cursor-pointer w-fit">
+              <input type="checkbox" name="recoit" value="1" defaultChecked={personne.recoit} className="w-4 h-4 accent-[var(--accent)]" />
+              Reçoit des rendez-vous : ses types sont proposés aux membres
+            </label>
+          </ModalBody>
+          <ModalFooter>
+            <CancelButton onClick={fermer} />
+            <SubmitButton pendingLabel="Enregistrement…">Enregistrer</SubmitButton>
+          </ModalFooter>
+        </form>
+      )}
+    </Modal>
+  );
+}
+
+// Bouton compact qui copie un lien (page de réservation, lien d'un type)
+export function BoutonCopierLien({ lien, libelle }: { lien: string; libelle: string }) {
+  const [copie, setCopie] = useState(false);
+  return (
+    <button
+      type="button"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(lien);
+          setCopie(true);
+          setTimeout(() => setCopie(false), 2000);
+        } catch {
+          window.prompt("Copiez le lien :", lien);
+        }
+      }}
+      className="btn-contour btn-contour-sm text-ink"
+    >
+      {copie ? <Check size={14} className="text-success-strong" /> : <Link2 size={14} />} {copie ? "Lien copié" : libelle}
+    </button>
+  );
 }
