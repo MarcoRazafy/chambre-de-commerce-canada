@@ -10,15 +10,15 @@ import { toISODate } from "@/lib/enums";
 import { docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
 import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
 import {
+  DATES_MAX,
   debutEvenement,
-  decomposerDelai,
-  echeance,
-  libelleDelai,
+  momentsEnvoi,
   rappelParDefaut,
   SUJET_DEFAUT,
-  UNITES_DELAI,
   VARIABLES_RAPPEL,
+  versSaisie,
 } from "@/lib/rappels";
+import { DatesRappel } from "@/components/admin/DatesRappel";
 
 const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 const PASTILLE = { brouillon: ["Brouillon", "muted"], programmee: ["Programmée", "info"], envoyee: ["Envoyée", "ok"] } as const;
@@ -38,7 +38,7 @@ export async function CourrielEvenement({
 }) {
   const [e, rappels, envois, lettres] = await Promise.all([
     prisma.event.findUnique({ where: { id: eventId }, select: { id: true, titre: true, date: true, debut: true } }),
-    prisma.rappelEvenement.findMany({ where: { eventId }, orderBy: { avant: "desc" } }),
+    prisma.rappelEvenement.findMany({ where: { eventId }, orderBy: { createdAt: "asc" } }),
     prisma.rappelEnvoye.groupBy({ by: ["type"], where: { eventId }, _count: { _all: true } }),
     prisma.lettre.findMany({
       where: { audience: { path: ["evenement"], equals: eventId } },
@@ -48,7 +48,6 @@ export async function CourrielEvenement({
   ]);
   if (!e) return null;
   const debut = debutEvenement(toISODate(e.date), e.debut);
-  const partis = new Map(envois.map((x) => [x.type, x._count._all]));
   const ouvert = rappel === "nouveau" ? null : rappels.find((r) => r.id === rappel) ?? null;
   const formulaire = !passe && (rappel === "nouveau" || ouvert);
   const base = `/admin/evenements/${e.id}?vue=courriel`;
@@ -56,7 +55,7 @@ export async function CourrielEvenement({
   return (
     <div className="flex flex-col gap-4">
       {formulaire ? (
-        <FormulaireRappel eventId={e.id} titre={e.titre} rappel={ouvert} retour={base} />
+        <FormulaireRappel eventId={e.id} titre={e.titre} rappel={ouvert} retour={base} debut={debut} />
       ) : (
         <div>
           {passe ? (
@@ -73,17 +72,17 @@ export async function CourrielEvenement({
         <Card className="p-0 overflow-hidden">
           <ul className="list-none m-0 p-0">
             {rappels.map((r) => {
-              const quand = echeance(r.avant, debut);
-              const nb = partis.get(r.id) ?? 0;
+              const moments = momentsEnvoi(r, debut);
+              const nb = envois.filter((x) => x.type === r.id || x.type.startsWith(`${r.id}@`)).reduce((n, x) => n + x._count._all, 0);
+              const restants = moments.filter((m) => m > maintenant);
               return (
                 <li key={r.id} className={`flex items-center gap-4 px-5 py-3.5 border-b border-line last:border-b-0 ${ouvert?.id === r.id ? "bg-accent-soft/40" : ""}`}>
                   <span className="w-9 h-9 shrink-0 rounded-full bg-success-soft text-success grid place-items-center"><BellRing size={16} /></span>
                   <div className="min-w-0 flex-1">
-                    <div className="text-[14px] font-semibold text-ink">{libelleDelai(r.avant)}</div>
-                    <div className="text-[12.5px] text-muted truncate">
-                      {passe ? "Événement passé" : `Envoi le ${fmtDateHeure(new Date(quand))}`}
-                      {nb ? ` · envoyé à ${nb} adresse${nb > 1 ? "s" : ""}` : quand <= maintenant && !passe ? " · heure passée" : ""}
-                      {" · "}{r.sujet ?? SUJET_DEFAUT}
+                    <div className="text-[14px] font-semibold text-ink">{r.titre || r.sujet || "Rappel"}</div>
+                    <div className="text-[12.5px] text-muted">
+                      {moments.length ? moments.map((m) => fmtDateHeure(new Date(m))).join(" · ") : "Aucune date"}
+                      {nb ? ` · ${nb} envoi${nb > 1 ? "s" : ""}` : !restants.length && !passe ? " · heures passées" : ""}
                     </div>
                   </div>
                   {nb ? <Pill tone="ok">Envoyé</Pill> : null}
@@ -93,7 +92,7 @@ export async function CourrielEvenement({
                   <form action={supprimerRappel}>
                     <input type="hidden" name="eventId" value={e.id} />
                     <input type="hidden" name="rappelId" value={r.id} />
-                    <button type="submit" aria-label={`Supprimer le rappel « ${libelleDelai(r.avant)} »`} title="Supprimer"
+                    <button type="submit" aria-label={`Supprimer le rappel « ${r.titre || "Rappel"} »`} title="Supprimer"
                       className="w-9 h-9 grid place-items-center rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-bad hover:border-bad"><Trash2 size={15} /></button>
                   </form>
                 </li>
@@ -137,31 +136,35 @@ function FormulaireRappel({
   titre,
   rappel,
   retour,
+  debut,
 }: {
   eventId: string;
   titre: string;
-  rappel: { id: string; avant: number; sujet: string | null; message: string | null } | null;
+  rappel: { id: string; titre: string | null; dates: Date[]; avant: number; sujet: string | null; message: string | null } | null;
   retour: string;
+  debut: number;
 }) {
   const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
   const doc =
     (rappel?.message && lireDoc(rappel.message, reseaux)) ||
     (rappel?.message ? docDepuisTexte(titre, rappel.message, reseaux) : rappelParDefaut(reseaux));
-  const delai = decomposerDelai(rappel?.avant ?? 1440);
+  // Par défaut : la veille, à l'heure du début de l'événement
+  const dates = rappel ? momentsEnvoi(rappel, debut).map(versSaisie) : [];
 
   return (
-    <Panneau titre={rappel ? `Rappel « ${libelleDelai(rappel.avant)} »` : "Nouveau rappel"} teinte="vert">
+    <Panneau titre={rappel ? "Modifier le rappel" : "Nouveau rappel"} teinte="vert">
       <form action={enregistrerRappel} className="flex flex-col gap-4">
         <input type="hidden" name="eventId" value={eventId} />
         {rappel ? <input type="hidden" name="rappelId" value={rappel.id} /> : null}
 
-        <div className="flex flex-wrap items-center gap-2 text-[13.6px] text-ink">
-          <span className="font-semibold">Envoyer</span>
-          <input type="number" name="nombre" min={1} max={2160} required defaultValue={delai.nombre} aria-label="Délai" className={`${CHAMP} w-[90px]`} />
-          <select name="unite" defaultValue={delai.unite} aria-label="Unité" className={CHAMP}>
-            {UNITES_DELAI.map((u) => <option key={u.cle} value={u.cle}>{u.libelle}</option>)}
-          </select>
-          <span className="font-semibold">avant le début</span>
+        <label className="block">
+          <span className="block text-[12.5px] font-semibold text-muted mb-1">Titre du rappel</span>
+          <input name="titre" maxLength={120} defaultValue={rappel?.titre ?? ""} placeholder="Ex. Rappel de la veille" className={`${CHAMP} w-full`} />
+        </label>
+
+        <div>
+          <span className="block text-[12.5px] font-semibold text-muted mb-1.5">Envoi (heure de Madagascar)</span>
+          <DatesRappel initiales={dates} suggestion={versSaisie(debut - 86_400_000)} max={DATES_MAX} limite={versSaisie(debut - 60_000)} />
         </div>
 
         <label className="block">

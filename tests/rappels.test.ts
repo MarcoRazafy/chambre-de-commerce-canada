@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { debutEvenement, decomposerDelai, echeance, estDu, libelleDelai, lireDelai, MESSAGE_DEFAUT, regrouperParAdresse, remplir } from "@/lib/rappels";
+import { cleEnvoi, debutEvenement, echeance, estDuA, lireDateEnvoi, MESSAGE_DEFAUT, momentsEnvoi, regrouperParAdresse, remplir, versSaisie } from "@/lib/rappels";
 
 const H = 3_600_000;
 // Le 20 novembre 2026 à 14 h, heure de Madagascar (11 h UTC)
@@ -11,39 +11,30 @@ describe("calendrier des rappels", () => {
     expect(debutEvenement("2026-11-20", null)).toBe(Date.parse("2026-11-20T06:00:00Z"));
   });
 
-  it("place chaque rappel avant le début, quel que soit son délai", () => {
-    expect(echeance(7 * 1440, DEBUT)).toBe(DEBUT - 7 * 24 * H);
-    expect(echeance(1440, DEBUT)).toBe(DEBUT - 24 * H);
-    expect(echeance(120, DEBUT)).toBe(DEBUT - 2 * H);
+  it("lit une date d'envoi à l'heure de Madagascar, et la réécrit pour le champ", () => {
+    expect(lireDateEnvoi("2026-11-19T14:00")).toBe(DEBUT - 24 * H);
+    expect(lireDateEnvoi("19/11/2026")).toBeNull();
+    expect(versSaisie(DEBUT)).toBe("2026-11-20T14:00");
   });
 
-  it("n'envoie pas avant l'heure, envoie à l'heure, et encore un peu en retard", () => {
-    expect(estDu(1440, DEBUT, DEBUT - 24 * H - 60_000)).toBe(false);
-    expect(estDu(1440, DEBUT, DEBUT - 24 * H)).toBe(true);
-    expect(estDu(1440, DEBUT, DEBUT - 13 * H)).toBe(true);
+  it("donne les moments d'envoi : les dates choisies, sinon l'ancien délai", () => {
+    const d1 = new Date(DEBUT - 2 * H), d2 = new Date(DEBUT - 7 * 24 * H);
+    expect(momentsEnvoi({ dates: [d1, d2], avant: 0 }, DEBUT)).toEqual([d2.getTime(), d1.getTime()]);
+    expect(momentsEnvoi({ dates: [], avant: 1440 }, DEBUT)).toEqual([echeance(1440, DEBUT)]);
+    expect(momentsEnvoi({ dates: [], avant: 0 }, DEBUT)).toEqual([]);
   });
 
-  it("saute un rappel trop en retard : un « 7 jours avant » reçu la veille n'a plus de sens", () => {
-    expect(estDu(7 * 1440, DEBUT, DEBUT - 5 * 24 * H)).toBe(false);
-    expect(estDu(1440, DEBUT, DEBUT - 11 * H)).toBe(false);
+  it("envoie à l'heure, rattrape jusqu'à 12 h de retard, jamais après le début", () => {
+    const m = DEBUT - 24 * H;
+    expect(estDuA(m, DEBUT, m - 60_000)).toBe(false);
+    expect(estDuA(m, DEBUT, m)).toBe(true);
+    expect(estDuA(m, DEBUT, m + 11 * H)).toBe(true);
+    expect(estDuA(m, DEBUT, m + 13 * H)).toBe(false);
+    expect(estDuA(DEBUT - H, DEBUT, DEBUT)).toBe(false);
   });
 
-  it("ne rappelle jamais un événement commencé", () => {
-    expect(estDu(120, DEBUT, DEBUT - H - 60_000)).toBe(true);
-    expect(estDu(120, DEBUT, DEBUT)).toBe(false);
-  });
-
-  it("lit et nomme un délai : minutes, heures, jours, dans les limites", () => {
-    expect(lireDelai("3", "jours")).toBe(3 * 1440);
-    expect(lireDelai("2", "heures")).toBe(120);
-    expect(lireDelai("5", "minutes")).toBeNull();
-    expect(lireDelai("100", "jours")).toBeNull();
-    expect(lireDelai("1", "semaines")).toBeNull();
-    expect(decomposerDelai(2880)).toEqual({ nombre: 2, unite: "jours" });
-    expect(decomposerDelai(90)).toEqual({ nombre: 90, unite: "minutes" });
-    expect(libelleDelai(1440)).toBe("La veille");
-    expect(libelleDelai(7 * 1440)).toBe("7 jours avant");
-    expect(libelleDelai(60)).toBe("1 heure avant");
+  it("note chaque date d'un rappel à part", () => {
+    expect(cleEnvoi("r1", DEBUT)).toBe("r1@2026-11-20T11:00:00.000Z");
   });
 });
 
@@ -113,8 +104,8 @@ beforeEach(() => {
   courrielsOk = true;
   const e = { id: "e1", titre: "Gala", date: new Date("2026-11-20T00:00:00Z"), debut: "14:00", fin: null, lieu: "Tana" };
   rappels = [
-    { id: "r7", avant: 7 * 1440, sujet: null, message: null, event: e },
-    { id: "r1", avant: 1440, sujet: null, message: null, event: e },
+    { id: "r7", avant: 0, dates: [new Date(DEBUT - 7 * 24 * H)], sujet: null, message: null, event: e },
+    { id: "r1", avant: 0, dates: [new Date(DEBUT - 24 * H)], sujet: null, message: null, event: e },
   ];
   inscrits = [
     { nom: "Haja Rakoto", entreprise: "Highlands", email: "haja@h.mg", code: "CC-AAAA-111111-1", statut: "confirme" },

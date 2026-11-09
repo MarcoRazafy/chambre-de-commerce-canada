@@ -6,47 +6,38 @@ import { FUSEAU_CHAMBRE } from "@/lib/rendezvous";
 
 const MINUTE = 60_000;
 
-// Délai d'un rappel, en minutes avant le début de l'événement (de 15 minutes à 90 jours)
-export const UNITES_DELAI = [
-  { cle: "minutes", libelle: "minutes", minutes: 1 },
-  { cle: "heures", libelle: "heures", minutes: 60 },
-  { cle: "jours", libelle: "jours", minutes: 1440 },
-] as const;
-export type UniteDelai = (typeof UNITES_DELAI)[number]["cle"];
-export const DELAI_MIN = 15;
-export const DELAI_MAX = 90 * 1440;
-
-export function lireDelai(nombre: unknown, unite: unknown): number | null {
-  const u = UNITES_DELAI.find((x) => x.cle === unite);
-  const n = Number(nombre);
-  if (!u || !Number.isFinite(n) || n <= 0) return null;
-  const minutes = Math.round(n * u.minutes);
-  return minutes >= DELAI_MIN && minutes <= DELAI_MAX ? minutes : null;
-}
-
-// Le délai dans l'unité la plus lisible (2 jours, 3 heures, 45 minutes)
-export function decomposerDelai(minutes: number): { nombre: number; unite: UniteDelai } {
-  if (minutes % 1440 === 0) return { nombre: minutes / 1440, unite: "jours" };
-  if (minutes % 60 === 0) return { nombre: minutes / 60, unite: "heures" };
-  return { nombre: minutes, unite: "minutes" };
-}
-
-export function libelleDelai(minutes: number): string {
-  if (minutes === 1440) return "La veille";
-  const { nombre, unite } = decomposerDelai(minutes);
-  const mot = unite === "jours" ? "jour" : unite === "heures" ? "heure" : "minute";
-  return `${nombre} ${mot}${nombre > 1 ? "s" : ""} avant`;
-}
-
+// Ancien réglage d'un rappel : un délai en minutes avant le début
 export const echeance = (avant: number, debut: number) => debut - avant * MINUTE;
 
-// Un rappel part une fois son heure venue, tant qu'il n'est pas trop en retard (la moitié du délai, entre
-// 1 heure et 1 jour) et que l'événement n'a pas commencé : un « 7 jours avant » reçu la veille n'aurait plus de sens
-export function estDu(avant: number, debut: number, maintenant: number): boolean {
-  const heure = echeance(avant, debut);
-  const tolerance = Math.min(1440, Math.max(60, avant / 2)) * MINUTE;
-  return maintenant >= heure && maintenant < heure + tolerance && maintenant < debut;
+// Dates d'envoi choisies par l'équipe, saisies à l'heure de Madagascar (« 2026-11-19T17:30 »)
+export const DATES_MAX = 10;
+const RETARD_MAX = 12 * 60 * MINUTE;
+
+export function lireDateEnvoi(saisie: string): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(saisie)) return null;
+  const t = Date.parse(`${saisie}:00${FUSEAU_CHAMBRE}`);
+  return Number.isNaN(t) ? null : t;
 }
+
+// Un instant au format d'un champ date et heure, à l'heure de Madagascar
+export function versSaisie(t: number): string {
+  return new Date(t + 3 * 60 * MINUTE).toISOString().slice(0, 16);
+}
+
+// Les moments d'envoi d'un rappel : ses dates, sinon l'ancien délai avant le début
+export function momentsEnvoi(r: { dates: Date[]; avant: number }, debut: number): number[] {
+  if (r.dates.length) return r.dates.map((d) => d.getTime()).sort((a, b) => a - b);
+  return r.avant > 0 ? [echeance(r.avant, debut)] : [];
+}
+
+// Une date d'envoi est due une fois son heure venue, avec 12 heures de rattrapage au plus,
+// et jamais une fois l'événement commencé
+export function estDuA(moment: number, debut: number, maintenant: number): boolean {
+  return maintenant >= moment && maintenant < moment + RETARD_MAX && maintenant < debut;
+}
+
+// Chaque date d'un rappel est notée à part : une adresse la reçoit une seule fois
+export const cleEnvoi = (rappelId: string, moment: number) => `${rappelId}@${new Date(moment).toISOString()}`;
 
 // Début de l'événement, heure de Madagascar ; sans heure de début, 9 h
 export function debutEvenement(jour: string, debut: string | null | undefined): number {

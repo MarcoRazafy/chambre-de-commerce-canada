@@ -1028,7 +1028,9 @@ model RappelEvenement {
   id        String   @id @default(cuid())
   eventId   String
   event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  avant     Int // minutes avant le début
+  titre     String? // nom du rappel dans la liste
+  dates     DateTime[] @default([]) // moments d'envoi choisis par l'équipe (un ou plusieurs)
+  avant     Int        @default(0) // ancien réglage : minutes avant le début (si aucune date)
   sujet     String?
   message   String? // lettre de l'éditeur (JSON) ; vide : le rappel par défaut
   createdAt DateTime @default(now())

@@ -8,9 +8,10 @@ import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { pngQr } from "@/lib/qr";
 import {
+  cleEnvoi,
   debutEvenement,
-  estDu,
-  libelleDelai,
+  estDuA,
+  momentsEnvoi,
   prenomDe,
   rappelParDefaut,
   regrouperParAdresse,
@@ -70,27 +71,32 @@ export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envo
   const jour = (decalage: number) => new Date(`${new Date(maintenant + decalage * 86_400_000).toISOString().slice(0, 10)}T00:00:00Z`);
   const rappels = await prisma.rappelEvenement.findMany({
     where: { event: { date: { gte: jour(-1), lte: jour(91) } } },
-    select: { id: true, avant: true, sujet: true, message: true, event: { select: evenementRappel } },
+    select: { id: true, avant: true, dates: true, sujet: true, message: true, event: { select: evenementRappel } },
   });
 
   let envoyes = 0, echecs = 0;
   for (const r of rappels) {
     const e = r.event;
-    if (!estDu(r.avant, debutEvenement(toISODate(e.date), e.debut), maintenant)) continue;
+    const debut = debutEvenement(toISODate(e.date), e.debut);
+    const dus = momentsEnvoi(r, debut).filter((m) => estDuA(m, debut, maintenant));
+    if (!dus.length) continue;
     const inscrits = await prisma.attendee.findMany({
       where: { eventId: e.id, statut: { in: ["confirme", "a_valider"] } },
       orderBy: [{ createdAt: "asc" }, { code: "asc" }],
       select: { nom: true, entreprise: true, email: true, code: true, statut: true },
     });
-    for (const g of regrouperParAdresse(inscrits)) {
-      const reserve = await prisma.rappelEnvoye.createMany({ data: [{ eventId: e.id, type: r.id, email: g.email }], skipDuplicates: true });
-      if (!reserve.count) continue;
-      if (await envoyerCourriel(await courrielRappel(e, r, g.email, g.participants))) {
-        envoyes++;
-      } else {
-        // Raté : la réservation est levée, le prochain passage réessaiera (tant que le rappel est dû)
-        await prisma.rappelEnvoye.deleteMany({ where: { eventId: e.id, type: r.id, email: g.email } });
-        echecs++;
+    for (const moment of dus) {
+      const type = cleEnvoi(r.id, moment);
+      for (const g of regrouperParAdresse(inscrits)) {
+        const reserve = await prisma.rappelEnvoye.createMany({ data: [{ eventId: e.id, type, email: g.email }], skipDuplicates: true });
+        if (!reserve.count) continue;
+        if (await envoyerCourriel(await courrielRappel(e, r, g.email, g.participants))) {
+          envoyes++;
+        } else {
+          // Raté : la réservation est levée, le prochain passage réessaiera (tant que la date est due)
+          await prisma.rappelEnvoye.deleteMany({ where: { eventId: e.id, type, email: g.email } });
+          echecs++;
+        }
       }
     }
   }
@@ -102,9 +108,9 @@ export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envo
 export async function envoyerTestRappel(rappelId: string, a: { email: string; nom: string }) {
   const r = await prisma.rappelEvenement.findUnique({
     where: { id: rappelId },
-    select: { avant: true, sujet: true, message: true, event: { select: evenementRappel } },
+    select: { titre: true, avant: true, sujet: true, message: true, event: { select: evenementRappel } },
   });
   if (!r) return false;
   const c = await courrielRappel(r.event, r, a.email, [{ nom: a.nom, entreprise: "Votre entreprise", email: a.email, code: null, statut: "a_valider" }]);
-  return envoyerCourriel({ ...c, sujet: `[Test · ${libelleDelai(r.avant)}] ${c.sujet}` });
+  return envoyerCourriel({ ...c, sujet: `[Test · ${r.titre || "Rappel"}] ${c.sujet}` });
 }
