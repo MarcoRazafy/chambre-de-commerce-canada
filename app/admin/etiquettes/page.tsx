@@ -1,12 +1,13 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Mail, Tag, Trash2, X } from "lucide-react";
+import { ChevronLeft, Mail, Trash2, X } from "lucide-react";
 import { FiltresAuto } from "@/components/FiltresAuto";
+import { ListeTags, type ResumeTag } from "@/components/admin/ListeTags";
 import {
   AjouterContactsTag,
   NouveauTag,
   type ContactTag,
 } from "@/components/admin/Tags";
-import { EnTeteAdmin, Vide } from "@/components/admin/ui";
+import { EnTeteAdmin } from "@/components/admin/ui";
 import { Avatar, Card, Saillant } from "@/components/ui";
 import {
   renommerEtiquette,
@@ -15,20 +16,23 @@ import {
 } from "@/lib/actions/maillage";
 import { prisma } from "@/lib/db";
 import { initials as initiales } from "@/lib/format";
+import { plat } from "@/lib/texte";
 
 const CHAMP =
   "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent";
 const TH =
   "text-left surtitre text-faint font-semibold px-5 py-3 border-b border-line";
 
-const lienTag = (nom: string) =>
-  `/admin/etiquettes?e=${encodeURIComponent(nom)}`;
-
 // Tags : repères internes posés sur les contacts (cibler une newsletter, suivre un groupe)
 export default async function AdminEtiquettes({
   searchParams,
 }: {
-  searchParams: Promise<{ e?: string; entreprise?: string }>;
+  searchParams: Promise<{
+    e?: string;
+    entreprise?: string;
+    q?: string;
+    tri?: string;
+  }>;
 }) {
   const sp = await searchParams;
   const choisi = sp.e ?? null;
@@ -235,6 +239,28 @@ export default async function AdminEtiquettes({
     );
   }
 
+  const recherche = (sp.q ?? "").trim();
+  const tri = sp.tri === "nom" ? "nom" : "nombre";
+  const resumes: ResumeTag[] = tags
+    .map(([nom]) => {
+      const qui = contacts.filter((c) => c.etiquettes.includes(nom));
+      return {
+        nom,
+        contacts: qui.map(({ id, nom, photo }) => ({ id, nom, photo })),
+        entreprises: [
+          ...new Set(qui.map((c) => c.entreprise).filter(Boolean)),
+        ].sort((a, b) => a.localeCompare(b, "fr")),
+      };
+    })
+    .filter((t) => !recherche || plat(t.nom).includes(plat(recherche)))
+    .sort((a, b) =>
+      tri === "nom"
+        ? a.nom.localeCompare(b.nom, "fr")
+        : b.contacts.length - a.contacts.length ||
+          a.nom.localeCompare(b.nom, "fr"),
+    );
+  const tagues = contacts.filter((c) => c.etiquettes.length);
+
   return (
     <>
       <EnTeteAdmin
@@ -246,52 +272,15 @@ export default async function AdminEtiquettes({
         }
         actions={<NouveauTag contacts={pourChoix(contacts)} />}
       />
-
-      {tags.length ? (
-        <Card className="p-0 overflow-hidden">
-          <table className="w-full border-collapse text-[13.4px]">
-            <thead>
-              <tr className="bg-surface-2">
-                {["Tag", "Contacts", ""].map((t, i) => (
-                  <th key={i} className={TH}>
-                    {t}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {tags.map(([nom, n]) => (
-                <tr
-                  key={nom}
-                  className="border-b border-line last:border-b-0 hover:bg-surface-2"
-                >
-                  <td className="px-5 py-3.5">
-                    <Link
-                      href={lienTag(nom)}
-                      className="inline-flex items-center gap-2 font-semibold text-[14px] text-ink no-underline hover:text-accent"
-                    >
-                      <Tag size={15} className="shrink-0 text-muted" /> {nom}
-                    </Link>
-                  </td>
-                  <td className="px-5 py-3.5 tabular-nums text-ink">{n}</td>
-                  <td className="px-5 py-3.5 text-right">
-                    <Link
-                      href={lienTag(nom)}
-                      className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
-                    >
-                      Voir les contacts <ChevronRight size={15} />
-                    </Link>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
-      ) : (
-        <Card>
-          <Vide icone={<Tag size={26} />}>Aucun tag pour l’instant.</Vide>
-        </Card>
-      )}
+      <ListeTags
+        tags={resumes}
+        totalTags={tags.length}
+        contactsTagues={tagues.length}
+        totalContacts={contacts.length}
+        entreprisesTaguees={new Set(tagues.map((c) => c.member?.id)).size}
+        q={recherche}
+        tri={tri}
+      />
     </>
   );
 }

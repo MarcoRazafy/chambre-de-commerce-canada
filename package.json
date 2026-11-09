@@ -24,7 +24,8 @@
     "agenda:demo": "tsx --env-file=.env scripts/agenda-demo.ts",
     "maillage:demo": "tsx --env-file=.env scripts/maillage-demo.ts",
     "newsletter:demo": "tsx --env-file=.env scripts/newsletter-demo.ts",
-    "motsdepasse:demo": "tsx --env-file=.env scripts/mot-de-passe-demo.ts"
+    "motsdepasse:demo": "tsx --env-file=.env scripts/mot-de-passe-demo.ts",
+    "tags:demo": "tsx --env-file=.env scripts/tags-demo.ts"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
