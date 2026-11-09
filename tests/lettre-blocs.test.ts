@@ -12,7 +12,7 @@ const O = {
 describe("lettre de la newsletter", () => {
   it("nettoie le texte mis en forme : garde gras, italique, liens sûrs, listes ; retire le reste", () => {
     const h = nettoyerHtml('<b>gras</b> <i onclick="x">ital</i> <script>alert(1)</script><a href="javascript:x">a</a> <a href="https://a.mg" target="_blank">b</a><img src=x onerror=y><ul><li>un</li></ul><span style="color:red">t</span>');
-    expect(h).toBe('<strong>gras</strong> <em>ital</em> <a>a</a> <a href="https://a.mg">b</a><ul><li>un</li></ul>t');
+    expect(h).toBe('<strong>gras</strong> <em>ital</em> <a>a</a> <a href="https://a.mg">b</a><ul><li>un</li></ul><span>t</span>');
   });
 
   it("refuse les adresses dangereuses", () => {
@@ -59,5 +59,26 @@ describe("lettre de la newsletter", () => {
     expect(html).not.toContain("/marque/reseaux/facebook.png");
     expect(html).toContain("https://site.mg/desabonnement?x");
     expect(versTexte(doc, O)).toContain("Chez Bio Sud");
+  });
+
+  it("garde l'alignement des paragraphes et les couleurs de la palette, retire les autres", () => {
+    const h = nettoyerHtml('<div style="text-align: center;">Milieu</div><p align="right">Fin</p><div style="text-align:start">x</div><span style="color: rgb(0, 113, 64);">vert</span><font color="#ff0000">rouge vif</font>');
+    expect(h).toBe('<p style="text-align:center">Milieu</p><p style="text-align:right">Fin</p><p>x</p><span style="color:#007140">vert</span><span>rouge vif</span>');
+    const html = versHtml({ ...docVide(), sections: [{ id: "t", type: "texte", fond: "", align: "left", html: '<p style="text-align:justify">J</p>', taille: 15, couleur: "ardoise" }] }, O);
+    expect(html).toContain('<p style="margin:0 0 12px;text-align:justify">J</p>');
+  });
+
+  it("logo remplaçable (IMPACT 261 par défaut) et pied de page entièrement modifiable", () => {
+    const d = docVide();
+    expect(versHtml(d, O)).toContain("/marque/logo-couleur.png");
+    const logo = { ...d.sections[0], image: "/televersements/mon-logo.png", largeur: 120 } as (typeof d.sections)[number];
+    const pied = { ...d.sections.at(-1)!, adresse: "Montréal", email: "", telephone: "+1 514", copyright: "© Moi", confidentialite: "" } as (typeof d.sections)[number];
+    const html = versHtml({ ...d, sections: [logo, pied] }, O);
+    expect(html).toContain('src="https://site.mg/televersements/mon-logo.png" width="120"');
+    expect(html).toContain("Montréal");
+    expect(html).toContain("+1 514");
+    expect(html).toContain("© Moi");
+    expect(html).not.toContain("Politique de confidentialité");
+    expect(html).not.toContain("mailto:");
   });
 });

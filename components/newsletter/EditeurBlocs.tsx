@@ -3,21 +3,35 @@
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   AlignCenter,
+  AlignJustify,
   AlignLeft,
   AlignRight,
   ArrowDown,
   ArrowUp,
+  Baseline,
   Bold,
+  BadgeCheck,
   Copy,
+  Eraser,
+  Heading,
   Image as IconeImage,
   ImagePlus,
   Italic,
   Link2,
   List,
+  ListOrdered,
   Loader2,
+  Megaphone,
+  Minus,
+  MousePointerClick,
+  MoveVertical,
   Paintbrush,
+  PanelBottom,
+  PanelTop,
   Plus,
+  Share2,
   Trash2,
+  Type,
   Underline,
   X,
 } from "lucide-react";
@@ -112,31 +126,55 @@ function Editable({ valeur, onChange, style, placeholder, multiligne = false }: 
   );
 }
 
-// Texte mis en forme modifiable sur place, avec sa barre (gras, italique, souligné, lien, liste, variables)
+// Texte mis en forme modifiable sur place, avec sa barre : gras, italique, souligné, couleur (palette),
+// alignement du paragraphe (début, milieu, fin, justifié), listes, lien, variables, effacer la mise en forme
 function TexteRiche({ html, onChange, style }: { html: string; onChange: (h: string) => void; style: CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   const [initial] = useState(html);
   const [actif, setActif] = useState(false);
+  const [teintes, setTeintes] = useState(false);
   const commande = (c: string, v?: string) => {
     ref.current?.focus();
+    document.execCommand("styleWithCSS", false, "true");
     document.execCommand(c, false, v);
     onChange(nettoyerHtml(ref.current?.innerHTML ?? ""));
   };
-  const B = "w-8 h-8 grid place-items-center rounded-md border-0 bg-transparent text-white/85 cursor-pointer hover:bg-white/15";
+  const B = "w-8 h-8 grid place-items-center rounded-md border-0 bg-transparent text-[#16202b] cursor-pointer hover:bg-[#f1f4f7]";
+  const sep = <span className="w-px h-5 bg-[#e5eaf0] mx-0.5" />;
   return (
-    <div className="relative" onFocus={() => setActif(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setActif(false); }}>
+    <div className="relative" onFocus={() => setActif(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setActif(false); setTeintes(false); } }}>
       {actif ? (
-        <div className="absolute -top-11 left-0 z-30 flex items-center gap-0.5 rounded-lg bg-[#0f1d2c] px-1 py-1 shadow-lg" onMouseDown={(e) => e.preventDefault()}>
-          <button type="button" className={B} onClick={() => commande("bold")} aria-label="Gras" title="Gras"><Bold size={14} /></button>
-          <button type="button" className={B} onClick={() => commande("italic")} aria-label="Italique" title="Italique"><Italic size={14} /></button>
-          <button type="button" className={B} onClick={() => commande("underline")} aria-label="Souligné" title="Souligné"><Underline size={14} /></button>
-          <button type="button" className={B} onClick={() => { const u = demanderLien("", "Adresse du lien (https://…)"); if (u) commande("createLink", u); }} aria-label="Lien" title="Lien"><Link2 size={14} /></button>
-          <button type="button" className={B} onClick={() => commande("insertUnorderedList")} aria-label="Liste" title="Liste à puces"><List size={14} /></button>
-          <span className="w-px h-5 bg-white/20 mx-1" />
-          {VARIABLES.map((v) => (
-            <button key={v.cle} type="button" onClick={() => commande("insertText", `{${v.cle}}`)} title={`Insérer : ${v.libelle} du destinataire`}
-              className="h-8 px-2 rounded-md border-0 bg-transparent text-[11.5px] font-semibold text-white/85 cursor-pointer hover:bg-white/15">{v.libelle}</button>
-          ))}
+        <div className="absolute -top-12 left-0 z-30 flex items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white px-1.5 py-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)]" onMouseDown={(e) => e.preventDefault()} style={{ fontFamily: "var(--font-texte)" }}>
+          <button type="button" className={B} onClick={() => commande("bold")} aria-label="Gras" title="Gras"><Bold size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("italic")} aria-label="Italique" title="Italique"><Italic size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("underline")} aria-label="Souligné" title="Souligné"><Underline size={15} /></button>
+          <span className="relative">
+            <button type="button" className={B} onClick={() => setTeintes((t) => !t)} aria-label="Couleur du texte" title="Couleur du texte (palette)"><Baseline size={15} /></button>
+            {teintes ? (
+              <span className="absolute top-10 left-0 z-40 grid grid-cols-6 gap-1.5 rounded-xl border border-[#e5eaf0] bg-white p-2 shadow-lg w-[196px]">
+                {COULEURS.map((c) => (
+                  <button key={c} type="button" onClick={() => { commande("foreColor", hex(c)); setTeintes(false); }} title={PALETTE[c].libelle} aria-label={PALETTE[c].libelle}
+                    className="w-6 h-6 rounded-full border border-[#d5d8dd] cursor-pointer hover:scale-110 transition-transform" style={{ background: hex(c) }} />
+                ))}
+              </span>
+            ) : null}
+          </span>
+          {sep}
+          <button type="button" className={B} onClick={() => commande("justifyLeft")} aria-label="Aligner au début" title="Aligner au début"><AlignLeft size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("justifyCenter")} aria-label="Centrer" title="Centrer"><AlignCenter size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("justifyRight")} aria-label="Aligner à la fin" title="Aligner à la fin"><AlignRight size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("justifyFull")} aria-label="Justifier" title="Justifier"><AlignJustify size={15} /></button>
+          {sep}
+          <button type="button" className={B} onClick={() => commande("insertUnorderedList")} aria-label="Liste à puces" title="Liste à puces"><List size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("insertOrderedList")} aria-label="Liste numérotée" title="Liste numérotée"><ListOrdered size={15} /></button>
+          <button type="button" className={B} onClick={() => { const u = demanderLien("", "Adresse du lien (https://…)"); if (u) commande("createLink", u); }} aria-label="Lien" title="Lien"><Link2 size={15} /></button>
+          <button type="button" className={B} onClick={() => commande("removeFormat")} aria-label="Effacer la mise en forme" title="Effacer la mise en forme"><Eraser size={15} /></button>
+          {sep}
+          <select value="" onChange={(e) => { if (e.target.value) commande("insertText", `{${e.target.value}}`); }} aria-label="Insérer une variable"
+            className="h-8 rounded-md border-0 bg-transparent text-[12.5px] font-semibold text-[#16202b] cursor-pointer hover:bg-[#f1f4f7] px-1">
+            <option value="">+ Variable</option>
+            {VARIABLES.map((v) => <option key={v.cle} value={v.cle}>{v.libelle}</option>)}
+          </select>
         </div>
       ) : null}
       <div
@@ -149,7 +187,7 @@ function TexteRiche({ html, onChange, style }: { html: string; onChange: (h: str
         onInput={(e) => onChange(nettoyerHtml(e.currentTarget.innerHTML))}
         onPaste={(e) => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain")); }}
         dangerouslySetInnerHTML={{ __html: initial }}
-        className="outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 [&_a]:text-[#ad0707] [&_a]:no-underline [&_ul]:pl-6 [&_ul]:list-disc [&_p]:m-0 [&_p]:mb-3"
+        className="outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 [&_a]:text-[#ad0707] [&_a]:no-underline [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:pl-6 [&_ol]:list-decimal [&_p]:m-0 [&_p]:mb-3"
         style={style}
       />
     </div>
@@ -174,26 +212,50 @@ function BoutonImage({ onUrl, libelle, sombre = true }: { onUrl: (u: string) => 
   );
 }
 
-// « + » entre deux sections : toutes les sections possibles
+const CATALOGUE: Record<TypeSection, { icone: ReactNode; aide: string }> = {
+  logo: { icone: <BadgeCheck size={18} />, aide: "Votre logo, centré" },
+  bandeau: { icone: <PanelTop size={18} />, aide: "Grand titre sur image ou couleur" },
+  titre: { icone: <Heading size={18} />, aide: "Titre de rubrique" },
+  texte: { icone: <Type size={18} />, aide: "Paragraphe mis en forme" },
+  image: { icone: <IconeImage size={18} />, aide: "Téléversée ou par lien" },
+  bouton: { icone: <MousePointerClick size={18} />, aide: "Lien bien visible" },
+  appel: { icone: <Megaphone size={18} />, aide: "Titre et bouton sur fond" },
+  reseaux: { icone: <Share2 size={18} />, aide: "Icônes de vos pages" },
+  pied: { icone: <PanelBottom size={18} />, aide: "Présentation et coordonnées" },
+  separateur: { icone: <Minus size={18} />, aide: "Ligne fine" },
+  espace: { icone: <MoveVertical size={18} />, aide: "Respiration verticale" },
+};
+
+// « + » entre deux sections : une carte avec toutes les sections possibles
 function Inserer({ onAjout }: { onAjout: (t: TypeSection) => void }) {
   const [ouvert, setOuvert] = useState(false);
   return (
     <div className="group/ins relative h-4 -my-2 z-20 flex items-center justify-center">
       <span className={`absolute inset-x-0 h-0.5 ${ouvert ? "opacity-100" : "opacity-0 group-hover/ins:opacity-100"}`} style={{ background: BLEU }} />
+      <button type="button" onClick={() => setOuvert((o) => !o)} aria-label="Ajouter une section ici" aria-expanded={ouvert} title="Ajouter une section ici"
+        className={`relative w-7 h-7 rounded-full border-2 border-white text-white grid place-items-center cursor-pointer shadow transition-[opacity,transform] duration-150 ${ouvert ? "opacity-100 rotate-45" : "opacity-0 group-hover/ins:opacity-100 focus:opacity-100"}`} style={{ background: BLEU }}>
+        <Plus size={15} />
+      </button>
       {ouvert ? (
-        <div className="relative flex flex-wrap justify-center items-center gap-1 rounded-xl bg-[#0f1d2c] p-1.5 shadow-xl max-w-[560px]">
-          {TYPES_SECTION.map((t) => (
-            <button key={t.type} type="button" onClick={() => { onAjout(t.type); setOuvert(false); }}
-              className="h-7 px-2.5 rounded-md border-0 bg-transparent text-white text-[12px] font-semibold cursor-pointer hover:bg-white/15">{t.libelle}</button>
-          ))}
-          <button type="button" onClick={() => setOuvert(false)} aria-label="Annuler" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-white/60 cursor-pointer hover:text-white"><X size={14} /></button>
+        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)]" style={{ fontFamily: "var(--font-texte)" }}>
+          <div className="flex items-center justify-between px-1 pb-2">
+            <b className="text-[13px] text-[#16202b]">Ajouter une section</b>
+            <button type="button" onClick={() => setOuvert(false)} aria-label="Fermer" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-[#5b6b7a] cursor-pointer hover:bg-[#f1f4f7]"><X size={15} /></button>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+            {TYPES_SECTION.map((t) => (
+              <button key={t.type} type="button" onClick={() => { onAjout(t.type); setOuvert(false); }}
+                className="flex items-start gap-2.5 rounded-xl border border-[#e5eaf0] bg-white p-2.5 text-left cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50 group/carte">
+                <span className="w-9 h-9 shrink-0 rounded-lg bg-[#f1f4f7] text-[#16202b] grid place-items-center group-hover/carte:bg-[#ad0707] group-hover/carte:text-white transition-colors duration-150">{CATALOGUE[t.type].icone}</span>
+                <span className="min-w-0">
+                  <span className="block text-[13px] font-semibold text-[#16202b]">{t.libelle}</span>
+                  <span className="block text-[11.5px] leading-snug text-[#5b6b7a]">{CATALOGUE[t.type].aide}</span>
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-      ) : (
-        <button type="button" onClick={() => setOuvert(true)} aria-label="Ajouter une section ici" title="Ajouter une section ici"
-          className="relative w-6 h-6 rounded-full border-0 text-white grid place-items-center cursor-pointer opacity-0 group-hover/ins:opacity-100 focus:opacity-100 shadow" style={{ background: BLEU }}>
-          <Plus size={14} />
-        </button>
-      )}
+      ) : null}
     </div>
   );
 }
@@ -247,6 +309,7 @@ function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
   return (
     <div className="flex flex-wrap gap-x-6 gap-y-4 rounded-b-lg border border-t-0 px-4 py-3.5 bg-white text-left" style={{ borderColor: BLEU, fontFamily: "var(--font-texte)" }}>
       {"taille" in s ? <Curseur libelle="Taille du texte" valeur={s.taille} min={s.type === "bandeau" ? 18 : s.type === "pied" ? 10 : 11} max={s.type === "bandeau" ? 56 : s.type === "titre" || s.type === "appel" ? 44 : 24} onChange={(taille) => m({ taille })} /> : null}
+      {s.type === "logo" ? <Curseur libelle="Largeur du logo" valeur={s.largeur} min={60} max={400} onChange={(largeur) => m({ largeur })} /> : null}
       {s.type === "image" ? <Curseur libelle="Largeur" valeur={s.largeur} min={20} max={100} unite="%" onChange={(largeur) => m({ largeur })} /> : null}
       {s.type === "espace" ? <Curseur libelle="Hauteur" valeur={s.hauteur} min={4} max={120} onChange={(hauteur) => m({ hauteur })} /> : null}
       {"couleur" in s ? <Nuancier libelle={s.type === "separateur" ? "Couleur de la ligne" : "Couleur du texte"} valeur={s.couleur} onChange={((couleur: Couleur) => m({ couleur })) as never} /> : null}
@@ -313,8 +376,8 @@ export function EditeurBlocs({ initial, reseaux }: { initial: DocLettre; reseaux
               <div key={s.id}>
                 <div className="group/sec relative" onClick={() => setChoisie(s.id)}>
                   <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sec:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
-                  <div className={`absolute right-1 -top-3.5 z-20 items-center gap-0.5 rounded-lg bg-[#0f1d2c] p-0.5 shadow-lg ${actif ? "flex" : "hidden group-hover/sec:flex"}`}>
-                    <span className="px-2 text-[11px] font-semibold text-white/60">{libelle}</span>
+                  <div className={`absolute right-1 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sec:flex"}`} style={{ fontFamily: "var(--font-texte)" }}>
+                    <span className="px-2 text-[11.5px] font-semibold text-[#5b6b7a]">{libelle}</span>
                     <Outil libelle="Style" actif={style === s.id} onClick={() => setStyle(style === s.id ? null : s.id)}><Paintbrush size={13} /></Outil>
                     <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
                     <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === doc.sections.length - 1}><ArrowDown size={13} /></Outil>
@@ -341,7 +404,7 @@ export function EditeurBlocs({ initial, reseaux }: { initial: DocLettre; reseaux
 function Outil({ libelle, onClick, children, disabled, actif }: { libelle: string; onClick: () => void; children: ReactNode; disabled?: boolean; actif?: boolean }) {
   return (
     <button type="button" onClick={(e) => { e.stopPropagation(); onClick(); }} disabled={disabled} aria-label={libelle} title={libelle}
-      className={`h-7 min-w-7 px-1.5 grid place-items-center rounded-md border-0 text-[11.5px] font-semibold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${actif ? "bg-white text-[#0f1d2c]" : "bg-transparent text-white/85 hover:bg-white/15"}`}>
+      className={`h-7 min-w-7 px-1.5 grid place-items-center rounded-md border-0 text-[11.5px] font-semibold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${actif ? "bg-[#ad0707] text-white" : "bg-transparent text-[#16202b] hover:bg-[#f1f4f7]"}`}>
       {children}
     </button>
   );
@@ -370,8 +433,17 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
   );
   switch (s.type) {
     case "logo":
-      // eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel
-      return cadre(<img src="/marque/logo-couleur.png" alt="IMPACT 261" style={{ width: 190, height: "auto", display: "inline-block" }} />, "24px 32px 18px");
+      return cadre(
+        // eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel
+        <img src={s.image || "/marque/logo-couleur.png"} alt="Logo" style={{ width: s.largeur, maxWidth: "100%", height: "auto", display: "inline-block" }} />,
+        "24px 32px 18px",
+        <Actions>
+          <BoutonImage libelle="Changer le logo" onUrl={(image) => m({ image })} />
+          <button type="button" onClick={() => { const u = demanderLien(s.image, "Adresse d’une image de logo (https://…)"); if (u !== null) m({ image: u }); }}
+            className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer"><Link2 size={13} className="inline -mt-0.5" /> Lien</button>
+          {s.image ? <button type="button" onClick={() => m({ image: "" })} className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer">Logo IMPACT 261</button> : null}
+        </Actions>,
+      );
     case "bandeau":
       return (
         <div className="relative" style={{ padding: "0 0 24px" }}>
@@ -458,19 +530,24 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
         </div>,
         "24px 32px 8px",
       );
-    case "pied":
+    case "pied": {
+      const lien = { color: hex("rouge") };
       return cadre(
         <div style={{ fontSize: s.taille, lineHeight: 1.55, color: hex(s.couleur) }}>
           <Editable multiligne valeur={s.texte} onChange={(texte) => m({ texte })} placeholder="Présentation de la Chambre" style={{ marginBottom: 12 }} />
-          <p style={{ margin: 0 }}>
-            <span style={{ color: hex("rouge") }}>Politique de confidentialité</span><br />
-            {COORDONNEES_APERCU.adresse}<br />
-            <span style={{ color: hex("rouge") }}>{COORDONNEES_APERCU.email}</span> | {COORDONNEES_APERCU.telephone}
-          </p>
-          <p style={{ margin: "12px 0 0" }}>© {new Date().getFullYear()} Chambre de Commerce et de Coopération Canada–Madagascar. Tous droits réservés.</p>
+          <button type="button" onClick={(e) => { e.stopPropagation(); const u = demanderLien(s.confidentialite, "Adresse de la politique de confidentialité — vide pour la retirer"); if (u !== null) m({ confidentialite: u }); }}
+            title={s.confidentialite || "Ajouter le lien"} className="p-0 border-0 bg-transparent cursor-pointer hover:underline" style={{ ...lien, fontSize: s.taille, opacity: s.confidentialite ? 1 : 0.4 }}>
+            Politique de confidentialité{s.confidentialite ? "" : " (cliquez pour ajouter le lien)"}
+          </button>
+          <Editable valeur={s.adresse} onChange={(adresse) => m({ adresse })} placeholder="Adresse" />
+          <div className="flex justify-center items-baseline gap-1 flex-wrap" style={{ justifyContent: s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center" }}>
+            <Editable valeur={s.email} onChange={(email) => m({ email })} placeholder="Courriel" style={lien} /> | <Editable valeur={s.telephone} onChange={(telephone) => m({ telephone })} placeholder="Téléphone" />
+          </div>
+          <Editable valeur={s.copyright} onChange={(copyright) => m({ copyright })} placeholder="Copyright" style={{ marginTop: 12 }} />
         </div>,
         "12px 40px 28px",
       );
+    }
     case "separateur":
       return cadre(<div style={{ borderTop: `1px solid ${hex(s.couleur)}` }} />, "14px 32px");
     case "espace":
