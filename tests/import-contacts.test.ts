@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { devinerCorrespondance, ligneValide, lireCsv, preparerLignes } from "@/lib/import-contacts";
+import { devinerCorrespondance, ligneValide, lireCsv, normaliserEmail, preparerLignes } from "@/lib/import-contacts";
 
 describe("import de contacts (CSV)", () => {
   it("lit un CSV au point-virgule, avec guillemets et BOM", () => {
@@ -17,21 +17,48 @@ describe("import de contacts (CSV)", () => {
     expect(c).toMatchObject({ entreprise: 0, nom: 1, email: 2, fonction: 3, tel: 4, secteur: -1, ville: -1, tags: -1 });
   });
 
-  it("prépare les lignes et signale ce qui manque, les courriels invalides ou en double", () => {
+  it("prépare les lignes et signale ce qui manque ou les courriels invalides", () => {
     const c = devinerCorrespondance(["Entreprise", "Nom", "Email", "Tags"]);
     const r = preparerLignes(
       [
         ["Bio Sud", "Noro", "NORO@bio.mg", "VIP; Export | VIP"],
         ["", "Tahiry", "t@bio.mg", ""],
         ["Bio Sud", "X", "pas-un-mail", ""],
-        ["Autre", "Y", "noro@bio.mg", ""],
       ],
       c,
     );
-    expect(r[0]).toMatchObject({ numero: 2, erreur: null, ligne: { email: "noro@bio.mg", tags: ["VIP", "Export"] } });
+    expect(r[0]).toMatchObject({ numero: 2, erreur: null, fusion: null, ligne: { email: "noro@bio.mg", tags: ["VIP", "Export"] } });
     expect(r[1].erreur).toBe("Manque : entreprise");
     expect(r[2].erreur).toContain("n’est pas un courriel valide");
-    expect(r[3].erreur).toContain("apparaît déjà");
+  });
+
+  it("réunit les lignes au même courriel en un seul contact", () => {
+    const c = devinerCorrespondance(["Entreprise", "Nom", "Email", "Téléphone", "Tags"]);
+    const r = preparerLignes(
+      [
+        ["Bio Sud", "Noro", "Noro@Bio.mg", "", "VIP"],
+        ["Fandresena", "Fetra", "fetra@f.mg", "", ""],
+        ["Autre SA", "", " mailto:noro@bio.mg ", "+261 34 00", "Export, VIP"],
+        ["", "Tahiry", "t@bio.mg", "", ""],
+        ["Bio Sud", "", "<T@BIO.MG>", "", ""],
+      ],
+      c,
+    );
+    expect(r).toHaveLength(3);
+    expect(r[0]).toMatchObject({
+      numero: 2,
+      erreur: null,
+      ligne: { entreprise: "Bio Sud", nom: "Noro", email: "noro@bio.mg", tel: "+261 34 00", tags: ["VIP", "Export"] },
+      fusion: { numeros: [2, 4], ecarts: ["entreprise « Autre SA » (ligne 4)"] },
+    });
+    expect(r[1].fusion).toBeNull();
+    // Une ligne incomplète est sauvée par son double
+    expect(r[2]).toMatchObject({ numero: 5, erreur: null, ligne: { entreprise: "Bio Sud", nom: "Tahiry", email: "t@bio.mg" }, fusion: { numeros: [5, 6] } });
+  });
+
+  it("nettoie les adresses avant de les comparer", () => {
+    expect(normaliserEmail(" Mailto:Noro@Bio.MG ")).toBe("noro@bio.mg");
+    expect(normaliserEmail("<noro @bio.mg>")).toBe("noro@bio.mg");
   });
 
   it("revérifie côté serveur chaque ligne reçue", () => {

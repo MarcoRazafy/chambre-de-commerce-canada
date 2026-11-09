@@ -30,7 +30,6 @@ import {
   fmtDate,
   fmtDateShort,
   fmtMoney,
-  initials,
   parseISO,
 } from "@/lib/format";
 import type {
@@ -198,12 +197,15 @@ export function LogoMark({
     );
   }
 
+  // Ni logo ni photo : une icône de personne
   return (
     <div
-      className="rounded-[var(--radius-s)] bg-accent-soft text-accent-strong flex items-center justify-center font-[family-name:var(--font-display)] font-bold shrink-0"
-      style={{ width: size, height: size, fontSize: size * 0.35 }}
+      role="img"
+      aria-label={member.nom}
+      className="rounded-[var(--radius-s)] bg-surface-2 border border-line text-muted flex items-center justify-center shrink-0"
+      style={{ width: size, height: size }}
     >
-      {initials(member.nom)}
+      <UserIcon size={Math.round(size * 0.5)} aria-hidden />
     </div>
   );
 }

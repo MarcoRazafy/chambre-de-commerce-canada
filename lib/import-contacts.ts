@@ -84,31 +84,81 @@ export function devinerCorrespondance(entetes: string[]): Correspondance {
   return sortie;
 }
 
-export type LignePreparee = { numero: number; ligne: LigneImport | null; erreur: string | null };
+export type LignePreparee = {
+  numero: number;
+  ligne: LigneImport | null;
+  erreur: string | null;
+  // Lignes du fichier réunies dans celle-ci (même courriel), et les valeurs écartées
+  fusion: { numeros: number[]; ecarts: string[] } | null;
+};
 
-// Construit chaque ligne selon la correspondance, et dit ce qui manque
+// « Mailto:Noro@Bio.mg », « <noro@bio.mg> », « noro @bio.mg » : une seule et même adresse
+export function normaliserEmail(brut: string): string {
+  return brut.trim().replace(/^mailto:/i, "").replace(/^<(.*)>$/, "$1").replace(/\s+/g, "").toLowerCase();
+}
+
+const CHAMPS_TEXTE = ["entreprise", "nom", "fonction", "tel", "secteur", "ville"] as const;
+const LIBELLES: Record<(typeof CHAMPS_TEXTE)[number], string> = {
+  entreprise: "entreprise",
+  nom: "nom",
+  fonction: "fonction",
+  tel: "téléphone",
+  secteur: "secteur",
+  ville: "ville",
+};
+
+// Construit chaque ligne selon la correspondance. Les lignes au même courriel sont réunies en une seule :
+// la première valeur trouvée l'emporte, les champs vides se complètent, les tags s'additionnent.
 export function preparerLignes(lignes: string[][], c: Correspondance): LignePreparee[] {
-  const vus = new Set<string>();
-  return lignes.map((cellules, i) => {
-    const val = (cle: CleImport) => (c[cle] >= 0 ? (cellules[c[cle]] ?? "").trim() : "");
-    const numero = i + 2; // la ligne 1 du fichier : les en-têtes
-    const email = val("email").toLowerCase();
+  const brutes = lignes.map((cellules, i) => {
+    const val = (cle: CleImport) => (c[cle] >= 0 ? (cellules[c[cle]] ?? "").trim().replace(/\s+/g, " ") : "");
     const ligne: LigneImport = {
       entreprise: val("entreprise").slice(0, 120),
       nom: val("nom").slice(0, 120),
-      email,
+      email: normaliserEmail(val("email")).slice(0, 200),
       fonction: val("fonction").slice(0, 120),
       tel: val("tel").slice(0, 40),
       secteur: val("secteur").slice(0, 80),
       ville: val("ville").slice(0, 80),
-      tags: [...new Set(val("tags").split(/[,;|]/).map((t) => t.trim().replace(/\s+/g, " ").slice(0, 60)).filter(Boolean))].slice(0, 20),
+      tags: [...new Set(val("tags").split(/[,;|]/).map((t) => t.trim().slice(0, 60)).filter(Boolean))].slice(0, 20),
     };
-    const manque = [!ligne.entreprise && "entreprise", !ligne.nom && "nom du contact", !email && "courriel"].filter(Boolean);
-    if (manque.length) return { numero, ligne: null, erreur: `Manque : ${manque.join(", ")}` };
-    if (!ADRESSE.test(email)) return { numero, ligne: null, erreur: `« ${email} » n’est pas un courriel valide` };
-    if (vus.has(email)) return { numero, ligne: null, erreur: `${email} apparaît déjà plus haut dans le fichier` };
-    vus.add(email);
-    return { numero, ligne, erreur: null };
+    return { numero: i + 2, ligne }; // la ligne 1 du fichier : les en-têtes
+  });
+
+  // Regroupe par courriel, dans l'ordre de première apparition
+  const groupes: (typeof brutes)[] = [];
+  const parEmail = new Map<string, (typeof brutes)>();
+  for (const b of brutes) {
+    const g = b.ligne.email ? parEmail.get(b.ligne.email) : undefined;
+    if (g) g.push(b);
+    else {
+      const nouveau = [b];
+      groupes.push(nouveau);
+      if (b.ligne.email) parEmail.set(b.ligne.email, nouveau);
+    }
+  }
+
+  return groupes.map((g) => {
+    const [premiere, ...autres] = g;
+    const ligne: LigneImport = { ...premiere.ligne, tags: [...premiere.ligne.tags] };
+    const ecarts: string[] = [];
+    for (const a of autres) {
+      for (const k of CHAMPS_TEXTE) {
+        const v = a.ligne[k];
+        if (!v) continue;
+        if (!ligne[k]) ligne[k] = v;
+        else if (ligne[k].toLowerCase() !== v.toLowerCase()) ecarts.push(`${LIBELLES[k]} « ${v} » (ligne ${a.numero})`);
+      }
+      for (const t of a.ligne.tags) if (!ligne.tags.includes(t)) ligne.tags.push(t);
+    }
+    ligne.tags = ligne.tags.slice(0, 20);
+    const fusion = autres.length ? { numeros: g.map((x) => x.numero), ecarts } : null;
+    const numero = premiere.numero;
+
+    const manque = [!ligne.entreprise && "entreprise", !ligne.nom && "nom du contact", !ligne.email && "courriel"].filter(Boolean);
+    if (manque.length) return { numero, ligne: null, erreur: `Manque : ${manque.join(", ")}`, fusion };
+    if (!ADRESSE.test(ligne.email)) return { numero, ligne: null, erreur: `« ${ligne.email} » n’est pas un courriel valide`, fusion };
+    return { numero, ligne, erreur: null, fusion };
   });
 }
 
@@ -117,7 +167,7 @@ export function ligneValide(l: unknown): LigneImport | null {
   if (!l || typeof l !== "object") return null;
   const o = l as Record<string, unknown>;
   const t = (k: string, max: number) => (typeof o[k] === "string" ? (o[k] as string).trim().slice(0, max) : "");
-  const email = t("email", 200).toLowerCase();
+  const email = normaliserEmail(t("email", 200));
   const ligne: LigneImport = {
     entreprise: t("entreprise", 120),
     nom: t("nom", 120),

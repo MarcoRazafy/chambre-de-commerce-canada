@@ -1,8 +1,8 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
-import { AlertTriangle, ArrowRight, Check, FileUp, FolderOpen, Plus, UserPlus } from "lucide-react";
+import { useEffect, useMemo, useState, useTransition } from "react";
+import { AlertTriangle, ArrowRight, Check, FileUp, FolderOpen, ImagePlus, Plus, User, UserPlus, X } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { OptionsSecteurs } from "@/components/OptionsSecteurs";
 import { CancelButton, Field, INPUT, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
@@ -46,6 +46,9 @@ export function AjouterContact({ entreprises, retour }: { entreprises: { id: str
             </Field>
             {nouvelle ? (
               <div className="grid gap-3.5 md:grid-cols-3 rounded-[var(--radius-m)] border border-line bg-surface-2 p-3.5">
+                <div className="md:col-span-3">
+                  <ChoixLogo />
+                </div>
                 <Field label="Nom de l’entreprise">
                   <input name="entreprise" required autoFocus maxLength={120} className={INPUT} />
                 </Field>
@@ -94,6 +97,45 @@ export function AjouterContact({ entreprises, retour }: { entreprises: { id: str
   );
 }
 
+// Logo facultatif de la nouvelle entreprise, avec aperçu ; sans logo, l'icône de personne
+function ChoixLogo() {
+  const [apercu, setApercu] = useState<string | null>(null);
+  const [cle, setCle] = useState(0);
+  useEffect(() => () => { if (apercu) URL.revokeObjectURL(apercu); }, [apercu]);
+  return (
+    <div className="flex items-center gap-3.5">
+      <span className="w-[84px] h-[48px] shrink-0 rounded-[var(--radius-s)] border border-line bg-surface grid place-items-center overflow-hidden text-muted">
+        {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local (blob:) avant l'envoi */}
+        {apercu ? <img src={apercu} alt="Aperçu du logo" className="w-full h-full object-contain p-1" /> : <User size={22} aria-hidden />}
+      </span>
+      <div className="flex flex-col gap-1">
+        <span className="text-[12.5px] font-semibold text-muted">Logo de l’entreprise <span className="font-normal">(facultatif)</span></span>
+        <div className="flex items-center gap-2">
+          <label className="btn-contour btn-contour-sm text-ink cursor-pointer">
+            <ImagePlus size={14} aria-hidden /> {apercu ? "Changer" : "Choisir une image"}
+            <input
+              key={cle}
+              type="file"
+              name="logo"
+              accept="image/*"
+              className="sr-only"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                setApercu(f ? URL.createObjectURL(f) : null);
+              }}
+            />
+          </label>
+          {apercu ? (
+            <button type="button" onClick={() => { setApercu(null); setCle((k) => k + 1); }} className="inline-flex items-center gap-1 border-0 bg-transparent text-[12.5px] font-semibold text-muted cursor-pointer hover:text-bad">
+              <X size={13} /> Retirer
+            </button>
+          ) : null}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // « Importer un CSV » : choisir le fichier, dire quelle colonne correspond à quoi, vérifier, importer
 export function ImporterContacts() {
   return (
@@ -122,6 +164,8 @@ function Import({ fermer }: { fermer: () => void }) {
   const preparees = useMemo(() => (fichier && corr ? preparerLignes(fichier.lignes, corr) : []), [fichier, corr]);
   const valides = preparees.filter((p) => p.ligne);
   const rejetees = preparees.filter((p) => p.erreur);
+  const fusions = preparees.filter((p) => p.fusion);
+  const lignesFusionnees = fusions.reduce((n, p) => n + (p.fusion?.numeros.length ?? 0) - 1, 0);
   const manquants = corr ? CHAMPS_IMPORT.filter((c) => c.requis && corr[c.cle] < 0) : [];
 
   const lire = async (f: File | undefined) => {
@@ -155,6 +199,9 @@ function Import({ fermer }: { fermer: () => void }) {
           <ul className="m-0 pl-5 text-[13.6px] text-ink flex flex-col gap-1">
             <li><b>{bilan.contactsCrees}</b> contact{bilan.contactsCrees > 1 ? "s" : ""} ajouté{bilan.contactsCrees > 1 ? "s" : ""}</li>
             <li><b>{bilan.contactsMisAJour}</b> contact{bilan.contactsMisAJour > 1 ? "s" : ""} déjà connu{bilan.contactsMisAJour > 1 ? "s" : ""}, mis à jour</li>
+            {lignesFusionnees ? (
+              <li><b>{fusions.length}</b> courriel{fusions.length > 1 ? "s" : ""} en double réuni{fusions.length > 1 ? "s" : ""} en un seul contact ({lignesFusionnees} ligne{lignesFusionnees > 1 ? "s" : ""} en moins)</li>
+            ) : null}
             <li><b>{bilan.entreprisesCreees}</b> nouvelle{bilan.entreprisesCreees > 1 ? "s" : ""} entreprise{bilan.entreprisesCreees > 1 ? "s" : ""} (en attente de paiement, fiche à compléter)</li>
           </ul>
           {bilan.ignores.length ? (
@@ -224,8 +271,26 @@ function Import({ fermer }: { fermer: () => void }) {
               <div className="rounded-[var(--radius-m)] border border-line overflow-hidden">
                 <div className="px-3 py-2 bg-surface-2 text-[12.5px] text-muted">
                   <b className="text-ink">{valides.length}</b> ligne{valides.length > 1 ? "s" : ""} prête{valides.length > 1 ? "s" : ""}
+                  {fusions.length ? <> · <span className="text-navy font-semibold">{fusions.length} doublon{fusions.length > 1 ? "s" : ""} réuni{fusions.length > 1 ? "s" : ""}</span></> : null}
                   {rejetees.length ? <> · <span className="text-warn">{rejetees.length} à corriger dans le fichier</span></> : null}
                 </div>
+                {fusions.length ? (
+                  <details className="border-t border-line bg-navy-soft/40 px-3 py-2 text-[12.5px]">
+                    <summary className="cursor-pointer font-semibold text-navy">
+                      {fusions.length} courriel{fusions.length > 1 ? "s" : ""} en double : chacun ne fera qu’un seul contact
+                    </summary>
+                    <ul className="m-0 mt-1.5 pl-5 flex flex-col gap-1 text-ink">
+                      {fusions.map((p) => (
+                        <li key={p.numero}>
+                          <b>{p.ligne?.email ?? p.erreur}</b> : lignes {p.fusion!.numeros.join(", ")} réunies
+                          {p.fusion!.ecarts.length ? (
+                            <span className="block text-muted">Gardé : la ligne {p.numero}. Écarté : {p.fusion!.ecarts.join(" ; ")}.</span>
+                          ) : null}
+                        </li>
+                      ))}
+                    </ul>
+                  </details>
+                ) : null}
                 <div className="max-h-[200px] overflow-auto">
                   <table className="w-full border-collapse text-[12.5px]">
                     <tbody>
@@ -236,7 +301,14 @@ function Import({ fermer }: { fermer: () => void }) {
                             <>
                               <td className="px-3 py-1.5 text-ink font-semibold">{p.ligne.entreprise}</td>
                               <td className="px-3 py-1.5 text-ink">{p.ligne.nom}</td>
-                              <td className="px-3 py-1.5 text-muted">{p.ligne.email}</td>
+                              <td className="px-3 py-1.5 text-muted">
+                                {p.ligne.email}
+                                {p.fusion ? (
+                                  <span className="ml-1.5 inline-block rounded-full bg-navy-soft text-navy px-2 py-px text-[11px] font-semibold whitespace-nowrap">
+                                    {p.fusion.numeros.length} lignes réunies
+                                  </span>
+                                ) : null}
+                              </td>
                             </>
                           ) : (
                             <td colSpan={3} className="px-3 py-1.5 text-warn">{p.erreur}</td>
@@ -249,7 +321,7 @@ function Import({ fermer }: { fermer: () => void }) {
               </div>
             )}
             <p className="m-0 text-[12px] text-faint">
-              Une entreprise inconnue est créée (en attente de paiement, fiche à compléter). Un courriel déjà connu met à jour son contact. Le premier contact d’une entreprise en devient le contact principal.
+              Les lignes au même courriel sont réunies : les cases vides se complètent, les tags s’additionnent, la première valeur l’emporte. Une entreprise inconnue est créée (en attente de paiement, fiche à compléter). Un courriel déjà connu met à jour son contact. Le premier contact d’une entreprise en devient le contact principal.
             </p>
           </>
         ) : null}

@@ -8,6 +8,7 @@ import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { jourBase } from "@/lib/format";
 import { LIGNES_IMPORT_MAX, ligneValide } from "@/lib/import-contacts";
 import { secteurOuProvisoire } from "@/lib/secteurs";
+import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 
 // Page Contacts (équipe) : ajouter un contact, importer un CSV, poser ou retirer des tags sur une sélection
 
@@ -29,11 +30,12 @@ async function journal(action: string, entiteId: string, acteur: string, detail:
 }
 
 // Nouvelle entreprise, comme « Ajouter un membre » : en attente de paiement, fiche à compléter
-function nouvelleEntreprise(nom: string, secteur: string, ville: string) {
+function nouvelleEntreprise(nom: string, secteur: string, ville: string, logo: string | null = null) {
   return prisma.member.create({
     data: {
       type: "morale",
       nom,
+      logo,
       secteur: secteurOuProvisoire(secteur, PROVISOIRE.secteur),
       ville: ville || PROVISOIRE.ville,
       statut: "en_attente",
@@ -65,7 +67,15 @@ export async function ajouterContact(formData: FormData) {
   if (memberId) {
     if (!(await prisma.member.findUnique({ where: { id: memberId }, select: { id: true } }))) redirectWithErreur(retour, "Entreprise introuvable.");
   } else {
-    memberId = (await nouvelleEntreprise(nomEntreprise, texte(formData, "secteur"), texte(formData, "ville"))).id;
+    // Logo facultatif de la nouvelle entreprise, vérifié avant de créer quoi que ce soit
+    let logo: string | null = null;
+    try {
+      logo = await enregistrerImage(formData.get("logo"), { prefixe: `logo-${crypto.randomUUID().slice(0, 8)}`, largeur: 600, transparence: true });
+    } catch (e) {
+      if (e instanceof ImageRefusee) redirectWithErreur(retour, e.message);
+      throw e;
+    }
+    memberId = (await nouvelleEntreprise(nomEntreprise, texte(formData, "secteur"), texte(formData, "ville"), logo)).id;
     creee = true;
   }
 
