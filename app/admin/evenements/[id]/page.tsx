@@ -223,6 +223,12 @@ export default async function EvenementAdmin({
                 <MapPin size={15} /> {e.lieu}
               </span>
             </div>
+            <TagsEvenement
+              eventId={e.id}
+              tags={tagsEvenement?.etiquettes ?? []}
+              tousTags={tousTags}
+              inscrites={inscrites}
+            />
             <div className="flex gap-2.5 flex-wrap mt-auto pt-2">
               <ScannerQr eventId={e.id} termine={passe} />
               <Link
@@ -231,12 +237,6 @@ export default async function EvenementAdmin({
               >
                 <Pencil size={14} /> Modifier
               </Link>
-              <TagsEvenement
-                eventId={e.id}
-                tags={tagsEvenement?.etiquettes ?? []}
-                tousTags={tousTags}
-                inscrites={inscrites}
-              />
               <DeleteEventButton eventId={e.id} titre={e.titre} />
             </div>
           </div>

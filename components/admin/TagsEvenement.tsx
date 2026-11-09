@@ -1,6 +1,6 @@
 "use client";
 
-import { Tag } from "lucide-react";
+import { Plus, Tag } from "lucide-react";
 import { ChoixTags } from "@/components/admin/ChoixTags";
 import { Modal } from "@/components/Modal";
 import { CancelButton, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
@@ -22,14 +22,29 @@ export function TagsEvenement({
     <Modal
       title="Tags des inscrits"
       trigger={(ouvrir) => (
-        <button type="button" onClick={ouvrir} className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">
-          <Tag size={14} /> Tags des inscrits
+        <div className="flex flex-wrap items-center gap-1.5">
           {tags.length ? (
-            <span className="ml-0.5 min-w-[20px] h-5 px-1.5 rounded-full bg-accent text-white text-[11px] font-bold grid place-items-center tabular-nums">
-              {tags.length}
-            </span>
-          ) : null}
-        </button>
+            tags.map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={ouvrir}
+                title="Modifier les tags des inscrits"
+                className="inline-flex items-center gap-1 rounded-full border-0 bg-accent-soft text-accent-strong px-2.5 py-1 text-[12.5px] font-semibold cursor-pointer hover:bg-accent hover:text-white transition-colors duration-150"
+              >
+                <Tag size={12} aria-hidden /> {t}
+              </button>
+            ))
+          ) : (
+            <button
+              type="button"
+              onClick={ouvrir}
+              className="inline-flex items-center gap-1 rounded-full border border-dashed border-line bg-transparent text-muted px-2.5 py-1 text-[12.5px] font-semibold cursor-pointer hover:border-accent hover:text-accent transition-colors duration-150"
+            >
+              <Plus size={12} aria-hidden /> Ajouter un tag
+            </button>
+          )}
+        </div>
       )}
     >
       {(fermer) => (
