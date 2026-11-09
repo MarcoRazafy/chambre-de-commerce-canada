@@ -5,6 +5,8 @@ import { prisma } from "@/lib/db";
 import { courrielsActifs } from "@/lib/courriel";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { exigerEquipe } from "@/lib/autorisations";
+import { lireDoc } from "@/lib/lettre-blocs";
+import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { fmtDateHeure, lireProgrammation } from "@/lib/lettres";
 import {
   destinataires,
@@ -35,7 +37,10 @@ export async function enregistrerLettre(formData: FormData) {
   const id = texte(formData, "id");
   const intention = texte(formData, "intention");
   const sujet = texte(formData, "sujet").slice(0, 200);
-  const contenu = texte(formData, "contenu").slice(0, 20000);
+  // Lettre de l'éditeur visuel : relue et nettoyée ici (couleurs, adresses, longueurs) avant d'être enregistrée
+  const brut = texte(formData, "contenu").slice(0, 200000);
+  const doc = lireDoc(brut);
+  const contenu = doc ? (doc.blocs.length ? JSON.stringify(doc) : "") : brut.slice(0, 20000);
   const audience = audienceDe(formData);
   const retourEdition = id ? `/admin/newsletter/${id}` : "/admin/newsletter/nouvelle";
   if (!sujet || !contenu) redirectWithErreur(retourEdition, "Indiquez l’objet et le texte de la lettre.");
@@ -129,4 +134,16 @@ export async function supprimerLettre(formData: FormData) {
   await prisma.lettre.deleteMany({ where: { id: texte(formData, "id"), statut: "brouillon" } });
   revalidatePath("/admin/newsletter");
   redirectWithFlash("/admin/newsletter", "Brouillon supprimé");
+}
+
+// Image d'une lettre (bandeau, image, colonne) : téléversée depuis l'éditeur, son adresse revient aussitôt
+export async function televerserImageLettre(formData: FormData): Promise<{ url: string } | { erreur: string }> {
+  await exigerEquipe();
+  try {
+    const url = await enregistrerImage(formData.get("image"), { prefixe: "lettre", largeur: 1200, transparence: true });
+    return url ? { url } : { erreur: "Choisissez une image." };
+  } catch (e) {
+    if (e instanceof ImageRefusee) return { erreur: e.message };
+    throw e;
+  }
 }

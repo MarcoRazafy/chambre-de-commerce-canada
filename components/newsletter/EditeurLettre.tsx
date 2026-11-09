@@ -3,11 +3,13 @@ import { Panneau } from "@/components/admin/ui";
 import { enregistrerLettre } from "@/lib/actions/newsletter";
 import { DELAI_MAX_JOURS, programmationParDefaut } from "@/lib/lettres";
 import { STATUTS_AUDIENCE, type Audience } from "@/lib/newsletter";
+import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
+import { docDepuisTexte, docVide, lireDoc } from "@/lib/lettre-blocs";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 const CASE = "inline-flex items-center gap-2 text-[13.4px] text-ink cursor-pointer";
 
-// Rédaction d'une lettre : objet, texte (un paragraphe par ligne vide), audience ; brouillon, test, envoi
+// Rédaction d'une lettre : objet, éditeur visuel en blocs, audience ; brouillon, test, envoi
 export function EditeurLettre({
   lettre,
   audience,
@@ -23,25 +25,22 @@ export function EditeurLettre({
   /** Lettre aux inscrits de cet événement : l'audience est fixée */
   evenement?: { id: string; titre: string } | null;
 }) {
+  const contenu = lettre?.contenu ?? "";
+  const initial = lireDoc(contenu) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu) : docVide());
   return (
-    <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
+    <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
       {lettre?.id ? <input type="hidden" name="id" value={lettre.id} /> : null}
       <Panneau titre="La lettre" teinte="degrade">
         <div className="flex flex-col gap-3">
           <label className="block">
             <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet du courriel</span>
-            <input name="sujet" required maxLength={200} defaultValue={lettre?.sujet ?? ""} placeholder="Ex. Les rendez-vous de la CanCham en décembre" className={CHAMP} />
+            <input name="sujet" required maxLength={200} defaultValue={lettre?.sujet ?? ""} placeholder="Ex. Les rendez-vous de la Chambre en décembre" className={CHAMP} />
           </label>
-          <label className="block">
-            <span className="block text-[12.5px] font-semibold text-muted mb-1">Texte</span>
-            <textarea name="contenu" required rows={16} defaultValue={lettre?.contenu ?? ""} className={`${CHAMP} leading-relaxed`}
-              placeholder={"Bonjour,\n\nUn paragraphe par bloc : laissez une ligne vide entre deux paragraphes.\n\nÀ bientôt,\nL’équipe CanCham"} />
-            <span className="block mt-1 text-[12px] text-faint">Une ligne vide sépare les paragraphes. Le courriel reprend l’en-tête CanCham.</span>
-          </label>
+          <EditeurBlocs initial={initial} />
         </div>
       </Panneau>
 
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4 lg:sticky lg:top-[88px] lg:max-h-[calc(100vh-104px)] lg:overflow-y-auto lg:pr-1">
         <Panneau titre="Destinataires" teinte="bleu" sousTitre={nbDestinataires !== null ? `${nbDestinataires} adresse${nbDestinataires > 1 ? "s" : ""} avec l’audience enregistrée` : undefined}>
           {evenement ? (
             <div className="flex flex-col gap-2 text-[13.4px] text-ink">

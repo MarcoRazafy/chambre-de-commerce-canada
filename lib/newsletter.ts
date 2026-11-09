@@ -2,7 +2,9 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
-import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
+import { courrielsActifs, enTete, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
+import { COORDONNEES } from "@/lib/coordonnees";
+import { lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 
 // Audience d'une lettre : les contacts des membres (selon le statut et les tags de l'entreprise, principal ou tous)
 // et, si coché, les abonnés à la lettre d'information. Avec « evenement », seulement les inscrits de cet événement.
@@ -33,7 +35,7 @@ export function lireAudience(v: unknown): Audience {
 }
 
 // « motif » : pourquoi la personne reçoit ce courriel, rappelé en bas (sinon : membre ou abonné)
-export type Destinataire = { email: string; nom: string; abonne: boolean; motif?: string };
+export type Destinataire = { email: string; nom: string; abonne: boolean; motif?: string; entreprise?: string };
 
 // Une adresse n'apparaît qu'une fois, même si elle est à la fois contact et abonnée
 export async function destinataires(a: Audience): Promise<Destinataire[]> {
@@ -65,9 +67,9 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
           ...(a.etiquettes.length ? { etiquettes: { hasSome: a.etiquettes } } : {}),
         },
       },
-      select: { email: true, nom: true },
+      select: { email: true, nom: true, member: { select: { nom: true } } },
     });
-    for (const c of contacts) parAdresse.set(c.email.toLowerCase(), { email: c.email, nom: c.nom, abonne: false });
+    for (const c of contacts) parAdresse.set(c.email.toLowerCase(), { email: c.email, nom: c.nom, abonne: false, entreprise: c.member?.nom });
   }
   if (a.abonnes) {
     const abonnes = await prisma.abonne.findMany({ where: { desabonneLe: null, erreurLe: null }, select: { email: true, prenom: true } });
@@ -89,6 +91,17 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
   const desabonnement = d.abonne
     ? await urlPublique(`/desabonnement?${new URLSearchParams({ e: d.email, s: signature(d.email) })}`)
     : null;
+  const mention = desabonnement
+    ? `Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information. Pour ne plus la recevoir : ${desabonnement}`
+    : (d.motif ?? "Vous recevez ce message en tant que membre de la Chambre.");
+  // Lettre composée dans l'éditeur visuel : blocs, variables personnalisées
+  const doc = lireDoc(contenu);
+  if (doc) {
+    const vars = { prenom: d.nom.split(/\s+/)[0] ?? "", nom: d.nom, email: d.email, entreprise: d.entreprise ?? "" };
+    const pied = [mention, `Chambre de Commerce et de Coopération Canada–Madagascar · ${COORDONNEES.email} · ${COORDONNEES.telephone}`];
+    const base = (await urlPublique("/")).replace(/\/$/, "");
+    return { a: d.email, sujet, html: versHtml(doc, { base, logo: enTete(), vars, pied }), texte: versTexte(doc, vars, pied) };
+  }
   return {
     a: d.email,
     sujet,

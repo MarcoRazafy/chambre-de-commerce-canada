@@ -193,7 +193,7 @@ export async function urlPublique(chemin: string): Promise<string> {
   return `${protocole}://${hote}${chemin}`;
 }
 
-function enTete(): string {
+export function enTete(): string {
   const base = baseLiens();
   const site = base && !estAdresseLocale(base) ? base : ADRESSE_PLATEFORME;
   return `<img src="${echapper(`${site}/marque/logo-courriel.png`)}" width="220" height="89" alt="IMPACT 261" style="display:block;border:0;outline:none;text-decoration:none;width:220px;height:auto;color:#ffffff;font-size:16px;font-weight:bold">`;

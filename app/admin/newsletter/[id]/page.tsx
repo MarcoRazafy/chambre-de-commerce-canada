@@ -5,6 +5,8 @@ import { EditeurLettre } from "@/components/newsletter/EditeurLettre";
 import { Pill, Saillant } from "@/components/ui";
 import { annulerProgrammation, dupliquerLettre } from "@/lib/actions/newsletter";
 import { getTagsEntreprises } from "@/lib/contacts-admin";
+import { ApercuLettre } from "@/components/newsletter/EditeurBlocs";
+import { lireDoc } from "@/lib/lettre-blocs";
 import { prisma } from "@/lib/db";
 import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
 import { destinataires, lireAudience } from "@/lib/newsletter";
@@ -93,7 +95,11 @@ export default async function Lettre({ params }: { params: Promise<{ id: string 
         teinte={programmee ? "bleu" : "vert"}
         action={<Pill tone={programmee ? "info" : "ok"}>{programmee ? "Programmée" : "Envoyée"}</Pill>}
       >
-        <div className="text-[14px] leading-relaxed text-ink whitespace-pre-line max-w-[70ch]">{l.contenu}</div>
+        {lireDoc(l.contenu) ? (
+          <ApercuLettre doc={lireDoc(l.contenu)!} hauteur={720} />
+        ) : (
+          <div className="text-[14px] leading-relaxed text-ink whitespace-pre-line max-w-[70ch]">{l.contenu}</div>
+        )}
       </Panneau>
     </>
   );
