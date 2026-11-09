@@ -1,26 +1,44 @@
 import Link from "next/link";
-import { BellRing, Mail, Megaphone, RotateCcw, Save, Send, TestTube } from "lucide-react";
-import { Panneau, Vide } from "@/components/admin/ui";
-import { Pill } from "@/components/ui";
-import { enregistrerRappels } from "@/lib/actions/rappels";
+import { BellRing, Pencil, Plus, Save, TestTube, Trash2 } from "lucide-react";
+import { Panneau } from "@/components/admin/ui";
+import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
+import { Card, Pill } from "@/components/ui";
+import { enregistrerRappel, supprimerRappel } from "@/lib/actions/rappels";
+import { COORDONNEES } from "@/lib/coordonnees";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
-import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
-import { debutEvenement, echeance, rappelParDefaut, RAPPELS, SUJET_DEFAUT, VARIABLES_RAPPEL } from "@/lib/rappels";
-import { ApercuLettre, EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
-import { COORDONNEES } from "@/lib/coordonnees";
 import { docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
+import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
+import {
+  debutEvenement,
+  decomposerDelai,
+  echeance,
+  libelleDelai,
+  rappelParDefaut,
+  SUJET_DEFAUT,
+  UNITES_DELAI,
+  VARIABLES_RAPPEL,
+} from "@/lib/rappels";
 
-const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
+const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 const PASTILLE = { brouillon: ["Brouillon", "muted"], programmee: ["Programmée", "info"], envoyee: ["Envoyée", "ok"] } as const;
 
-// Onglet « Courriel » d'un événement : rappels automatiques aux inscrits, courriel aux inscrits, annonce en newsletter
-export async function CourrielEvenement({ eventId, passe, maintenant }: { eventId: string; passe: boolean; maintenant: number }) {
-  const [e, envois, lettres] = await Promise.all([
-    prisma.event.findUnique({
-      where: { id: eventId },
-      select: { id: true, titre: true, date: true, debut: true, rappelJ7: true, rappelJ1: true, rappelH2: true, rappelSujet: true, rappelMessage: true },
-    }),
+// Onglet « Courriel » d'un événement : les rappels automatiques aux inscrits, ajoutés un à un.
+// « rappel » : « nouveau » ou l'id du rappel ouvert dans le formulaire.
+export async function CourrielEvenement({
+  eventId,
+  passe,
+  maintenant,
+  rappel,
+}: {
+  eventId: string;
+  passe: boolean;
+  maintenant: number;
+  rappel?: string;
+}) {
+  const [e, rappels, envois, lettres] = await Promise.all([
+    prisma.event.findUnique({ where: { id: eventId }, select: { id: true, titre: true, date: true, debut: true } }),
+    prisma.rappelEvenement.findMany({ where: { eventId }, orderBy: { avant: "desc" } }),
     prisma.rappelEnvoye.groupBy({ by: ["type"], where: { eventId }, _count: { _all: true } }),
     prisma.lettre.findMany({
       where: { audience: { path: ["evenement"], equals: eventId } },
@@ -31,124 +49,140 @@ export async function CourrielEvenement({ eventId, passe, maintenant }: { eventI
   if (!e) return null;
   const debut = debutEvenement(toISODate(e.date), e.debut);
   const partis = new Map(envois.map((x) => [x.type, x._count._all]));
-  const personnalise = !!(e.rappelSujet || e.rappelMessage);
-  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
-  const docMessage =
-    (e.rappelMessage && lireDoc(e.rappelMessage, reseaux)) ||
-    (e.rappelMessage ? docDepuisTexte(e.titre, e.rappelMessage, reseaux) : rappelParDefaut(reseaux));
+  const ouvert = rappel === "nouveau" ? null : rappels.find((r) => r.id === rappel) ?? null;
+  const formulaire = !passe && (rappel === "nouveau" || ouvert);
+  const base = `/admin/evenements/${e.id}?vue=courriel`;
 
   return (
-    <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px]">
-      <Panneau
-        titre="Rappels automatiques aux inscrits"
-        sousTitre="Par courriel, avec le QR code d’entrée."
-        teinte="vert"
-      >
-        <form action={enregistrerRappels} className="flex flex-col gap-4">
-          <input type="hidden" name="eventId" value={e.id} />
+    <div className="flex flex-col gap-4">
+      {formulaire ? (
+        <FormulaireRappel eventId={e.id} titre={e.titre} rappel={ouvert} retour={base} />
+      ) : (
+        <div>
+          {passe ? (
+            <p className="m-0 text-[13px] text-muted">L’événement est passé : plus de rappel à ajouter.</p>
+          ) : (
+            <Link href={`${base}&rappel=nouveau`} className="btn-action btn-action-sm no-underline">
+              <Plus size={15} /> Ajouter un rappel
+            </Link>
+          )}
+        </div>
+      )}
+
+      {rappels.length ? (
+        <Card className="p-0 overflow-hidden">
           <ul className="list-none m-0 p-0">
-            {RAPPELS.map((r) => {
-              const quand = echeance(r.cle, debut);
-              const nb = partis.get(r.cle) ?? 0;
-              const depasse = quand <= maintenant;
+            {rappels.map((r) => {
+              const quand = echeance(r.avant, debut);
+              const nb = partis.get(r.id) ?? 0;
               return (
-                <li key={r.cle} className="flex items-center justify-between gap-3 py-2.5 border-b border-line last:border-b-0">
-                  <label htmlFor={`rappel-${r.cle}`} className="min-w-0 cursor-pointer">
-                    <span className="block text-[13.8px] font-semibold text-ink">{r.libelle}</span>
-                    <span className="block text-[12.5px] text-muted">
+                <li key={r.id} className={`flex items-center gap-4 px-5 py-3.5 border-b border-line last:border-b-0 ${ouvert?.id === r.id ? "bg-accent-soft/40" : ""}`}>
+                  <span className="w-9 h-9 shrink-0 rounded-full bg-success-soft text-success grid place-items-center"><BellRing size={16} /></span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-[14px] font-semibold text-ink">{libelleDelai(r.avant)}</div>
+                    <div className="text-[12.5px] text-muted truncate">
                       {passe ? "Événement passé" : `Envoi le ${fmtDateHeure(new Date(quand))}`}
-                      {nb ? ` · envoyé à ${nb} adresse${nb > 1 ? "s" : ""}` : depasse && !passe ? " · heure passée" : ""}
-                    </span>
-                  </label>
-                  <input
-                    id={`rappel-${r.cle}`}
-                    type="checkbox"
-                    name={r.cle}
-                    value="1"
-                    defaultChecked={e[r.champ]}
-                    disabled={passe}
-                    className="w-5 h-5 shrink-0 accent-[var(--success)] cursor-pointer disabled:cursor-not-allowed"
-                  />
+                      {nb ? ` · envoyé à ${nb} adresse${nb > 1 ? "s" : ""}` : quand <= maintenant && !passe ? " · heure passée" : ""}
+                      {" · "}{r.sujet ?? SUJET_DEFAUT}
+                    </div>
+                  </div>
+                  {nb ? <Pill tone="ok">Envoyé</Pill> : null}
+                  {passe ? null : (
+                    <Link href={`${base}&rappel=${r.id}`} className="btn-contour btn-contour-sm text-ink no-underline"><Pencil size={14} /> Modifier</Link>
+                  )}
+                  <form action={supprimerRappel}>
+                    <input type="hidden" name="eventId" value={e.id} />
+                    <input type="hidden" name="rappelId" value={r.id} />
+                    <button type="submit" aria-label={`Supprimer le rappel « ${libelleDelai(r.avant)} »`} title="Supprimer"
+                      className="w-9 h-9 grid place-items-center rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-bad hover:border-bad"><Trash2 size={15} /></button>
+                  </form>
                 </li>
               );
             })}
           </ul>
+        </Card>
+      ) : null}
 
-          <label className="block">
-            <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet du rappel</span>
-            <input name="sujet" maxLength={200} defaultValue={e.rappelSujet ?? SUJET_DEFAUT} disabled={passe} className={CHAMP} />
-          </label>
-          <div>
-            <span className="block text-[12.5px] font-semibold text-muted mb-2">Message du rappel</span>
-            {passe ? (
-              <ApercuLettre doc={docMessage} hauteur={640} />
-            ) : (
-              <EditeurBlocs initial={docMessage} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} apercuBoite={false}
-                mention="Vous recevez ce rappel car vous êtes inscrit(e) à cet événement." />
-            )}
-            <p className="m-0 mt-2 text-[12px] text-faint">Les QR codes d’entrée s’ajoutent à la fin, pour les inscrits confirmés.</p>
-          </div>
-
-          {passe ? null : (
-            <div className="flex flex-wrap gap-2">
-              <button type="submit" name="intention" value="enregistrer" className="btn-action btn-action-sm"><Save size={14} /> Enregistrer les rappels</button>
-              <button type="submit" name="intention" value="test" className="btn-contour btn-contour-sm text-ink"><TestTube size={14} /> M’envoyer un test</button>
-              {personnalise ? (
-                <button type="submit" name="intention" value="defaut" className="btn-contour btn-contour-sm text-muted"><RotateCcw size={14} /> Rétablir le texte par défaut</button>
-              ) : null}
-            </div>
-          )}
-        </form>
-      </Panneau>
-
-      <div className="flex flex-col gap-4">
-        <Panneau titre="Écrire aux inscrits" sousTitre="Infos pratiques, changement de salle… tout de suite ou programmé" teinte="bleu">
-          <div className="flex flex-col gap-3">
-            <Link href={`/admin/newsletter/nouvelle?evenement=${e.id}`} className="btn-action btn-action-sm self-start no-underline">
-              <Mail size={14} /> Nouveau courriel aux inscrits
-            </Link>
-            {lettres.length ? (
-              <ul className="list-none m-0 p-0">
-                {lettres.map((l) => {
-                  const etat = etatLettre(l);
-                  const s = suiviDe(l.envois);
-                  const quand = dateEnvoi(l);
-                  return (
-                    <li key={l.id} className="py-2.5 border-t border-line">
-                      <div className="flex items-center justify-between gap-2">
-                        <Link href={`/admin/newsletter/${l.id}`} className="min-w-0 truncate text-[13.4px] font-semibold text-ink no-underline hover:text-accent">{l.sujet}</Link>
-                        <Pill tone={PASTILLE[etat][1]}>{PASTILLE[etat][0]}</Pill>
-                      </div>
-                      <div className="text-[12px] text-muted">
-                        {etat === "brouillon"
-                          ? `Par ${l.auteur}`
-                          : `${quand ? fmtDateHeure(quand) : ""} · ${etat === "programmee" ? l.destinataires : l.envoyes} destinataire${(etat === "programmee" ? l.destinataires : l.envoyes) > 1 ? "s" : ""}${etat === "envoyee" && s.envoyes ? ` · ouverture ${fmtTaux(taux(s.ouverts, s.envoyes))}` : ""}`}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            ) : (
-              <Vide icone={<Send size={22} />}>Aucun courriel envoyé aux inscrits.</Vide>
-            )}
-          </div>
+      {lettres.length ? (
+        <Panneau titre="Courriels aux inscrits" teinte="bleu">
+          <ul className="list-none m-0 p-0">
+            {lettres.map((l) => {
+              const etat = etatLettre(l);
+              const s = suiviDe(l.envois);
+              const quand = dateEnvoi(l);
+              const nb = etat === "programmee" ? l.destinataires : l.envoyes;
+              return (
+                <li key={l.id} className="py-2.5 border-t border-line first:border-t-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <Link href={`/admin/newsletter/${l.id}`} className="min-w-0 truncate text-[13.4px] font-semibold text-ink no-underline hover:text-accent">{l.sujet}</Link>
+                    <Pill tone={PASTILLE[etat][1]}>{PASTILLE[etat][0]}</Pill>
+                  </div>
+                  <div className="text-[12px] text-muted">
+                    {etat === "brouillon"
+                      ? `Par ${l.auteur}`
+                      : `${quand ? fmtDateHeure(quand) : ""} · ${nb} destinataire${nb > 1 ? "s" : ""}${etat === "envoyee" && s.envoyes ? ` · ouverture ${fmtTaux(taux(s.ouverts, s.envoyes))}` : ""}`}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
         </Panneau>
-
-        <Panneau titre="Annoncer dans une newsletter" sousTitre="Une lettre préremplie pour tous les membres et les abonnés" teinte="rouge">
-          {passe ? (
-            <p className="m-0 text-[13px] text-muted">L’événement est passé.</p>
-          ) : (
-            <Link href={`/admin/newsletter/nouvelle?annonce=${e.id}`} className="btn-contour btn-contour-sm text-ink no-underline">
-              <Megaphone size={14} /> Préparer l’annonce
-            </Link>
-          )}
-        </Panneau>
-
-        <p className="m-0 flex items-start gap-2 text-[12px] text-faint">
-          <BellRing size={14} className="shrink-0 mt-px" />
-          Chaque adresse reçoit chaque rappel une seule fois. Une personne inscrite bien après l’heure d’un rappel ne le reçoit plus : il n’aurait plus de sens.
-        </p>
-      </div>
+      ) : null}
     </div>
   );
 }
+
+function FormulaireRappel({
+  eventId,
+  titre,
+  rappel,
+  retour,
+}: {
+  eventId: string;
+  titre: string;
+  rappel: { id: string; avant: number; sujet: string | null; message: string | null } | null;
+  retour: string;
+}) {
+  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
+  const doc =
+    (rappel?.message && lireDoc(rappel.message, reseaux)) ||
+    (rappel?.message ? docDepuisTexte(titre, rappel.message, reseaux) : rappelParDefaut(reseaux));
+  const delai = decomposerDelai(rappel?.avant ?? 1440);
+
+  return (
+    <Panneau titre={rappel ? `Rappel « ${libelleDelai(rappel.avant)} »` : "Nouveau rappel"} teinte="vert">
+      <form action={enregistrerRappel} className="flex flex-col gap-4">
+        <input type="hidden" name="eventId" value={eventId} />
+        {rappel ? <input type="hidden" name="rappelId" value={rappel.id} /> : null}
+
+        <div className="flex flex-wrap items-center gap-2 text-[13.6px] text-ink">
+          <span className="font-semibold">Envoyer</span>
+          <input type="number" name="nombre" min={1} max={2160} required defaultValue={delai.nombre} aria-label="Délai" className={`${CHAMP} w-[90px]`} />
+          <select name="unite" defaultValue={delai.unite} aria-label="Unité" className={CHAMP}>
+            {UNITES_DELAI.map((u) => <option key={u.cle} value={u.cle}>{u.libelle}</option>)}
+          </select>
+          <span className="font-semibold">avant le début</span>
+        </div>
+
+        <label className="block">
+          <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet</span>
+          <input name="sujet" maxLength={200} defaultValue={rappel?.sujet ?? SUJET_DEFAUT} className={`${CHAMP} w-full`} />
+        </label>
+
+        <div>
+          <span className="block text-[12.5px] font-semibold text-muted mb-2">Message</span>
+          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} apercuBoite={false}
+            mention="Vous recevez ce rappel car vous êtes inscrit(e) à cet événement." />
+          <p className="m-0 mt-2 text-[12px] text-faint">Les QR codes d’entrée s’ajoutent à la fin, pour les inscrits confirmés.</p>
+        </div>
+
+        <div className="flex flex-wrap gap-2">
+          <button type="submit" name="intention" value="enregistrer" className="btn-action btn-action-sm"><Save size={14} /> Enregistrer le rappel</button>
+          <button type="submit" name="intention" value="test" className="btn-contour btn-contour-sm text-ink"><TestTube size={14} /> M’envoyer un test</button>
+          <Link href={retour} className="btn-contour btn-contour-sm text-muted no-underline">Annuler</Link>
+        </div>
+      </form>
+    </Panneau>
+  );
+}
+

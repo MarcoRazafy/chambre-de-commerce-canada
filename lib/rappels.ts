@@ -4,32 +4,53 @@ import { docVide, sectionVide, type DocLettre, type Reseau, type Section } from 
 
 import { FUSEAU_CHAMBRE } from "@/lib/rendezvous";
 
-export type TypeRappel = "j7" | "j1" | "h2";
+const MINUTE = 60_000;
 
-const HEURE = 3_600_000;
+// Délai d'un rappel, en minutes avant le début de l'événement (de 15 minutes à 90 jours)
+export const UNITES_DELAI = [
+  { cle: "minutes", libelle: "minutes", minutes: 1 },
+  { cle: "heures", libelle: "heures", minutes: 60 },
+  { cle: "jours", libelle: "jours", minutes: 1440 },
+] as const;
+export type UniteDelai = (typeof UNITES_DELAI)[number]["cle"];
+export const DELAI_MIN = 15;
+export const DELAI_MAX = 90 * 1440;
 
-// « avant » : combien de temps avant le début ; « tolerance » : jusqu'à quand un rappel en retard
-// (serveur arrêté, inscription tardive) part encore. Au-delà, il est sauté : un « J-7 » reçu la veille n'a plus de sens.
-export const RAPPELS: { cle: TypeRappel; libelle: string; champ: "rappelJ7" | "rappelJ1" | "rappelH2"; avant: number; tolerance: number }[] = [
-  { cle: "j7", libelle: "7 jours avant", champ: "rappelJ7", avant: 7 * 24 * HEURE, tolerance: 24 * HEURE },
-  { cle: "j1", libelle: "La veille", champ: "rappelJ1", avant: 24 * HEURE, tolerance: 12 * HEURE },
-  { cle: "h2", libelle: "2 heures avant", champ: "rappelH2", avant: 2 * HEURE, tolerance: 1.5 * HEURE },
-];
+export function lireDelai(nombre: unknown, unite: unknown): number | null {
+  const u = UNITES_DELAI.find((x) => x.cle === unite);
+  const n = Number(nombre);
+  if (!u || !Number.isFinite(n) || n <= 0) return null;
+  const minutes = Math.round(n * u.minutes);
+  return minutes >= DELAI_MIN && minutes <= DELAI_MAX ? minutes : null;
+}
+
+// Le délai dans l'unité la plus lisible (2 jours, 3 heures, 45 minutes)
+export function decomposerDelai(minutes: number): { nombre: number; unite: UniteDelai } {
+  if (minutes % 1440 === 0) return { nombre: minutes / 1440, unite: "jours" };
+  if (minutes % 60 === 0) return { nombre: minutes / 60, unite: "heures" };
+  return { nombre: minutes, unite: "minutes" };
+}
+
+export function libelleDelai(minutes: number): string {
+  if (minutes === 1440) return "La veille";
+  const { nombre, unite } = decomposerDelai(minutes);
+  const mot = unite === "jours" ? "jour" : unite === "heures" ? "heure" : "minute";
+  return `${nombre} ${mot}${nombre > 1 ? "s" : ""} avant`;
+}
+
+export const echeance = (avant: number, debut: number) => debut - avant * MINUTE;
+
+// Un rappel part une fois son heure venue, tant qu'il n'est pas trop en retard (la moitié du délai, entre
+// 1 heure et 1 jour) et que l'événement n'a pas commencé : un « 7 jours avant » reçu la veille n'aurait plus de sens
+export function estDu(avant: number, debut: number, maintenant: number): boolean {
+  const heure = echeance(avant, debut);
+  const tolerance = Math.min(1440, Math.max(60, avant / 2)) * MINUTE;
+  return maintenant >= heure && maintenant < heure + tolerance && maintenant < debut;
+}
 
 // Début de l'événement, heure de Madagascar ; sans heure de début, 9 h
 export function debutEvenement(jour: string, debut: string | null | undefined): number {
   return Date.parse(`${jour}T${debut && /^\d{2}:\d{2}$/.test(debut) ? debut : "09:00"}:00${FUSEAU_CHAMBRE}`);
-}
-
-export function echeance(type: TypeRappel, debut: number): number {
-  return debut - RAPPELS.find((r) => r.cle === type)!.avant;
-}
-
-// Un rappel part une fois son heure venue, tant qu'il n'est pas trop en retard et que l'événement n'a pas commencé
-export function estDu(type: TypeRappel, debut: number, maintenant: number): boolean {
-  const r = RAPPELS.find((x) => x.cle === type)!;
-  const heure = debut - r.avant;
-  return maintenant >= heure && maintenant < heure + r.tolerance && maintenant < debut;
 }
 
 export const SUJET_DEFAUT = "Rappel : {événement}";

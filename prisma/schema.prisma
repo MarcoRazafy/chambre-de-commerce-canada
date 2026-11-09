@@ -306,6 +306,7 @@ model Event {
 
   inscriptions Registration[]
   rappels      RappelEnvoye[]
+  rappelsProgrammes RappelEvenement[]
   participants Attendee[]
   programme    EventAgenda[]
   intervenants EventIntervenant[]
@@ -1019,4 +1020,19 @@ model Tag {
   createdAt DateTime @default(now())
 
   @@map("tags")
+}
+
+// Un rappel automatique aux inscrits d'un événement : combien de temps avant le début, son objet et sa lettre.
+// Un événement en a autant que l'équipe en ajoute ; les envois sont notés dans RappelEnvoye (type = id du rappel).
+model RappelEvenement {
+  id        String   @id @default(cuid())
+  eventId   String
+  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  avant     Int // minutes avant le début
+  sujet     String?
+  message   String? // lettre de l'éditeur (JSON) ; vide : le rappel par défaut
+  createdAt DateTime @default(now())
+
+  @@index([eventId])
+  @@map("rappels_evenement")
 }

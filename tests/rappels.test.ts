@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { debutEvenement, echeance, estDu, MESSAGE_DEFAUT, regrouperParAdresse, remplir } from "@/lib/rappels";
+import { debutEvenement, decomposerDelai, echeance, estDu, libelleDelai, lireDelai, MESSAGE_DEFAUT, regrouperParAdresse, remplir } from "@/lib/rappels";
 
 const H = 3_600_000;
 // Le 20 novembre 2026 à 14 h, heure de Madagascar (11 h UTC)
@@ -11,26 +11,39 @@ describe("calendrier des rappels", () => {
     expect(debutEvenement("2026-11-20", null)).toBe(Date.parse("2026-11-20T06:00:00Z"));
   });
 
-  it("place chaque rappel avant le début", () => {
-    expect(echeance("j7", DEBUT)).toBe(DEBUT - 7 * 24 * H);
-    expect(echeance("j1", DEBUT)).toBe(DEBUT - 24 * H);
-    expect(echeance("h2", DEBUT)).toBe(DEBUT - 2 * H);
+  it("place chaque rappel avant le début, quel que soit son délai", () => {
+    expect(echeance(7 * 1440, DEBUT)).toBe(DEBUT - 7 * 24 * H);
+    expect(echeance(1440, DEBUT)).toBe(DEBUT - 24 * H);
+    expect(echeance(120, DEBUT)).toBe(DEBUT - 2 * H);
   });
 
   it("n'envoie pas avant l'heure, envoie à l'heure, et encore un peu en retard", () => {
-    expect(estDu("j1", DEBUT, DEBUT - 24 * H - 60_000)).toBe(false);
-    expect(estDu("j1", DEBUT, DEBUT - 24 * H)).toBe(true);
-    expect(estDu("j1", DEBUT, DEBUT - 13 * H)).toBe(true);
+    expect(estDu(1440, DEBUT, DEBUT - 24 * H - 60_000)).toBe(false);
+    expect(estDu(1440, DEBUT, DEBUT - 24 * H)).toBe(true);
+    expect(estDu(1440, DEBUT, DEBUT - 13 * H)).toBe(true);
   });
 
-  it("saute un rappel trop en retard : un « J-7 » reçu la veille n'a plus de sens", () => {
-    expect(estDu("j7", DEBUT, DEBUT - 5 * 24 * H)).toBe(false);
-    expect(estDu("j1", DEBUT, DEBUT - 11 * H)).toBe(false);
+  it("saute un rappel trop en retard : un « 7 jours avant » reçu la veille n'a plus de sens", () => {
+    expect(estDu(7 * 1440, DEBUT, DEBUT - 5 * 24 * H)).toBe(false);
+    expect(estDu(1440, DEBUT, DEBUT - 11 * H)).toBe(false);
   });
 
   it("ne rappelle jamais un événement commencé", () => {
-    expect(estDu("h2", DEBUT, DEBUT - H)).toBe(true);
-    expect(estDu("h2", DEBUT, DEBUT)).toBe(false);
+    expect(estDu(120, DEBUT, DEBUT - H - 60_000)).toBe(true);
+    expect(estDu(120, DEBUT, DEBUT)).toBe(false);
+  });
+
+  it("lit et nomme un délai : minutes, heures, jours, dans les limites", () => {
+    expect(lireDelai("3", "jours")).toBe(3 * 1440);
+    expect(lireDelai("2", "heures")).toBe(120);
+    expect(lireDelai("5", "minutes")).toBeNull();
+    expect(lireDelai("100", "jours")).toBeNull();
+    expect(lireDelai("1", "semaines")).toBeNull();
+    expect(decomposerDelai(2880)).toEqual({ nombre: 2, unite: "jours" });
+    expect(decomposerDelai(90)).toEqual({ nombre: 90, unite: "minutes" });
+    expect(libelleDelai(1440)).toBe("La veille");
+    expect(libelleDelai(7 * 1440)).toBe("7 jours avant");
+    expect(libelleDelai(60)).toBe("1 heure avant");
   });
 });
 
@@ -60,13 +73,13 @@ describe("texte du rappel", () => {
 // L'envoi, avec une base et des courriels simulés
 const envoyes: { a: string; sujet: string; pieces?: unknown[]; html?: string }[] = [];
 const reserves = new Set<string>();
-let evenements: Record<string, unknown>[] = [];
+let rappels: Record<string, unknown>[] = [];
 let inscrits: { nom: string; entreprise: string; email: string; code: string | null; statut: string }[] = [];
 let courrielsOk = true;
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    event: { findMany: async () => evenements },
+    rappelEvenement: { findMany: async () => rappels },
     attendee: { findMany: async () => inscrits },
     rappelEnvoye: {
       createMany: async ({ data }: { data: { eventId: string; type: string; email: string }[] }) => {
@@ -98,10 +111,11 @@ beforeEach(() => {
   envoyes.length = 0;
   reserves.clear();
   courrielsOk = true;
-  evenements = [{
-    id: "e1", titre: "Gala", date: new Date("2026-11-20T00:00:00Z"), debut: "14:00", fin: null, lieu: "Tana",
-    rappelJ7: true, rappelJ1: true, rappelH2: false, rappelSujet: null, rappelMessage: "Bonjour {prénom}, à bientôt pour {événement}.",
-  }];
+  const e = { id: "e1", titre: "Gala", date: new Date("2026-11-20T00:00:00Z"), debut: "14:00", fin: null, lieu: "Tana" };
+  rappels = [
+    { id: "r7", avant: 7 * 1440, sujet: null, message: null, event: e },
+    { id: "r1", avant: 1440, sujet: null, message: null, event: e },
+  ];
   inscrits = [
     { nom: "Haja Rakoto", entreprise: "Highlands", email: "haja@h.mg", code: "CC-AAAA-111111-1", statut: "confirme" },
     { nom: "Lova R.", entreprise: "Highlands", email: "haja@h.mg", code: "CC-AAAA-111111-2", statut: "confirme" },

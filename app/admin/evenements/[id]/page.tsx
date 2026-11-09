@@ -83,6 +83,7 @@ export default async function EvenementAdmin({
     onglet?: string;
     q?: string;
     vue?: string;
+    rappel?: string;
     par?: string;
     page?: string;
   }>;
@@ -313,7 +314,7 @@ export default async function EvenementAdmin({
       />
 
       {vueCourriel ? (
-        <CourrielEvenement eventId={e.id} passe={passe} maintenant={maintenant()} />
+        <CourrielEvenement eventId={e.id} passe={passe} maintenant={maintenant()} rappel={sp.rappel} />
       ) : vueListe ? (
         <Card className="p-0 min-w-0">
           <div className="px-6 pt-5 flex items-end justify-between gap-4 flex-wrap">

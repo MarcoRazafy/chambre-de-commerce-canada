@@ -451,7 +451,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
               {s.image ? <button type="button" onClick={() => m({ image: "" })} className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer">Retirer l’image</button> : null}
             </Actions>
           ) : null}
-          <div style={{ ...fondCss(s.fond, s.image), borderRadius: 16, padding: "56px 40px", textAlign: s.align }}>
+          <div style={{ ...fondCss(s.fond, s.image), padding: "56px 40px", textAlign: s.align }}>
             <TexteRiche ligne html={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre du bandeau"
               style={{ fontSize: s.taille, lineHeight: 1.12, fontWeight: 800, letterSpacing: "-0.02em", color: hex(s.couleur) }} />
             <TexteRiche ligne html={s.sousTitre} onChange={(sousTitre) => m({ sousTitre })} placeholder="Sous-titre"
