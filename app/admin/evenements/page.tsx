@@ -2,32 +2,39 @@ import Image from "next/image";
 import { Partage } from "@/components/Partage";
 import Link from "next/link";
 import {
+  BarChart3,
   CalendarDays,
   ChevronRight,
   Globe,
   LockKeyhole,
   MapPin,
   Plus,
+  Search,
 } from "lucide-react";
 import { EnTeteAdmin, Jauge, Onglets, Vide } from "@/components/admin/ui";
+import { FiltresAuto } from "@/components/FiltresAuto";
 import { Card, Pill, Saillant } from "@/components/ui";
-import { fmtMoney, isPast, parseISO } from "@/lib/format";
+import { lirePeriode, selection } from "@/lib/evenements-stats";
+import { fmtMoney, parseISO } from "@/lib/format";
 import { getEvents } from "@/lib/queries";
 
 export default async function AdminEvenements({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string }>;
+  searchParams: Promise<{ periode?: string; q?: string }>;
 }) {
-  const { periode: demande } = await searchParams;
-  const periode = demande === "passes" ? "passes" : "a_venir";
+  const p = await searchParams;
+  const periode = lirePeriode(p.periode);
+  const q = (p.q ?? "").trim().slice(0, 100);
 
   const events = await getEvents();
-  const aVenir = events.filter((e) => !isPast(e.date));
-  const passes = events
-    .filter((e) => isPast(e.date))
-    .sort((a, b) => b.date.localeCompare(a.date));
+  const aVenir = selection(events, "a_venir", q);
+  const passes = selection(events, "passes", q);
   const liste = periode === "passes" ? passes : aVenir;
+  const avec = (params: Record<string, string>) => {
+    const u = new URLSearchParams(Object.entries(params).filter(([, v]) => v));
+    return u.size ? `?${u}` : "";
+  };
 
   return (
     <>
@@ -39,12 +46,23 @@ export default async function AdminEvenements({
           </>
         }
         actions={
-          <Link
-            href="/admin/evenements/nouveau"
-            className="btn-action btn-action-sm no-underline"
-          >
-            <Plus size={15} /> Nouvel événement
-          </Link>
+          <>
+            {/* Fichier CSV : les événements de l’onglet et de la recherche en cours */}
+            <a
+              href={`/admin/evenements/statistiques${avec({ periode: periode === "passes" ? "passes" : "", q })}`}
+              download
+              className="btn-contour btn-contour-sm text-ink no-underline"
+              title="Inscrits, présents, absents, remplissage et taux de présence de chaque événement affiché"
+            >
+              <BarChart3 size={15} /> Statistiques
+            </a>
+            <Link
+              href="/admin/evenements/nouveau"
+              className="btn-action btn-action-sm no-underline"
+            >
+              <Plus size={15} /> Nouvel événement
+            </Link>
+          </>
         }
       />
 
@@ -54,16 +72,33 @@ export default async function AdminEvenements({
           {
             cle: "a_venir",
             libelle: "À venir",
-            href: "/admin/evenements",
+            href: `/admin/evenements${avec({ q })}`,
             compte: aVenir.length,
           },
           {
             cle: "passes",
             libelle: "Passés",
-            href: "/admin/evenements?periode=passes",
+            href: `/admin/evenements${avec({ periode: "passes", q })}`,
             compte: passes.length,
           },
         ]}
+        fin={
+          <FiltresAuto action="/admin/evenements" className="relative w-full sm:w-[300px]">
+            {periode === "passes" ? <input type="hidden" name="periode" value="passes" /> : null}
+            <Search
+              size={15}
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
+            />
+            <input
+              type="search"
+              name="q"
+              defaultValue={q}
+              placeholder="Rechercher un événement, un lieu…"
+              aria-label="Rechercher un événement"
+              className="w-full border border-line bg-surface text-ink rounded-[var(--radius-s)] pl-[34px] pr-3 py-[8px] text-[13.6px]"
+            />
+          </FiltresAuto>
+        }
       />
 
       {liste.length ? (
@@ -158,9 +193,11 @@ export default async function AdminEvenements({
       ) : (
         <Card>
           <Vide icone={<CalendarDays size={26} />}>
-            {periode === "passes"
-              ? "Aucun événement passé."
-              : "Aucun événement programmé."}
+            {q
+              ? `Aucun événement ${periode === "passes" ? "passé" : "à venir"} ne correspond à « ${q} ».`
+              : periode === "passes"
+                ? "Aucun événement passé."
+                : "Aucun événement programmé."}
           </Vide>
         </Card>
       )}
