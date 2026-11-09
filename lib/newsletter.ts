@@ -2,7 +2,7 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
-import { courrielsActifs, enTete, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
+import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 
@@ -91,16 +91,17 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
   const desabonnement = d.abonne
     ? await urlPublique(`/desabonnement?${new URLSearchParams({ e: d.email, s: signature(d.email) })}`)
     : null;
-  const mention = desabonnement
-    ? `Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information. Pour ne plus la recevoir : ${desabonnement}`
-    : (d.motif ?? "Vous recevez ce message en tant que membre de la Chambre.");
-  // Lettre composée dans l'éditeur visuel : blocs, variables personnalisées
+  // Lettre composée dans l'éditeur visuel : son rendu, avec les variables du destinataire
   const doc = lireDoc(contenu);
   if (doc) {
-    const vars = { prenom: d.nom.split(/\s+/)[0] ?? "", nom: d.nom, email: d.email, entreprise: d.entreprise ?? "" };
-    const pied = [mention, `Chambre de Commerce et de Coopération Canada–Madagascar · ${COORDONNEES.email} · ${COORDONNEES.telephone}`];
-    const base = (await urlPublique("/")).replace(/\/$/, "");
-    return { a: d.email, sujet, html: versHtml(doc, { base, logo: enTete(), vars, pied }), texte: versTexte(doc, vars, pied) };
+    const o = {
+      base: (await urlPublique("/")).replace(/\/$/, ""),
+      vars: { prenom: d.nom.split(/\s+/)[0] ?? "", nom: d.nom, email: d.email, entreprise: d.entreprise ?? "" },
+      mention: d.abonne ? "Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information." : (d.motif ?? "Vous recevez ce message en tant que membre de la Chambre."),
+      desabonnement,
+      coordonnees: { adresse: COORDONNEES.adresse, email: COORDONNEES.email, telephone: COORDONNEES.telephone, confidentialite: COORDONNEES.legal.confidentialite },
+    };
+    return { a: d.email, sujet, html: versHtml(doc, o), texte: versTexte(doc, o) };
   }
   return {
     a: d.email,

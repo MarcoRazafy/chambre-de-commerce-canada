@@ -1,40 +1,52 @@
 import { describe, expect, it } from "vitest";
-import { blocVide, docVide, lireDoc, miseEnForme, urlSure, versHtml, versTexte } from "@/lib/lettre-blocs";
+import { docVide, lireDoc, nettoyerHtml, urlSure, versHtml, versTexte, type DocLettre } from "@/lib/lettre-blocs";
 
-const O = { base: "https://site.mg", logo: "<b>logo</b>", vars: { prenom: "Noro", entreprise: "Bio Sud" }, pied: ["Pied"] };
+const O = {
+  base: "https://site.mg",
+  vars: { prenom: "Noro", entreprise: "Bio Sud" },
+  mention: "Vous êtes membre.",
+  desabonnement: "https://site.mg/desabonnement?x",
+  coordonnees: { adresse: "Antananarivo", email: "info@x.mg", telephone: "+261", confidentialite: "https://x.mg/conf" },
+};
 
-describe("lettre en blocs", () => {
-  it("met en forme gras, italique, souligné, liens, listes et variables, en échappant le reste", () => {
-    const h = miseEnForme("Bonjour {prenom} <script>\n**gras** *ital* __soul__ [site](https://a.mg)\n\n- un\n- deux", { prenom: "Noro" }, "#ad0707", "");
-    expect(h).toContain("Bonjour Noro &lt;script&gt;");
-    expect(h).toContain("<strong>gras</strong> <em>ital</em> <u>soul</u>");
-    expect(h).toContain('<a href="https://a.mg" style="color:#ad0707');
-    expect(h).toContain("<ul");
-    expect(h).toContain("<li style=\"margin:0 0 4px\">deux</li>");
+describe("lettre de la newsletter", () => {
+  it("nettoie le texte mis en forme : garde gras, italique, liens sûrs, listes ; retire le reste", () => {
+    const h = nettoyerHtml('<b>gras</b> <i onclick="x">ital</i> <script>alert(1)</script><a href="javascript:x">a</a> <a href="https://a.mg" target="_blank">b</a><img src=x onerror=y><ul><li>un</li></ul><span style="color:red">t</span>');
+    expect(h).toBe('<strong>gras</strong> <em>ital</em> <a>a</a> <a href="https://a.mg">b</a><ul><li>un</li></ul>t');
   });
 
   it("refuse les adresses dangereuses", () => {
     expect(urlSure("javascript:alert(1)")).toBe("");
     expect(urlSure("cancham.mg/agenda")).toBe("https://cancham.mg/agenda");
     expect(urlSure("/televersements/lettre-1.webp")).toBe("/televersements/lettre-1.webp");
-    expect(miseEnForme("[x](javascript:alert(1))", {}, "#000000", "")).not.toContain("href");
   });
 
-  it("relit un contenu enregistré en corrigeant ce qui est invalide", () => {
-    const d = lireDoc(JSON.stringify({ v: 1, fond: "rouge", police: "Comic", largeur: 9999, blocs: [{ type: "bouton", url: "javascript:x", fond: "#123456" }, { type: "inconnu" }] }));
-    expect(d).toMatchObject({ fond: "#f3f5f8", police: "Arial", largeur: 600 });
-    expect(d!.blocs).toHaveLength(1);
-    expect(d!.blocs[0]).toMatchObject({ type: "bouton", url: "", fond: "#123456" });
+  it("relit un contenu enregistré en corrigeant ce qui est invalide, et reprend une lettre du premier éditeur", () => {
+    const d = lireDoc(JSON.stringify({ v: 2, bandeau: { image: "javascript:x", titre: "T" }, blocs: [{ type: "bouton", url: "javascript:x", libelle: "Go" }, { type: "inconnu" }], pied: { reseaux: { facebook: "fb.com/x", tiktok: "javascript:y" } } }))!;
+    expect(d.bandeau).toMatchObject({ image: "", titre: "T" });
+    expect(d.blocs).toEqual([expect.objectContaining({ type: "bouton", url: "", libelle: "Go" })]);
+    expect(d.pied.reseaux).toMatchObject({ facebook: "https://fb.com/x", tiktok: "" });
+    const v1 = lireDoc(JSON.stringify({ v: 1, blocs: [{ type: "bandeau", titre: "Ancien" }, { type: "texte", texte: "Bonjour\nà tous" }] }))!;
+    expect(v1.bandeau.titre).toBe("Ancien");
+    expect(v1.blocs).toEqual([expect.objectContaining({ type: "texte", html: "Bonjour<br>à tous" })]);
     expect(lireDoc("Bonjour,\n\ntexte simple")).toBeNull();
   });
 
-  it("produit le HTML du courriel : ligne d'aperçu, images absolues, variables, pied", () => {
-    const doc = { ...docVide(), apercu: "Pour {prenom}", blocs: [{ ...blocVide("image"), url: "/televersements/a.webp" }, { ...blocVide("texte"), texte: "Chez {entreprise}" }] } as ReturnType<typeof docVide>;
+  it("produit le courriel : logo, bandeau, variables, images absolues, réseaux remplis, pied, désabonnement", () => {
+    const base = docVide({ linkedin: "https://linkedin.com/x" });
+    const doc: DocLettre = {
+      ...base,
+      apercu: "Pour {prenom}",
+      blocs: [{ id: "a", type: "image", url: "/televersements/a.webp", lien: "", alt: "" }, { id: "b", type: "texte", html: "Chez <b>{entreprise}</b>" }],
+    };
     const html = versHtml(doc, O);
     expect(html).toContain("Pour Noro");
+    expect(html).toContain("https://site.mg/marque/logo-couleur.png");
     expect(html).toContain('src="https://site.mg/televersements/a.webp"');
-    expect(html).toContain("Chez Bio Sud");
-    expect(html).toContain("Pied");
-    expect(versTexte(doc, O.vars, O.pied)).toContain("Chez Bio Sud");
+    expect(html).toContain("Chez <strong>Bio Sud</strong>");
+    expect(html).toContain("/marque/reseaux/linkedin.png");
+    expect(html).not.toContain("/marque/reseaux/facebook.png");
+    expect(html).toContain("https://site.mg/desabonnement?x");
+    expect(versTexte(doc, O)).toContain("Chez Bio Sud");
   });
 });
