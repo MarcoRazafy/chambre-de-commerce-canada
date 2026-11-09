@@ -9,7 +9,6 @@ import {
 import { EnTeteAdmin, Vide } from "@/components/admin/ui";
 import { Avatar, Card, Saillant } from "@/components/ui";
 import {
-  attribuerEtiquette,
   renommerEtiquette,
   retirerEtiquetteContact,
   supprimerEtiquette,
