@@ -70,7 +70,6 @@ export const NAV_ADMIN: NavGroup[] = [
     label: "Membres",
     items: [
       { href: "/admin/membres", label: "Membres", icon: "users" },
-      { href: "/admin/contacts", label: "Contacts", icon: "contacts" },
       { href: "/admin/maillage", label: "Maillage", icon: "maillage" },
     ],
   },
@@ -92,6 +91,7 @@ export const NAV_ADMIN: NavGroup[] = [
   {
     label: "Communication",
     items: [
+      { href: "/admin/contacts", label: "Contacts", icon: "contacts" },
       { href: "/admin/messagerie", label: "Messagerie", icon: "chat" },
       { href: "/admin/newsletter", label: "Newsletter", icon: "newsletter" },
       { href: "/admin/etiquettes", label: "Tags", icon: "tag" },
