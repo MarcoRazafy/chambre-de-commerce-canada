@@ -71,7 +71,6 @@ export const NAV_ADMIN: NavGroup[] = [
     items: [
       { href: "/admin/membres", label: "Membres", icon: "users" },
       { href: "/admin/contacts", label: "Contacts", icon: "contacts" },
-      { href: "/admin/annuaire", label: "Annuaire", icon: "annuaire" },
       { href: "/admin/maillage", label: "Maillage", icon: "maillage" },
     ],
   },
@@ -151,7 +150,6 @@ export const TITLES: Record<string, [string, string]> = {
   "/admin/equipe": ["Back-office", "Équipe & accès"],
   "/admin/profil": ["Back-office", "Mon profil"],
   "/admin/membres": ["Back-office", "Membres"],
-  "/admin/annuaire": ["Back-office", "Annuaire"],
   "/admin/contacts": ["Back-office", "Contacts"],
   "/admin/maillage": ["Back-office", "Maillage"],
   "/admin/newsletter": ["Back-office", "Newsletter"],
@@ -198,7 +196,6 @@ const SOUS_PAGES: Record<string, string> = {
 
 const FICHES: Record<string, string> = {
   "/admin/membres": "Fiche du membre",
-  "/admin/annuaire": "Fiche",
   "/admin/evenements": "Événement",
   "/admin/actualites": "Actualité",
   "/admin/ressources": "Ressource",
