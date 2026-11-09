@@ -40,7 +40,7 @@ export async function enregistrerLettre(formData: FormData) {
   // Lettre de l'éditeur visuel : relue et nettoyée ici (couleurs, adresses, longueurs) avant d'être enregistrée
   const brut = texte(formData, "contenu").slice(0, 200000);
   const doc = lireDoc(brut);
-  const contenu = doc ? (doc.blocs.length ? JSON.stringify(doc) : "") : brut.slice(0, 20000);
+  const contenu = doc ? (doc.sections.length ? JSON.stringify(doc) : "") : brut.slice(0, 20000);
   const audience = audienceDe(formData);
   const retourEdition = id ? `/admin/newsletter/${id}` : "/admin/newsletter/nouvelle";
   if (!sujet || !contenu) redirectWithErreur(retourEdition, "Indiquez l’objet et le texte de la lettre.");

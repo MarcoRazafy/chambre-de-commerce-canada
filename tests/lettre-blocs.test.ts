@@ -21,29 +21,40 @@ describe("lettre de la newsletter", () => {
     expect(urlSure("/televersements/lettre-1.webp")).toBe("/televersements/lettre-1.webp");
   });
 
-  it("relit un contenu enregistré en corrigeant ce qui est invalide, et reprend une lettre du premier éditeur", () => {
-    const d = lireDoc(JSON.stringify({ v: 2, bandeau: { image: "javascript:x", titre: "T" }, blocs: [{ type: "bouton", url: "javascript:x", libelle: "Go" }, { type: "inconnu" }], pied: { reseaux: { facebook: "fb.com/x", tiktok: "javascript:y" } } }))!;
-    expect(d.bandeau).toMatchObject({ image: "", titre: "T" });
-    expect(d.blocs).toEqual([expect.objectContaining({ type: "bouton", url: "", libelle: "Go" })]);
-    expect(d.pied.reseaux).toMatchObject({ facebook: "https://fb.com/x", tiktok: "" });
-    const v1 = lireDoc(JSON.stringify({ v: 1, blocs: [{ type: "bandeau", titre: "Ancien" }, { type: "texte", texte: "Bonjour\nà tous" }] }))!;
-    expect(v1.bandeau.titre).toBe("Ancien");
-    expect(v1.blocs).toEqual([expect.objectContaining({ type: "texte", html: "Bonjour<br>à tous" })]);
+  it("relit un contenu enregistré en corrigeant ce qui est invalide (couleurs hors palette, adresses, types)", () => {
+    const d = lireDoc(JSON.stringify({ v: 3, fond: "fuchsia", sections: [
+      { type: "bouton", url: "javascript:x", libelle: "Go", couleurBouton: "#ff00ff", taille: 99 },
+      { type: "inconnu" },
+      { type: "bandeau", image: "javascript:x", titre: "T", fond: "degrade" },
+      { type: "reseaux", liens: { facebook: "fb.com/x", tiktok: "javascript:y" } },
+    ] }))!;
+    expect(d.fond).toBe("brume");
+    expect(d.sections.map((s) => s.type)).toEqual(["bouton", "bandeau", "reseaux"]);
+    expect(d.sections[0]).toMatchObject({ url: "", libelle: "Go", couleurBouton: "rouge", taille: 22 });
+    expect(d.sections[1]).toMatchObject({ image: "", titre: "T", fond: "degrade" });
+    expect(d.sections[2]).toMatchObject({ liens: { facebook: "https://fb.com/x", tiktok: "" } });
     expect(lireDoc("Bonjour,\n\ntexte simple")).toBeNull();
   });
 
-  it("produit le courriel : logo, bandeau, variables, images absolues, réseaux remplis, pied, désabonnement", () => {
-    const base = docVide({ linkedin: "https://linkedin.com/x" });
-    const doc: DocLettre = {
-      ...base,
-      apercu: "Pour {prenom}",
-      blocs: [{ id: "a", type: "image", url: "/televersements/a.webp", lien: "", alt: "" }, { id: "b", type: "texte", html: "Chez <b>{entreprise}</b>" }],
-    };
+  it("reprend une lettre des éditeurs précédents", () => {
+    const v2 = lireDoc(JSON.stringify({ v: 2, bandeau: { titre: "Ancien" }, blocs: [{ type: "texte", html: "Bonjour" }], appel: { actif: true, titre: "Venez" }, pied: { reseaux: { linkedin: "https://l.in/x" } } }))!;
+    expect(v2.sections.map((s) => s.type)).toEqual(["logo", "bandeau", "texte", "appel", "reseaux", "pied"]);
+    expect(v2.sections[1]).toMatchObject({ titre: "Ancien" });
+  });
+
+  it("produit le courriel : couleurs de la palette, variables, images absolues, réseaux remplis, désabonnement", () => {
+    const doc: DocLettre = { ...docVide({ linkedin: "https://linkedin.com/x" }), apercu: "Pour {prenom}" };
+    doc.sections.push(
+      { id: "a", type: "image", fond: "", align: "center", url: "/televersements/a.webp", lien: "", alt: "", largeur: 100 },
+      { id: "b", type: "texte", fond: "menthe", align: "left", html: "Chez <b>{entreprise}</b>", taille: 16, couleur: "vert" },
+    );
     const html = versHtml(doc, O);
     expect(html).toContain("Pour Noro");
     expect(html).toContain("https://site.mg/marque/logo-couleur.png");
     expect(html).toContain('src="https://site.mg/televersements/a.webp"');
     expect(html).toContain("Chez <strong>Bio Sud</strong>");
+    expect(html).toContain("background-color:#e3f3ea");
+    expect(html).toContain("color:#007140");
     expect(html).toContain("/marque/reseaux/linkedin.png");
     expect(html).not.toContain("/marque/reseaux/facebook.png");
     expect(html).toContain("https://site.mg/desabonnement?x");

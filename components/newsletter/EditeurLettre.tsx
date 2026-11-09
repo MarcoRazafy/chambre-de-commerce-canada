@@ -38,7 +38,7 @@ export function EditeurLettre({
             <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet du courriel</span>
             <input name="sujet" required maxLength={200} defaultValue={lettre?.sujet ?? ""} placeholder="Ex. Les rendez-vous de la Chambre en décembre" className={CHAMP} />
           </label>
-          <EditeurBlocs initial={initial} />
+          <EditeurBlocs initial={initial} reseaux={reseaux} />
         </div>
       </Panneau>
 

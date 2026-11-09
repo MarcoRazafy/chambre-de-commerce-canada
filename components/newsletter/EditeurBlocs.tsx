@@ -2,40 +2,51 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
+  AlignCenter,
+  AlignLeft,
+  AlignRight,
   ArrowDown,
   ArrowUp,
   Bold,
-  EyeOff,
-  Heading,
+  Copy,
   Image as IconeImage,
   ImagePlus,
   Italic,
   Link2,
   List,
   Loader2,
-  MousePointerClick,
+  Paintbrush,
   Plus,
   Trash2,
-  Type,
   Underline,
+  X,
 } from "lucide-react";
 import { televerserImageLettre } from "@/lib/actions/newsletter";
 import {
-  ACCENT,
-  blocVide,
+  COULEURS,
+  DEGRADE,
+  hex,
   LARGEUR,
   nettoyerHtml,
+  nouvelId,
+  PALETTE,
   RESEAUX,
+  sectionVide,
+  TYPES_SECTION,
   urlSure,
   VARIABLES,
   versHtml,
-  type Bloc,
+  type Align,
+  type Couleur,
   type DocLettre,
+  type Fond,
   type Reseau,
-  type TypeBloc,
+  type Section,
+  type TypeSection,
 } from "@/lib/lettre-blocs";
 
 const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
+const BLEU = "#3b82f6"; // repères de l'éditeur (survol, sélection) : jamais dans la lettre
 
 // Lettre envoyée : son rendu exact, dans un cadre
 export function ApercuLettre({ doc, hauteur = 720 }: { doc: DocLettre; hauteur?: number }) {
@@ -53,21 +64,31 @@ export function ApercuLettre({ doc, hauteur = 720 }: { doc: DocLettre; hauteur?:
   return <iframe title="Aperçu de la lettre" srcDoc={html} sandbox="" className="w-full bg-white rounded-[var(--radius-m)] border border-line" style={{ height: hauteur }} />;
 }
 
-async function televerser(f: File): Promise<string | { erreur: string }> {
+const fondCss = (f: Fond, image = ""): CSSProperties =>
+  image
+    ? { backgroundColor: hex("rouge"), backgroundImage: `url('${image}')`, backgroundSize: "cover", backgroundPosition: "center" }
+    : f === "degrade"
+      ? { backgroundColor: hex("rouge"), backgroundImage: DEGRADE }
+      : f
+        ? { backgroundColor: hex(f) }
+        : {};
+
+async function televerser(f: File): Promise<string | null> {
   const fd = new FormData();
   fd.set("image", f);
   const r = await televerserImageLettre(fd).catch(() => ({ erreur: "Le téléversement n’a pas abouti." }));
-  return "url" in r ? r.url : r;
+  if ("url" in r) return r.url;
+  window.alert(r.erreur);
+  return null;
 }
-
 const demanderLien = (actuel: string, question = "Adresse du lien (https://…) — vide pour retirer") => {
   const r = window.prompt(question, actuel);
   return r === null ? null : urlSure(r);
 };
 
-// Texte simple modifiable sur place (titre, libellé de bouton…)
-function Editable({ valeur, onChange, className = "", style, placeholder, multiligne = false }: {
-  valeur: string; onChange: (v: string) => void; className?: string; style?: CSSProperties; placeholder: string; multiligne?: boolean;
+// Texte simple modifiable sur place
+function Editable({ valeur, onChange, style, placeholder, multiligne = false }: {
+  valeur: string; onChange: (v: string) => void; style?: CSSProperties; placeholder: string; multiligne?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -85,14 +106,14 @@ function Editable({ valeur, onChange, className = "", style, placeholder, multil
       onInput={(e) => onChange(e.currentTarget.innerText.replace(/\n$/, ""))}
       onKeyDown={(e) => { if (!multiligne && e.key === "Enter") e.preventDefault(); }}
       onPaste={(e) => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain")); }}
-      className={`outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 hover:ring-1 hover:ring-[#3b82f6]/40 empty:before:content-[attr(data-vide)] empty:before:opacity-50 ${className}`}
+      className="outline-none rounded-sm cursor-text whitespace-pre-wrap focus:ring-2 focus:ring-[#3b82f6]/60 empty:before:content-[attr(data-vide)] empty:before:opacity-50"
       style={style}
     />
   );
 }
 
-// Texte mis en forme modifiable sur place, avec sa barre (gras, italique, souligné, lien, liste, variable)
-function TexteRiche({ html, onChange }: { html: string; onChange: (h: string) => void }) {
+// Texte mis en forme modifiable sur place, avec sa barre (gras, italique, souligné, lien, liste, variables)
+function TexteRiche({ html, onChange, style }: { html: string; onChange: (h: string) => void; style: CSSProperties }) {
   const ref = useRef<HTMLDivElement>(null);
   const [initial] = useState(html);
   const [actif, setActif] = useState(false);
@@ -105,7 +126,7 @@ function TexteRiche({ html, onChange }: { html: string; onChange: (h: string) =>
   return (
     <div className="relative" onFocus={() => setActif(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setActif(false); }}>
       {actif ? (
-        <div className="absolute -top-11 left-0 z-20 flex items-center gap-0.5 rounded-lg bg-[#0f1d2c] px-1 py-1 shadow-lg" onMouseDown={(e) => e.preventDefault()}>
+        <div className="absolute -top-11 left-0 z-30 flex items-center gap-0.5 rounded-lg bg-[#0f1d2c] px-1 py-1 shadow-lg" onMouseDown={(e) => e.preventDefault()}>
           <button type="button" className={B} onClick={() => commande("bold")} aria-label="Gras" title="Gras"><Bold size={14} /></button>
           <button type="button" className={B} onClick={() => commande("italic")} aria-label="Italique" title="Italique"><Italic size={14} /></button>
           <button type="button" className={B} onClick={() => commande("underline")} aria-label="Souligné" title="Souligné"><Underline size={14} /></button>
@@ -113,9 +134,8 @@ function TexteRiche({ html, onChange }: { html: string; onChange: (h: string) =>
           <button type="button" className={B} onClick={() => commande("insertUnorderedList")} aria-label="Liste" title="Liste à puces"><List size={14} /></button>
           <span className="w-px h-5 bg-white/20 mx-1" />
           {VARIABLES.map((v) => (
-            <button key={v.cle} type="button" onClick={() => commande("insertText", `{${v.cle}}`)} className="h-8 px-2 rounded-md border-0 bg-transparent text-[11.5px] font-semibold text-white/85 cursor-pointer hover:bg-white/15" title={`Insérer : ${v.libelle} du destinataire`}>
-              {v.libelle}
-            </button>
+            <button key={v.cle} type="button" onClick={() => commande("insertText", `{${v.cle}}`)} title={`Insérer : ${v.libelle} du destinataire`}
+              className="h-8 px-2 rounded-md border-0 bg-transparent text-[11.5px] font-semibold text-white/85 cursor-pointer hover:bg-white/15">{v.libelle}</button>
           ))}
         </div>
       ) : null}
@@ -129,55 +149,48 @@ function TexteRiche({ html, onChange }: { html: string; onChange: (h: string) =>
         onInput={(e) => onChange(nettoyerHtml(e.currentTarget.innerHTML))}
         onPaste={(e) => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain")); }}
         dangerouslySetInnerHTML={{ __html: initial }}
-        className="outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 hover:ring-1 hover:ring-[#3b82f6]/40 [&_a]:text-[#ad0707] [&_a]:no-underline [&_ul]:pl-6 [&_ul]:list-disc [&_p]:m-0 [&_p]:mb-3"
-        style={{ fontSize: 15, lineHeight: 1.6, color: "#6b6b6b" }}
+        className="outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 [&_a]:text-[#ad0707] [&_a]:no-underline [&_ul]:pl-6 [&_ul]:list-disc [&_p]:m-0 [&_p]:mb-3"
+        style={style}
       />
     </div>
   );
 }
 
-// Un élément de la lettre, avec sa barre d'outils au survol
-function Element({ children, outils, className = "" }: { children: ReactNode; outils: ReactNode; className?: string }) {
+function BoutonImage({ onUrl, libelle, sombre = true }: { onUrl: (u: string) => void; libelle: string; sombre?: boolean }) {
+  const [enCours, setEnCours] = useState(false);
   return (
-    <div className={`group/el relative ${className}`}>
-      <div className="absolute -right-2 -top-3 z-10 hidden group-hover/el:flex group-focus-within/el:flex items-center gap-0.5 rounded-lg bg-[#0f1d2c] p-0.5 shadow-lg">{outils}</div>
-      {children}
-    </div>
-  );
-}
-function Outil({ libelle, onClick, children, disabled }: { libelle: string; onClick: () => void; children: ReactNode; disabled?: boolean }) {
-  return (
-    <button type="button" onClick={onClick} disabled={disabled} aria-label={libelle} title={libelle}
-      className="h-7 min-w-7 px-1.5 grid place-items-center rounded-md border-0 bg-transparent text-white/85 text-[11.5px] font-semibold cursor-pointer hover:bg-white/15 disabled:opacity-30 disabled:cursor-not-allowed">
-      {children}
-    </button>
+    <label className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[12.5px] font-semibold cursor-pointer ${sombre ? "bg-[#0f1d2c] text-white hover:bg-[#1b2f45]" : "bg-white text-[#0f1d2c] border border-line hover:border-[#0f1d2c]"} ${enCours ? "opacity-60 pointer-events-none" : ""}`}>
+      {enCours ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {libelle}
+      <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
+        const f = e.target.files?.[0];
+        e.target.value = "";
+        if (!f) return;
+        setEnCours(true);
+        const u = await televerser(f);
+        setEnCours(false);
+        if (u) onUrl(u);
+      }} />
+    </label>
   );
 }
 
-// « + » entre deux éléments : titre, texte, image, bouton
-function Inserer({ onAjout }: { onAjout: (t: TypeBloc) => void }) {
+// « + » entre deux sections : toutes les sections possibles
+function Inserer({ onAjout }: { onAjout: (t: TypeSection) => void }) {
   const [ouvert, setOuvert] = useState(false);
-  const choix: [TypeBloc, string, ReactNode][] = [
-    ["titre", "Titre", <Heading key="t" size={14} />],
-    ["texte", "Texte", <Type key="x" size={14} />],
-    ["image", "Image", <IconeImage key="i" size={14} />],
-    ["bouton", "Bouton", <MousePointerClick key="b" size={14} />],
-  ];
   return (
-    <div className="group/ins relative h-5 -my-2.5 z-[5] flex items-center justify-center">
-      <span className={`absolute inset-x-6 h-px bg-[#3b82f6] ${ouvert ? "opacity-100" : "opacity-0 group-hover/ins:opacity-100"}`} />
+    <div className="group/ins relative h-4 -my-2 z-20 flex items-center justify-center">
+      <span className={`absolute inset-x-0 h-0.5 ${ouvert ? "opacity-100" : "opacity-0 group-hover/ins:opacity-100"}`} style={{ background: BLEU }} />
       {ouvert ? (
-        <div className="relative flex items-center gap-1 rounded-full bg-[#0f1d2c] p-1 shadow-lg">
-          {choix.map(([t, l, i]) => (
-            <button key={t} type="button" onClick={() => { onAjout(t); setOuvert(false); }} className="inline-flex items-center gap-1.5 h-7 px-2.5 rounded-full border-0 bg-transparent text-white text-[12px] font-semibold cursor-pointer hover:bg-white/15">
-              {i} {l}
-            </button>
+        <div className="relative flex flex-wrap justify-center items-center gap-1 rounded-xl bg-[#0f1d2c] p-1.5 shadow-xl max-w-[560px]">
+          {TYPES_SECTION.map((t) => (
+            <button key={t.type} type="button" onClick={() => { onAjout(t.type); setOuvert(false); }}
+              className="h-7 px-2.5 rounded-md border-0 bg-transparent text-white text-[12px] font-semibold cursor-pointer hover:bg-white/15">{t.libelle}</button>
           ))}
-          <button type="button" onClick={() => setOuvert(false)} className="h-7 px-2 rounded-full border-0 bg-transparent text-white/60 text-[12px] cursor-pointer hover:text-white">Annuler</button>
+          <button type="button" onClick={() => setOuvert(false)} aria-label="Annuler" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-white/60 cursor-pointer hover:text-white"><X size={14} /></button>
         </div>
       ) : (
-        <button type="button" onClick={() => setOuvert(true)} aria-label="Ajouter un élément ici" title="Ajouter un titre, un texte, une image ou un bouton"
-          className="relative w-6 h-6 rounded-full border-0 bg-[#3b82f6] text-white grid place-items-center cursor-pointer opacity-0 group-hover/ins:opacity-100 focus:opacity-100 shadow">
+        <button type="button" onClick={() => setOuvert(true)} aria-label="Ajouter une section ici" title="Ajouter une section ici"
+          className="relative w-6 h-6 rounded-full border-0 text-white grid place-items-center cursor-pointer opacity-0 group-hover/ins:opacity-100 focus:opacity-100 shadow" style={{ background: BLEU }}>
           <Plus size={14} />
         </button>
       )}
@@ -185,39 +198,91 @@ function Inserer({ onAjout }: { onAjout: (t: TypeBloc) => void }) {
   );
 }
 
-function BoutonTeleverser({ onUrl, libelle, clair = false }: { onUrl: (u: string) => void; libelle: string; clair?: boolean }) {
-  const [enCours, setEnCours] = useState(false);
+// Pastilles de la palette
+function Nuancier({ libelle, valeur, onChange, fond = false }: { libelle: string; valeur: string; onChange: (c: never) => void; fond?: boolean }) {
+  const choix: { cle: string; style: CSSProperties; nom: string }[] = [
+    ...(fond ? [{ cle: "", style: { background: "repeating-linear-gradient(45deg,#fff 0 4px,#e5e7eb 4px 8px)" }, nom: "Aucun" }, { cle: "degrade", style: { backgroundImage: DEGRADE }, nom: "Dégradé rouge → vert" }] : []),
+    ...COULEURS.map((c) => ({ cle: c, style: { background: hex(c) }, nom: PALETTE[c].libelle })),
+  ];
   return (
-    <label className={`inline-flex items-center gap-1.5 h-8 px-3 rounded-md text-[12.5px] font-semibold cursor-pointer ${clair ? "bg-white/90 text-[#0f1d2c] hover:bg-white" : "bg-[#0f1d2c] text-white hover:bg-[#1b2f45]"} ${enCours ? "opacity-60 pointer-events-none" : ""}`}>
-      {enCours ? <Loader2 size={14} className="animate-spin" /> : <ImagePlus size={14} />} {libelle}
-      <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
-        const f = e.target.files?.[0];
-        e.target.value = "";
-        if (!f) return;
-        setEnCours(true);
-        const r = await televerser(f);
-        setEnCours(false);
-        if (typeof r === "string") onUrl(r);
-        else window.alert(r.erreur);
-      }} />
+    <div>
+      <div className="text-[11.5px] font-semibold text-muted mb-1.5">{libelle}</div>
+      <div className="flex flex-wrap gap-1.5">
+        {choix.map((c) => (
+          <button key={c.cle || "aucun"} type="button" onClick={() => (onChange as (v: string) => void)(c.cle)} title={c.nom} aria-label={c.nom} aria-pressed={valeur === c.cle}
+            className={`w-7 h-7 rounded-full border cursor-pointer ${valeur === c.cle ? "ring-2 ring-offset-2 ring-[#3b82f6] border-transparent" : "border-[#d5d8dd]"}`} style={c.style} />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function Curseur({ libelle, valeur, min, max, onChange, unite = "px" }: { libelle: string; valeur: number; min: number; max: number; onChange: (n: number) => void; unite?: string }) {
+  return (
+    <label className="block min-w-[160px]">
+      <span className="block text-[11.5px] font-semibold text-muted mb-1">{libelle} : {valeur} {unite}</span>
+      <input type="range" min={min} max={max} value={valeur} onChange={(e) => onChange(Number(e.target.value))} className="w-full accent-[#ad0707]" />
     </label>
   );
 }
 
-// Éditeur : la lettre telle qu'elle sera reçue, modifiable directement
-export function EditeurBlocs({ initial }: { initial: DocLettre }) {
+function Alignement({ valeur, onChange }: { valeur: Align; onChange: (a: Align) => void }) {
+  const choix: [Align, ReactNode, string][] = [["left", <AlignLeft key="l" size={14} />, "Gauche"], ["center", <AlignCenter key="c" size={14} />, "Centre"], ["right", <AlignRight key="r" size={14} />, "Droite"]];
+  return (
+    <div>
+      <div className="text-[11.5px] font-semibold text-muted mb-1.5">Alignement</div>
+      <div className="inline-flex rounded-md border border-line p-0.5 bg-surface-2">
+        {choix.map(([a, i, l]) => (
+          <button key={a} type="button" onClick={() => onChange(a)} aria-label={l} aria-pressed={valeur === a}
+            className={`w-8 h-7 grid place-items-center rounded border-0 cursor-pointer ${valeur === a ? "bg-white text-ink shadow-sm" : "bg-transparent text-muted"}`}>{i}</button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Réglages d'une section : taille, couleurs de la palette, fond, alignement, et ce qui lui est propre
+function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
+  const m = maj as (c: Record<string, unknown>) => void;
+  return (
+    <div className="flex flex-wrap gap-x-6 gap-y-4 rounded-b-lg border border-t-0 px-4 py-3.5 bg-white text-left" style={{ borderColor: BLEU, fontFamily: "var(--font-texte)" }}>
+      {"taille" in s ? <Curseur libelle="Taille du texte" valeur={s.taille} min={s.type === "bandeau" ? 18 : s.type === "pied" ? 10 : 11} max={s.type === "bandeau" ? 56 : s.type === "titre" || s.type === "appel" ? 44 : 24} onChange={(taille) => m({ taille })} /> : null}
+      {s.type === "image" ? <Curseur libelle="Largeur" valeur={s.largeur} min={20} max={100} unite="%" onChange={(largeur) => m({ largeur })} /> : null}
+      {s.type === "espace" ? <Curseur libelle="Hauteur" valeur={s.hauteur} min={4} max={120} onChange={(hauteur) => m({ hauteur })} /> : null}
+      {"couleur" in s ? <Nuancier libelle={s.type === "separateur" ? "Couleur de la ligne" : "Couleur du texte"} valeur={s.couleur} onChange={((couleur: Couleur) => m({ couleur })) as never} /> : null}
+      {"couleurBouton" in s ? <Nuancier libelle="Couleur du bouton" valeur={s.couleurBouton} onChange={((couleurBouton: Couleur) => m({ couleurBouton })) as never} /> : null}
+      {s.type === "appel" ? <Nuancier libelle="Texte du bouton" valeur={s.couleurTexteBouton} onChange={((couleurTexteBouton: Couleur) => m({ couleurTexteBouton })) as never} /> : null}
+      <Nuancier fond libelle="Fond de la section" valeur={s.fond} onChange={((fond: Fond) => m({ fond })) as never} />
+      {s.type !== "espace" && s.type !== "separateur" ? <Alignement valeur={s.align} onChange={(align) => m({ align })} /> : null}
+    </div>
+  );
+}
+
+// Éditeur : la lettre telle qu'elle sera reçue, faite de sections modifiables, déplaçables, supprimables
+export function EditeurBlocs({ initial, reseaux }: { initial: DocLettre; reseaux: Partial<Record<Reseau, string>> }) {
   const [doc, setDoc] = useState<DocLettre>(initial);
-  const majBloc = (id: string, c: Partial<Bloc>) => setDoc((d) => ({ ...d, blocs: d.blocs.map((b) => (b.id === id ? ({ ...b, ...c } as Bloc) : b)) }));
-  const inserer = (i: number, t: TypeBloc) => setDoc((d) => ({ ...d, blocs: [...d.blocs.slice(0, i), blocVide(t), ...d.blocs.slice(i)] }));
+  const [choisie, setChoisie] = useState<string | null>(null);
+  const [style, setStyle] = useState<string | null>(null);
+
+  const maj = (id: string, c: Partial<Section>) => setDoc((d) => ({ ...d, sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...c } as Section) : s)) }));
+  const inserer = (i: number, t: TypeSection) => {
+    const s = sectionVide(t, reseaux);
+    setDoc((d) => ({ ...d, sections: [...d.sections.slice(0, i), s, ...d.sections.slice(i)] }));
+    setChoisie(s.id);
+  };
   const deplacer = (i: number, sens: -1 | 1) => setDoc((d) => {
     const j = i + sens;
-    if (j < 0 || j >= d.blocs.length) return d;
-    const blocs = [...d.blocs];
-    [blocs[i], blocs[j]] = [blocs[j], blocs[i]];
-    return { ...d, blocs };
+    if (j < 0 || j >= d.sections.length) return d;
+    const sections = [...d.sections];
+    [sections[i], sections[j]] = [sections[j], sections[i]];
+    return { ...d, sections };
   });
-  const retirer = (id: string) => setDoc((d) => ({ ...d, blocs: d.blocs.filter((b) => b.id !== id) }));
-  const ba = doc.bandeau;
+  const dupliquer = (i: number) => {
+    const copie = { ...structuredClone(doc.sections[i]), id: nouvelId() };
+    setDoc((d) => ({ ...d, sections: [...d.sections.slice(0, i + 1), copie, ...d.sections.slice(i + 1)] }));
+    setChoisie(copie.id);
+  };
+  const supprimer = (id: string) => setDoc((d) => ({ ...d, sections: d.sections.filter((s) => s.id !== id) }));
 
   return (
     <div className="flex flex-col gap-3">
@@ -227,178 +292,188 @@ export function EditeurBlocs({ initial }: { initial: DocLettre }) {
         <input value={doc.apercu} maxLength={200} onChange={(e) => setDoc({ ...doc, apercu: e.target.value })} placeholder="Ex. Le programme du mois et deux places offertes"
           className="w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent" />
       </label>
-      <p className="m-0 text-[12px] text-muted">Cliquez sur un texte pour l’écrire. Survolez un élément pour le déplacer ou le supprimer, et passez entre deux éléments pour en ajouter un (+).</p>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="m-0 text-[12px] text-muted">Cliquez sur un texte pour l’écrire. Survolez une section pour la régler (<Paintbrush size={11} className="inline" />), la déplacer, la dupliquer ou la supprimer ; passez entre deux sections pour en ajouter une.</p>
+        <div className="flex items-center gap-2 text-[12px] text-muted">
+          Fond autour :
+          {(["brume", "blanc", "ciel", "menthe", "rose"] as Couleur[]).map((c) => (
+            <button key={c} type="button" onClick={() => setDoc({ ...doc, fond: c })} title={PALETTE[c].libelle} aria-label={PALETTE[c].libelle} aria-pressed={doc.fond === c}
+              className={`w-5 h-5 rounded-full border cursor-pointer ${doc.fond === c ? "ring-2 ring-offset-1 ring-[#3b82f6]" : "border-[#d5d8dd]"}`} style={{ background: hex(c) }} />
+          ))}
+        </div>
+      </div>
 
-      <div className="rounded-[var(--radius-m)] border border-line bg-[#f4f5f7] px-3 py-8 overflow-x-auto">
-        <div className="mx-auto bg-white" style={{ maxWidth: LARGEUR, fontFamily: "Arial, Helvetica, sans-serif" }}>
-          {/* Logo */}
-          <div className="flex justify-center pt-6 pb-5">
-            {/* eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel */}
-            <img src="/marque/logo-couleur.png" alt="IMPACT 261" style={{ width: 190, height: "auto" }} />
-          </div>
-
-          {/* Bandeau */}
-          <div className="group/el relative px-0 pb-7">
-            <div className="rounded-2xl px-10 py-16 text-right bg-cover bg-center" style={{ backgroundColor: ACCENT, backgroundImage: ba.image ? `url('${ba.image}')` : undefined }}>
-              <Editable valeur={ba.titre} onChange={(titre) => setDoc((d) => ({ ...d, bandeau: { ...d.bandeau, titre } }))} placeholder="Titre du bandeau"
-                style={{ fontFamily: "Georgia, 'Times New Roman', serif", fontSize: 40, lineHeight: 1.1, fontWeight: "bold", color: "#fff" }} />
-              <Editable valeur={ba.sousTitre} onChange={(sousTitre) => setDoc((d) => ({ ...d, bandeau: { ...d.bandeau, sousTitre } }))} placeholder="Sous-titre"
-                className="mt-2.5" style={{ fontSize: 20, lineHeight: 1.3, fontWeight: "bold", color: "#fff" }} />
-            </div>
-            <div className="absolute left-3 top-3 hidden group-hover/el:flex group-focus-within/el:flex gap-1.5">
-              <BoutonTeleverser clair libelle={ba.image ? "Changer l’image" : "Image du bandeau"} onUrl={(image) => setDoc((d) => ({ ...d, bandeau: { ...d.bandeau, image } }))} />
-              <button type="button" onClick={() => { const u = demanderLien(ba.image, "Adresse d’une image (https://…)"); if (u !== null) setDoc((d) => ({ ...d, bandeau: { ...d.bandeau, image: u } })); }}
-                className="h-8 px-3 rounded-md border-0 bg-white/90 text-[#0f1d2c] text-[12.5px] font-semibold cursor-pointer hover:bg-white"><Link2 size={13} className="inline -mt-0.5" /> Lien</button>
-              {ba.image ? <button type="button" onClick={() => setDoc((d) => ({ ...d, bandeau: { ...d.bandeau, image: "" } }))} className="h-8 px-3 rounded-md border-0 bg-white/90 text-[#0f1d2c] text-[12.5px] font-semibold cursor-pointer hover:bg-white">Retirer</button> : null}
-            </div>
-          </div>
-
-          {/* Contenu */}
-          <div className="px-6">
-            <Inserer onAjout={(t) => inserer(0, t)} />
-            {doc.blocs.map((b, i) => (
-              <div key={b.id}>
-                <Element
-                  className="py-2.5"
-                  outils={
-                    <>
-                      {b.type === "image" && b.url ? (
-                        <>
-                          <BoutonTeleverserOutil onUrl={(url) => majBloc(b.id, { url })} />
-                          <Outil libelle="Lien au clic" onClick={() => { const u = demanderLien(b.lien); if (u !== null) majBloc(b.id, { lien: u }); }}><Link2 size={13} /></Outil>
-                        </>
-                      ) : null}
-                      {b.type === "bouton" ? (
-                        <Outil libelle={b.url ? `Lien : ${b.url}` : "Ajouter le lien du bouton"} onClick={() => { const u = demanderLien(b.url); if (u !== null) majBloc(b.id, { url: u }); }}>
-                          <span className="inline-flex items-center gap-1"><Link2 size={13} /> {b.url ? "Lien" : "Lien ?"}</span>
-                        </Outil>
-                      ) : null}
-                      <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
-                      <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === doc.blocs.length - 1}><ArrowDown size={13} /></Outil>
-                      <Outil libelle="Supprimer" onClick={() => retirer(b.id)}><Trash2 size={13} /></Outil>
-                    </>
-                  }
-                >
-                  <ContenuBloc bloc={b} maj={(c) => majBloc(b.id, c)} />
-                </Element>
+      <div className="rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto" style={{ background: hex(doc.fond) }}>
+        <div className="mx-auto bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
+          <Inserer onAjout={(t) => inserer(0, t)} />
+          {doc.sections.map((s, i) => {
+            const actif = choisie === s.id;
+            const libelle = TYPES_SECTION.find((t) => t.type === s.type)!.libelle;
+            return (
+              <div key={s.id}>
+                <div className="group/sec relative" onClick={() => setChoisie(s.id)}>
+                  <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sec:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
+                  <div className={`absolute right-1 -top-3.5 z-20 items-center gap-0.5 rounded-lg bg-[#0f1d2c] p-0.5 shadow-lg ${actif ? "flex" : "hidden group-hover/sec:flex"}`}>
+                    <span className="px-2 text-[11px] font-semibold text-white/60">{libelle}</span>
+                    <Outil libelle="Style" actif={style === s.id} onClick={() => setStyle(style === s.id ? null : s.id)}><Paintbrush size={13} /></Outil>
+                    <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
+                    <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === doc.sections.length - 1}><ArrowDown size={13} /></Outil>
+                    <Outil libelle="Dupliquer" onClick={() => dupliquer(i)}><Copy size={13} /></Outil>
+                    <Outil libelle="Supprimer la section" onClick={() => supprimer(s.id)}><Trash2 size={13} /></Outil>
+                  </div>
+                  <RenduSection s={s} maj={(c) => maj(s.id, c)} actif={actif} />
+                </div>
+                {style === s.id ? <Style s={s} maj={(c) => maj(s.id, c)} /> : null}
                 <Inserer onAjout={(t) => inserer(i + 1, t)} />
               </div>
-            ))}
-          </div>
-          <div className="h-5" />
-
-          {/* Encadré d'appel */}
-          {doc.appel.actif ? (
-            <Element outils={
-              <>
-                <Outil libelle={doc.appel.url ? `Lien : ${doc.appel.url}` : "Ajouter le lien du bouton"} onClick={() => { const u = demanderLien(doc.appel.url); if (u !== null) setDoc((d) => ({ ...d, appel: { ...d.appel, url: u } })); }}>
-                  <span className="inline-flex items-center gap-1"><Link2 size={13} /> {doc.appel.url ? "Lien" : "Lien ?"}</span>
-                </Outil>
-                <Outil libelle="Masquer l’encadré" onClick={() => setDoc((d) => ({ ...d, appel: { ...d.appel, actif: false } }))}><EyeOff size={13} /></Outil>
-              </>
-            }>
-              <div className="px-6 py-8 text-center" style={{ background: ACCENT }}>
-                <Editable valeur={doc.appel.titre} onChange={(titre) => setDoc((d) => ({ ...d, appel: { ...d.appel, titre } }))} placeholder="Titre de l’encadré"
-                  className="mb-3.5" style={{ fontSize: 28, lineHeight: 1.25, color: "#fff" }} />
-                <span className="inline-block bg-white px-2.5 py-2">
-                  <Editable valeur={doc.appel.bouton} onChange={(bouton) => setDoc((d) => ({ ...d, appel: { ...d.appel, bouton } }))} placeholder="Texte du bouton"
-                    style={{ fontSize: 16, fontWeight: "bold", color: ACCENT }} />
-                </span>
-              </div>
-            </Element>
-          ) : (
-            <button type="button" onClick={() => setDoc((d) => ({ ...d, appel: { ...d.appel, actif: true } }))}
-              className="mx-6 mb-2 w-[calc(100%-48px)] py-3 rounded-md border border-dashed border-[#c9c9c9] bg-transparent text-[13px] font-semibold text-[#8a8a8a] cursor-pointer hover:border-[#ad0707] hover:text-[#ad0707]">
-              <Plus size={14} className="inline -mt-0.5" /> Ajouter l’encadré d’appel (titre + bouton sur fond rouge)
-            </button>
-          )}
-
-          {/* Pied de page */}
-          <div className="px-10 pt-7 pb-8 text-center" style={{ background: "#efece0", fontSize: 12, lineHeight: 1.5, color: "#5a5a5a" }}>
-            <div className="flex justify-center gap-2.5 mb-5">
-              {RESEAUX.map((r) => (
-                <ReseauIcone key={r} reseau={r} url={doc.pied.reseaux[r]} onChange={(u) => setDoc((d) => ({ ...d, pied: { ...d.pied, reseaux: { ...d.pied.reseaux, [r]: u } } }))} />
-              ))}
-            </div>
-            <Editable multiligne valeur={doc.pied.texte} onChange={(texte) => setDoc((d) => ({ ...d, pied: { ...d.pied, texte } }))} placeholder="Présentation de la Chambre" className="mb-3.5 whitespace-pre-line" />
-            <p className="m-0">
-              <span style={{ color: ACCENT }}>Politique de confidentialité</span><br />
-              {COORDONNEES_APERCU.adresse}<br />
-              <span style={{ color: ACCENT }}>{COORDONNEES_APERCU.email}</span> | {COORDONNEES_APERCU.telephone}
-            </p>
-            <p className="m-0 mt-3.5">© {new Date().getFullYear()} Chambre de Commerce et de Coopération Canada–Madagascar.<br />Tous droits réservés.</p>
-          </div>
-          <div className="px-6 py-4 text-center" style={{ background: "#f1f1f1", fontSize: 12, color: "#8a8a8a" }}>
-            Vous recevez ce message en tant que membre de la Chambre. Les abonnés y trouvent le lien pour se désabonner.
-          </div>
+            );
+          })}
+          {!doc.sections.length ? <p className="m-0 py-16 text-center text-[13px] text-muted">Lettre vide : survolez ce cadre et cliquez sur « + » pour ajouter une section.</p> : null}
         </div>
+        <p className="mx-auto mt-3 text-center text-[11.5px]" style={{ maxWidth: LARGEUR, color: hex("ardoise") }}>
+          Vous recevez ce message en tant que membre de la Chambre. Les abonnés trouvent ici le lien pour se désabonner (toujours présent).
+        </p>
       </div>
     </div>
   );
 }
 
-function BoutonTeleverserOutil({ onUrl }: { onUrl: (u: string) => void }) {
-  const [enCours, setEnCours] = useState(false);
+function Outil({ libelle, onClick, children, disabled, actif }: { libelle: string; onClick: () => void; children: ReactNode; disabled?: boolean; actif?: boolean }) {
   return (
-    <label title="Changer l’image" className="h-7 min-w-7 px-1.5 grid place-items-center rounded-md text-white/85 cursor-pointer hover:bg-white/15">
-      {enCours ? <Loader2 size={13} className="animate-spin" /> : <ImagePlus size={13} />}
-      <input type="file" accept="image/*" className="sr-only" onChange={async (e) => {
-        const f = e.target.files?.[0];
-        e.target.value = "";
-        if (!f) return;
-        setEnCours(true);
-        const r = await televerser(f);
-        setEnCours(false);
-        if (typeof r === "string") onUrl(r);
-        else window.alert(r.erreur);
-      }} />
-    </label>
-  );
-}
-
-function ReseauIcone({ reseau, url, onChange }: { reseau: Reseau; url: string; onChange: (u: string) => void }) {
-  const nom = reseau.charAt(0).toUpperCase() + reseau.slice(1);
-  return (
-    <button type="button" onClick={() => { const u = demanderLien(url, `Adresse de votre page ${nom} — vide pour ne pas l’afficher`); if (u !== null) onChange(u); }}
-      title={url ? `${nom} : ${url}` : `${nom} : cliquez pour ajouter l’adresse (masqué dans le courriel tant qu’elle est vide)`}
-      className={`relative p-0 border-0 bg-transparent cursor-pointer rounded-full transition-opacity hover:opacity-100 ${url ? "" : "opacity-25"}`}>
-      {/* eslint-disable-next-line @next/next/no-img-element -- mêmes icônes que dans le courriel */}
-      <img src={`/marque/reseaux/${reseau}.png`} alt={nom} width={48} height={48} className="block" />
-      {url ? null : <span className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full bg-[#3b82f6] text-white grid place-items-center"><Plus size={12} /></span>}
+    <button type="button" onClick={(e) => { e.stopPropagation(); onClick(); }} disabled={disabled} aria-label={libelle} title={libelle}
+      className={`h-7 min-w-7 px-1.5 grid place-items-center rounded-md border-0 text-[11.5px] font-semibold cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${actif ? "bg-white text-[#0f1d2c]" : "bg-transparent text-white/85 hover:bg-white/15"}`}>
+      {children}
     </button>
   );
 }
 
-function ContenuBloc({ bloc: b, maj }: { bloc: Bloc; maj: (c: Partial<Bloc>) => void }) {
-  switch (b.type) {
-    case "titre":
-      return <Editable valeur={b.texte} onChange={(texte) => maj({ texte })} placeholder="Titre" style={{ fontSize: 17, lineHeight: 1.4, fontWeight: "bold", color: "#3a3a3a" }} />;
-    case "texte":
-      return <TexteRiche html={b.html} onChange={(html) => maj({ html })} />;
-    case "image":
-      return b.url ? (
-        // eslint-disable-next-line @next/next/no-img-element -- image de la lettre, de taille quelconque
-        <img src={b.url} alt={b.alt} className="block w-full h-auto rounded-xl" />
-      ) : (
-        <div className="flex flex-col items-center justify-center gap-2.5 py-10 rounded-xl border-2 border-dashed border-[#d5d8dd] bg-[#fafbfc] text-[#8a8a8a]">
-          <IconeImage size={26} />
-          <div className="flex gap-2">
-            <BoutonTeleverser libelle="Téléverser une image" onUrl={(url) => maj({ url })} />
-            <button type="button" onClick={() => { const u = demanderLien("", "Adresse d’une image (https://…)"); if (u) maj({ url: u }); }}
-              className="h-8 px-3 rounded-md border border-[#d5d8dd] bg-white text-[12.5px] font-semibold text-[#3a3a3a] cursor-pointer hover:border-[#0f1d2c]">
-              <Link2 size={13} className="inline -mt-0.5" /> Lien d’une image
-            </button>
+// Petite barre d'actions propre à une section (image, liens), affichée quand elle est choisie
+function Actions({ children }: { children: ReactNode }) {
+  return <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>{children}</div>;
+}
+function ActionLien({ libelle, url, onChange }: { libelle: string; url: string; onChange: (u: string) => void }) {
+  return (
+    <button type="button" onClick={() => { const u = demanderLien(url); if (u !== null) onChange(u); }} title={url || "Aucun lien"}
+      className={`inline-flex items-center gap-1 h-8 px-3 rounded-md border-0 text-[12.5px] font-semibold cursor-pointer ${url ? "bg-[#0f1d2c] text-white" : "bg-[#b45309] text-white"}`}>
+      <Link2 size={13} /> {url ? libelle : `${libelle} (à ajouter)`}
+    </button>
+  );
+}
+
+function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>) => void; actif: boolean }) {
+  const m = maj as (c: Record<string, unknown>) => void;
+  const cadre = (contenu: ReactNode, padding: string, extra?: ReactNode) => (
+    <div className="relative" style={{ ...fondCss(s.fond), padding, textAlign: s.align }}>
+      {actif ? extra : null}
+      {contenu}
+    </div>
+  );
+  switch (s.type) {
+    case "logo":
+      // eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel
+      return cadre(<img src="/marque/logo-couleur.png" alt="IMPACT 261" style={{ width: 190, height: "auto", display: "inline-block" }} />, "24px 32px 18px");
+    case "bandeau":
+      return (
+        <div className="relative" style={{ padding: "0 0 24px" }}>
+          {actif ? (
+            <Actions>
+              <BoutonImage libelle={s.image ? "Changer l’image" : "Image de fond"} onUrl={(image) => m({ image })} />
+              <button type="button" onClick={() => { const u = demanderLien(s.image, "Adresse d’une image (https://…)"); if (u !== null) m({ image: u }); }}
+                className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer"><Link2 size={13} className="inline -mt-0.5" /> Lien d’image</button>
+              {s.image ? <button type="button" onClick={() => m({ image: "" })} className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer">Retirer l’image</button> : null}
+            </Actions>
+          ) : null}
+          <div style={{ ...fondCss(s.fond, s.image), borderRadius: 16, padding: "56px 40px", textAlign: s.align }}>
+            <Editable valeur={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre du bandeau"
+              style={{ fontSize: s.taille, lineHeight: 1.12, fontWeight: 800, letterSpacing: "-0.02em", color: hex(s.couleur) }} />
+            <Editable valeur={s.sousTitre} onChange={(sousTitre) => m({ sousTitre })} placeholder="Sous-titre"
+              style={{ marginTop: 10, fontSize: Math.round(s.taille * 0.5), lineHeight: 1.35, fontWeight: 600, color: hex(s.couleur) }} />
           </div>
         </div>
       );
-    case "bouton":
-      return (
-        <div className="text-center">
-          <span className="inline-block rounded-md px-6 py-3" style={{ background: ACCENT }}>
-            <Editable valeur={b.libelle} onChange={(libelle) => maj({ libelle })} placeholder="Texte du bouton" style={{ fontSize: 15, fontWeight: "bold", color: "#fff" }} />
-          </span>
-          {!b.url ? <div className="mt-1.5 text-[11.5px] text-[#b45309]">Ce bouton n’a pas encore de lien : survolez-le, puis « Lien ».</div> : null}
-        </div>
+    case "titre":
+      return cadre(<Editable valeur={s.texte} onChange={(texte) => m({ texte })} placeholder="Titre"
+        style={{ fontSize: s.taille, lineHeight: 1.3, fontWeight: 700, letterSpacing: "-0.015em", color: hex(s.couleur) }} />, "16px 32px 6px");
+    case "texte":
+      return cadre(<TexteRiche html={s.html} onChange={(html) => m({ html })} style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />, "12px 32px");
+    case "image":
+      return cadre(
+        s.url ? (
+          // eslint-disable-next-line @next/next/no-img-element -- image de la lettre, de taille quelconque
+          <img src={s.url} alt={s.alt} style={{ display: "inline-block", width: `${s.largeur}%`, height: "auto", borderRadius: 12 }} />
+        ) : (
+          <div className="flex flex-col items-center justify-center gap-2.5 py-10 rounded-xl border-2 border-dashed border-[#d5d8dd] bg-[#fafbfc] text-[#8a8a8a]" onClick={(e) => e.stopPropagation()}>
+            <IconeImage size={26} />
+            <div className="flex gap-2">
+              <BoutonImage libelle="Téléverser une image" onUrl={(url) => m({ url })} />
+              <button type="button" onClick={() => { const u = demanderLien("", "Adresse d’une image (https://…)"); if (u) m({ url: u }); }}
+                className="h-8 px-3 rounded-md border border-[#d5d8dd] bg-white text-[12.5px] font-semibold text-[#16202b] cursor-pointer hover:border-[#0f1d2c]"><Link2 size={13} className="inline -mt-0.5" /> Lien d’une image</button>
+            </div>
+          </div>
+        ),
+        "12px 32px",
+        s.url ? (
+          <Actions>
+            <BoutonImage libelle="Changer" onUrl={(url) => m({ url })} />
+            <ActionLien libelle="Lien au clic" url={s.lien} onChange={(lien) => m({ lien })} />
+          </Actions>
+        ) : null,
       );
+    case "bouton":
+      return cadre(
+        <span style={{ display: "inline-block", background: hex(s.couleurBouton), borderRadius: 8, padding: "13px 26px" }}>
+          <Editable valeur={s.libelle} onChange={(libelle) => m({ libelle })} placeholder="Texte du bouton" style={{ fontSize: s.taille, fontWeight: 700, color: hex(s.couleur) }} />
+        </span>,
+        "14px 32px 22px",
+        <Actions><ActionLien libelle="Lien du bouton" url={s.url} onChange={(url) => m({ url })} /></Actions>,
+      );
+    case "appel":
+      return cadre(
+        <>
+          <Editable valeur={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre de l’encadré"
+            style={{ fontSize: s.taille, lineHeight: 1.25, fontWeight: 700, letterSpacing: "-0.015em", color: hex(s.couleur), marginBottom: 16 }} />
+          <span style={{ display: "inline-block", background: hex(s.couleurBouton), borderRadius: 8, padding: "11px 22px" }}>
+            <Editable valeur={s.bouton} onChange={(bouton) => m({ bouton })} placeholder="Texte du bouton" style={{ fontSize: 15, fontWeight: 700, color: hex(s.couleurTexteBouton) }} />
+          </span>
+        </>,
+        "34px 32px",
+        <Actions><ActionLien libelle="Lien du bouton" url={s.url} onChange={(url) => m({ url })} /></Actions>,
+      );
+    case "reseaux":
+      return cadre(
+        <div className="inline-flex gap-2.5" onClick={(e) => e.stopPropagation()}>
+          {RESEAUX.map((r) => {
+            const nom = r.charAt(0).toUpperCase() + r.slice(1);
+            const url = s.liens[r];
+            return (
+              <button key={r} type="button" onClick={() => { const u = demanderLien(url, `Adresse de votre page ${nom} — vide pour ne pas l’afficher`); if (u !== null) m({ liens: { ...s.liens, [r]: u } }); }}
+                title={url ? `${nom} : ${url}` : `${nom} : cliquez pour ajouter l’adresse (masqué dans le courriel tant qu’elle est vide)`}
+                className={`relative p-0 border-0 bg-transparent cursor-pointer rounded-full hover:opacity-100 ${url ? "" : "opacity-25"}`}>
+                {/* eslint-disable-next-line @next/next/no-img-element -- mêmes icônes que dans le courriel */}
+                <img src={`/marque/reseaux/${r}.png`} alt={nom} width={44} height={44} className="block" />
+                {url ? null : <span className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full text-white grid place-items-center" style={{ background: BLEU }}><Plus size={12} /></span>}
+              </button>
+            );
+          })}
+        </div>,
+        "24px 32px 8px",
+      );
+    case "pied":
+      return cadre(
+        <div style={{ fontSize: s.taille, lineHeight: 1.55, color: hex(s.couleur) }}>
+          <Editable multiligne valeur={s.texte} onChange={(texte) => m({ texte })} placeholder="Présentation de la Chambre" style={{ marginBottom: 12 }} />
+          <p style={{ margin: 0 }}>
+            <span style={{ color: hex("rouge") }}>Politique de confidentialité</span><br />
+            {COORDONNEES_APERCU.adresse}<br />
+            <span style={{ color: hex("rouge") }}>{COORDONNEES_APERCU.email}</span> | {COORDONNEES_APERCU.telephone}
+          </p>
+          <p style={{ margin: "12px 0 0" }}>© {new Date().getFullYear()} Chambre de Commerce et de Coopération Canada–Madagascar. Tous droits réservés.</p>
+        </div>,
+        "12px 40px 28px",
+      );
+    case "separateur":
+      return cadre(<div style={{ borderTop: `1px solid ${hex(s.couleur)}` }} />, "14px 32px");
+    case "espace":
+      return <div style={{ ...fondCss(s.fond), height: s.hauteur }} />;
   }
 }
