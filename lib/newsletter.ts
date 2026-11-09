@@ -11,11 +11,13 @@ import { lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 export type Audience = {
   statuts: ("a_jour" | "en_attente" | "en_retard")[];
   etiquettes: string[];
+  // Entreprises qui ne reçoivent pas la lettre, même si elles ont un tag choisi
+  exclus: string[];
   contacts: "principal" | "tous";
   abonnes: boolean;
   evenement?: string;
 };
-export const AUDIENCE_DEFAUT: Audience = { statuts: ["a_jour", "en_attente", "en_retard"], etiquettes: [], contacts: "tous", abonnes: true };
+export const AUDIENCE_DEFAUT: Audience = { statuts: ["a_jour", "en_attente", "en_retard"], etiquettes: [], exclus: [], contacts: "tous", abonnes: false };
 export const STATUTS_AUDIENCE: [Audience["statuts"][number], string][] = [
   ["a_jour", "À jour"],
   ["en_attente", "En attente de paiement"],
@@ -28,6 +30,7 @@ export function lireAudience(v: unknown): Audience {
   return {
     statuts,
     etiquettes: Array.isArray(o.etiquettes) ? o.etiquettes.map(String).filter(Boolean) : [],
+    exclus: Array.isArray(o.exclus) ? o.exclus.map(String).filter(Boolean) : [],
     contacts: o.contacts === "principal" ? "principal" : "tous",
     abonnes: o.abonnes === true,
     ...(typeof o.evenement === "string" && o.evenement ? { evenement: o.evenement.slice(0, 40) } : {}),
@@ -65,6 +68,7 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
         member: {
           statut: { in: a.statuts },
           ...(a.etiquettes.length ? { etiquettes: { hasSome: a.etiquettes } } : {}),
+          ...(a.exclus.length ? { NOT: { etiquettes: { hasSome: a.exclus } } } : {}),
         },
       },
       select: { email: true, nom: true, member: { select: { nom: true } } },

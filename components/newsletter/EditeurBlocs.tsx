@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   AlignCenter,
   AlignJustify,
@@ -100,35 +100,11 @@ const demanderLien = (actuel: string, question = "Adresse du lien (https://…) 
   return r === null ? null : urlSure(r);
 };
 
-// Texte simple modifiable sur place
-function Editable({ valeur, onChange, style, placeholder, multiligne = false }: {
-  valeur: string; onChange: (v: string) => void; style?: CSSProperties; placeholder: string; multiligne?: boolean;
-}) {
-  const ref = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    const el = ref.current;
-    if (el && document.activeElement !== el && el.innerText !== valeur) el.innerText = valeur;
-  }, [valeur]);
-  return (
-    <div
-      ref={ref}
-      contentEditable
-      suppressContentEditableWarning
-      role="textbox"
-      aria-label={placeholder}
-      data-vide={placeholder}
-      onInput={(e) => onChange(e.currentTarget.innerText.replace(/\n$/, ""))}
-      onKeyDown={(e) => { if (!multiligne && e.key === "Enter") e.preventDefault(); }}
-      onPaste={(e) => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain")); }}
-      className="outline-none rounded-sm cursor-text whitespace-pre-wrap focus:ring-2 focus:ring-[#3b82f6]/60 empty:before:content-[attr(data-vide)] empty:before:opacity-50"
-      style={style}
-    />
-  );
-}
-
 // Texte mis en forme modifiable sur place, avec sa barre : gras, italique, souligné, couleur (palette),
 // alignement du paragraphe (début, milieu, fin, justifié), listes, lien, variables, effacer la mise en forme
-function TexteRiche({ html, onChange, style }: { html: string; onChange: (h: string) => void; style: CSSProperties }) {
+function TexteRiche({ html, onChange, style, ligne = false, placeholder = "Texte" }: {
+  html: string; onChange: (h: string) => void; style?: CSSProperties; ligne?: boolean; placeholder?: string;
+}) {
   const ref = useRef<HTMLDivElement>(null);
   const [initial] = useState(html);
   const [actif, setActif] = useState(false);
@@ -183,11 +159,13 @@ function TexteRiche({ html, onChange, style }: { html: string; onChange: (h: str
         suppressContentEditableWarning
         role="textbox"
         aria-multiline
-        aria-label="Texte"
+        aria-label={placeholder}
+        data-vide={placeholder}
+        onKeyDown={(e) => { if (ligne && e.key === "Enter") e.preventDefault(); }}
         onInput={(e) => onChange(nettoyerHtml(e.currentTarget.innerHTML))}
         onPaste={(e) => { e.preventDefault(); document.execCommand("insertText", false, e.clipboardData.getData("text/plain")); }}
         dangerouslySetInnerHTML={{ __html: initial }}
-        className="outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 [&_a]:text-[#ad0707] [&_a]:no-underline [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:pl-6 [&_ol]:list-decimal [&_p]:m-0 [&_p]:mb-3"
+        className="outline-none rounded-sm cursor-text focus:ring-2 focus:ring-[#3b82f6]/60 empty:before:content-[attr(data-vide)] empty:before:opacity-50 [&_a]:text-[#ad0707] [&_a]:no-underline [&_ul]:pl-6 [&_ul]:list-disc [&_ol]:pl-6 [&_ol]:list-decimal [&_p]:m-0 [&_p]:mb-3"
         style={style}
       />
     </div>
@@ -435,7 +413,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
     case "logo":
       return cadre(
         // eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel
-        <img src={s.image || "/marque/logo-couleur.png"} alt="Logo" style={{ width: s.largeur, maxWidth: "100%", height: "auto", display: "inline-block" }} />,
+        <img src={s.image || "/marque/logo-couleur.png"} alt="Logo" style={{ width: s.largeur || 150, maxWidth: "100%", height: "auto", display: "inline-block" }} />,
         "24px 32px 18px",
         <Actions>
           <BoutonImage libelle="Changer le logo" onUrl={(image) => m({ image })} />
@@ -456,15 +434,15 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
             </Actions>
           ) : null}
           <div style={{ ...fondCss(s.fond, s.image), borderRadius: 16, padding: "56px 40px", textAlign: s.align }}>
-            <Editable valeur={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre du bandeau"
+            <TexteRiche ligne html={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre du bandeau"
               style={{ fontSize: s.taille, lineHeight: 1.12, fontWeight: 800, letterSpacing: "-0.02em", color: hex(s.couleur) }} />
-            <Editable valeur={s.sousTitre} onChange={(sousTitre) => m({ sousTitre })} placeholder="Sous-titre"
+            <TexteRiche ligne html={s.sousTitre} onChange={(sousTitre) => m({ sousTitre })} placeholder="Sous-titre"
               style={{ marginTop: 10, fontSize: Math.round(s.taille * 0.5), lineHeight: 1.35, fontWeight: 600, color: hex(s.couleur) }} />
           </div>
         </div>
       );
     case "titre":
-      return cadre(<Editable valeur={s.texte} onChange={(texte) => m({ texte })} placeholder="Titre"
+      return cadre(<TexteRiche ligne html={s.texte} onChange={(texte) => m({ texte })} placeholder="Titre"
         style={{ fontSize: s.taille, lineHeight: 1.3, fontWeight: 700, letterSpacing: "-0.015em", color: hex(s.couleur) }} />, "16px 32px 6px");
     case "texte":
       return cadre(<TexteRiche html={s.html} onChange={(html) => m({ html })} style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />, "12px 32px");
@@ -494,7 +472,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
     case "bouton":
       return cadre(
         <span style={{ display: "inline-block", background: hex(s.couleurBouton), borderRadius: 8, padding: "13px 26px" }}>
-          <Editable valeur={s.libelle} onChange={(libelle) => m({ libelle })} placeholder="Texte du bouton" style={{ fontSize: s.taille, fontWeight: 700, color: hex(s.couleur) }} />
+          <TexteRiche ligne html={s.libelle} onChange={(libelle) => m({ libelle })} placeholder="Texte du bouton" style={{ fontSize: s.taille, fontWeight: 700, color: hex(s.couleur) }} />
         </span>,
         "14px 32px 22px",
         <Actions><ActionLien libelle="Lien du bouton" url={s.url} onChange={(url) => m({ url })} /></Actions>,
@@ -502,10 +480,10 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
     case "appel":
       return cadre(
         <>
-          <Editable valeur={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre de l’encadré"
+          <TexteRiche ligne html={s.titre} onChange={(titre) => m({ titre })} placeholder="Titre de l’encadré"
             style={{ fontSize: s.taille, lineHeight: 1.25, fontWeight: 700, letterSpacing: "-0.015em", color: hex(s.couleur), marginBottom: 16 }} />
           <span style={{ display: "inline-block", background: hex(s.couleurBouton), borderRadius: 8, padding: "11px 22px" }}>
-            <Editable valeur={s.bouton} onChange={(bouton) => m({ bouton })} placeholder="Texte du bouton" style={{ fontSize: 15, fontWeight: 700, color: hex(s.couleurTexteBouton) }} />
+            <TexteRiche ligne html={s.bouton} onChange={(bouton) => m({ bouton })} placeholder="Texte du bouton" style={{ fontSize: 15, fontWeight: 700, color: hex(s.couleurTexteBouton) }} />
           </span>
         </>,
         "34px 32px",
@@ -534,16 +512,16 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
       const lien = { color: hex("rouge") };
       return cadre(
         <div style={{ fontSize: s.taille, lineHeight: 1.55, color: hex(s.couleur) }}>
-          <Editable multiligne valeur={s.texte} onChange={(texte) => m({ texte })} placeholder="Présentation de la Chambre" style={{ marginBottom: 12 }} />
+          <TexteRiche html={s.texte} onChange={(texte) => m({ texte })} placeholder="Présentation de la Chambre" style={{ marginBottom: 12 }} />
           <button type="button" onClick={(e) => { e.stopPropagation(); const u = demanderLien(s.confidentialite, "Adresse de la politique de confidentialité — vide pour la retirer"); if (u !== null) m({ confidentialite: u }); }}
             title={s.confidentialite || "Ajouter le lien"} className="p-0 border-0 bg-transparent cursor-pointer hover:underline" style={{ ...lien, fontSize: s.taille, opacity: s.confidentialite ? 1 : 0.4 }}>
             Politique de confidentialité{s.confidentialite ? "" : " (cliquez pour ajouter le lien)"}
           </button>
-          <Editable valeur={s.adresse} onChange={(adresse) => m({ adresse })} placeholder="Adresse" />
+          <TexteRiche ligne html={s.adresse} onChange={(adresse) => m({ adresse })} placeholder="Adresse" />
           <div className="flex justify-center items-baseline gap-1 flex-wrap" style={{ justifyContent: s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center" }}>
-            <Editable valeur={s.email} onChange={(email) => m({ email })} placeholder="Courriel" style={lien} /> | <Editable valeur={s.telephone} onChange={(telephone) => m({ telephone })} placeholder="Téléphone" />
+            <TexteRiche ligne html={s.email} onChange={(email) => m({ email })} placeholder="Courriel" style={lien} /> | <TexteRiche ligne html={s.telephone} onChange={(telephone) => m({ telephone })} placeholder="Téléphone" />
           </div>
-          <Editable valeur={s.copyright} onChange={(copyright) => m({ copyright })} placeholder="Copyright" style={{ marginTop: 12 }} />
+          <TexteRiche ligne html={s.copyright} onChange={(copyright) => m({ copyright })} placeholder="Copyright" style={{ marginTop: 12 }} />
         </div>,
         "12px 40px 28px",
       );

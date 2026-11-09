@@ -21,8 +21,10 @@ const SANS_COURRIELS = "L’envoi de courriels n’est pas configuré (variables
 
 function audienceDe(fd: FormData): Audience {
   return lireAudience({
-    statuts: fd.getAll("statuts").map(String),
+    // Tous les membres actifs ; les tags choisis restreignent, les tags exclus retirent
+    statuts: ["a_jour", "en_attente", "en_retard"],
     etiquettes: fd.getAll("etiquettes").map(String),
+    exclus: fd.getAll("exclus").map(String),
     contacts: texte(fd, "contacts"),
     abonnes: fd.get("abonnes") === "1",
     evenement: texte(fd, "evenement"),

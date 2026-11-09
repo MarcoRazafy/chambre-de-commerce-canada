@@ -1,14 +1,14 @@
-import { CalendarClock, Eye, Save, Send, TestTube } from "lucide-react";
+import { CalendarClock, Save, Send, TestTube } from "lucide-react";
 import { Panneau } from "@/components/admin/ui";
 import { enregistrerLettre } from "@/lib/actions/newsletter";
 import { DELAI_MAX_JOURS, programmationParDefaut } from "@/lib/lettres";
-import { STATUTS_AUDIENCE, type Audience } from "@/lib/newsletter";
+import type { Audience } from "@/lib/newsletter";
 import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
+import { SelecteurTags } from "@/components/newsletter/SelecteurTags";
 import { docDepuisTexte, docVide, lireDoc } from "@/lib/lettre-blocs";
 import { COORDONNEES } from "@/lib/coordonnees";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
-const CASE = "inline-flex items-center gap-2 text-[13.4px] text-ink cursor-pointer";
 
 // Rédaction d'une lettre : objet, éditeur visuel en blocs, audience ; brouillon, test, envoi
 export function EditeurLettre({
@@ -43,68 +43,40 @@ export function EditeurLettre({
       </Panneau>
 
       <div className="flex flex-col gap-4 lg:sticky lg:top-[88px]">
-        <Panneau titre="Destinataires" teinte="bleu" sousTitre={nbDestinataires !== null ? `${nbDestinataires} adresse${nbDestinataires > 1 ? "s" : ""} avec l’audience enregistrée` : undefined}>
-          {evenement ? (
-            <div className="flex flex-col gap-2 text-[13.4px] text-ink">
-              <input type="hidden" name="evenement" value={evenement.id} />
-              <p className="m-0">Les inscrits de <b>« {evenement.titre} »</b>, une fois par adresse (sauf ceux notés absents).</p>
-              <p className="m-0 text-[12px] text-faint">Pour écrire à tous les membres, partez d’une nouvelle lettre depuis la page Newsletter.</p>
-            </div>
-          ) : (
-          <div className="flex flex-col gap-3">
-            <div>
-              <div className="text-[12.5px] font-semibold text-muted mb-1.5">Contacts des membres</div>
-              <div className="flex flex-col gap-1.5">
-                {STATUTS_AUDIENCE.map(([k, l]) => (
-                  <label key={k} className={CASE}><input type="checkbox" name="statuts" value={k} defaultChecked={audience.statuts.includes(k)} className="w-4 h-4 accent-[var(--accent)]" />{l}</label>
-                ))}
+        <Panneau titre="Envoi" teinte="rouge" sousTitre={nbDestinataires !== null ? `${nbDestinataires} destinataire${nbDestinataires > 1 ? "s" : ""} avec les tags enregistrés` : undefined}>
+          <div className="flex flex-col gap-4">
+            {evenement ? (
+              <div className="flex flex-col gap-1.5 text-[13.4px] text-ink">
+                <input type="hidden" name="evenement" value={evenement.id} />
+                <p className="m-0">Les inscrits de <b>« {evenement.titre} »</b>, une fois par adresse (sauf ceux notés absents).</p>
               </div>
-            </div>
-            <label className="block">
-              <span className="block text-[12.5px] font-semibold text-muted mb-1">Chez chaque membre</span>
-              <select name="contacts" defaultValue={audience.contacts} className={CHAMP}>
-                <option value="tous">Tous les contacts</option>
-                <option value="principal">Le contact principal seulement</option>
-              </select>
-            </label>
-            {etiquettes.length ? (
-              <label className="block">
-                <span className="block text-[12.5px] font-semibold text-muted mb-1">Seulement les entreprises avec le tag</span>
-                <select name="etiquettes" multiple size={Math.min(6, etiquettes.length)} defaultValue={audience.etiquettes} className={CHAMP}>
-                  {etiquettes.map((e) => <option key={e} value={e}>{e}</option>)}
-                </select>
-                <span className="block mt-1 text-[12px] text-faint">Aucune sélection : tous les membres des statuts cochés.</span>
-              </label>
-            ) : null}
-            <label className={`${CASE} pt-2 border-t border-line`}>
-              <input type="checkbox" name="abonnes" value="1" defaultChecked={audience.abonnes} className="w-4 h-4 accent-[var(--accent)]" />
-              Abonnés à la lettre d’information
-            </label>
-          </div>
-          )}
-        </Panneau>
+            ) : (
+              <>
+                <div>
+                  <div className="text-[12.5px] font-semibold text-ink mb-1">Envoyer aux entreprises avec le tag</div>
+                  <SelecteurTags name="etiquettes" options={etiquettes} initiaux={audience.etiquettes} bouton="Ajouter un tag" />
+                  <p className="m-0 mt-1.5 text-[11.5px] text-faint">Sans tag : tous les membres.</p>
+                </div>
+                <div>
+                  <div className="text-[12.5px] font-semibold text-ink mb-1">Ne pas envoyer aux entreprises avec le tag</div>
+                  <SelecteurTags name="exclus" ton="gris" options={etiquettes} initiaux={audience.exclus} bouton="Exclure un tag" />
+                </div>
+              </>
+            )}
 
-        <div className="flex flex-col gap-2">
-          <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink"><Save size={14} /> Enregistrer le brouillon</button>
-          <button type="submit" name="intention" value="test" className="btn-contour btn-contour-sm text-ink"><TestTube size={14} /> M’envoyer un test</button>
-          <p className="m-0 text-[12px] text-faint flex items-start gap-1.5"><Eye size={13} className="shrink-0 mt-px" />Enregistrez pour voir le nombre de destinataires.</p>
-        </div>
-
-        <div id="envoi" className="scroll-mt-24">
-          <Panneau titre="Envoi" teinte="rouge" sousTitre="Tout de suite, ou à la date et l’heure de votre choix">
-            <div className="flex flex-col gap-3">
+            <div className="pt-4 border-t border-line flex flex-col gap-2">
               <button type="submit" name="intention" value="envoyer" className="btn-action btn-action-sm"><Send size={14} /> Envoyer maintenant</button>
-              <div className="pt-3 border-t border-line flex flex-col gap-2">
-                <label className="block">
-                  <span className="block text-[12.5px] font-semibold text-muted mb-1">Programmer pour le (heure de Madagascar)</span>
-                  <input type="datetime-local" name="programmeeLe" defaultValue={programmationParDefaut()} className={CHAMP} />
-                </label>
-                <button type="submit" name="intention" value="programmer" className="btn-contour btn-contour-sm text-ink"><CalendarClock size={14} /> Programmer l’envoi</button>
-                <span className="text-[12px] text-faint">Jusqu’à {DELAI_MAX_JOURS} jours à l’avance ; elle part dans les 5 minutes qui suivent l’heure choisie. Les destinataires sont lus au moment de l’envoi (un désabonnement entre-temps est respecté). Une lettre programmée peut être annulée tant qu’elle n’est pas partie.</span>
+              <div className="flex gap-2">
+                <input type="datetime-local" name="programmeeLe" defaultValue={programmationParDefaut()} aria-label="Date et heure d’envoi (heure de Madagascar)" className={`${CHAMP} flex-1 min-w-0`} />
+                <button type="submit" name="intention" value="programmer" className="btn-contour btn-contour-sm text-ink shrink-0" title={`Envoi automatique à la date choisie (heure de Madagascar, jusqu’à ${DELAI_MAX_JOURS} jours à l’avance)`}><CalendarClock size={14} /> Programmer</button>
               </div>
             </div>
-          </Panneau>
-        </div>
+            <div className="flex gap-2">
+              <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink flex-1"><Save size={14} /> Brouillon</button>
+              <button type="submit" name="intention" value="test" className="btn-contour btn-contour-sm text-ink flex-1"><TestTube size={14} /> M’envoyer un test</button>
+            </div>
+          </div>
+        </Panneau>
       </div>
     </form>
   );

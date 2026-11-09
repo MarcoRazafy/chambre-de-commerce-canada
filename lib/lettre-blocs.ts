@@ -155,7 +155,7 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
   const id = nouvelId();
   switch (type) {
     case "logo":
-      return { id, type, fond: "", align: "center", image: "", largeur: 190 };
+      return { id, type, fond: "", align: "center", image: "", largeur: 150 };
     case "bandeau":
       return { id, type, fond: "degrade", align: "left", image: "", titre: "La lettre de la Chambre", sousTitre: "Canada – Madagascar", taille: 34, couleur: "blanc" };
     case "titre":
@@ -198,6 +198,15 @@ export function docDepuisTexte(sujet: string, contenu: string, reseaux: Partial<
   return { v: 3, apercu: "", fond: "brume", sections: [sectionVide("logo"), bandeau, ...textes, sectionVide("reseaux", reseaux), sectionVide("pied")] };
 }
 
+// Texte d'une section : mis en forme (nettoyé), ou texte simple (échappé, retours à la ligne gardés)
+const riche = (v: unknown, max = 3000) => {
+  const t = chaine(v, max);
+  return /<[a-z/][^>]*>|&[a-z#0-9]+;/i.test(t) ? nettoyerHtml(t) : enHtml(t);
+};
+// Le texte seul, sans balise (adresse d'un lien mailto, version texte du courriel)
+export const sansBalise = (h: string) =>
+  h.replace(/<br>|<\/p>|<\/li>/g, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
+
 function lireSection(s: unknown): Section | null {
   if (!s || typeof s !== "object") return null;
   const o = s as Record<string, unknown>;
@@ -209,26 +218,26 @@ function lireSection(s: unknown): Section | null {
     case "logo":
       return { ...d, ...base, image: urlSure(o.image), largeur: entier(o.largeur, 60, 400, d.largeur) };
     case "bandeau":
-      return { ...d, ...base, image: urlSure(o.image), titre: chaine(o.titre, 200), sousTitre: chaine(o.sousTitre, 300), taille: entier(o.taille, 18, 56, d.taille), couleur: couleur(o.couleur, d.couleur) };
+      return { ...d, ...base, image: urlSure(o.image), titre: riche(o.titre, 1000), sousTitre: riche(o.sousTitre, 1000), taille: entier(o.taille, 18, 56, d.taille), couleur: couleur(o.couleur, d.couleur) };
     case "titre":
-      return { ...d, ...base, texte: chaine(o.texte, 300), taille: entier(o.taille, 14, 44, d.taille), couleur: couleur(o.couleur, d.couleur) };
+      return { ...d, ...base, texte: riche(o.texte, 1000), taille: entier(o.taille, 14, 44, d.taille), couleur: couleur(o.couleur, d.couleur) };
     case "texte":
       return { ...d, ...base, html: nettoyerHtml(typeof o.html === "string" ? o.html : enHtml(chaine(o.texte))), taille: entier(o.taille, 11, 24, d.taille), couleur: couleur(o.couleur, d.couleur) };
     case "image":
       return { ...d, ...base, url: urlSure(o.url), lien: urlSure(o.lien), alt: chaine(o.alt, 200), largeur: entier(o.largeur, 20, 100, d.largeur) };
     case "bouton":
-      return { ...d, ...base, libelle: chaine(o.libelle, 80), url: urlSure(o.url), couleurBouton: couleur(o.couleurBouton, d.couleurBouton), couleur: couleur(o.couleur, d.couleur), taille: entier(o.taille, 12, 22, d.taille) };
+      return { ...d, ...base, libelle: riche(o.libelle, 400), url: urlSure(o.url), couleurBouton: couleur(o.couleurBouton, d.couleurBouton), couleur: couleur(o.couleur, d.couleur), taille: entier(o.taille, 12, 22, d.taille) };
     case "appel":
-      return { ...d, ...base, titre: chaine(o.titre, 200), bouton: chaine(o.bouton, 80), url: urlSure(o.url), taille: entier(o.taille, 16, 40, d.taille), couleur: couleur(o.couleur, d.couleur), couleurBouton: couleur(o.couleurBouton, d.couleurBouton), couleurTexteBouton: couleur(o.couleurTexteBouton, d.couleurTexteBouton) };
+      return { ...d, ...base, titre: riche(o.titre, 1000), bouton: riche(o.bouton, 400), url: urlSure(o.url), taille: entier(o.taille, 16, 40, d.taille), couleur: couleur(o.couleur, d.couleur), couleurBouton: couleur(o.couleurBouton, d.couleurBouton), couleurTexteBouton: couleur(o.couleurTexteBouton, d.couleurTexteBouton) };
     case "reseaux": {
       const l = (o.liens ?? {}) as Record<string, unknown>;
       return { ...d, ...base, liens: Object.fromEntries(RESEAUX.map((r) => [r, urlSure(l[r])])) as Record<Reseau, string> };
     }
     case "pied": {
-      const champ = (k: keyof typeof PIED_DEFAUT, max = 200) => (typeof o[k] === "string" ? chaine(o[k], max) : d[k]);
+      const champ = (k: keyof typeof PIED_DEFAUT, max = 1000) => (typeof o[k] === "string" ? riche(o[k], max) : d[k]);
       return {
-        ...d, ...base, texte: chaine(o.texte, 1000), confidentialite: typeof o.confidentialite === "string" ? urlSure(o.confidentialite) : d.confidentialite,
-        adresse: champ("adresse"), email: champ("email"), telephone: champ("telephone"), copyright: champ("copyright", 300),
+        ...d, ...base, texte: riche(o.texte, 3000), confidentialite: typeof o.confidentialite === "string" ? urlSure(o.confidentialite) : d.confidentialite,
+        adresse: champ("adresse"), email: champ("email"), telephone: champ("telephone"), copyright: champ("copyright"),
         couleur: couleur(o.couleur, d.couleur), taille: entier(o.taille, 10, 16, d.taille),
       };
     }
@@ -305,6 +314,7 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
       .replace(/<p style="text-align:(\w+)">/g, '<p style="margin:0 0 12px;text-align:$1">')
       .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 12px;padding-left:22px">');
   const v = (t: string) => echapper(remplacer(t, o.vars));
+  const r = (h: string) => riche(h).replace(/<p( style="text-align:\w+")?>/g, "<div$1>").replace(/<\/p>/g, "</div>");
   const cellule = (s: Section, contenu: string, pad = "12px 32px") =>
     `<tr><td align="${s.align}" style="${styleFond(s.fond)}padding:${pad};text-align:${s.align}">${contenu}</td></tr>`;
 
@@ -313,9 +323,9 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
       case "logo":
         return cellule(s, `<img src="${echapper(s.image ? abs(s.image) : `${o.base}/marque/logo-couleur.png`)}" width="${s.largeur}" alt="Logo" style="display:inline-block;width:${s.largeur}px;max-width:100%;height:auto;border:0">`, "24px 32px 18px");
       case "bandeau":
-        return `<tr><td style="padding:0 0 24px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="${s.align}" ${s.image ? `background="${echapper(abs(s.image))}" ` : ""}style="${styleFond(s.fond, s.image, abs)}border-radius:16px;padding:56px 40px;text-align:${s.align}">${s.titre ? `<div style="font-size:${s.taille}px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:${hex(s.couleur)}">${v(s.titre)}</div>` : ""}${s.sousTitre ? `<div style="margin-top:10px;font-size:${Math.round(s.taille * 0.5)}px;line-height:1.35;font-weight:600;color:${hex(s.couleur)}">${v(s.sousTitre)}</div>` : ""}</td></tr></table></td></tr>`;
+        return `<tr><td style="padding:0 0 24px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="${s.align}" ${s.image ? `background="${echapper(abs(s.image))}" ` : ""}style="${styleFond(s.fond, s.image, abs)}border-radius:16px;padding:56px 40px;text-align:${s.align}">${s.titre ? `<div style="font-size:${s.taille}px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:${hex(s.couleur)}">${r(s.titre)}</div>` : ""}${s.sousTitre ? `<div style="margin-top:10px;font-size:${Math.round(s.taille * 0.5)}px;line-height:1.35;font-weight:600;color:${hex(s.couleur)}">${r(s.sousTitre)}</div>` : ""}</td></tr></table></td></tr>`;
       case "titre":
-        return cellule(s, `<h2 style="margin:0;font-size:${s.taille}px;line-height:1.3;font-weight:700;letter-spacing:-0.015em;color:${hex(s.couleur)}">${v(s.texte)}</h2>`, "16px 32px 6px");
+        return cellule(s, `<h2 style="margin:0;font-size:${s.taille}px;line-height:1.3;font-weight:700;letter-spacing:-0.015em;color:${hex(s.couleur)}">${r(s.texte)}</h2>`, "16px 32px 6px");
       case "texte":
         return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.65;color:${hex(s.couleur)}">${riche(s.html)}</div>`);
       case "image": {
@@ -325,9 +335,9 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
         return cellule(s, s.lien ? `<a href="${echapper(abs(s.lien))}">${img}</a>` : img);
       }
       case "bouton":
-        return cellule(s, `<a href="${echapper(abs(s.url) || "#")}" style="display:inline-block;background:${hex(s.couleurBouton)};color:${hex(s.couleur)};text-decoration:none;font-weight:700;font-size:${s.taille}px;padding:13px 26px;border-radius:8px">${v(s.libelle)}</a>`, "14px 32px 22px");
+        return cellule(s, `<a href="${echapper(abs(s.url) || "#")}" style="display:inline-block;background:${hex(s.couleurBouton)};color:${hex(s.couleur)};text-decoration:none;font-weight:700;font-size:${s.taille}px;padding:13px 26px;border-radius:8px">${r(s.libelle)}</a>`, "14px 32px 22px");
       case "appel":
-        return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.25;font-weight:700;letter-spacing:-0.015em;color:${hex(s.couleur)};margin:0 0 16px">${v(s.titre)}</div>${s.bouton ? `<a href="${echapper(abs(s.url) || "#")}" style="display:inline-block;background:${hex(s.couleurBouton)};color:${hex(s.couleurTexteBouton)};text-decoration:none;font-weight:700;font-size:15px;padding:11px 22px;border-radius:8px">${echapper(s.bouton)}</a>` : ""}`, "34px 32px");
+        return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.25;font-weight:700;letter-spacing:-0.015em;color:${hex(s.couleur)};margin:0 0 16px">${r(s.titre)}</div>${s.bouton ? `<a href="${echapper(abs(s.url) || "#")}" style="display:inline-block;background:${hex(s.couleurBouton)};color:${hex(s.couleurTexteBouton)};text-decoration:none;font-weight:700;font-size:15px;padding:11px 22px;border-radius:8px">${r(s.bouton)}</a>` : ""}`, "34px 32px");
       case "reseaux": {
         const liens = RESEAUX.filter((r) => s.liens[r])
           .map((r) => `<a href="${echapper(s.liens[r])}" style="display:inline-block;margin:0 5px"><img src="${o.base}/marque/reseaux/${r}.png" width="44" height="44" alt="${r}" style="display:block;border:0;width:44px;height:44px"></a>`)
@@ -335,7 +345,7 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
         return liens ? cellule(s, liens, "24px 32px 8px") : "";
       }
       case "pied":
-        return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.55;color:${hex(s.couleur)}">${s.texte ? `<p style="margin:0 0 12px">${enHtml(s.texte)}</p>` : ""}<p style="margin:0">${s.confidentialite ? `<a href="${echapper(s.confidentialite)}" style="${lien}">Politique de confidentialité</a><br>` : ""}${s.adresse ? `${echapper(s.adresse)}<br>` : ""}${s.email ? `<a href="mailto:${echapper(s.email)}" style="${lien}">${echapper(s.email)}</a>` : ""}${s.email && s.telephone ? " | " : ""}${echapper(s.telephone)}</p>${s.copyright ? `<p style="margin:12px 0 0">${echapper(s.copyright)}</p>` : ""}</div>`, "12px 40px 28px");
+        return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.55;color:${hex(s.couleur)}">${s.texte ? `<div style="margin:0 0 12px">${r(s.texte)}</div>` : ""}${s.confidentialite ? `<a href="${echapper(s.confidentialite)}" style="${lien}">Politique de confidentialité</a><br>` : ""}${s.adresse ? `<div>${r(s.adresse)}</div>` : ""}<div>${s.email ? `<a href="mailto:${echapper(sansBalise(s.email))}" style="${lien}">${r(s.email)}</a>` : ""}${s.email && s.telephone ? " | " : ""}${r(s.telephone)}</div>${s.copyright ? `<div style="margin:12px 0 0">${r(s.copyright)}</div>` : ""}</div>`, "12px 40px 28px");
       case "separateur":
         return cellule(s, `<div style="border-top:1px solid ${hex(s.couleur)};height:1px;line-height:1px;font-size:1px">&nbsp;</div>`, "14px 32px");
       case "espace":
@@ -370,7 +380,7 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
       .replace(/&lt;/g, "<")
       .replace(/&gt;/g, ">")
       .trim();
-  const r = (t: string) => remplacer(t, o.vars);
+  const r = (t: string) => sansBalise(remplacer(nettoyerHtml(t), o.vars));
   const lignes = doc.sections.flatMap((s) => {
     switch (s.type) {
       case "bandeau":
@@ -382,9 +392,9 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
       case "bouton":
         return s.url ? [`${r(s.libelle)} : ${s.url}`, ""] : [];
       case "appel":
-        return [r(s.titre), s.url ? `${s.bouton} : ${s.url}` : "", ""];
+        return [r(s.titre), s.url ? `${r(s.bouton)} : ${s.url}` : "", ""];
       case "pied":
-        return ["—", s.texte, s.adresse, [s.email, s.telephone].filter(Boolean).join(" · "), s.copyright, ""];
+        return ["—", r(s.texte), r(s.adresse), [r(s.email), r(s.telephone)].filter(Boolean).join(" · "), r(s.copyright), ""];
       case "separateur":
         return ["—", ""];
       default:

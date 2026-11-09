@@ -48,7 +48,7 @@ vi.mock("@/lib/courriel", () => ({
 }));
 
 const { envoyerLettresDues } = await import("@/lib/newsletter");
-const AUDIENCE = { statuts: [], etiquettes: [], contacts: "tous", abonnes: true };
+const AUDIENCE = { statuts: [], etiquettes: [], exclus: [], contacts: "tous", abonnes: true };
 
 beforeEach(() => {
   courriels.length = 0;
