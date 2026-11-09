@@ -5,7 +5,8 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { courrielsActifs } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
-import { MESSAGE_DEFAUT, RAPPELS, SUJET_DEFAUT } from "@/lib/rappels";
+import { lireDoc } from "@/lib/lettre-blocs";
+import { RAPPELS, SUJET_DEFAUT } from "@/lib/rappels";
 import { envoyerTestRappel } from "@/lib/rappels-envoi";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").replace(/\r\n/g, "\n").trim();
@@ -22,8 +23,9 @@ export async function enregistrerRappels(formData: FormData) {
   const intention = texte(formData, "intention");
   const defaut = intention === "defaut";
   const sujet = texte(formData, "sujet").slice(0, 200);
-  const message = texte(formData, "message").slice(0, 5000);
-  if (!defaut && !message) redirectWithErreur(page, "Le message du rappel ne peut pas être vide.");
+  // Le message vient de l'éditeur de lettre : relu et nettoyé avant d'être enregistré
+  const doc = lireDoc(String(formData.get("message") ?? "").slice(0, 200000));
+  if (!defaut && !doc?.sections.length) redirectWithErreur(page, "Le message du rappel ne peut pas être vide.");
 
   await prisma.event.update({
     where: { id },
@@ -31,7 +33,7 @@ export async function enregistrerRappels(formData: FormData) {
       ...Object.fromEntries(RAPPELS.map((r) => [r.champ, formData.get(r.cle) === "1"])),
       // Le texte par défaut n'est pas recopié : il pourra évoluer sans toucher aux événements
       rappelSujet: defaut || !sujet || sujet === SUJET_DEFAUT ? null : sujet,
-      rappelMessage: defaut || message === MESSAGE_DEFAUT ? null : message,
+      rappelMessage: defaut || !doc ? null : JSON.stringify(doc),
     },
   });
   revalidatePath(`/admin/evenements/${id}`);

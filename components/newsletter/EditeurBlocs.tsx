@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   AlignCenter,
   AlignJustify,
@@ -60,6 +60,8 @@ import {
 } from "@/lib/lettre-blocs";
 
 const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
+// Variables proposées dans la barre de mise en forme (newsletter par défaut ; un rappel a les siennes)
+const VariablesProposees = createContext<readonly { cle: string; libelle: string }[]>(VARIABLES);
 const BLEU = "#3b82f6"; // repères de l'éditeur (survol, sélection) : jamais dans la lettre
 
 // Lettre envoyée : son rendu exact, dans un cadre
@@ -95,7 +97,7 @@ async function televerser(f: File): Promise<string | null> {
   window.alert(r.erreur);
   return null;
 }
-const demanderLien = (actuel: string, question = "Adresse du lien (https://…) — vide pour retirer") => {
+const demanderLien = (actuel: string, question = "Adresse du lien (https://…). Laissez vide pour le retirer.") => {
   const r = window.prompt(question, actuel);
   return r === null ? null : urlSure(r);
 };
@@ -109,6 +111,7 @@ function TexteRiche({ html, onChange, style, ligne = false, placeholder = "Texte
   const [initial] = useState(html);
   const [actif, setActif] = useState(false);
   const [teintes, setTeintes] = useState(false);
+  const variables = useContext(VariablesProposees);
   const commande = (c: string, v?: string) => {
     ref.current?.focus();
     document.execCommand("styleWithCSS", false, "true");
@@ -149,7 +152,7 @@ function TexteRiche({ html, onChange, style, ligne = false, placeholder = "Texte
           <select value="" onChange={(e) => { if (e.target.value) commande("insertText", `{${e.target.value}}`); }} aria-label="Insérer une variable"
             className="h-8 rounded-md border-0 bg-transparent text-[12.5px] font-semibold text-[#16202b] cursor-pointer hover:bg-[#f1f4f7] px-1">
             <option value="">+ Variable</option>
-            {VARIABLES.map((v) => <option key={v.cle} value={v.cle}>{v.libelle}</option>)}
+            {variables.map((v) => <option key={v.cle} value={v.cle}>{v.libelle}</option>)}
           </select>
         </div>
       ) : null}
@@ -300,7 +303,21 @@ function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
 }
 
 // Éditeur : la lettre telle qu'elle sera reçue, faite de sections modifiables, déplaçables, supprimables
-export function EditeurBlocs({ initial, reseaux }: { initial: DocLettre; reseaux: Partial<Record<Reseau, string>> }) {
+export function EditeurBlocs({
+  initial,
+  reseaux,
+  name = "contenu",
+  variables = VARIABLES,
+  apercuBoite = true,
+  mention = "Vous recevez ce message en tant que membre de la Chambre.",
+}: {
+  initial: DocLettre;
+  reseaux: Partial<Record<Reseau, string>>;
+  name?: string;
+  variables?: readonly { cle: string; libelle: string }[];
+  apercuBoite?: boolean;
+  mention?: string;
+}) {
   const [doc, setDoc] = useState<DocLettre>(initial);
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
@@ -326,15 +343,15 @@ export function EditeurBlocs({ initial, reseaux }: { initial: DocLettre; reseaux
   const supprimer = (id: string) => setDoc((d) => ({ ...d, sections: d.sections.filter((s) => s.id !== id) }));
 
   return (
+    <VariablesProposees.Provider value={variables}>
     <div className="flex flex-col gap-3">
-      <input type="hidden" name="contenu" value={JSON.stringify(doc)} />
-      <label className="block">
-        <span className="block text-[12.5px] font-semibold text-muted mb-1">Ligne d’aperçu <span className="font-normal">(petit texte affiché après l’objet dans la boîte de réception)</span></span>
-        <input value={doc.apercu} maxLength={200} onChange={(e) => setDoc({ ...doc, apercu: e.target.value })} placeholder="Ex. Le programme du mois et deux places offertes"
+      <input type="hidden" name={name} value={JSON.stringify(doc)} />
+      {apercuBoite ? <label className="block">
+        <span className="block text-[12.5px] font-semibold text-muted mb-1">Aperçu dans la boîte de réception</span>
+        <input value={doc.apercu} maxLength={200} onChange={(e) => setDoc({ ...doc, apercu: e.target.value })} placeholder="Le texte qui suit l’objet, ex. le programme du mois"
           className="w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent" />
-      </label>
+      </label> : null}
       <div className="flex items-center justify-between gap-3 flex-wrap">
-        <p className="m-0 text-[12px] text-muted">Cliquez sur un texte pour l’écrire. Survolez une section pour la régler (<Paintbrush size={11} className="inline" />), la déplacer, la dupliquer ou la supprimer ; passez entre deux sections pour en ajouter une.</p>
         <div className="flex items-center gap-2 text-[12px] text-muted">
           Fond autour :
           {(["brume", "blanc", "ciel", "menthe", "rose"] as Couleur[]).map((c) => (
@@ -369,13 +386,14 @@ export function EditeurBlocs({ initial, reseaux }: { initial: DocLettre; reseaux
               </div>
             );
           })}
-          {!doc.sections.length ? <p className="m-0 py-16 text-center text-[13px] text-muted">Lettre vide : survolez ce cadre et cliquez sur « + » pour ajouter une section.</p> : null}
+          {!doc.sections.length ? <p className="m-0 py-16 text-center text-[13px] text-muted">Lettre vide. Ajoutez une section avec le « + ».</p> : null}
         </div>
         <p className="mx-auto mt-3 text-center text-[11.5px]" style={{ maxWidth: LARGEUR, color: hex("ardoise") }}>
-          Vous recevez ce message en tant que membre de la Chambre. Les abonnés trouvent ici le lien pour se désabonner (toujours présent).
+          {mention}
         </p>
       </div>
     </div>
+    </VariablesProposees.Provider>
   );
 }
 
@@ -496,8 +514,8 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
             const nom = r.charAt(0).toUpperCase() + r.slice(1);
             const url = s.liens[r];
             return (
-              <button key={r} type="button" onClick={() => { const u = demanderLien(url, `Adresse de votre page ${nom} — vide pour ne pas l’afficher`); if (u !== null) m({ liens: { ...s.liens, [r]: u } }); }}
-                title={url ? `${nom} : ${url}` : `${nom} : cliquez pour ajouter l’adresse (masqué dans le courriel tant qu’elle est vide)`}
+              <button key={r} type="button" onClick={() => { const u = demanderLien(url, `Adresse de votre page ${nom}. Laissez vide pour ne pas l’afficher.`); if (u !== null) m({ liens: { ...s.liens, [r]: u } }); }}
+                title={url ? `${nom} : ${url}` : `${nom} : ajouter l’adresse`}
                 className={`relative p-0 border-0 bg-transparent cursor-pointer rounded-full hover:opacity-100 ${url ? "" : "opacity-25"}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- mêmes icônes que dans le courriel */}
                 <img src={`/marque/reseaux/${r}.png`} alt={nom} width={44} height={44} className="block" />
@@ -513,9 +531,9 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
       return cadre(
         <div style={{ fontSize: s.taille, lineHeight: 1.55, color: hex(s.couleur) }}>
           <TexteRiche html={s.texte} onChange={(texte) => m({ texte })} placeholder="Présentation de la Chambre" style={{ marginBottom: 12 }} />
-          <button type="button" onClick={(e) => { e.stopPropagation(); const u = demanderLien(s.confidentialite, "Adresse de la politique de confidentialité — vide pour la retirer"); if (u !== null) m({ confidentialite: u }); }}
+          <button type="button" onClick={(e) => { e.stopPropagation(); const u = demanderLien(s.confidentialite, "Adresse de la politique de confidentialité. Laissez vide pour la retirer."); if (u !== null) m({ confidentialite: u }); }}
             title={s.confidentialite || "Ajouter le lien"} className="p-0 border-0 bg-transparent cursor-pointer hover:underline" style={{ ...lien, fontSize: s.taille, opacity: s.confidentialite ? 1 : 0.4 }}>
-            Politique de confidentialité{s.confidentialite ? "" : " (cliquez pour ajouter le lien)"}
+            Politique de confidentialité
           </button>
           <TexteRiche ligne html={s.adresse} onChange={(adresse) => m({ adresse })} placeholder="Adresse" />
           <div className="flex justify-center items-baseline gap-1 flex-wrap" style={{ justifyContent: s.align === "left" ? "flex-start" : s.align === "right" ? "flex-end" : "center" }}>

@@ -73,7 +73,8 @@ export const VARIABLES = [
   { cle: "entreprise", libelle: "Entreprise" },
   { cle: "email", libelle: "Courriel" },
 ] as const;
-export type Variables = Partial<Record<(typeof VARIABLES)[number]["cle"], string>>;
+// Valeurs des variables pour un destinataire ({prenom}, {entreprise}… ou celles d'un rappel : {événement}, {date}…)
+export type Variables = Record<string, string | undefined>;
 
 const chaine = (v: unknown, max = 5000) => (typeof v === "string" ? v.slice(0, max) : "");
 const entier = (v: unknown, min: number, max: number, defaut: number) =>
@@ -285,8 +286,9 @@ export function lireDoc(contenu: string, reseaux: Partial<Record<Reseau, string>
   }
 }
 
+// Une variable connue est remplacée ; une variable inconnue reste telle quelle
 const remplacer = (t: string, vars: Variables) =>
-  t.replace(/\{(prenom|nom|entreprise|email)\}/g, (_, k: keyof Variables) => vars[k] ?? "");
+  t.replace(/\{([^{}<>\s][^{}<>]{0,30})\}/g, (tout, k: string) => vars[k.trim().toLowerCase()] ?? tout);
 
 export type OptionsRendu = {
   base: string; // adresse du site, pour le logo, les icônes et les images téléversées
@@ -294,6 +296,7 @@ export type OptionsRendu = {
   mention: string; // pourquoi la personne reçoit ce courriel
   desabonnement: string | null; // lien de désabonnement (abonnés à la lettre)
   coordonnees: { adresse: string; email: string; telephone: string; confidentialite: string };
+  apres?: string; // lignes HTML (<tr>) ajoutées après les sections, ex. les QR codes d'un rappel
 };
 
 // Fond d'une section, pour un courriel (couleur de repli quand le dégradé n'est pas affiché)
@@ -353,6 +356,11 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
     }
   };
 
+  // Ce qui s'ajoute (QR codes d'un rappel) arrive avant les réseaux sociaux et le pied de page de la fin
+  let coupe = doc.sections.length;
+  while (coupe > 0 && ["reseaux", "pied", "separateur", "espace"].includes(doc.sections[coupe - 1].type)) coupe--;
+  const avantFin = doc.sections.slice(0, coupe), fin = doc.sections.slice(coupe);
+
   const bas = `<tr><td style="padding:16px 24px;text-align:center;font-size:11.5px;line-height:1.5;color:${hex("ardoise")}">${echapper(o.mention)}${o.desabonnement ? ` Pour ne plus recevoir ces courriels, <a href="${echapper(o.desabonnement)}" style="${lien}">cliquez ici</a>.` : ""}</td></tr>`;
 
   return `<!doctype html>
@@ -361,7 +369,9 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
 ${doc.apercu ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${v(doc.apercu)}</div>` : ""}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${LARGEUR}px;background:#ffffff;border-radius:14px;overflow:hidden">
-${doc.sections.map(section).join("\n")}
+${avantFin.map(section).join("\n")}
+${o.apres ?? ""}
+${fin.map(section).join("\n")}
 </table>
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:${LARGEUR}px">${bas}</table>
 </td></tr></table></body></html>`;

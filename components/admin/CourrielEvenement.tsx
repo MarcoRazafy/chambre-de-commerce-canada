@@ -6,7 +6,10 @@ import { enregistrerRappels } from "@/lib/actions/rappels";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
-import { debutEvenement, echeance, MESSAGE_DEFAUT, RAPPELS, SUJET_DEFAUT, VARIABLES } from "@/lib/rappels";
+import { debutEvenement, echeance, rappelParDefaut, RAPPELS, SUJET_DEFAUT, VARIABLES_RAPPEL } from "@/lib/rappels";
+import { ApercuLettre, EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
+import { COORDONNEES } from "@/lib/coordonnees";
+import { docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 const PASTILLE = { brouillon: ["Brouillon", "muted"], programmee: ["Programmée", "info"], envoyee: ["Envoyée", "ok"] } as const;
@@ -29,12 +32,16 @@ export async function CourrielEvenement({ eventId, passe, maintenant }: { eventI
   const debut = debutEvenement(toISODate(e.date), e.debut);
   const partis = new Map(envois.map((x) => [x.type, x._count._all]));
   const personnalise = !!(e.rappelSujet || e.rappelMessage);
+  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
+  const docMessage =
+    (e.rappelMessage && lireDoc(e.rappelMessage, reseaux)) ||
+    (e.rappelMessage ? docDepuisTexte(e.titre, e.rappelMessage, reseaux) : rappelParDefaut(reseaux));
 
   return (
     <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px]">
       <Panneau
         titre="Rappels automatiques aux inscrits"
-        sousTitre="Chaque rappel part par courriel, avec le QR code d’entrée des inscrits confirmés."
+        sousTitre="Par courriel, avec le QR code d’entrée."
         teinte="vert"
       >
         <form action={enregistrerRappels} className="flex flex-col gap-4">
@@ -71,13 +78,16 @@ export async function CourrielEvenement({ eventId, passe, maintenant }: { eventI
             <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet du rappel</span>
             <input name="sujet" maxLength={200} defaultValue={e.rappelSujet ?? SUJET_DEFAUT} disabled={passe} className={CHAMP} />
           </label>
-          <label className="block">
-            <span className="block text-[12.5px] font-semibold text-muted mb-1">Message du rappel</span>
-            <textarea name="message" rows={9} maxLength={5000} defaultValue={e.rappelMessage ?? MESSAGE_DEFAUT} disabled={passe} className={`${CHAMP} leading-relaxed`} />
-            <span className="block mt-1 text-[12px] text-faint">
-              {VARIABLES.join(", ")} sont remplacés pour chaque inscrit. Une ligne vide sépare les paragraphes.
-            </span>
-          </label>
+          <div>
+            <span className="block text-[12.5px] font-semibold text-muted mb-2">Message du rappel</span>
+            {passe ? (
+              <ApercuLettre doc={docMessage} hauteur={640} />
+            ) : (
+              <EditeurBlocs initial={docMessage} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} apercuBoite={false}
+                mention="Vous recevez ce rappel car vous êtes inscrit(e) à cet événement." />
+            )}
+            <p className="m-0 mt-2 text-[12px] text-faint">Les QR codes d’entrée s’ajoutent à la fin, pour les inscrits confirmés.</p>
+          </div>
 
           {passe ? null : (
             <div className="flex flex-wrap gap-2">

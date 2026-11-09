@@ -58,7 +58,7 @@ describe("texte du rappel", () => {
 });
 
 // L'envoi, avec une base et des courriels simulés
-const envoyes: { a: string; sujet: string; pieces?: unknown[] }[] = [];
+const envoyes: { a: string; sujet: string; pieces?: unknown[]; html?: string }[] = [];
 const reserves = new Set<string>();
 let evenements: Record<string, unknown>[] = [];
 let inscrits: { nom: string; entreprise: string; email: string; code: string | null; statut: string }[] = [];
@@ -84,11 +84,12 @@ vi.mock("@/lib/db", () => ({
 }));
 vi.mock("@/lib/courriel", () => ({
   courrielsActifs: () => true,
-  envoyerCourriel: async (c: { a: string; sujet: string; pieces?: unknown[] }) => {
+  envoyerCourriel: async (c: { a: string; sujet: string; pieces?: unknown[]; html?: string }) => {
     if (courrielsOk) envoyes.push(c);
     return courrielsOk;
   },
   gabarit: ({ paragraphes }: { paragraphes: string[] }) => ({ html: paragraphes.join("\n"), texte: paragraphes.join("\n") }),
+  urlPublique: async (chemin: string) => `https://site.mg${chemin}`,
 }));
 
 const { envoyerRappelsDus } = await import("@/lib/rappels-envoi");
@@ -115,6 +116,11 @@ describe("envoi des rappels", () => {
     expect(haja.sujet).toBe("Rappel : Gala");
     expect(haja.pieces).toHaveLength(2);
     expect(envoyes.find((c) => c.a === "toky@s.mg")!.pieces).toHaveLength(0);
+    // Le rappel par défaut, en lettre : bandeau de l'événement, prénom, QR codes avant le pied de page
+    expect(haja.html).toContain("Bonjour Haja");
+    expect(haja.html).toContain(">Gala<");
+    expect(haja.html).toContain("cid:qr-");
+    expect(haja.html!.indexOf("cid:qr-")).toBeLessThan(haja.html!.indexOf("Tous droits réservés"));
   });
 
   it("ne renvoie pas un rappel déjà parti au passage suivant", async () => {

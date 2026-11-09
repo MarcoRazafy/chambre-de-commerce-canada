@@ -1,15 +1,17 @@
 import "server-only";
 
 import { quandEvenement, type EvenementCourriel } from "@/lib/billets";
-import { courrielsActifs, envoyerCourriel, gabarit, type Courriel } from "@/lib/courriel";
+import { courrielsActifs, envoyerCourriel, urlPublique, type Courriel } from "@/lib/courriel";
+import { COORDONNEES } from "@/lib/coordonnees";
+import { docDepuisTexte, lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { pngQr } from "@/lib/qr";
 import {
   debutEvenement,
   estDu,
-  MESSAGE_DEFAUT,
   prenomDe,
+  rappelParDefaut,
   RAPPELS,
   regrouperParAdresse,
   remplir,
@@ -33,27 +35,30 @@ export async function courrielRappel(e: EvenementRappel, email: string, particip
     lieu: e.lieu,
   };
   const sujet = remplir(e.rappelSujet || SUJET_DEFAUT, valeurs).slice(0, 200);
-  const paragraphes = remplir(e.rappelMessage || MESSAGE_DEFAUT, valeurs)
-    .split(/\n{2,}/)
-    .map((p) => p.trim())
-    .filter(Boolean);
   const avecCode = participants.filter((p) => p.statut === "confirme" && p.code);
   const pieces = await Promise.all(
     avecCode.map(async (p) => ({ nom: `billet-${p.code}.png`, contenu: await pngQr(p.code!), type: "image/png", cid: `qr-${p.code}` })),
   );
-  return {
-    a: email,
-    sujet,
-    pieces,
-    ...gabarit({
-      titre: e.titre,
-      paragraphes: avecCode.length
-        ? [...paragraphes, avecCode.length > 1 ? "Les QR codes d’entrée, un par participant :" : "Votre QR code d’entrée, à présenter à l’accueil :"]
-        : paragraphes,
-      images: avecCode.map((p) => ({ cid: `qr-${p.code}`, legende: `${p.nom ? `${p.nom} — ` : ""}${p.code}` })),
-      apres: ["Vous recevez ce rappel car vous êtes inscrit(e) à cet événement. Pour toute question, répondez simplement à ce message."],
-    }),
+  // Le message : la lettre composée dans l'éditeur, un ancien texte simple, ou le rappel par défaut
+  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
+  const doc =
+    (e.rappelMessage && lireDoc(e.rappelMessage, reseaux)) ||
+    (e.rappelMessage ? docDepuisTexte(e.titre, e.rappelMessage, reseaux) : rappelParDefaut(reseaux));
+  const echapper = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const codes = avecCode.length
+    ? `<tr><td style="padding:8px 32px 20px;font-size:15px;line-height:1.6;color:#5b6b7a">${avecCode.length > 1 ? "Les QR codes d’entrée, un par participant :" : "Votre QR code d’entrée, à présenter à l’accueil :"}${avecCode
+        .map((p) => `<div style="margin:14px 0 0"><div style="font-weight:bold;color:#16202b;margin:0 0 6px">${echapper(`${p.nom ? `${p.nom} · ` : ""}${p.code}`)}</div><img src="cid:qr-${echapper(p.code!)}" width="170" height="170" alt="QR code ${echapper(p.code!)}" style="display:block;border:1px solid #e5eaf0;border-radius:10px;width:170px;height:170px"></div>`)
+        .join("")}</td></tr>`
+    : "";
+  const o = {
+    base: (await urlPublique("/")).replace(/\/$/, ""),
+    vars: valeurs,
+    mention: "Vous recevez ce rappel car vous êtes inscrit(e) à cet événement. Pour toute question, répondez à ce message.",
+    desabonnement: null,
+    coordonnees: { adresse: COORDONNEES.adresse, email: COORDONNEES.email, telephone: COORDONNEES.telephone, confidentialite: COORDONNEES.legal.confidentialite },
+    apres: codes,
   };
+  return { a: email, sujet, pieces, html: versHtml(doc, o), texte: versTexte(doc, o) };
 }
 
 const evenementRappel = {

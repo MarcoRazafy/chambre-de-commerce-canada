@@ -1,3 +1,4 @@
+import { docVide, sectionVide, type DocLettre, type Reseau, type Section } from "@/lib/lettre-blocs";
 // Rappels automatiques aux inscrits d'un événement : quand chacun part, le texte du courriel.
 // Sans dépendance au serveur.
 
@@ -35,6 +36,27 @@ export const SUJET_DEFAUT = "Rappel : {événement}";
 export const MESSAGE_DEFAUT =
   "Bonjour {prénom},\n\nPetit rappel : « {événement} » a lieu le {date}.\nLieu : {lieu}.\n\nNous avons hâte de vous y retrouver.\n\nÀ bientôt,\nL’équipe CanCham";
 export const VARIABLES = ["{prénom}", "{entreprise}", "{événement}", "{date}", "{lieu}"];
+
+// Variables proposées dans l'éditeur du rappel
+export const VARIABLES_RAPPEL = [
+  { cle: "prénom", libelle: "Prénom" },
+  { cle: "entreprise", libelle: "Entreprise" },
+  { cle: "événement", libelle: "Événement" },
+  { cle: "date", libelle: "Date" },
+  { cle: "lieu", libelle: "Lieu" },
+];
+
+// Le rappel par défaut, en lettre : bandeau avec l'événement, message, réseaux sociaux et pied de page
+export function rappelParDefaut(reseaux: Partial<Record<Reseau, string>> = {}): DocLettre {
+  const d = docVide(reseaux);
+  const garder = d.sections.filter((x) => x.type === "logo" || x.type === "reseaux" || x.type === "pied");
+  const bandeau = { ...(sectionVide("bandeau") as Extract<Section, { type: "bandeau" }>), titre: "{événement}", sousTitre: "{date} · {lieu}", taille: 30 };
+  const message = {
+    ...(sectionVide("texte") as Extract<Section, { type: "texte" }>),
+    html: "Bonjour {prénom},<br><br>Petit rappel : « {événement} » a lieu le {date}.<br>Lieu : {lieu}.<br><br>Nous avons hâte de vous y retrouver.<br><br>À bientôt,<br>L’équipe de la Chambre",
+  };
+  return { ...d, sections: [garder[0], bandeau, message, ...garder.slice(1)] };
+}
 
 // Remplace {prénom}, {entreprise}… ; une variable inconnue reste telle quelle
 export function remplir(modele: string, valeurs: Record<string, string>): string {
