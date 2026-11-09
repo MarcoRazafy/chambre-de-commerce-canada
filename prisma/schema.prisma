@@ -1009,3 +1009,12 @@ model EnvoiLettre {
   @@index([email])
   @@map("envois_lettres")
 }
+
+// Un tag de l'équipe, qui existe même sans contact ; les contacts le portent dans « etiquettes »
+model Tag {
+  id        String   @id @default(cuid())
+  nom       String   @unique
+  createdAt DateTime @default(now())
+
+  @@map("tags")
+}

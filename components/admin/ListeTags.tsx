@@ -7,6 +7,7 @@ import {
   Tags,
   Trophy,
   Users,
+  UserPlus,
 } from "lucide-react";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { Compteur, Vide } from "@/components/admin/ui";
@@ -42,9 +43,9 @@ export function ListeTags({
   q: string;
   tri: "nombre" | "nom";
 }) {
-  const plusUtilise = [...tags].sort(
-    (a, b) => b.contacts.length - a.contacts.length,
-  )[0];
+  const plusUtilise = [...tags]
+    .filter((t) => t.contacts.length)
+    .sort((a, b) => b.contacts.length - a.contacts.length)[0];
   const part = totalContacts
     ? Math.round((contactsTagues / totalContacts) * 100)
     : 0;
@@ -166,51 +167,61 @@ function CarteTag({ tag }: { tag: ResumeTag }) {
           </span>
         </div>
 
-        <div
-          className="flex items-center"
-          aria-label={tag.contacts.map((c) => c.nom).join(", ")}
-        >
-          {tag.contacts.slice(0, VISAGES).map((c, i) => (
-            <span
-              key={c.id}
-              className={`rounded-full ring-2 ring-surface ${i ? "-ml-2.5" : ""}`}
-              title={c.nom}
+        {n === 0 ? (
+          <div className="flex items-center gap-2.5 rounded-[var(--radius-s)] border border-dashed border-line px-3 py-3 text-[13px] text-muted">
+            <UserPlus size={16} className="shrink-0" aria-hidden />
+            Aucun contact pour l’instant
+          </div>
+        ) : (
+          <>
+            <div
+              className="flex items-center"
+              aria-label={tag.contacts.map((c) => c.nom).join(", ")}
             >
-              <Avatar
-                initials={initiales(c.nom)}
-                src={c.photo}
-                alt=""
-                size={34}
-                className="bg-accent-soft text-accent-strong"
-              />
-            </span>
-          ))}
-          {autresVisages > 0 ? (
-            <span className="-ml-2.5 w-[34px] h-[34px] rounded-full ring-2 ring-surface bg-surface-3 text-muted text-[12px] font-bold grid place-items-center tabular-nums">
-              +{autresVisages}
-            </span>
-          ) : null}
-        </div>
+              {tag.contacts.slice(0, VISAGES).map((c, i) => (
+                <span
+                  key={c.id}
+                  className={`rounded-full ring-2 ring-surface ${i ? "-ml-2.5" : ""}`}
+                  title={c.nom}
+                >
+                  <Avatar
+                    initials={initiales(c.nom)}
+                    src={c.photo}
+                    alt=""
+                    size={34}
+                    className="bg-accent-soft text-accent-strong"
+                  />
+                </span>
+              ))}
+              {autresVisages > 0 ? (
+                <span className="-ml-2.5 w-[34px] h-[34px] rounded-full ring-2 ring-surface bg-surface-3 text-muted text-[12px] font-bold grid place-items-center tabular-nums">
+                  +{autresVisages}
+                </span>
+              ) : null}
+            </div>
 
-        <div className="flex flex-wrap gap-1.5 text-[12.5px]">
-          {tag.entreprises.slice(0, ENTREPRISES).map((e) => (
-            <span
-              key={e}
-              className="inline-flex items-center gap-1 max-w-full rounded-full border border-line px-2.5 py-0.5 text-muted"
-            >
-              <Building2 size={12} className="shrink-0" aria-hidden />
-              <span className="truncate">{e}</span>
-            </span>
-          ))}
-          {autresEntreprises > 0 ? (
-            <span className="rounded-full px-1.5 py-0.5 text-muted whitespace-nowrap">
-              +{autresEntreprises} entreprise{autresEntreprises > 1 ? "s" : ""}
-            </span>
-          ) : null}
-        </div>
+            <div className="flex flex-wrap gap-1.5 text-[12.5px]">
+              {tag.entreprises.slice(0, ENTREPRISES).map((e) => (
+                <span
+                  key={e}
+                  className="inline-flex items-center gap-1 max-w-full rounded-full border border-line px-2.5 py-0.5 text-muted"
+                >
+                  <Building2 size={12} className="shrink-0" aria-hidden />
+                  <span className="truncate">{e}</span>
+                </span>
+              ))}
+              {autresEntreprises > 0 ? (
+                <span className="rounded-full px-1.5 py-0.5 text-muted whitespace-nowrap">
+                  +{autresEntreprises} entreprise
+                  {autresEntreprises > 1 ? "s" : ""}
+                </span>
+              ) : null}
+            </div>
+          </>
+        )}
 
         <span className="mt-auto pt-3 border-t border-line inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent">
-          Voir les contacts
+          {n ? "Voir les contacts" : "Ajouter des contacts"}
           <ArrowRight
             size={15}
             className="transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"

@@ -65,7 +65,10 @@ export default async function AdminEtiquettes({
       entreprise,
     }));
 
+  // Les tags créés (même sans contact) et ceux posés sur des contacts
   const parTag = new Map<string, number>();
+  for (const t of await prisma.tag.findMany({ select: { nom: true } }))
+    parTag.set(t.nom, 0);
   for (const c of contacts)
     for (const e of c.etiquettes) parTag.set(e, (parTag.get(e) ?? 0) + 1);
   const tags = [...parTag.entries()].sort((a, b) =>
@@ -270,7 +273,7 @@ export default async function AdminEtiquettes({
             Les <Saillant>tags</Saillant>
           </>
         }
-        actions={<NouveauTag contacts={pourChoix(contacts)} />}
+        actions={<NouveauTag />}
       />
       <ListeTags
         tags={resumes}
