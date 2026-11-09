@@ -23,19 +23,40 @@ function Acces({ e }: { e: EntrepriseContact }) {
 }
 
 // Une ligne de la page Contacts : l'entreprise (son logo) et son contact principal ; un clic ouvre sa fiche et ses tags
-export function LigneEntreprise({ entreprise: e, tousTags }: { entreprise: EntrepriseContact; tousTags: string[] }) {
+export function LigneEntreprise({
+  entreprise: e,
+  tousTags,
+  choisie,
+  onChoisir,
+}: {
+  entreprise: EntrepriseContact;
+  tousTags: string[];
+  choisie: boolean;
+  onChoisir: (oui: boolean) => void;
+}) {
   const [ouvert, setOuvert] = useState(false);
   const autres = e.etiquettes.length - TAGS_VISIBLES;
   const c = e.contact;
 
   return (
     <tr
-      className="hover:bg-surface-2 align-middle cursor-pointer transition-colors duration-150"
+      className={`align-middle cursor-pointer transition-colors duration-150 ${choisie ? "bg-accent-soft/50 hover:bg-accent-soft/70" : "hover:bg-surface-2"}`}
       onClick={(ev) => {
-        if ((ev.target as HTMLElement).closest("a,button,dialog")) return;
+        if ((ev.target as HTMLElement).closest("a,button,dialog,input,label")) return;
         setOuvert(true);
       }}
     >
+      <td className={`${TD} w-[52px] pr-0`}>
+        <label className="grid place-items-center w-9 h-9 -m-1.5 cursor-pointer rounded-full hover:bg-surface-3">
+          <input
+            type="checkbox"
+            checked={choisie}
+            onChange={(ev) => onChoisir(ev.target.checked)}
+            aria-label={`Sélectionner ${e.nom}`}
+            className="w-[18px] h-[18px] accent-[var(--accent)] cursor-pointer"
+          />
+        </label>
+      </td>
       <td className={TD}>
         <div className="flex items-center gap-3.5">
           <span className="w-[64px] flex justify-center shrink-0">

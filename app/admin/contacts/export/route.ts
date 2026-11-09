@@ -1,14 +1,10 @@
 import { exigerEquipe } from "@/lib/autorisations";
-import { getEntreprisesContacts, lireFiltresContacts } from "@/lib/contacts-admin";
+import { getEntreprisesContacts, lireFiltresContacts, type EntrepriseContact } from "@/lib/contacts-admin";
 import { reponseCsv, versCsv } from "@/lib/csv";
 import { statusLabel } from "@/lib/format";
 
 // Export de la page Contacts : une ligne par entreprise, avec son contact principal
-export async function GET(requete: Request) {
-  await exigerEquipe();
-  const sp = new URL(requete.url).searchParams;
-  const f = lireFiltresContacts(Object.fromEntries([...new Set(sp.keys())].map((k) => [k, sp.getAll(k)])));
-  const entreprises = await getEntreprisesContacts(f);
+function csv(entreprises: EntrepriseContact[]) {
   return reponseCsv(
     "contacts",
     versCsv(
@@ -27,4 +23,19 @@ export async function GET(requete: Request) {
       ]),
     ),
   );
+}
+
+// Selon les filtres de l'adresse
+export async function GET(requete: Request) {
+  await exigerEquipe();
+  const sp = new URL(requete.url).searchParams;
+  const f = lireFiltresContacts(Object.fromEntries([...new Set(sp.keys())].map((k) => [k, sp.getAll(k)])));
+  return csv(await getEntreprisesContacts(f));
+}
+
+// Les entreprises sélectionnées dans le tableau (envoyées par formulaire)
+export async function POST(requete: Request) {
+  await exigerEquipe();
+  const ids = new Set((await requete.formData()).getAll("entreprises").map(String));
+  return csv((await getEntreprisesContacts()).filter((e) => ids.has(e.id)));
 }
