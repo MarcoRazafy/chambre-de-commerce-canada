@@ -58,7 +58,7 @@ Sur le service de l'application, onglet **Variables** :
 | `VANILLAPAY_MOBILE_MONEY` | `1` une fois « l'offre mobile money » (MVola, Orange Money, Airtel Money) ouverte sur le compte marchand. Vide : seule la carte bancaire se paie en ligne. |
 | `VANILLAPAY_MARCHAND` | Le nom que leur page affiche au payeur, s'il n'est pas celui de la chambre. Vide avec le compte de la chambre : leur page affiche « Chambre de commerce et de coopération Canada MDG ». Sinon, le membre en est prévenu avant de payer. |
 | `TRAVERSEE_PLATEFORME_URL` | L'adresse de la plateforme d'inscription de La Traversée, en `https`, sans chemin. Le bouton « Réserver mon billet » de `/la-traversee` y envoie le visiteur, sur `/inscription`, avec ses coordonnées préremplies. Vide : `https://impact261.com`. |
-| `PLATEFORME_FORFAIT` | Forfait mensuel de la Chambre pour la plateforme, en $ CAD, affiché sur « Abonnement & utilisateurs ». Vide : `150`. |
+| `PLATEFORME_FORFAIT` | Forfait mensuel de la Chambre pour la plateforme, en $ CAD, affiché sur « Abonnement & utilisateurs ». Vide : `100`. |
 | `PLATEFORME_PRIX_UTILISATEUR` | Prix mensuel de chaque compte de l'équipe, en $ CAD. Vide : `15`. |
 | `PLATEFORME_TPS` / `PLATEFORME_TVQ` | Taux des taxes en %, appliqués à l'abonnement. Vides : `5` et `9.975`. |
 | `PLATEFORME_JOUR_FACTURATION` | Jour du mois de la facture de l'abonnement (1 à 28). Vide : `1`. |

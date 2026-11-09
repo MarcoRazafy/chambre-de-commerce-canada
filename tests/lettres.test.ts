@@ -132,23 +132,23 @@ describe("webhook Resend", () => {
 
 describe("abonnement à la plateforme", () => {
   it("prend les valeurs par défaut du prototype, ou celles de l'environnement", () => {
-    expect(configPlateforme({})).toMatchObject({ forfait: 150, parUtilisateur: 15, tps: 5, tvq: 9.975, jourFacturation: 1 });
+    expect(configPlateforme({})).toMatchObject({ forfait: 100, parUtilisateur: 15, tps: 5, tvq: 9.975, jourFacturation: 1 });
     expect(configPlateforme({ PLATEFORME_FORFAIT: "200", PLATEFORME_TVQ: "0", PLATEFORME_JOUR_FACTURATION: "45" })).toMatchObject({
       forfait: 200,
       tvq: 0,
       jourFacturation: 28,
     });
-    expect(configPlateforme({ PLATEFORME_FORFAIT: "abc", PLATEFORME_PRIX_UTILISATEUR: "-3" })).toMatchObject({ forfait: 150, parUtilisateur: 15 });
+    expect(configPlateforme({ PLATEFORME_FORFAIT: "abc", PLATEFORME_PRIX_UTILISATEUR: "-3" })).toMatchObject({ forfait: 100, parUtilisateur: 15 });
   });
 
   it("calcule la facture : forfait + comptes d'équipe, puis TPS et TVQ", () => {
     expect(facturePlateforme(7, configPlateforme({}))).toEqual({
-      forfait: 150,
+      forfait: 100,
       equipe: 105,
-      sousTotal: 255,
-      tps: 12.75,
-      tvq: 25.44,
-      total: 293.19,
+      sousTotal: 205,
+      tps: 10.25,
+      tvq: 20.45,
+      total: 235.7,
     });
   });
 

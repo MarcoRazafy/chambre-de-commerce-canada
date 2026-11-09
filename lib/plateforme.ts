@@ -18,7 +18,7 @@ const nombre = (v: string | undefined, defaut: number) => {
 export function configPlateforme(env: Record<string, string | undefined> = process.env): ConfigPlateforme {
   return {
     nom: env.PLATEFORME_NOM?.trim() || "CanCham Connect — Chambre",
-    forfait: nombre(env.PLATEFORME_FORFAIT, 150),
+    forfait: nombre(env.PLATEFORME_FORFAIT, 100),
     parUtilisateur: nombre(env.PLATEFORME_PRIX_UTILISATEUR, 15),
     tps: nombre(env.PLATEFORME_TPS, 5),
     tvq: nombre(env.PLATEFORME_TVQ, 9.975),
