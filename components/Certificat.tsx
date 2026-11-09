@@ -24,9 +24,9 @@ export function CertificatAdhesion({
             <div className="flex h-full w-full flex-col items-center border border-[#0f1d2c]/20 px-[5cqw] py-[2.6cqw] text-center text-[#0f1d2c]">
               <Image
                 src="/marque/sigle.png"
-                alt="CanCham — Chambre de Commerce et de Coopération Canada-Madagascar"
-                width={1888}
-                height={1159}
+                alt="IMPACT 261"
+                width={889}
+                height={1000}
                 sizes="260px"
                 draggable={false}
                 className="h-auto w-[13.5cqw]"

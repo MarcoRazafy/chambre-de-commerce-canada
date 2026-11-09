@@ -44,9 +44,9 @@ export function TunnelOrangeMoney(p: PropsTunnel) {
         </p>
         <Image
           src="/marque/logo-blanc.png"
-          alt="CanCham"
-          width={2383}
-          height={711}
+          alt="IMPACT 261"
+          width={1600}
+          height={647}
           className="hidden h-10 w-auto shrink-0 object-contain sm:block"
         />
       </header>

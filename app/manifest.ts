@@ -3,8 +3,8 @@ import type { MetadataRoute } from "next";
 export default function manifest(): MetadataRoute.Manifest {
   return {
     id: "/",
-    name: "CanCham Connect",
-    short_name: "CanCham",
+    name: "IMPACT 261",
+    short_name: "IMPACT 261",
     description:
       "L’espace des membres de la Chambre de Commerce et de Coopération Canada–Madagascar : événements, annuaire, messagerie, cotisations.",
     lang: "fr",

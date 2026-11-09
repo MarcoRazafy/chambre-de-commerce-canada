@@ -671,7 +671,7 @@ export function SignaturePublication({ news }: { news: NewsItem }) {
         <div className="w-11 h-11 rounded-full bg-white border border-line flex items-center justify-center shrink-0 overflow-hidden">
           <Image
             src="/marque/sigle.png"
-            alt="CanCham Madagascar"
+            alt="IMPACT 261"
             width={44}
             height={44}
             sizes="44px"

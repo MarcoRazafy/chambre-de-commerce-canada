@@ -54,15 +54,15 @@ export const metadata: Metadata = {
   metadataBase: new URL(baseSite()),
   title: {
     default:
-      "CanCham — Chambre de Commerce et de Coopération Canada–Madagascar",
-    template: "%s · CanCham",
+      "IMPACT 261 — Chambre de Commerce et de Coopération Canada–Madagascar",
+    template: "%s · IMPACT 261",
   },
   description:
     "Le réseau des entreprises du Canada et de Madagascar : événements, mises en relation et accompagnement à l’export.",
-  applicationName: "CanCham Connect",
+  applicationName: "IMPACT 261",
   appleWebApp: {
     capable: true,
-    title: "CanCham",
+    title: "IMPACT 261",
     statusBarStyle: "default",
   },
 };

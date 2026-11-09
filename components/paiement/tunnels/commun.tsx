@@ -38,9 +38,9 @@ export function PastilleCanCham({ className = "" }: { className?: string }) {
     >
       <Image
         src="/marque/logo-vertical.png"
-        alt="CanCham"
-        width={760}
-        height={547}
+        alt="IMPACT 261"
+        width={900}
+        height={859}
         className="h-9 w-auto object-contain"
       />
     </span>

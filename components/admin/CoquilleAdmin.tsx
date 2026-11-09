@@ -58,12 +58,12 @@ export function CoquilleAdmin({
           >
             <Image
               src="/marque/logo-blanc.png"
-              alt="CanCham — Chambre de Commerce et de Coopération Canada-Madagascar"
-              width={2383}
-              height={711}
+              alt="IMPACT 261"
+              width={1600}
+              height={647}
               priority
-              sizes="230px"
-              className="w-full h-auto"
+              sizes="170px"
+              className="w-[170px] max-w-full h-auto"
             />
           </Link>
           <div className="mt-5 flex items-center gap-2.5">

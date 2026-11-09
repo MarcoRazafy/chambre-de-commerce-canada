@@ -122,9 +122,9 @@ function BonDeRemise({
           <div className="flex items-start justify-between gap-3">
             <Image
               src="/marque/logo-couleur.png"
-              alt="CanCham"
-              width={2536}
-              height={711}
+              alt="IMPACT 261"
+              width={1600}
+              height={647}
               className="h-9 w-auto object-contain"
             />
             <span className="font-[family-name:var(--font-mono)] text-[12.5px] font-semibold text-[#3b3520]">

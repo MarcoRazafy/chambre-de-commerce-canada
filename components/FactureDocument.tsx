@@ -19,9 +19,9 @@ export function FactureDocument({ facture: f }: { facture: FactureDetaillee }) {
         <header className="flex justify-between items-start gap-8 flex-wrap">
           <Image
             src="/marque/logo-couleur.png"
-            alt="CanCham — Chambre de Commerce et de Coopération Canada-Madagascar"
-            width={2536}
-            height={711}
+            alt="IMPACT 261"
+            width={1600}
+            height={647}
             className="w-[220px] h-auto"
             priority
           />

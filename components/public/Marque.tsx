@@ -1,8 +1,8 @@
 import Image from "next/image";
 
 const LOGOS = {
-  couleur: { src: "/marque/logo-couleur.png", width: 2536 },
-  blanc: { src: "/marque/logo-blanc.png", width: 2383 },
+  couleur: { src: "/marque/logo-couleur.png", width: 1600 },
+  blanc: { src: "/marque/logo-blanc.png", width: 1600 },
 } as const;
 
 export function LogoOfficiel({
@@ -17,9 +17,9 @@ export function LogoOfficiel({
   return (
     <Image
       src={LOGOS[version].src}
-      alt="CanCham — Chambre de Commerce et de Coopération Canada-Madagascar"
+      alt="IMPACT 261"
       width={LOGOS[version].width}
-      height={711}
+      height={647}
       priority={priority}
       className={className}
       sizes="(max-width: 768px) 260px, 340px"
@@ -39,8 +39,8 @@ export function Sigle({
       src="/marque/sigle.png"
       alt=""
       aria-hidden="true"
-      width={1888}
-      height={1159}
+      width={889}
+      height={1000}
       className={className}
       style={{ width: size, height: "auto" }}
     />

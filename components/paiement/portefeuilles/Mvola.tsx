@@ -41,9 +41,9 @@ export function TunnelMvola(p: PropsTunnel) {
         <div className="flex items-center gap-4">
           <Image
             src="/marque/logo-vertical.png"
-            alt="CanCham"
-            width={760}
-            height={547}
+            alt="IMPACT 261"
+            width={900}
+            height={859}
             className="h-16 w-auto object-contain"
           />
           <span aria-hidden className="text-[15px] font-semibold opacity-60">
