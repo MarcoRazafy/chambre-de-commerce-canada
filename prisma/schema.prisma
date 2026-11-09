@@ -298,6 +298,9 @@ model Event {
   rappelSujet   String?
   rappelMessage String?
 
+  // Tags posés automatiquement sur les entreprises inscrites (à l'enregistrement et à chaque inscription)
+  etiquettes String[] @default([])
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

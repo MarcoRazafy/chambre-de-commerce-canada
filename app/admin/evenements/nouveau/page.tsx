@@ -1,18 +1,11 @@
-import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 import { EnTeteAdmin } from "@/components/admin/ui";
 import { FormulaireEvenement } from "@/components/forms/FormulaireEvenement";
 import { Saillant } from "@/components/ui";
+import { getTousLesTags } from "@/lib/contacts-admin";
 
-export default function NouvelEvenement() {
+export default async function NouvelEvenement() {
   return (
     <>
-      <Link
-        href="/admin/evenements"
-        className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-muted no-underline hover:text-accent mb-4"
-      >
-        <ArrowLeft size={14} /> Tous les événements
-      </Link>
       <EnTeteAdmin
         surtitre="Programme"
         titre={
@@ -21,7 +14,7 @@ export default function NouvelEvenement() {
           </>
         }
       />
-      <FormulaireEvenement />
+      <FormulaireEvenement tousTags={await getTousLesTags()} />
     </>
   );
 }

@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ArrowDown, ArrowUp, Check, Plus, Trash2, UserPlus } from "lucide-react";
 import { ChampPhoto, Field, INPUT, SubmitButton } from "@/components/form-bits";
 import { ChoixDiffusion } from "@/components/forms/ChoixDiffusion";
+import { ChoixTags } from "@/components/admin/ChoixTags";
 import { Card } from "@/components/ui";
 import { saveEvent } from "@/lib/actions/events";
 import type { CanchamEvent, EtapeProgramme, Intervenant } from "@/lib/types";
@@ -59,7 +60,15 @@ function deplace<T>(l: T[], i: number, sens: -1 | 1): T[] {
   return copie;
 }
 
-export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
+export function FormulaireEvenement({
+  event,
+  tousTags,
+  tags = [],
+}: {
+  event?: CanchamEvent;
+  tousTags: string[];
+  tags?: string[];
+}) {
   const [payant, setPayant] = useState(event?.payant ?? false);
   const [publique, setPublique] = useState(event?.public ?? true);
   const [payantPublic, setPayantPublic] = useState(
@@ -429,6 +438,13 @@ export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
                 ) : null}
               </>
             ) : null}
+          </Rubrique>
+
+          <Rubrique
+            titre="Tags des inscrits"
+            aide="Chaque entreprise membre qui s’inscrit reçoit ces tags (celles déjà inscrites aussi, à l’enregistrement). Pratique pour leur écrire ensuite."
+          >
+            <ChoixTags name="etiquettes" options={tousTags} initiaux={tags} creation />
           </Rubrique>
 
           <SubmitButton pendingLabel="Enregistrement…" className="w-full">

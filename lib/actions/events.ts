@@ -27,6 +27,8 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { getCurrentUser } from "@/lib/session";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { INTERVENANTS_MAX, lireIntervenants } from "@/lib/intervenants";
+import { poserTags } from "@/lib/poser-tags";
+import { lireTags } from "@/lib/tags";
 import type { EventFormat } from "@/lib/types";
 import {
   notifierEquipe,
@@ -176,6 +178,8 @@ export async function registerForEvent(formData: FormData) {
   }
 
   const ecrit = await prisma.$transaction(ecritures);
+  // L'entreprise inscrite reçoit les tags de l'événement
+  await poserTags([user.memberId], event.etiquettes);
   const facture = event.payant
     ? (ecrit[ecrit.length - 1] as { id: string })
     : null;
@@ -513,6 +517,7 @@ export async function saveEvent(formData: FormData) {
     prixPublic,
     desc: texte(formData, "desc") || "Détails à venir.",
     pourQui: texte(formData, "pourQui") || null,
+    etiquettes: lireTags(formData.getAll("etiquettes")),
   };
   const retirerPhoto = texte(formData, "retirerPhoto") === "1";
 
@@ -541,6 +546,12 @@ export async function saveEvent(formData: FormData) {
     return ev;
   });
 
+  // Les entreprises déjà inscrites reçoivent les tags de l'événement
+  const inscrites = data.etiquettes.length
+    ? (await prisma.registration.findMany({ where: { eventId: e.id }, select: { memberId: true } })).map((r) => r.memberId)
+    : [];
+  const taguees = await poserTags(inscrites, data.etiquettes);
+
   await prisma.auditLog.create({
     data: {
       action: id ? "evenement_modifie" : "evenement_cree",
@@ -565,7 +576,7 @@ export async function saveEvent(formData: FormData) {
   redirectWithFlash(
     pageEvenement(e.id),
     id
-      ? `« ${e.titre} » mis à jour`
+      ? `« ${e.titre} » mis à jour${taguees ? ` · tags posés sur ${taguees} entreprise${taguees > 1 ? "s" : ""} inscrite${taguees > 1 ? "s" : ""}` : ""}`
       : `« ${e.titre} » créé · ${e.public ? "publié sur la plateforme et la page publique" : "publié sur la plateforme"}`,
   );
 }
