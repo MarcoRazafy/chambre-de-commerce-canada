@@ -2,18 +2,18 @@ import { Contact as IconeContact, Download, Search } from "lucide-react";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { EnTeteAdmin, Vide } from "@/components/admin/ui";
 import { Card, Saillant } from "@/components/ui";
-import { LigneContact } from "@/components/admin/LigneContact";
 import Link from "next/link";
 import { FiltreCoches } from "@/components/FiltreCoches";
-import { TaguerContacts } from "@/components/admin/Tags";
-import { getTagsContacts, getTousContacts, getTousLesTags, lireFiltresContacts, parametresContacts } from "@/lib/contacts-admin";
+import { LigneEntreprise } from "@/components/admin/LigneEntreprise";
+import { TaguerEntreprises } from "@/components/admin/Tags";
+import { getEntreprisesContacts, getTagsEntreprises, getTousLesTags, lireFiltresContacts, parametresContacts } from "@/lib/contacts-admin";
 import { SANS_TAG, SITUATIONS } from "@/lib/filtres-contacts";
 
-// Contacts : les personnes de toutes les entreprises membres, à joindre ou à exporter
+// Contacts : une ligne par entreprise membre, avec son logo et son contact principal, à joindre, taguer ou exporter
 export default async function AdminContacts({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const sp = await searchParams;
   const f = lireFiltresContacts(sp);
-  const [contacts, tags, tousTags] = await Promise.all([getTousContacts(f), getTagsContacts(), getTousLesTags()]);
+  const [entreprises, tags, tousTags] = await Promise.all([getEntreprisesContacts(f), getTagsEntreprises(), getTousLesTags()]);
   const params = parametresContacts(f);
   const filtre = params.size > 0;
 
@@ -31,7 +31,7 @@ export default async function AdminContacts({ searchParams }: { searchParams: Pr
       <FiltresAuto action="/admin/contacts" className="flex gap-2.5 flex-wrap items-center mb-3">
         <div className="relative flex-1 min-w-[220px] max-w-[420px]">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" aria-hidden />
-          <input type="search" name="q" defaultValue={f.q} placeholder="Nom, entreprise, e-mail, fonction…" aria-label="Rechercher un contact"
+          <input type="search" name="q" defaultValue={f.q} placeholder="Entreprise, contact, e-mail, secteur…" aria-label="Rechercher"
             className="w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink pl-9 pr-3 py-2.5 text-[13.5px] outline-none focus:border-accent" />
         </div>
         <FiltreCoches name="situation" libelle="Situations" tous="Toutes les situations" choisis={f.situations}
@@ -47,25 +47,25 @@ export default async function AdminContacts({ searchParams }: { searchParams: Pr
 
       <div className="flex items-center justify-between gap-3 flex-wrap mb-4">
         <span className="text-[13px] text-muted" aria-live="polite">
-          {contacts.length} contact{contacts.length > 1 ? "s" : ""}{filtre ? " correspondent aux filtres" : ""}
+          {entreprises.length} entreprise{entreprises.length > 1 ? "s" : ""}{filtre ? " correspondent aux filtres" : ""}
         </span>
-        <TaguerContacts ids={contacts.map((c) => c.id)} tousTags={tousTags} retour={`/admin/contacts${params.size ? `?${params}` : ""}`} />
+        <TaguerEntreprises ids={entreprises.map((e) => e.id)} tousTags={tousTags} retour={`/admin/contacts${params.size ? `?${params}` : ""}`} />
       </div>
 
-      {contacts.length === 0 ? (
-        <Card><Vide icone={<IconeContact size={26} />}>Aucun contact ne correspond à ces critères.</Vide></Card>
+      {entreprises.length === 0 ? (
+        <Card><Vide icone={<IconeContact size={26} />}>Aucune entreprise ne correspond à ces critères.</Vide></Card>
       ) : (
         <Card className="p-0 overflow-x-auto">
           <table className="w-full border-collapse text-[13.4px]">
             <thead>
               <tr className="bg-surface-2">
-                {["Contact", "Entreprise", "Coordonnées", "Tags", "Accès"].map((t) => (
+                {["Entreprise", "Contact principal", "Coordonnées", "Tags", "Accès"].map((t) => (
                   <th key={t} className="text-left text-[11px] uppercase tracking-[0.07em] text-faint font-semibold px-4 py-3 border-b border-line whitespace-nowrap">{t}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {contacts.map((c) => <LigneContact key={c.id} contact={c} tousTags={tousTags} />)}
+              {entreprises.map((e) => <LigneEntreprise key={e.id} entreprise={e} tousTags={tousTags} />)}
             </tbody>
           </table>
         </Card>

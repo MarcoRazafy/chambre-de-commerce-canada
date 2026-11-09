@@ -98,12 +98,8 @@ export default async function AdminMembreDetail({
       chargerMaillage(m.id),
       suggestions(m.id),
       relations(m.id),
-      prisma.member.findUnique({ where: { id: m.id }, select: { offresTags: true, besoinsTags: true, interetsTags: true } }),
+      prisma.member.findUnique({ where: { id: m.id }, select: { etiquettes: true, offresTags: true, besoinsTags: true, interetsTags: true } }),
     ]);
-  // Tags des contacts : repères internes, lus à part pour ne jamais les envoyer au membre
-  const tagsContacts = new Map(
-    (await prisma.user.findMany({ where: { memberId: m.id, role: "membre" }, select: { id: true, etiquettes: true } })).map((u) => [u.id, u.etiquettes]),
-  );
   const candidature = m.statut === "candidature";
   const dernierReglement = dernierReglementCotisation(factures);
   const renouvellement = renouvellementCotisation({
@@ -369,19 +365,7 @@ export default async function AdminMembreDetail({
           </Panneau>
 
           <Panneau titre="Tags" teinte="degrade">
-            {contacts.length ? (
-              <ul className="list-none m-0 p-0 flex flex-col gap-3.5">
-                {contacts.map((c) => (
-                  <li key={c.id}>
-                    <div className="text-[13.4px] font-semibold text-ink">{c.nom}</div>
-                    {c.fonction ? <div className="text-[12.3px] text-muted mb-1.5">{c.fonction}</div> : null}
-                    <EtiquettesMembre contactId={c.id} valeurs={tagsContacts.get(c.id) ?? []} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="m-0 text-[13px] text-muted">Ajoutez un contact pour lui poser des tags.</p>
-            )}
+            <EtiquettesMembre memberId={m.id} tags valeurs={etiquettes?.etiquettes ?? []} />
           </Panneau>
 
           <NotesMembre memberId={m.id} notes={commentaires} />

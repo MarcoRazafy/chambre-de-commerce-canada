@@ -1,120 +1,76 @@
 import Link from "next/link";
-import {
-  ArrowRight,
-  Building2,
-  Search,
-  Tag,
-  Tags,
-  Trophy,
-  Users,
-  UserPlus,
-} from "lucide-react";
+import { ArrowRight, Building2, CircleDashed, Search, Tag, Tags, Trophy } from "lucide-react";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { Compteur, Vide } from "@/components/admin/ui";
-import { Avatar, Card } from "@/components/ui";
-import { initials as initiales } from "@/lib/format";
+import { LogoMark } from "@/components/domain";
+import { Card } from "@/components/ui";
+import { SANS_TAG } from "@/lib/filtres-contacts";
+import type { MemberType } from "@/lib/types";
 
 export interface ResumeTag {
   nom: string;
-  contacts: { id: string; nom: string; photo: string | null }[];
-  entreprises: string[];
+  entreprises: { id: string; nom: string; type: MemberType; photo: string | null; logo: string | null }[];
 }
 
-const VISAGES = 5;
-const ENTREPRISES = 2;
+const LOGOS = 4;
 const CHAMP =
   "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent";
+const pluriel = (n: number) => `${n} entreprise${n > 1 ? "s" : ""}`;
 
-// Liste des tags : chiffres clés, recherche et tri, puis une carte par tag (qui, de quelles entreprises)
+// Liste des tags : chiffres clés, recherche et tri, puis une carte par tag avec les logos des entreprises
 export function ListeTags({
   tags,
   totalTags,
-  contactsTagues,
-  totalContacts,
   entreprisesTaguees,
+  totalEntreprises,
   q,
   tri,
 }: {
   tags: ResumeTag[];
   totalTags: number;
-  contactsTagues: number;
-  totalContacts: number;
   entreprisesTaguees: number;
+  totalEntreprises: number;
   q: string;
   tri: "nombre" | "nom";
 }) {
-  const plusUtilise = [...tags]
-    .filter((t) => t.contacts.length)
-    .sort((a, b) => b.contacts.length - a.contacts.length)[0];
-  const part = totalContacts
-    ? Math.round((contactsTagues / totalContacts) * 100)
-    : 0;
+  const plusUtilise = [...tags].filter((t) => t.entreprises.length).sort((a, b) => b.entreprises.length - a.entreprises.length)[0];
+  const part = totalEntreprises ? Math.round((entreprisesTaguees / totalEntreprises) * 100) : 0;
+  const sansTag = totalEntreprises - entreprisesTaguees;
 
   return (
     <>
       <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <Compteur icone={<Tags size={20} />} libelle="Tags" valeur={totalTags} detail="Repères de l’équipe" />
         <Compteur
-          icone={<Tags size={20} />}
-          libelle="Tags"
-          valeur={totalTags}
-          detail="Repères de l’équipe"
-        />
-        <Compteur
-          icone={<Users size={20} />}
-          libelle="Contacts tagués"
-          valeur={contactsTagues}
-          detail={`${part} % des ${totalContacts} contacts`}
+          icone={<Building2 size={20} />}
+          libelle="Entreprises taguées"
+          valeur={entreprisesTaguees}
+          detail={`${part} % des ${totalEntreprises} entreprises`}
           teinte="bleu"
         />
         <Compteur
-          icone={<Building2 size={20} />}
-          libelle="Entreprises concernées"
-          valeur={entreprisesTaguees}
-          detail="Au moins un contact tagué"
+          icone={<CircleDashed size={20} />}
+          libelle="Entreprises sans tag"
+          valeur={sansTag}
+          detail={sansTag ? "Voir et les taguer" : "Toutes sont taguées"}
+          href={sansTag ? `/admin/contacts?tag=${SANS_TAG}` : undefined}
           teinte="vert"
         />
         <Compteur
           icone={<Trophy size={20} />}
           libelle="Le plus utilisé"
-          valeur={
-            <span className="block truncate text-[22px] leading-[1.3]">
-              {plusUtilise?.nom ?? "—"}
-            </span>
-          }
-          detail={
-            plusUtilise
-              ? `${plusUtilise.contacts.length} contact${plusUtilise.contacts.length > 1 ? "s" : ""}`
-              : "Aucun tag"
-          }
+          valeur={<span className="block truncate text-[22px] leading-[1.3]">{plusUtilise?.nom ?? "—"}</span>}
+          detail={plusUtilise ? pluriel(plusUtilise.entreprises.length) : "Aucun tag posé"}
           teinte="bleu"
         />
       </div>
 
-      <FiltresAuto
-        action="/admin/etiquettes"
-        className="flex gap-2.5 flex-wrap items-center mb-4"
-      >
+      <FiltresAuto action="/admin/etiquettes" className="flex gap-2.5 flex-wrap items-center mb-4">
         <div className="relative flex-1 min-w-[220px] max-w-[420px]">
-          <Search
-            size={15}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
-            aria-hidden
-          />
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Rechercher un tag…"
-            aria-label="Rechercher un tag"
-            className={`${CHAMP} w-full pl-9`}
-          />
+          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" aria-hidden />
+          <input type="search" name="q" defaultValue={q} placeholder="Rechercher un tag…" aria-label="Rechercher un tag" className={`${CHAMP} w-full pl-9`} />
         </div>
-        <select
-          name="tri"
-          defaultValue={tri}
-          aria-label="Trier les tags"
-          className={CHAMP}
-        >
+        <select name="tri" defaultValue={tri} aria-label="Trier les tags" className={CHAMP}>
           <option value="nombre">Les plus utilisés</option>
           <option value="nom">De A à Z</option>
         </select>
@@ -134,11 +90,7 @@ export function ListeTags({
         </ul>
       ) : (
         <Card>
-          <Vide icone={<Tag size={26} />}>
-            {q
-              ? "Aucun tag ne correspond à cette recherche."
-              : "Aucun tag pour l’instant."}
-          </Vide>
+          <Vide icone={<Tag size={26} />}>{q ? "Aucun tag ne correspond à cette recherche." : "Aucun tag pour l’instant."}</Vide>
         </Card>
       )}
     </>
@@ -146,9 +98,8 @@ export function ListeTags({
 }
 
 function CarteTag({ tag }: { tag: ResumeTag }) {
-  const n = tag.contacts.length;
-  const autresVisages = n - VISAGES;
-  const autresEntreprises = tag.entreprises.length - ENTREPRISES;
+  const n = tag.entreprises.length;
+  const autres = n - LOGOS;
   return (
     <Link
       href={`/admin/etiquettes?e=${encodeURIComponent(tag.nom)}`}
@@ -158,75 +109,42 @@ function CarteTag({ tag }: { tag: ResumeTag }) {
         <div className="flex items-start justify-between gap-3">
           <span className="inline-flex items-center gap-2 min-w-0">
             <Tag size={16} className="shrink-0 text-accent" aria-hidden />
-            <span className="font-semibold text-[15.5px] text-ink truncate">
-              {tag.nom}
-            </span>
+            <span className="font-semibold text-[15.5px] text-ink truncate">{tag.nom}</span>
           </span>
           <span className="shrink-0 whitespace-nowrap rounded-full bg-surface-2 border border-line px-2.5 py-0.5 text-[12.5px] font-semibold text-ink tabular-nums">
-            {n} contact{n > 1 ? "s" : ""}
+            {pluriel(n)}
           </span>
         </div>
 
         {n === 0 ? (
           <div className="flex items-center gap-2.5 rounded-[var(--radius-s)] border border-dashed border-line px-3 py-3 text-[13px] text-muted">
-            <UserPlus size={16} className="shrink-0" aria-hidden />
-            Aucun contact pour l’instant
+            <Building2 size={16} className="shrink-0" aria-hidden />
+            Aucune entreprise pour l’instant
           </div>
         ) : (
-          <>
-            <div
-              className="flex items-center"
-              aria-label={tag.contacts.map((c) => c.nom).join(", ")}
-            >
-              {tag.contacts.slice(0, VISAGES).map((c, i) => (
-                <span
-                  key={c.id}
-                  className={`rounded-full ring-2 ring-surface ${i ? "-ml-2.5" : ""}`}
-                  title={c.nom}
-                >
-                  <Avatar
-                    initials={initiales(c.nom)}
-                    src={c.photo}
-                    alt=""
-                    size={34}
-                    className="bg-accent-soft text-accent-strong"
-                  />
+          <div>
+            <div className="flex flex-wrap items-center gap-2" aria-label={tag.entreprises.map((e) => e.nom).join(", ")}>
+              {tag.entreprises.slice(0, LOGOS).map((e) => (
+                <span key={e.id} title={e.nom}>
+                  <LogoMark member={e} size={30} />
                 </span>
               ))}
-              {autresVisages > 0 ? (
-                <span className="-ml-2.5 w-[34px] h-[34px] rounded-full ring-2 ring-surface bg-surface-3 text-muted text-[12px] font-bold grid place-items-center tabular-nums">
-                  +{autresVisages}
+              {autres > 0 ? (
+                <span className="h-[30px] min-w-[30px] px-2 rounded-[var(--radius-s)] bg-surface-3 text-muted text-[12px] font-bold grid place-items-center tabular-nums">
+                  +{autres}
                 </span>
               ) : null}
             </div>
-
-            <div className="flex flex-wrap gap-1.5 text-[12.5px]">
-              {tag.entreprises.slice(0, ENTREPRISES).map((e) => (
-                <span
-                  key={e}
-                  className="inline-flex items-center gap-1 max-w-full rounded-full border border-line px-2.5 py-0.5 text-muted"
-                >
-                  <Building2 size={12} className="shrink-0" aria-hidden />
-                  <span className="truncate">{e}</span>
-                </span>
-              ))}
-              {autresEntreprises > 0 ? (
-                <span className="rounded-full px-1.5 py-0.5 text-muted whitespace-nowrap">
-                  +{autresEntreprises} entreprise
-                  {autresEntreprises > 1 ? "s" : ""}
-                </span>
-              ) : null}
-            </div>
-          </>
+            <p className="m-0 mt-2.5 text-[12.5px] text-muted truncate">
+              {tag.entreprises.slice(0, 2).map((e) => e.nom).join(", ")}
+              {n > 2 ? ` et ${pluriel(n - 2)} de plus` : ""}
+            </p>
+          </div>
         )}
 
         <span className="mt-auto pt-3 border-t border-line inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent">
-          {n ? "Voir les contacts" : "Ajouter des contacts"}
-          <ArrowRight
-            size={15}
-            className="transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none"
-            aria-hidden
-          />
+          {n ? "Voir les entreprises" : "Ajouter des entreprises"}
+          <ArrowRight size={15} className="transition-transform duration-200 group-hover:translate-x-0.5 motion-reduce:transition-none" aria-hidden />
         </span>
       </Card>
     </Link>

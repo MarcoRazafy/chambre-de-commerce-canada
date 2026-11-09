@@ -1,6 +1,7 @@
-// Filtres de la page Contacts : recherche, situations à cocher (cotisation, accès, rôle) et tags à cocher.
+// Filtres de la page Contacts (une ligne par entreprise, représentée par son contact principal) :
+// recherche, situations à cocher (cotisation, accès du contact principal) et tags à cocher.
 // Dans une même famille, les cas cochés s'additionnent (« à jour » ou « en retard ») ;
-// d'une famille à l'autre, ils se combinent (« en retard » et « contact principal »).
+// d'une famille à l'autre, ils se combinent (« en retard » et « invitation en attente »).
 
 export const SITUATIONS = [
   {
@@ -17,13 +18,6 @@ export const SITUATIONS = [
     options: [
       { valeur: "actif", libelle: "Accès actif" },
       { valeur: "invite", libelle: "Invitation en attente" },
-    ],
-  },
-  {
-    famille: "Rôle",
-    options: [
-      { valeur: "principal", libelle: "Contact principal" },
-      { valeur: "secondaire", libelle: "Autre contact" },
     ],
   },
 ] as const;
@@ -44,10 +38,9 @@ const liste = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? 
 export function lireFiltresContacts(p: Parametres): FiltresContacts {
   const q = liste(p.q)[0]?.trim() ?? "";
   const situations = [...new Set(liste(p.situation))].filter((s): s is Situation => VALEURS.has(s));
-  // Anciennes adresses : ?acces=actif, ?principal=1
+  // Anciennes adresses : ?acces=actif
   for (const a of liste(p.acces)) if ((a === "actif" || a === "invite") && !situations.includes(a)) situations.push(a);
-  if (liste(p.principal).includes("1") && !situations.includes("principal")) situations.push("principal");
-  const tags = [...new Set([...liste(p.tag)].map((t) => t.trim().slice(0, 60)).filter(Boolean))];
+  const tags = [...new Set(liste(p.tag).map((t) => t.trim().slice(0, 60)).filter(Boolean))];
   return { q, situations, tags };
 }
 
@@ -60,17 +53,16 @@ export function parametresContacts(f: FiltresContacts): URLSearchParams {
   return p;
 }
 
-// Conditions Prisma (sur les comptes « membre ») qui traduisent les filtres
+// Conditions Prisma (sur les entreprises membres) qui traduisent les filtres
 export function conditionsContacts(f: FiltresContacts) {
   const et: Record<string, unknown>[] = [];
   const statuts = STATUTS.filter((s) => f.situations.includes(s));
-  if (statuts.length) et.push({ member: { statut: { in: statuts } } });
+  if (statuts.length) et.push({ statut: { in: statuts } });
 
   const actif = f.situations.includes("actif"), invite = f.situations.includes("invite");
-  if (actif !== invite) et.push({ motDePasse: actif ? { not: null } : null });
-
-  const principal = f.situations.includes("principal"), secondaire = f.situations.includes("secondaire");
-  if (principal !== secondaire) et.push({ contactPrincipal: principal });
+  if (actif !== invite) {
+    et.push({ users: { some: { role: "membre", contactPrincipal: true, motDePasse: actif ? { not: null } : null } } });
+  }
 
   const noms = f.tags.filter((t) => t !== SANS_TAG);
   const sans = f.tags.includes(SANS_TAG);
@@ -83,7 +75,14 @@ export function conditionsContacts(f: FiltresContacts) {
 
   if (f.q) {
     const mots = { contains: f.q, mode: "insensitive" as const };
-    et.push({ OR: [{ nom: mots }, { email: mots }, { fonction: mots }, { tel: mots }, { member: { nom: mots } }] });
+    et.push({
+      OR: [
+        { nom: mots },
+        { secteur: mots },
+        { ville: mots },
+        { users: { some: { role: "membre", OR: [{ nom: mots }, { email: mots }, { fonction: mots }, { tel: mots }] } } },
+      ],
+    });
   }
   return et;
 }

@@ -1,42 +1,50 @@
 import { prisma } from "../lib/db";
 
-// Données de démonstration des tags : des repères posés sur les contacts des entreprises membres,
-// selon leur fonction, leur secteur ou leur rôle de contact principal.
+// Données de démonstration des tags : des repères posés sur les entreprises membres,
+// selon leur secteur, leur situation et la fonction de leur contact principal.
 // Ajoute seulement : les tags déjà posés restent en place.
 
-type Contact = { fonction: string; principal: boolean; secteur: string; entreprise: string; rang: number };
+type Entreprise = { secteur: string; statut: string; fonction: string; rang: number };
 
-const REGLES: [string, (c: Contact) => boolean][] = [
-  ["Décideurs", (c) => /direct|gérant|fondat|président|pdg|ceo/i.test(c.fonction)],
-  ["Contacts export", (c) => /export|commercial|vente/i.test(c.fonction) || /export/i.test(c.secteur)],
-  ["VIP gala 2026", (c) => c.principal && c.rang % 2 === 0],
-  ["Mission Canada 2027", (c) => /agri|artisan|tourism|voyage/i.test(c.secteur) && c.principal],
-  ["Comité agribusiness", (c) => /agri|agro/i.test(c.secteur)],
-  ["Prospects sponsoring", (c) => /financ|digital|mines/i.test(c.secteur) && c.principal],
-  ["Formation continue", (c) => /qualit|pédagog|formation|ressources humaines|rh/i.test(`${c.fonction} ${c.secteur}`)],
-  ["Ambassadeurs", (c) => c.rang % 5 === 1],
+const REGLES: [string, (e: Entreprise) => boolean][] = [
+  ["Décideurs", (e) => /direct|gérant|fondat|président|pdg|ceo/i.test(e.fonction)],
+  ["Contacts export", (e) => /export|commercial|vente/i.test(`${e.fonction} ${e.secteur}`)],
+  ["VIP gala 2026", (e) => e.rang % 2 === 0 && e.statut === "a_jour"],
+  ["Mission Canada 2027", (e) => /agri|artisan|tourism|voyage/i.test(e.secteur)],
+  ["Comité agribusiness", (e) => /agri|agro/i.test(e.secteur)],
+  ["Prospects sponsoring", (e) => /financ|digital|mines/i.test(e.secteur)],
+  ["Formation continue", (e) => /qualit|pédagog|formation/i.test(`${e.fonction} ${e.secteur}`)],
+  ["Relance cotisation", (e) => e.statut === "en_retard" || e.statut === "en_attente"],
+  ["Ambassadeurs", (e) => e.rang % 4 === 1],
 ];
 
 async function main() {
-  const contacts = await prisma.user.findMany({
-    where: { role: "membre", memberId: { not: null }, member: { statut: { notIn: ["refusee", "candidature"] } } },
-    select: { id: true, nom: true, fonction: true, contactPrincipal: true, etiquettes: true, member: { select: { nom: true, secteur: true } } },
-    orderBy: [{ member: { nom: "asc" } }, { nom: "asc" }],
+  const membres = await prisma.member.findMany({
+    where: { statut: { notIn: ["refusee", "candidature"] } },
+    select: {
+      id: true,
+      secteur: true,
+      statut: true,
+      etiquettes: true,
+      users: { where: { role: "membre" }, orderBy: [{ contactPrincipal: "desc" }, { createdAt: "asc" }], take: 1, select: { fonction: true } },
+    },
+    orderBy: { nom: "asc" },
   });
 
   let poses = 0;
-  for (const [rang, u] of contacts.entries()) {
-    const c: Contact = { fonction: u.fonction, principal: u.contactPrincipal, secteur: u.member?.secteur ?? "", entreprise: u.member?.nom ?? "", rang };
-    const nouveaux = REGLES.filter(([, ok]) => ok(c)).map(([nom]) => nom).filter((nom) => !u.etiquettes.includes(nom));
+  for (const [rang, m] of membres.entries()) {
+    const e: Entreprise = { secteur: m.secteur, statut: m.statut, fonction: m.users[0]?.fonction ?? "", rang };
+    const nouveaux = REGLES.filter(([, ok]) => ok(e)).map(([nom]) => nom).filter((nom) => !m.etiquettes.includes(nom));
     if (!nouveaux.length) continue;
-    await prisma.user.update({ where: { id: u.id }, data: { etiquettes: [...u.etiquettes, ...nouveaux] } });
+    await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...m.etiquettes, ...nouveaux] } });
+    for (const nom of nouveaux) await prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
     poses += nouveaux.length;
   }
 
-  const tous = await prisma.user.findMany({ where: { role: "membre", etiquettes: { isEmpty: false } }, select: { etiquettes: true } });
+  const tous = await prisma.member.findMany({ where: { etiquettes: { isEmpty: false } }, select: { etiquettes: true } });
   const compte = new Map<string, number>();
-  for (const u of tous) for (const e of u.etiquettes) compte.set(e, (compte.get(e) ?? 0) + 1);
-  console.log(`Tags de démo : ${poses} tag(s) posé(s) sur ${contacts.length} contact(s).`);
+  for (const m of tous) for (const t of m.etiquettes) compte.set(t, (compte.get(t) ?? 0) + 1);
+  console.log(`Tags de démo : ${poses} tag(s) posé(s) sur ${membres.length} entreprise(s).`);
   for (const [nom, n] of [...compte].sort((a, b) => b[1] - a[1])) console.log(`  ${nom} : ${n}`);
 }
 

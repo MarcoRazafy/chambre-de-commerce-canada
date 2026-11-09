@@ -157,25 +157,24 @@ export async function majEtiquettes(memberId: string, champ: ChampEtiquettes, va
   return { ok: true as const, valeurs: propres };
 }
 
-// Tags d'un contact : repères internes, réservés à l'équipe
-export async function majTagsContact(contactId: string, valeurs: string[]) {
+// Tags d'une entreprise : repères internes, réservés à l'équipe
+export async function majTagsEntreprise(memberId: string, valeurs: string[]) {
   await exigerEquipe();
-  const c = await prisma.user.findFirst({ where: { id: contactId, role: "membre" }, select: { memberId: true } });
-  if (!c) return { ok: false as const, erreur: "Contact introuvable." };
+  const m = await prisma.member.findUnique({ where: { id: memberId }, select: { id: true } });
+  if (!m) return { ok: false as const, erreur: "Entreprise introuvable." };
   const propres = propresTags(valeurs);
-  await prisma.user.update({ where: { id: contactId }, data: { etiquettes: propres } });
+  await prisma.member.update({ where: { id: memberId }, data: { etiquettes: propres } });
   for (const nom of propres) await prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
   revalidatePath("/admin", "layout");
   return { ok: true as const, valeurs: propres };
 }
 
-/* ===== Page Tags (équipe) : renommer, supprimer, poser sur plusieurs contacts ===== */
+/* ===== Page Tags (équipe) : renommer, supprimer, poser sur plusieurs entreprises ===== */
 const propreEtiquette = (v: string) => v.trim().replace(/\s+/g, " ").slice(0, 60);
-const CONTACTS = { role: "membre" as const, memberId: { not: null } };
-const pluriel = (n: number) => `${n} contact${n > 1 ? "s" : ""}`;
+const pluriel = (n: number) => `${n} entreprise${n > 1 ? "s" : ""}`;
 const garderTag = (nom: string) => prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
 
-// Créer un tag : son nom suffit, les contacts s'ajoutent ensuite depuis sa page
+// Créer un tag : son nom suffit, les entreprises s'ajoutent ensuite depuis sa page
 export async function creerTag(formData: FormData) {
   await exigerEquipe();
   const nom = propreEtiquette(texte(formData, "nom"));
@@ -193,9 +192,9 @@ export async function renommerEtiquette(formData: FormData) {
     await prisma.tag.deleteMany({ where: { nom: ancien } });
     await garderTag(nouveau);
   }
-  const cs = await prisma.user.findMany({ where: { ...CONTACTS, etiquettes: { has: ancien } }, select: { id: true, etiquettes: true } });
-  for (const c of cs) {
-    await prisma.user.update({ where: { id: c.id }, data: { etiquettes: [...new Set(c.etiquettes.map((e) => (e === ancien ? nouveau : e)))] } });
+  const ms = await prisma.member.findMany({ where: { etiquettes: { has: ancien } }, select: { id: true, etiquettes: true } });
+  for (const m of ms) {
+    await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...new Set(m.etiquettes.map((e) => (e === ancien ? nouveau : e)))] } });
   }
   revalidatePath("/admin", "layout");
   redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nouveau)}`, `« ${ancien} » renommé en « ${nouveau} »`);
@@ -205,32 +204,32 @@ export async function supprimerEtiquette(formData: FormData) {
   await exigerEquipe();
   const nom = texte(formData, "nom");
   await prisma.tag.deleteMany({ where: { nom } });
-  const cs = await prisma.user.findMany({ where: { ...CONTACTS, etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
-  for (const c of cs) await prisma.user.update({ where: { id: c.id }, data: { etiquettes: c.etiquettes.filter((e) => e !== nom) } });
+  const ms = await prisma.member.findMany({ where: { etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
+  for (const m of ms) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: m.etiquettes.filter((e) => e !== nom) } });
   revalidatePath("/admin", "layout");
-  redirectWithFlash("/admin/etiquettes", `Tag « ${nom} » retiré de ${pluriel(cs.length)}`);
+  redirectWithFlash("/admin/etiquettes", `Tag « ${nom} » retiré de ${pluriel(ms.length)}`);
 }
 
 export async function attribuerEtiquette(formData: FormData) {
   await exigerEquipe();
   const nom = propreEtiquette(texte(formData, "nom"));
-  const ids = formData.getAll("contacts").map(String).filter(Boolean);
-  if (!nom || !ids.length) redirectWithErreur(nom ? `/admin/etiquettes?e=${encodeURIComponent(nom)}` : "/admin/etiquettes", "Choisissez au moins un contact.");
+  const ids = formData.getAll("entreprises").map(String).filter(Boolean);
+  if (!nom || !ids.length) redirectWithErreur(nom ? `/admin/etiquettes?e=${encodeURIComponent(nom)}` : "/admin/etiquettes", "Choisissez au moins une entreprise.");
   await garderTag(nom);
-  const cs = await prisma.user.findMany({ where: { ...CONTACTS, id: { in: ids } }, select: { id: true, etiquettes: true } });
-  for (const c of cs) if (!c.etiquettes.includes(nom)) await prisma.user.update({ where: { id: c.id }, data: { etiquettes: [...c.etiquettes, nom] } });
+  const ms = await prisma.member.findMany({ where: { id: { in: ids } }, select: { id: true, etiquettes: true } });
+  for (const m of ms) if (!m.etiquettes.includes(nom)) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...m.etiquettes, nom] } });
   revalidatePath("/admin", "layout");
   // Depuis la page Contacts : on y revient, avec les mêmes filtres
   const retour = texte(formData, "retour");
   const destination = retour.startsWith("/admin/contacts") ? retour : `/admin/etiquettes?e=${encodeURIComponent(nom)}`;
-  redirectWithFlash(destination, `« ${nom} » ajouté à ${pluriel(cs.length)}`);
+  redirectWithFlash(destination, `« ${nom} » ajouté à ${pluriel(ms.length)}`);
 }
 
-export async function retirerEtiquetteContact(formData: FormData) {
+export async function retirerEtiquetteEntreprise(formData: FormData) {
   await exigerEquipe();
-  const nom = texte(formData, "nom"), id = texte(formData, "contactId");
-  const c = await prisma.user.findFirst({ where: { ...CONTACTS, id }, select: { etiquettes: true } });
-  if (c) await prisma.user.update({ where: { id }, data: { etiquettes: c.etiquettes.filter((e) => e !== nom) } });
+  const nom = texte(formData, "nom"), id = texte(formData, "memberId");
+  const m = await prisma.member.findUnique({ where: { id }, select: { etiquettes: true } });
+  if (m) await prisma.member.update({ where: { id }, data: { etiquettes: m.etiquettes.filter((e) => e !== nom) } });
   revalidatePath("/admin", "layout");
   redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nom)}`, "Tag retiré");
 }

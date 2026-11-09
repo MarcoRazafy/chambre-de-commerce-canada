@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
 
-// Audience d'une lettre : les contacts des membres (selon le statut du membre, les tags du contact, principal ou tous)
+// Audience d'une lettre : les contacts des membres (selon le statut et les tags de l'entreprise, principal ou tous)
 // et, si coché, les abonnés à la lettre d'information. Avec « evenement », seulement les inscrits de cet événement.
 export type Audience = {
   statuts: ("a_jour" | "en_attente" | "en_retard")[];
@@ -60,8 +60,10 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
       where: {
         role: "membre",
         ...(a.contacts === "principal" ? { contactPrincipal: true } : {}),
-        ...(a.etiquettes.length ? { etiquettes: { hasSome: a.etiquettes } } : {}),
-        member: { statut: { in: a.statuts } },
+        member: {
+          statut: { in: a.statuts },
+          ...(a.etiquettes.length ? { etiquettes: { hasSome: a.etiquettes } } : {}),
+        },
       },
       select: { email: true, nom: true },
     });

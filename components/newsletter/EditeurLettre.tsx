@@ -68,7 +68,7 @@ export function EditeurLettre({
             </label>
             {etiquettes.length ? (
               <label className="block">
-                <span className="block text-[12.5px] font-semibold text-muted mb-1">Seulement les contacts avec le tag</span>
+                <span className="block text-[12.5px] font-semibold text-muted mb-1">Seulement les entreprises avec le tag</span>
                 <select name="etiquettes" multiple size={Math.min(6, etiquettes.length)} defaultValue={audience.etiquettes} className={CHAMP}>
                   {etiquettes.map((e) => <option key={e} value={e}>{e}</option>)}
                 </select>

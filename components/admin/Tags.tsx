@@ -1,120 +1,73 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Search, Tag, UserPlus } from "lucide-react";
+import { Building2, Plus, Search, Tag } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { LogoMark } from "@/components/domain";
+import { CancelButton, Field, INPUT, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { attribuerEtiquette, creerTag } from "@/lib/actions/maillage";
+import type { MemberType } from "@/lib/types";
 import { plat } from "@/lib/texte";
 
-export interface ContactTag {
+export interface EntrepriseTag {
   id: string;
   nom: string;
-  email: string;
-  entreprise: string;
+  type: MemberType;
+  photo: string | null;
+  logo: string | null;
+  contact: string | null;
+  email: string | null;
 }
 
-// Contacts à cocher : nom, courriel et entreprise ; filtre par entreprise et recherche
-function ChoixContacts({ contacts }: { contacts: ContactTag[] }) {
+// Entreprises à cocher : logo, nom, contact principal et son courriel ; recherche sur le tout
+function ChoixEntreprises({ entreprises }: { entreprises: EntrepriseTag[] }) {
   const [q, setQ] = useState("");
-  const [entreprise, setEntreprise] = useState("");
-  const entreprises = [...new Set(contacts.map((c) => c.entreprise))].sort(
-    (a, b) => a.localeCompare(b, "fr"),
-  );
-  const visible = (c: ContactTag) =>
-    (!entreprise || c.entreprise === entreprise) &&
-    (!q || plat(`${c.nom} ${c.email} ${c.entreprise}`).includes(plat(q)));
-
-  if (!contacts.length)
-    return (
-      <p className="m-0 text-[13px] text-muted">
-        Tous les contacts ont déjà ce tag.
-      </p>
-    );
+  const visible = (e: EntrepriseTag) => !q || plat(`${e.nom} ${e.contact ?? ""} ${e.email ?? ""}`).includes(plat(q));
+  if (!entreprises.length) return <p className="m-0 text-[13px] text-muted">Toutes les entreprises ont déjà ce tag.</p>;
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex gap-2 flex-wrap">
-        <select
-          value={entreprise}
-          onChange={(e) => setEntreprise(e.target.value)}
-          aria-label="Entreprise"
-          className={`${INPUT} sm:w-[220px] flex-1 sm:flex-none`}
-        >
-          <option value="">Toutes les entreprises</option>
-          {entreprises.map((e) => (
-            <option key={e} value={e}>
-              {e}
-            </option>
-          ))}
-        </select>
-        <div className="relative flex-1 min-w-[180px]">
-          <Search
-            size={14}
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
-          />
-          <input
-            type="search"
-            value={q}
-            onChange={(e) => setQ(e.target.value)}
-            placeholder="Nom ou courriel…"
-            aria-label="Rechercher un contact"
-            className={`${INPUT} pl-8`}
-          />
-        </div>
+      <div className="relative">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none" aria-hidden />
+        <input
+          type="search"
+          value={q}
+          onChange={(ev) => setQ(ev.target.value)}
+          placeholder="Entreprise, contact ou courriel…"
+          aria-label="Rechercher une entreprise"
+          className={`${INPUT} pl-8`}
+        />
       </div>
-      <div className="max-h-[320px] overflow-y-auto rounded-[var(--radius-s)] border border-line">
-        {contacts.map((c) => (
+      <div className="max-h-[340px] overflow-y-auto rounded-[var(--radius-s)] border border-line">
+        {entreprises.map((e) => (
           <label
-            key={c.id}
-            className={`${visible(c) ? "flex" : "hidden"} items-center gap-3 px-3 py-2.5 border-b border-line last:border-b-0 cursor-pointer hover:bg-surface-2`}
+            key={e.id}
+            className={`${visible(e) ? "flex" : "hidden"} items-center gap-3 px-3 py-2.5 border-b border-line last:border-b-0 cursor-pointer hover:bg-surface-2`}
           >
-            <input
-              type="checkbox"
-              name="contacts"
-              value={c.id}
-              className="accent-[var(--accent)] w-4 h-4 shrink-0"
-            />
-            <span className="min-w-0 flex-1">
-              <span className="block text-[13.4px] font-semibold text-ink truncate">
-                {c.nom}
-              </span>
-              <span className="block text-[12.3px] text-muted truncate">
-                {c.email}
-              </span>
+            <input type="checkbox" name="entreprises" value={e.id} className="accent-[var(--accent)] w-4 h-4 shrink-0" />
+            <span className="w-[54px] flex justify-center shrink-0">
+              <LogoMark member={e} size={30} />
             </span>
-            <span className="text-[12.5px] text-ink text-right shrink-0 max-w-[40%] truncate">
-              {c.entreprise}
+            <span className="min-w-0 flex-1">
+              <span className="block text-[13.4px] font-semibold text-ink truncate">{e.nom}</span>
+              <span className="block text-[12.3px] text-muted truncate">
+                {e.contact ? `${e.contact} · ${e.email}` : "Aucun contact"}
+              </span>
             </span>
           </label>
         ))}
-        {!contacts.some(visible) ? (
-          <p className="m-0 px-3 py-2.5 text-[13px] text-muted">
-            Aucun contact trouvé.
-          </p>
-        ) : null}
+        {!entreprises.some(visible) ? <p className="m-0 px-3 py-2.5 text-[13px] text-muted">Aucune entreprise trouvée.</p> : null}
       </div>
     </div>
   );
 }
 
-// Bouton « Ajouter un tag » : son nom suffit ; on arrive ensuite sur sa page pour y ajouter des contacts
+// Bouton « Ajouter un tag » : son nom suffit ; on arrive ensuite sur sa page pour y ajouter des entreprises
 export function NouveauTag() {
   return (
     <Modal
       title="Ajouter un tag"
       trigger={(ouvrir) => (
-        <button
-          type="button"
-          onClick={ouvrir}
-          className="btn-action btn-action-sm"
-        >
+        <button type="button" onClick={ouvrir} className="btn-action btn-action-sm">
           <Plus size={15} /> Ajouter un tag
         </button>
       )}
@@ -123,14 +76,7 @@ export function NouveauTag() {
         <form action={creerTag}>
           <ModalBody>
             <Field label="Nom du tag">
-              <input
-                name="nom"
-                required
-                autoFocus
-                maxLength={60}
-                placeholder="Ex. Exportateurs, VIP gala"
-                className={INPUT}
-              />
+              <input name="nom" required autoFocus maxLength={60} placeholder="Ex. Exportateurs, VIP gala" className={INPUT} />
             </Field>
           </ModalBody>
           <ModalFooter>
@@ -145,25 +91,15 @@ export function NouveauTag() {
   );
 }
 
-// Bouton « Ajouter un contact » d'un tag : les contacts qui ne l'ont pas encore
-export function AjouterContactsTag({
-  nom,
-  contacts,
-}: {
-  nom: string;
-  contacts: ContactTag[];
-}) {
+// Bouton « Ajouter une entreprise » d'un tag : les entreprises qui ne l'ont pas encore
+export function AjouterEntreprisesTag({ nom, entreprises }: { nom: string; entreprises: EntrepriseTag[] }) {
   return (
     <Modal
-      title={`Ajouter des contacts à « ${nom} »`}
+      title={`Ajouter des entreprises à « ${nom} »`}
       wide
       trigger={(ouvrir) => (
-        <button
-          type="button"
-          onClick={ouvrir}
-          className="btn-action btn-action-sm"
-        >
-          <UserPlus size={15} /> Ajouter un contact
+        <button type="button" onClick={ouvrir} className="btn-action btn-action-sm">
+          <Building2 size={15} /> Ajouter une entreprise
         </button>
       )}
     >
@@ -171,13 +107,13 @@ export function AjouterContactsTag({
         <form action={attribuerEtiquette}>
           <input type="hidden" name="nom" value={nom} />
           <ModalBody>
-            <ChoixContacts contacts={contacts} />
+            <ChoixEntreprises entreprises={entreprises} />
           </ModalBody>
           <ModalFooter>
             <CancelButton onClick={fermer} />
-            {contacts.length ? (
+            {entreprises.length ? (
               <SubmitButton pendingLabel="Ajout…">
-                <UserPlus size={14} /> Ajouter
+                <Plus size={14} /> Ajouter
               </SubmitButton>
             ) : null}
           </ModalFooter>
@@ -187,15 +123,16 @@ export function AjouterContactsTag({
   );
 }
 
-// « Taguer ces N contacts » (page Contacts) : un tag existant ou nouveau, posé sur tous les contacts filtrés
-export function TaguerContacts({ ids, tousTags, retour }: { ids: string[]; tousTags: string[]; retour: string }) {
+// « Taguer ces N entreprises » (page Contacts) : un tag existant ou nouveau, posé sur toutes les entreprises filtrées
+export function TaguerEntreprises({ ids, tousTags, retour }: { ids: string[]; tousTags: string[]; retour: string }) {
   const n = ids.length;
+  const libelle = `${n} entreprise${n > 1 ? "s" : ""}`;
   return (
     <Modal
-      title={`Taguer ${n} contact${n > 1 ? "s" : ""}`}
+      title={`Taguer ${libelle}`}
       trigger={(ouvrir) => (
         <button type="button" onClick={ouvrir} disabled={!n} className="btn-action btn-action-sm disabled:opacity-50">
-          <Tag size={14} /> Taguer ces {n} contact{n > 1 ? "s" : ""}
+          <Tag size={14} /> Taguer ces {libelle}
         </button>
       )}
     >
@@ -203,7 +140,7 @@ export function TaguerContacts({ ids, tousTags, retour }: { ids: string[]; tousT
         <form action={attribuerEtiquette}>
           <input type="hidden" name="retour" value={retour} />
           {ids.map((id) => (
-            <input key={id} type="hidden" name="contacts" value={id} />
+            <input key={id} type="hidden" name="entreprises" value={id} />
           ))}
           <ModalBody>
             <Field label="Tag" hint="Choisissez un tag existant ou tapez-en un nouveau.">
@@ -218,7 +155,7 @@ export function TaguerContacts({ ids, tousTags, retour }: { ids: string[]; tousT
           <ModalFooter>
             <CancelButton onClick={fermer} />
             <SubmitButton pendingLabel="Ajout…">
-              <Tag size={14} /> Taguer {n} contact{n > 1 ? "s" : ""}
+              <Tag size={14} /> Taguer {libelle}
             </SubmitButton>
           </ModalFooter>
         </form>

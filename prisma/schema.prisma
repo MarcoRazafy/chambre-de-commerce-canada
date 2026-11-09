@@ -166,6 +166,8 @@ model Member {
   offresTags   String[] @default([]) @map("offres_tags")
   besoinsTags  String[] @default([]) @map("besoins_tags")
   interetsTags String[] @default([]) @map("interets_tags")
+  // Tags : repères internes de l'équipe sur l'entreprise (cibler une newsletter, suivre un groupe)
+  etiquettes   String[] @default([])
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -207,9 +209,6 @@ model User {
   member   Member? @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   contactPrincipal Boolean @default(false)
-
-  // Tags : repères internes de l'équipe posés sur le contact (cibler une newsletter, suivre un groupe)
-  etiquettes String[] @default([])
 
   jaimes             NewsLike[]
   participations     ParticipantFil[]
@@ -972,7 +971,7 @@ model MiseEnRelation {
 }
 
 // Newsletter : une lettre écrite par l'équipe, envoyée par courriel à une audience choisie
-// (contacts des membres selon leur statut et leurs tags, abonnés à la lettre)
+// (contacts des membres selon leur statut et les tags de l'entreprise, abonnés à la lettre)
 model Lettre {
   id            String        @id @default(cuid())
   sujet         String
@@ -1010,7 +1009,7 @@ model EnvoiLettre {
   @@map("envois_lettres")
 }
 
-// Un tag de l'équipe, qui existe même sans contact ; les contacts le portent dans « etiquettes »
+// Un tag de l'équipe, qui existe même sans entreprise ; les entreprises le portent dans « etiquettes »
 model Tag {
   id        String   @id @default(cuid())
   nom       String   @unique

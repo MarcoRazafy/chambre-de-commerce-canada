@@ -138,7 +138,7 @@ export function LogoMark({
   member,
   size = 46,
 }: {
-  member: Member;
+  member: Pick<Member, "id" | "type" | "nom" | "photo" | "logo">;
   size?: number;
 }) {
   if (member.type === "physique") {

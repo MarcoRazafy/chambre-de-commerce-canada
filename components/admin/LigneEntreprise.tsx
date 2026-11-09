@@ -3,93 +3,97 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
-import { Building2, Mail, Phone, Plus, Tag, X } from "lucide-react";
+import { ExternalLink, Mail, Phone, Plus, Tag, User, X } from "lucide-react";
 import { Modal } from "@/components/Modal";
+import { LogoMark } from "@/components/domain";
 import { INPUT } from "@/components/form-bits";
-import { Avatar, Pill } from "@/components/ui";
-import { majTagsContact } from "@/lib/actions/maillage";
-import { initials as initiales } from "@/lib/format";
+import { Pill, StatusPill } from "@/components/ui";
+import { majTagsEntreprise } from "@/lib/actions/maillage";
+import type { EntrepriseContact } from "@/lib/contacts-admin";
 import { plat } from "@/lib/texte";
-
-export interface ContactLigne {
-  id: string;
-  nom: string;
-  fonction: string;
-  email: string;
-  tel: string | null;
-  photo: string | null;
-  contactPrincipal: boolean;
-  actif: boolean;
-  etiquettes: string[];
-  member: { id: string; nom: string } | null;
-}
 
 const TAGS_VISIBLES = 3;
 const PASTILLE =
   "inline-flex items-center gap-1 max-w-full rounded-full bg-accent-soft text-accent-strong px-2.5 py-0.5 text-[12px] font-semibold whitespace-nowrap";
 const TD = "px-4 py-3 border-b border-line";
 
-// Une ligne de la page Contacts : un clic ouvre la fiche du contact, avec ses tags à modifier
-export function LigneContact({ contact: c, tousTags }: { contact: ContactLigne; tousTags: string[] }) {
+function Acces({ e }: { e: EntrepriseContact }) {
+  if (!e.contact) return <span className="text-faint">—</span>;
+  return e.contact.actif ? <Pill tone="ok">Actif</Pill> : <Pill tone="warn">Invitation en attente</Pill>;
+}
+
+// Une ligne de la page Contacts : l'entreprise (son logo) et son contact principal ; un clic ouvre sa fiche et ses tags
+export function LigneEntreprise({ entreprise: e, tousTags }: { entreprise: EntrepriseContact; tousTags: string[] }) {
   const [ouvert, setOuvert] = useState(false);
-  const autres = c.etiquettes.length - TAGS_VISIBLES;
+  const autres = e.etiquettes.length - TAGS_VISIBLES;
+  const c = e.contact;
 
   return (
     <tr
       className="hover:bg-surface-2 align-middle cursor-pointer transition-colors duration-150"
-      onClick={(e) => {
-        if ((e.target as HTMLElement).closest("a,button,dialog")) return;
+      onClick={(ev) => {
+        if ((ev.target as HTMLElement).closest("a,button,dialog")) return;
         setOuvert(true);
       }}
     >
       <td className={TD}>
-        <div className="flex items-center gap-3">
-          <Avatar initials={initiales(c.nom)} src={c.photo} alt="" size={36} />
+        <div className="flex items-center gap-3.5">
+          <span className="w-[64px] flex justify-center shrink-0">
+            <LogoMark member={e} size={36} />
+          </span>
           <div className="min-w-0">
             <button
               type="button"
               onClick={() => setOuvert(true)}
-              className="block p-0 border-0 bg-transparent font-semibold text-ink text-left cursor-pointer hover:text-accent focus-visible:outline-2 focus-visible:outline-accent rounded-sm"
+              className="block p-0 border-0 bg-transparent font-semibold text-[14px] text-ink text-left cursor-pointer hover:text-accent focus-visible:outline-2 focus-visible:outline-accent rounded-sm"
             >
-              {c.nom}
+              {e.nom}
             </button>
-            <div className="text-[12.3px] text-muted">{c.fonction}</div>
+            <div className="text-[12.3px] text-muted">
+              {e.secteur} · {e.ville}
+            </div>
           </div>
-          {c.contactPrincipal ? <Pill tone="warn">Principal</Pill> : null}
         </div>
-        <Modal title="Fiche du contact" ouvert={ouvert} onFermer={() => setOuvert(false)}>
-          {() => <FicheContact contact={c} tousTags={tousTags} />}
+        <Modal title="Fiche de l’entreprise" ouvert={ouvert} onFermer={() => setOuvert(false)}>
+          {() => <FicheEntreprise entreprise={e} tousTags={tousTags} />}
         </Modal>
       </td>
       <td className={TD}>
-        {c.member ? (
-          <Link href={`/admin/membres/${c.member.id}`} className="font-semibold text-ink no-underline hover:text-accent">
-            {c.member.nom}
-          </Link>
+        {c ? (
+          <>
+            <div className="font-semibold text-ink">{c.nom}</div>
+            <div className="text-[12.3px] text-muted">{c.fonction}</div>
+          </>
         ) : (
-          "—"
+          <span className="text-faint">Aucun contact</span>
         )}
       </td>
       <td className={TD}>
-        <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-accent no-underline hover:underline">
-          <Mail size={13} />
-          {c.email}
-        </a>
-        {c.tel ? (
-          <a href={`tel:${c.tel.replace(/\s/g, "")}`} className="flex items-center gap-1.5 text-muted no-underline mt-0.5">
-            <Phone size={13} />
-            {c.tel}
-          </a>
-        ) : null}
+        {c ? (
+          <>
+            <a href={`mailto:${c.email}`} className="flex items-center gap-1.5 text-accent no-underline hover:underline">
+              <Mail size={13} />
+              {c.email}
+            </a>
+            {c.tel ? (
+              <a href={`tel:${c.tel.replace(/\s/g, "")}`} className="flex items-center gap-1.5 text-muted no-underline mt-0.5">
+                <Phone size={13} />
+                {c.tel}
+              </a>
+            ) : null}
+          </>
+        ) : (
+          <span className="text-faint">—</span>
+        )}
       </td>
       <td className={TD}>
-        {c.etiquettes.length ? (
+        {e.etiquettes.length ? (
           <div className="flex flex-wrap gap-1.5 max-w-[240px]">
-            {c.etiquettes.slice(0, TAGS_VISIBLES).map((t) => (
+            {e.etiquettes.slice(0, TAGS_VISIBLES).map((t) => (
               <Link
                 key={t}
                 href={`/admin/etiquettes?e=${encodeURIComponent(t)}`}
-                title={`Voir les contacts « ${t} »`}
+                title={`Voir les entreprises « ${t} »`}
                 className={`${PASTILLE} no-underline hover:bg-accent hover:text-white transition-colors duration-150`}
               >
                 <Tag size={11} className="shrink-0" aria-hidden />
@@ -100,7 +104,7 @@ export function LigneContact({ contact: c, tousTags }: { contact: ContactLigne; 
               <button
                 type="button"
                 onClick={() => setOuvert(true)}
-                aria-label={`Voir les ${c.etiquettes.length} tags de ${c.nom}`}
+                aria-label={`Voir les ${e.etiquettes.length} tags de ${e.nom}`}
                 className="rounded-full border border-line bg-surface px-2 py-0.5 text-[12px] font-semibold text-muted cursor-pointer hover:border-accent hover:text-accent transition-colors duration-150"
               >
                 +{autres}
@@ -111,29 +115,32 @@ export function LigneContact({ contact: c, tousTags }: { contact: ContactLigne; 
           <span className="text-faint">—</span>
         )}
       </td>
-      <td className={TD}>{c.actif ? <Pill tone="ok">Actif</Pill> : <Pill tone="warn">Invitation en attente</Pill>}</td>
+      <td className={TD}>
+        <Acces e={e} />
+      </td>
     </tr>
   );
 }
 
-function FicheContact({ contact: c, tousTags }: { contact: ContactLigne; tousTags: string[] }) {
+function FicheEntreprise({ entreprise: e, tousTags }: { entreprise: EntrepriseContact; tousTags: string[] }) {
   const router = useRouter();
-  const [tags, setTags] = useState(c.etiquettes);
+  const [tags, setTags] = useState(e.etiquettes);
   const [ajout, setAjout] = useState(false);
   const [saisie, setSaisie] = useState("");
   const [erreur, setErreur] = useState("");
   const [enCours, demarrer] = useTransition();
+  const c = e.contact;
 
   const enregistrer = (liste: string[]) => {
     setTags(liste);
     demarrer(async () => {
-      const r = await majTagsContact(c.id, liste);
+      const r = await majTagsEntreprise(e.id, liste);
       if (r.ok) {
         setTags(r.valeurs);
         setErreur("");
         router.refresh();
       } else {
-        setTags(c.etiquettes);
+        setTags(e.etiquettes);
         setErreur(r.erreur);
       }
     });
@@ -150,48 +157,56 @@ function FicheContact({ contact: c, tousTags }: { contact: ContactLigne; tousTag
   return (
     <div className="px-5 py-5 flex flex-col gap-5">
       <div className="flex items-center gap-4">
-        <Avatar initials={initiales(c.nom)} src={c.photo} alt="" size={56} className="bg-accent-soft text-accent-strong" />
+        <LogoMark member={e} size={52} />
         <div className="min-w-0">
-          <div className="text-[17px] font-semibold text-ink">{c.nom}</div>
-          {c.fonction ? <div className="text-[13px] text-muted">{c.fonction}</div> : null}
-          <div className="flex flex-wrap gap-1.5 mt-1.5">
-            {c.contactPrincipal ? <Pill tone="warn">Principal</Pill> : null}
-            {c.actif ? <Pill tone="ok">Actif</Pill> : <Pill tone="warn">Invitation en attente</Pill>}
+          <div className="text-[17px] font-semibold text-ink">{e.nom}</div>
+          <div className="text-[13px] text-muted">
+            {e.secteur} · {e.ville}
+          </div>
+          <div className="mt-1.5">
+            <StatusPill status={e.statut} />
           </div>
         </div>
       </div>
 
-      <dl className="m-0 grid gap-2.5 text-[13.4px]">
-        {c.member ? (
-          <div className="flex items-center gap-2.5">
-            <dt className="sr-only">Entreprise</dt>
-            <Building2 size={15} className="shrink-0 text-muted" aria-hidden />
-            <dd className="m-0">
-              <Link href={`/admin/membres/${c.member.id}`} className="font-semibold text-ink no-underline hover:text-accent">
-                {c.member.nom}
-              </Link>
-            </dd>
-          </div>
-        ) : null}
-        <div className="flex items-center gap-2.5">
-          <dt className="sr-only">Courriel</dt>
-          <Mail size={15} className="shrink-0 text-muted" aria-hidden />
-          <dd className="m-0 min-w-0">
-            <a href={`mailto:${c.email}`} className="text-accent no-underline hover:underline break-all">{c.email}</a>
-          </dd>
-        </div>
-        {c.tel ? (
-          <div className="flex items-center gap-2.5">
-            <dt className="sr-only">Téléphone</dt>
-            <Phone size={15} className="shrink-0 text-muted" aria-hidden />
-            <dd className="m-0">
-              <a href={`tel:${c.tel.replace(/\s/g, "")}`} className="text-ink no-underline hover:text-accent">{c.tel}</a>
-            </dd>
-          </div>
-        ) : null}
-      </dl>
+      <section className="rounded-[var(--radius-m)] border border-line bg-surface-2 p-4">
+        <h4 className="m-0 mb-2.5 text-[11px] uppercase tracking-[0.07em] font-semibold text-faint">Contact principal</h4>
+        {c ? (
+          <dl className="m-0 grid gap-2 text-[13.4px]">
+            <div className="flex items-center gap-2.5">
+              <dt className="sr-only">Nom</dt>
+              <User size={15} className="shrink-0 text-muted" aria-hidden />
+              <dd className="m-0">
+                <span className="font-semibold text-ink">{c.nom}</span>
+                {c.fonction ? <span className="text-muted"> · {c.fonction}</span> : null}
+              </dd>
+            </div>
+            <div className="flex items-center gap-2.5">
+              <dt className="sr-only">Courriel</dt>
+              <Mail size={15} className="shrink-0 text-muted" aria-hidden />
+              <dd className="m-0 min-w-0">
+                <a href={`mailto:${c.email}`} className="text-accent no-underline hover:underline break-all">{c.email}</a>
+              </dd>
+            </div>
+            {c.tel ? (
+              <div className="flex items-center gap-2.5">
+                <dt className="sr-only">Téléphone</dt>
+                <Phone size={15} className="shrink-0 text-muted" aria-hidden />
+                <dd className="m-0">
+                  <a href={`tel:${c.tel.replace(/\s/g, "")}`} className="text-ink no-underline hover:text-accent">{c.tel}</a>
+                </dd>
+              </div>
+            ) : null}
+            <div className="mt-1">
+              <Acces e={e} />
+            </div>
+          </dl>
+        ) : (
+          <p className="m-0 text-[13px] text-muted">Aucun contact déclaré pour cette entreprise.</p>
+        )}
+      </section>
 
-      <section className="border-t border-line pt-4">
+      <section>
         <div className="flex items-center justify-between gap-3 mb-3">
           <h4 className="m-0 text-[14px] font-semibold text-ink">
             Tags <span className="text-muted font-normal">({tags.length})</span>
@@ -221,7 +236,7 @@ function FicheContact({ contact: c, tousTags }: { contact: ContactLigne; tousTag
             ))}
           </ul>
         ) : (
-          <p className="m-0 text-[13px] text-muted">Aucun tag pour ce contact.</p>
+          <p className="m-0 text-[13px] text-muted">Aucun tag pour cette entreprise.</p>
         )}
 
         {ajout ? (
@@ -229,10 +244,10 @@ function FicheContact({ contact: c, tousTags }: { contact: ContactLigne; tousTag
             <div className="flex gap-2">
               <input
                 value={saisie}
-                onChange={(e) => setSaisie(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
+                onChange={(ev) => setSaisie(ev.target.value)}
+                onKeyDown={(ev) => {
+                  if (ev.key === "Enter") {
+                    ev.preventDefault();
                     ajouter(proposes.find((t) => plat(t) === plat(saisie.trim())) ?? saisie);
                   }
                 }}
@@ -275,6 +290,10 @@ function FicheContact({ contact: c, tousTags }: { contact: ContactLigne; tousTag
           {erreur ? <span className="text-bad">{erreur}</span> : enCours ? <span className="text-faint">Enregistrement…</span> : null}
         </p>
       </section>
+
+      <Link href={`/admin/membres/${e.id}`} className="self-start inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent no-underline hover:underline">
+        Ouvrir la fiche du membre <ExternalLink size={14} aria-hidden />
+      </Link>
     </div>
   );
 }
