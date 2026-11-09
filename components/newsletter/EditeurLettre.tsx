@@ -13,15 +13,19 @@ export function EditeurLettre({
   audience,
   etiquettes,
   nbDestinataires,
+  evenement = null,
 }: {
-  lettre: { id: string; sujet: string; contenu: string } | null;
+  /** Sans « id » : une nouvelle lettre préremplie */
+  lettre: { id?: string; sujet: string; contenu: string } | null;
   audience: Audience;
   etiquettes: string[];
   nbDestinataires: number | null;
+  /** Lettre aux inscrits de cet événement : l'audience est fixée */
+  evenement?: { id: string; titre: string } | null;
 }) {
   return (
     <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
-      {lettre ? <input type="hidden" name="id" value={lettre.id} /> : null}
+      {lettre?.id ? <input type="hidden" name="id" value={lettre.id} /> : null}
       <Panneau titre="La lettre" teinte="degrade">
         <div className="flex flex-col gap-3">
           <label className="block">
@@ -39,6 +43,13 @@ export function EditeurLettre({
 
       <div className="flex flex-col gap-4">
         <Panneau titre="Destinataires" teinte="bleu" sousTitre={nbDestinataires !== null ? `${nbDestinataires} adresse${nbDestinataires > 1 ? "s" : ""} avec l’audience enregistrée` : undefined}>
+          {evenement ? (
+            <div className="flex flex-col gap-2 text-[13.4px] text-ink">
+              <input type="hidden" name="evenement" value={evenement.id} />
+              <p className="m-0">Les inscrits de <b>« {evenement.titre} »</b>, une fois par adresse (sauf ceux notés absents).</p>
+              <p className="m-0 text-[12px] text-faint">Pour écrire à tous les membres, partez d’une nouvelle lettre depuis la page Newsletter.</p>
+            </div>
+          ) : (
           <div className="flex flex-col gap-3">
             <div>
               <div className="text-[12.5px] font-semibold text-muted mb-1.5">Contacts des membres</div>
@@ -69,6 +80,7 @@ export function EditeurLettre({
               Abonnés à la lettre d’information
             </label>
           </div>
+          )}
         </Panneau>
 
         <div className="flex flex-col gap-2">
@@ -87,7 +99,7 @@ export function EditeurLettre({
                   <input type="datetime-local" name="programmeeLe" defaultValue={programmationParDefaut()} className={CHAMP} />
                 </label>
                 <button type="submit" name="intention" value="programmer" className="btn-contour btn-contour-sm text-ink"><CalendarClock size={14} /> Programmer l’envoi</button>
-                <span className="text-[12px] text-faint">Jusqu’à {DELAI_MAX_JOURS} jours à l’avance. La liste des destinataires est arrêtée au moment de la programmation ; une lettre programmée peut être annulée jusqu’à son heure d’envoi.</span>
+                <span className="text-[12px] text-faint">Jusqu’à {DELAI_MAX_JOURS} jours à l’avance ; elle part dans les 5 minutes qui suivent l’heure choisie. Les destinataires sont lus au moment de l’envoi (un désabonnement entre-temps est respecté). Une lettre programmée peut être annulée tant qu’elle n’est pas partie.</span>
               </div>
             </div>
           </Panneau>

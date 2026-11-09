@@ -220,6 +220,7 @@ export async function getEvent(id: string): Promise<CanchamEvent | null> {
     include: {
       _count: { select: { participants: true } },
       programme: { orderBy: { ordre: "asc" } },
+      intervenants: { orderBy: { ordre: "asc" } },
     },
   });
   if (!e) return null;
@@ -244,6 +245,13 @@ export async function getEvent(id: string): Promise<CanchamEvent | null> {
       heure: etape.heure,
       titre: etape.titre,
       detail: etape.detail,
+    })),
+    intervenants: e.intervenants.map((i) => ({
+      nom: i.nom,
+      fonction: i.fonction,
+      entreprise: i.entreprise,
+      bio: i.bio,
+      photo: i.photo,
     })),
   };
 }

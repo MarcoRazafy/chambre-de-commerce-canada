@@ -282,12 +282,22 @@ model Event {
   fin        String?
   pourQui    String?
 
+  // Rappels automatiques aux inscrits (7 jours avant, la veille, 2 heures avant) et leur courriel ;
+  // sujet et message vides : le texte par défaut
+  rappelJ7      Boolean @default(true)
+  rappelJ1      Boolean @default(true)
+  rappelH2      Boolean @default(false)
+  rappelSujet   String?
+  rappelMessage String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   inscriptions Registration[]
+  rappels      RappelEnvoye[]
   participants Attendee[]
   programme    EventAgenda[]
+  intervenants EventIntervenant[]
   factures     Invoice[]
 
   @@index([date])
@@ -321,6 +331,36 @@ model EventAgenda {
 
   @@index([eventId, ordre])
   @@map("event_agenda")
+}
+
+// Un rappel parti : une adresse ne reçoit chaque rappel d'un événement qu'une fois
+model RappelEnvoye {
+  id       String   @id @default(cuid())
+  eventId  String
+  event    Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  type     String
+  email    String
+  envoyeLe DateTime @default(now())
+
+  @@unique([eventId, type, email])
+  @@map("rappels_envoyes")
+}
+
+// Intervenant d'un événement (un ou plusieurs) : affiché dans l'ordre, avec sa photo
+model EventIntervenant {
+  id         String  @id @default(cuid())
+  nom        String
+  fonction   String?
+  entreprise String?
+  bio        String?
+  photo      String?
+  ordre      Int
+
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+
+  @@index([eventId, ordre])
+  @@map("event_intervenants")
 }
 
 model Attendee {

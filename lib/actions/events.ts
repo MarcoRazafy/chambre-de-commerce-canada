@@ -26,6 +26,7 @@ import { telephoneValide } from "@/lib/accueil";
 import { exigerEquipe } from "@/lib/autorisations";
 import { getCurrentUser } from "@/lib/session";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
+import { INTERVENANTS_MAX, lireIntervenants } from "@/lib/intervenants";
 import type { EventFormat } from "@/lib/types";
 import {
   notifierEquipe,
@@ -448,6 +449,41 @@ export async function saveEvent(formData: FormData) {
     throw e;
   }
 
+  // Intervenants : chaque photo envoyée est enregistrée avant la transaction, comme celle de l'événement
+  const noms = formData.getAll("intervenantNom").map(String);
+  const nouvelles: (string | null)[] = [];
+  let gardes = 0;
+  for (let i = 0; i < noms.length; i++) {
+    // Pas de photo enregistrée pour une ligne ignorée (sans nom, ou au-delà du maximum)
+    if (!noms[i].trim() || gardes >= INTERVENANTS_MAX) {
+      nouvelles.push(null);
+      continue;
+    }
+    gardes++;
+    try {
+      nouvelles.push(
+        await enregistrerImage(formData.get(`intervenantPhoto-${i}`), {
+          prefixe: "intervenant",
+          largeur: 600,
+        }),
+      );
+    } catch (e) {
+      if (e instanceof ImageRefusee) {
+        redirectWithErreur(retour, `Photo de ${noms[i].trim()} : ${e.message}`);
+      }
+      throw e;
+    }
+  }
+  const intervenants = lireIntervenants({
+    noms,
+    fonctions: formData.getAll("intervenantFonction").map(String),
+    entreprises: formData.getAll("intervenantEntreprise").map(String),
+    bios: formData.getAll("intervenantBio").map(String),
+    actuelles: formData.getAll("intervenantPhotoActuelle").map(String),
+    nouvelles,
+    retirees: noms.map((_, i) => texte(formData, `intervenantRetirer-${i}`) === "1"),
+  });
+
   const heures = formData.getAll("etapeHeure").map(String);
   const titres = formData.getAll("etapeTitre").map(String);
   const details = formData.getAll("etapeDetail").map(String);
@@ -494,6 +530,12 @@ export async function saveEvent(formData: FormData) {
     if (programme.length) {
       await tx.eventAgenda.createMany({
         data: programme.map((etape) => ({ ...etape, eventId: ev.id })),
+      });
+    }
+    await tx.eventIntervenant.deleteMany({ where: { eventId: ev.id } });
+    if (intervenants.length) {
+      await tx.eventIntervenant.createMany({
+        data: intervenants.map((p) => ({ ...p, eventId: ev.id })),
       });
     }
     return ev;

@@ -92,7 +92,7 @@ export async function relancerMaillage(formData: FormData) {
       fiche,
       courrielsActifs()
         ? `La relance n’a pas pu partir vers ${contact.email}. Réessayez plus tard.`
-        : "Relance notée et notification envoyée ; l’envoi de courriels n’est pas encore configuré (RESEND_API_KEY).",
+        : "Relance notée et notification envoyée ; l’envoi de courriels n’est pas encore configuré (variables SMTP de Brevo).",
     );
   }
   redirectWithFlash(fiche, `Relance envoyée à ${contact.email}`);

@@ -551,7 +551,7 @@ export async function sendReminder(formData: FormData) {
       fiche,
       courrielsActifs()
         ? `La relance n’a pas pu partir vers ${contact.email}. Réessayez plus tard.`
-        : "L’envoi d’e-mails n’est pas encore configuré (RESEND_API_KEY) : aucune relance n’est partie.",
+        : "L’envoi d’e-mails n’est pas encore configuré (variables SMTP de Brevo) : aucune relance n’est partie.",
     );
   }
 

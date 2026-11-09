@@ -2,15 +2,16 @@ import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
-import { annulerCourrielProgramme, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
+import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
 
 // Audience d'une lettre : les contacts des membres (selon leur statut, leurs étiquettes, principal ou tous)
-// et, si coché, les abonnés à la lettre d'information.
+// et, si coché, les abonnés à la lettre d'information. Avec « evenement », seulement les inscrits de cet événement.
 export type Audience = {
   statuts: ("a_jour" | "en_attente" | "en_retard")[];
   etiquettes: string[];
   contacts: "principal" | "tous";
   abonnes: boolean;
+  evenement?: string;
 };
 export const AUDIENCE_DEFAUT: Audience = { statuts: ["a_jour", "en_attente", "en_retard"], etiquettes: [], contacts: "tous", abonnes: true };
 export const STATUTS_AUDIENCE: [Audience["statuts"][number], string][] = [
@@ -27,14 +28,33 @@ export function lireAudience(v: unknown): Audience {
     etiquettes: Array.isArray(o.etiquettes) ? o.etiquettes.map(String).filter(Boolean) : [],
     contacts: o.contacts === "principal" ? "principal" : "tous",
     abonnes: o.abonnes === true,
+    ...(typeof o.evenement === "string" && o.evenement ? { evenement: o.evenement.slice(0, 40) } : {}),
   };
 }
 
-export type Destinataire = { email: string; nom: string; abonne: boolean };
+// « motif » : pourquoi la personne reçoit ce courriel, rappelé en bas (sinon : membre ou abonné)
+export type Destinataire = { email: string; nom: string; abonne: boolean; motif?: string };
 
 // Une adresse n'apparaît qu'une fois, même si elle est à la fois contact et abonnée
 export async function destinataires(a: Audience): Promise<Destinataire[]> {
   const parAdresse = new Map<string, Destinataire>();
+  if (a.evenement) {
+    // Les inscrits de l'événement (pas ceux notés absents), un courriel par adresse
+    const e = await prisma.event.findUnique({ where: { id: a.evenement }, select: { titre: true } });
+    if (!e) return [];
+    const inscrits = await prisma.attendee.findMany({
+      where: { eventId: a.evenement, statut: { not: "absent" } },
+      orderBy: { createdAt: "asc" },
+      select: { email: true, nom: true },
+    });
+    for (const p of inscrits) {
+      const cle = p.email.trim().toLowerCase();
+      if (cle && !parAdresse.has(cle)) {
+        parAdresse.set(cle, { email: p.email.trim(), nom: p.nom, abonne: false, motif: `Vous recevez ce message car vous êtes inscrit(e) à « ${e.titre} ».` });
+      }
+    }
+    return [...parAdresse.values()];
+  }
   if (a.statuts.length) {
     const contacts = await prisma.user.findMany({
       where: {
@@ -77,52 +97,53 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
       paragraphes: contenu.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean),
       apres: desabonnement
         ? [`Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information de la CanCham. Pour ne plus la recevoir : ${desabonnement}`]
-        : ["Vous recevez ce message en tant que membre de la CanCham."],
+        : [d.motif ?? "Vous recevez ce message en tant que membre de la CanCham."],
     }),
   };
 }
 
-// Envoi (ou programmation) à toute l'audience : chaque courriel parti est noté pour suivre
-// sa remise, son ouverture et ses clics ; renvoie le nombre de courriels partis
-export async function envoyerLettre(
-  lettreId: string,
-  sujet: string,
-  contenu: string,
-  liste: Destinataire[],
-  programmeLe?: Date,
-) {
+// Envoi à toute l'audience : chaque courriel est noté avant de partir, et son identifiant revient dans
+// les webhooks du fournisseur (remise, ouverture, clic, rebond) ; renvoie le nombre de courriels partis
+export async function envoyerLettre(lettreId: string, sujet: string, contenu: string, liste: Destinataire[]) {
   let partis = 0;
   for (const d of liste) {
-    const id = await envoyerCourrielSuivi(await courrielLettre(sujet, contenu, d), { programmeLe });
-    if (id === null) continue;
+    const envoi = await prisma.envoiLettre.create({ data: { lettreId, email: d.email.toLowerCase() } });
+    const id = await envoyerCourrielSuivi(await courrielLettre(sujet, contenu, d), { suivi: envoi.id });
+    if (id === null) {
+      await prisma.envoiLettre.delete({ where: { id: envoi.id } });
+      continue;
+    }
     partis++;
-    await prisma.envoiLettre.create({ data: { lettreId, email: d.email.toLowerCase(), resendId: id || null } });
+    if (id) await prisma.envoiLettre.update({ where: { id: envoi.id }, data: { resendId: id } });
   }
   return partis;
 }
 
-// Annule les courriels encore en attente chez Resend ; renvoie ceux qui n'ont pas pu l'être
-export async function annulerEnvois(envois: { id: string; resendId: string | null }[]) {
-  let restants = 0;
-  for (const e of envois) {
-    if (!e.resendId || (await annulerCourrielProgramme(e.resendId))) {
-      await prisma.envoiLettre.delete({ where: { id: e.id } });
-    } else restants++;
-  }
-  return restants;
-}
-
-// Une adresse qui se désabonne ne doit pas recevoir une lettre déjà programmée
-export async function annulerEnvoisProgrammesPour(email: string) {
-  const envois = await prisma.envoiLettre.findMany({
-    where: { email: email.toLowerCase(), lettre: { statut: "programmee", programmeeLe: { gt: new Date() } } },
-    select: { id: true, resendId: true, lettreId: true },
+// Lettres programmées dont l'heure est venue (appelé toutes les 5 minutes, comme les rappels d'événements).
+// La lettre est d'abord passée « en cours d'envoi » : deux passages simultanés ne l'envoient pas deux fois.
+// Les destinataires sont lus au moment de l'envoi : un désabonnement entre-temps est respecté.
+export async function envoyerLettresDues(maintenant = new Date()): Promise<number> {
+  if (!courrielsActifs()) return 0;
+  const dues = await prisma.lettre.findMany({
+    where: { statut: "programmee", programmeeLe: { lte: maintenant } },
+    select: { id: true, sujet: true, contenu: true, audience: true, auteur: true },
   });
-  await annulerEnvois(envois);
-  for (const lettreId of new Set(envois.map((e) => e.lettreId))) {
-    const n = await prisma.envoiLettre.count({ where: { lettreId } });
-    await prisma.lettre.update({ where: { id: lettreId }, data: { envoyes: n } });
+  let lettres = 0;
+  for (const l of dues) {
+    const { count } = await prisma.lettre.updateMany({ where: { id: l.id, statut: "programmee" }, data: { statut: "envoi" } });
+    if (!count) continue;
+    const liste = await destinataires(lireAudience(l.audience));
+    const partis = await envoyerLettre(l.id, l.sujet, l.contenu, liste);
+    await prisma.lettre.update({
+      where: { id: l.id },
+      data: { statut: "envoyee", envoyeeLe: new Date(), destinataires: liste.length, envoyes: partis },
+    });
+    await prisma.auditLog.create({
+      data: { action: "lettre_envoyee", entite: "Lettre", entiteId: l.id, acteur: l.auteur, detail: `« ${l.sujet} » (envoi programmé) · ${partis} sur ${liste.length} destinataires.` },
+    });
+    lettres++;
   }
+  return lettres;
 }
 
 export async function envoyerTest(sujet: string, contenu: string, email: string, nom: string) {

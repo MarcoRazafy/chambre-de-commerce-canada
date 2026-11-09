@@ -27,14 +27,17 @@ export default async function Lettre({ params }: { params: Promise<{ id: string 
   );
 
   if (etat === "brouillon") {
-    const ms = await prisma.member.findMany({ select: { etiquettes: true } });
+    const [ms, evenement] = await Promise.all([
+      prisma.member.findMany({ select: { etiquettes: true } }),
+      audience.evenement ? prisma.event.findUnique({ where: { id: audience.evenement }, select: { id: true, titre: true } }) : null,
+    ]);
     const etiquettes = [...new Set(ms.flatMap((m) => m.etiquettes))].sort((a, b) => a.localeCompare(b, "fr"));
     return (
       <>
         <EnTeteAdmin surtitre="Newsletter" titre={<>Modifier la <Saillant>lettre</Saillant></>} actions={dupliquer}>
           Brouillon de {l.auteur}.
         </EnTeteAdmin>
-        <EditeurLettre lettre={l} audience={audience} etiquettes={etiquettes} nbDestinataires={(await destinataires(audience)).length} />
+        <EditeurLettre lettre={l} audience={audience} etiquettes={etiquettes} nbDestinataires={(await destinataires(audience)).length} evenement={evenement} />
       </>
     );
   }
@@ -67,7 +70,7 @@ export default async function Lettre({ params }: { params: Promise<{ id: string 
         }
       >
         {programmee
-          ? `Programmée pour le ${fmtDateHeure(quand!)} · ${l.envoyes} destinataire${l.envoyes > 1 ? "s" : ""}. Pour la modifier, annulez l’envoi : elle redevient un brouillon.`
+          ? `Programmée pour le ${fmtDateHeure(quand!)} · ${l.destinataires} destinataire${l.destinataires > 1 ? "s" : ""} aujourd’hui (liste relue à l’envoi). Pour la modifier, annulez l’envoi : elle redevient un brouillon.`
           : `Envoyée le ${quand ? fmtDateHeure(quand) : "—"} à ${l.envoyes} destinataire${l.envoyes > 1 ? "s" : ""} sur ${l.destinataires}.`}
       </EnTeteAdmin>
 

@@ -43,8 +43,11 @@ Sur le service de l'application, onglet **Variables** :
 | `AUTH_SECRET` | Une clé longue et aléatoire, voir ci-dessous. **Sans elle, personne ne peut se connecter.** |
 | `STOCKAGE_RACINE` | `/data` |
 | `APP_URL` | L'adresse publique, sans barre finale : `https://app.cancham.mg`. Absente ou pointant vers localhost, les liens des e-mails prennent `https://app.cancham.mg`. |
-| `RESEND_API_KEY` | La clé Resend (étape 3) |
-| `COURRIEL_EXPEDITEUR` | `CanCham Connect <connect@cancham.mg>` — sur le domaine vérifié |
+| `SMTP_HOST` | `smtp-relay.brevo.com` (étape 3) |
+| `SMTP_PORT` / `SMTP_SECURE` | `587` et `false` |
+| `SMTP_USER` / `SMTP_PASS` | L'identifiant SMTP (`…@smtp-brevo.com`) et la clé SMTP de Brevo |
+| `MAIL_FROM` | L'expéditeur, sur une adresse validée chez Brevo : `CanCham Connect <connect@cancham.mg>` (`COURRIEL_EXPEDITEUR`, s'il est défini, passe devant) |
+| `BREVO_WEBHOOK_SECRET` | Une clé longue et aléatoire, reprise dans l'adresse du webhook Brevo (étape 3). Sans elle, la newsletter part mais ses ouvertures, clics et adresses en erreur restent inconnus. |
 | `COURRIEL_EQUIPE` | L'adresse qui reçoit les alertes d'inscription et les réponses aux e-mails |
 | `WEB_PUSH_CLE_PUBLIQUE` | Clé VAPID publique des notifications sur l'appareil, générée avec `npx web-push generate-vapid-keys` |
 | `WEB_PUSH_CLE_PRIVEE` | Sa clé privée, générée en même temps. Sans les deux, la cloche ne propose pas d'activer les notifications. |
@@ -55,11 +58,13 @@ Sur le service de l'application, onglet **Variables** :
 | `VANILLAPAY_MOBILE_MONEY` | `1` une fois « l'offre mobile money » (MVola, Orange Money, Airtel Money) ouverte sur le compte marchand. Vide : seule la carte bancaire se paie en ligne. |
 | `VANILLAPAY_MARCHAND` | Le nom que leur page affiche au payeur, s'il n'est pas celui de la chambre. Vide avec le compte de la chambre : leur page affiche « Chambre de commerce et de coopération Canada MDG ». Sinon, le membre en est prévenu avant de payer. |
 | `TRAVERSEE_PLATEFORME_URL` | L'adresse de la plateforme d'inscription de La Traversée, en `https`, sans chemin. Le bouton « Réserver mon billet » de `/la-traversee` y envoie le visiteur, sur `/inscription`, avec ses coordonnées préremplies. Vide : `https://impact261.com`. |
-| `RESEND_WEBHOOK_SECRET` | Le secret de signature du webhook Resend (`whsec_…`, étape 3). Sans lui, la newsletter part mais ses ouvertures, clics et adresses en erreur restent inconnus. |
 | `PLATEFORME_FORFAIT` | Forfait mensuel de la Chambre pour la plateforme, en $ CAD, affiché sur « Abonnement & utilisateurs ». Vide : `150`. |
 | `PLATEFORME_PRIX_UTILISATEUR` | Prix mensuel de chaque compte de l'équipe, en $ CAD. Vide : `15`. |
 | `PLATEFORME_TPS` / `PLATEFORME_TVQ` | Taux des taxes en %, appliqués à l'abonnement. Vides : `5` et `9.975`. |
 | `PLATEFORME_JOUR_FACTURATION` | Jour du mois de la facture de l'abonnement (1 à 28). Vide : `1`. |
+| `TACHES_SECRET` | Facultatif. Le serveur envoie lui-même, toutes les 5 minutes, les newsletters programmées et les rappels d'événements dus. S'ils ne partent pas et que les journaux montrent `[taches] réponse 401`, définissez ici une clé longue et aléatoire. Elle permet aussi à une tâche planifiée externe d'appeler `POST /api/taches` avec l'en-tête `x-taches-jeton`. |
+| `TACHES_DESACTIVEES` | `1` pour couper ces envois automatiques (par exemple sur une copie de test de la base). |
+| `TACHES_EN_DEV` | En local seulement : `1` fait aussi tourner ces envois automatiques avec `npm run dev`. À éviter sur la base de démo, dont les adresses sont fausses. |
 
 Générer `AUTH_SECRET` :
 
@@ -78,28 +83,31 @@ Au démarrage, la plateforme écrit dans ses journaux une ligne
 `[configuration]` pour chaque variable manquante. Un déploiement sans aucune
 de ces lignes est complet.
 
-## 3. Les e-mails (Resend)
+## 3. Les e-mails (Brevo)
 
-1. Créez un compte sur [resend.com](https://resend.com).
-2. **Domains → Add domain** : `cancham.mg` (ou un sous-domaine, par exemple
-   `mail.cancham.mg`, pour ne pas toucher au courrier existant).
-3. Resend affiche des enregistrements DNS (SPF, DKIM, et un MX pour les
-   retours). Ajoutez-les tels quels chez le gestionnaire du domaine, puis
-   attendez le statut **Verified**, de quelques minutes à quelques heures.
-4. **API Keys → Create**. Copiez la clé dans `RESEND_API_KEY`. Choisissez
-   *Full access* : une clé *Sending access* suffit pour envoyer, mais Resend
-   ne la laisse sans doute pas annuler une newsletter programmée.
-5. **Domains → (votre domaine) → Configuration** : activez *Open tracking* et
-   *Click tracking*. C'est ce qui permet de mesurer l'ouverture et les clics de
-   la newsletter.
-6. **Webhooks → Add endpoint** : l'adresse `https://…/api/courriels/resend`
-   (celle d'`APP_URL`), avec les événements `email.delivered`,
-   `email.opened`, `email.clicked`, `email.bounced`, `email.complained`,
-   `email.failed` et `email.suppressed`. Copiez le *Signing secret* dans
-   `RESEND_WEBHOOK_SECRET`.
+1. Dans Brevo, **Expéditeurs, domaines et IP dédiées → Domaines** : ajoutez
+   `cancham.mg` (ou un sous-domaine, par exemple `mail.cancham.mg`, pour ne
+   pas toucher au courrier existant), puis ajoutez chez le gestionnaire du
+   domaine les enregistrements DNS affichés (DKIM, SPF, DMARC). Attendez
+   qu'il soit **authentifié**.
+2. **Expéditeurs** : ajoutez l'adresse d'envoi (par exemple
+   `connect@cancham.mg`) et reprenez-la dans `MAIL_FROM`.
+3. **SMTP & API → SMTP** : l'identifiant va dans `SMTP_USER`, une clé SMTP
+   dans `SMTP_PASS`, avec `SMTP_HOST=smtp-relay.brevo.com`, `SMTP_PORT=587`,
+   `SMTP_SECURE=false`.
+4. **Transactionnel → Paramètres → Webhook** : ajoutez l'adresse
+   `https://…/api/courriels/brevo?jeton=<BREVO_WEBHOOK_SECRET>` (celle
+   d'`APP_URL`), avec les événements *Délivré*, *Ouvert*, *Premier ouvert*,
+   *Cliqué*, *Hard bounce*, *Adresse invalide*, *Bloqué*, *Erreur*, *Spam* et
+   *Désinscrit*. Le suivi de l'ouverture et des clics se fait par Brevo :
+   rien d'autre à activer.
 
-Tant que le domaine n'est pas vérifié, Resend n'accepte d'écrire qu'à
-l'adresse du propriétaire du compte : les membres ne reçoivent rien.
+Sans domaine authentifié, Brevo peut refuser ou classer en indésirable les
+courriels envoyés au nom de `cancham.mg`.
+
+Resend reste possible à la place de Brevo : sans `SMTP_HOST`, la plateforme
+utilise `RESEND_API_KEY` (et `RESEND_WEBHOOK_SECRET`, webhook
+`…/api/courriels/resend`).
 
 Ce qui part par e-mail :
 
@@ -109,9 +117,12 @@ Ce qui part par e-mail :
 - l'accusé de réception d'une demande d'adhésion, et l'alerte à l'équipe ;
 - la validation de la demande, qui ouvre la connexion ;
 - la relance de cotisation, envoyée depuis la fiche d'un membre ;
-- la newsletter, tout de suite ou programmée (jusqu'à 30 jours à l'avance :
-  les courriels attendent chez Resend, aucune tâche planifiée n'est
-  nécessaire), et l'invitation à adhérer envoyée à un abonné.
+- les rappels aux inscrits d'un événement (7 jours avant et la veille par
+  défaut, 2 heures avant en option), réglés dans l'onglet « Courriel » de
+  l'événement, avec le QR code d'entrée ;
+- la newsletter, tout de suite ou programmée (jusqu'à 90 jours à l'avance ;
+  le serveur l'envoie dans les 5 minutes qui suivent l'heure choisie, aux
+  destinataires du moment), et l'invitation à adhérer envoyée à un abonné.
 
 Le webhook tient le suivi de la newsletter : remise, ouverture, clics. Une
 adresse refusée définitivement passe « en erreur » et ne reçoit plus la

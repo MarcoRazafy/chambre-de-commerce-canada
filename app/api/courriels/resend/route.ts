@@ -1,6 +1,4 @@
-import { revalidatePath } from "next/cache";
-import { prisma } from "@/lib/db";
-import { annulerEnvoisProgrammesPour } from "@/lib/newsletter";
+import { appliquerSuivi } from "@/lib/suivi-courriels";
 import { effetEvenement, signatureResendValide, type EvenementResend } from "@/lib/resend-webhook";
 
 // Webhook de Resend : remise, ouverture, clic, rebond et plainte des courriels de la newsletter.
@@ -35,21 +33,7 @@ export async function POST(req: Request) {
   const emailId = e.data?.email_id;
   const adresse = e.data?.to?.[0]?.toLowerCase();
 
-  if (effet.envoi && emailId) {
-    // La première date compte (une lettre rouverte ne change pas son taux) ; un clic vaut ouverture
-    await prisma.envoiLettre.updateMany({ where: { resendId: emailId, [effet.envoi]: null }, data: { [effet.envoi]: moment } });
-    if (effet.envoi === "clicLe") {
-      await prisma.envoiLettre.updateMany({ where: { resendId: emailId, ouvertLe: null }, data: { ouvertLe: moment } });
-    }
-  }
-  if (effet.abonne && adresse) {
-    await prisma.abonne.updateMany({ where: { email: adresse, [effet.abonne]: null }, data: { [effet.abonne]: moment } });
-    if (effet.abonne === "desabonneLe") await annulerEnvoisProgrammesPour(adresse);
-  }
-  if (effet.envoi || effet.abonne) {
-    revalidatePath("/admin/newsletter");
-    revalidatePath("/admin/abonnes");
-  }
+  await appliquerSuivi({ effet, envoi: { fournisseurId: emailId }, adresse, moment });
 
   return Response.json({ recu: true }, { headers: { "Cache-Control": "no-store" } });
 }

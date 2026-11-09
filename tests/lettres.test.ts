@@ -13,19 +13,24 @@ import {
   taux,
 } from "@/lib/lettres";
 import { effetEvenement, signatureResendValide } from "@/lib/resend-webhook";
+import { effetBrevo, identifiantsBrevo, momentBrevo } from "@/lib/brevo-webhook";
 import { configPlateforme, facturePlateforme, prochaineFacturation } from "@/lib/plateforme";
 
 const MAINTENANT = new Date("2026-11-08T10:00:00Z"); // 13 h à Antananarivo
 
 describe("état d'une lettre", () => {
   it("distingue brouillon, programmée et envoyée", () => {
-    expect(etatLettre({ statut: "brouillon", programmeeLe: null }, MAINTENANT)).toBe("brouillon");
-    expect(etatLettre({ statut: "envoyee", programmeeLe: null }, MAINTENANT)).toBe("envoyee");
-    expect(etatLettre({ statut: "programmee", programmeeLe: new Date("2026-11-09T06:00:00Z") }, MAINTENANT)).toBe("programmee");
+    expect(etatLettre({ statut: "brouillon", programmeeLe: null })).toBe("brouillon");
+    expect(etatLettre({ statut: "envoyee", programmeeLe: null })).toBe("envoyee");
+    expect(etatLettre({ statut: "programmee", programmeeLe: new Date("2026-11-09T06:00:00Z") })).toBe("programmee");
   });
 
-  it("considère comme envoyée une lettre programmée dont l'heure est passée", () => {
-    expect(etatLettre({ statut: "programmee", programmeeLe: new Date("2026-11-08T09:59:00Z") }, MAINTENANT)).toBe("envoyee");
+  it("garde « programmée » tant que le serveur ne l'a pas envoyée, même l'heure passée", () => {
+    expect(etatLettre({ statut: "programmee", programmeeLe: new Date("2026-11-08T09:59:00Z") })).toBe("programmee");
+  });
+
+  it("compte comme partie une lettre en cours d'envoi", () => {
+    expect(etatLettre({ statut: "envoi", programmeeLe: new Date("2026-11-08T09:59:00Z") })).toBe("envoyee");
   });
 });
 
@@ -41,9 +46,9 @@ describe("programmation d'un envoi", () => {
     expect(lireProgrammation("2026-11-08T13:06", MAINTENANT)).toHaveProperty("date");
   });
 
-  it("refuse plus de 30 jours à l'avance, que Resend n'accepte pas", () => {
-    expect(lireProgrammation("2026-12-08T12:59", MAINTENANT)).toHaveProperty("date");
-    expect(lireProgrammation("2026-12-08T13:01", MAINTENANT)).toHaveProperty("erreur");
+  it("refuse plus de 90 jours à l'avance", () => {
+    expect(lireProgrammation("2027-02-06T12:59", MAINTENANT)).toHaveProperty("date");
+    expect(lireProgrammation("2027-02-06T13:01", MAINTENANT)).toHaveProperty("erreur");
   });
 
   it("refuse une saisie vide ou mal formée", () => {
@@ -172,5 +177,29 @@ describe("abonnement à la plateforme", () => {
     expect(prochaineFacturation("2026-11-08", 1)).toBe("2026-12-01");
     expect(prochaineFacturation("2026-12-08", 1)).toBe("2027-01-01");
     expect(prochaineFacturation("2026-11-08", 15)).toBe("2026-11-15");
+  });
+});
+
+describe("webhook Brevo", () => {
+  it("traduit chaque événement en effet sur l'envoi et l'abonné", () => {
+    expect(effetBrevo({ event: "delivered" })).toEqual({ envoi: "livreLe", abonne: null });
+    expect(effetBrevo({ event: "unique_opened" })).toEqual({ envoi: "ouvertLe", abonne: null });
+    expect(effetBrevo({ event: "opened" })).toEqual({ envoi: "ouvertLe", abonne: null });
+    expect(effetBrevo({ event: "click" })).toEqual({ envoi: "clicLe", abonne: null });
+    expect(effetBrevo({ event: "hard_bounce" })).toEqual({ envoi: "erreurLe", abonne: "erreurLe" });
+    expect(effetBrevo({ event: "soft_bounce" })).toEqual({ envoi: null, abonne: null });
+    expect(effetBrevo({ event: "spam" })).toEqual({ envoi: null, abonne: "desabonneLe" });
+    expect(effetBrevo({ event: "unsubscribed" })).toEqual({ envoi: null, abonne: "desabonneLe" });
+    expect(effetBrevo({ event: "proxy_open" })).toEqual({ envoi: null, abonne: null });
+  });
+
+  it("retrouve l'envoi par notre identifiant, sinon par celui du message", () => {
+    expect(identifiantsBrevo({ "X-Mailin-custom": " cmabc ", "message-id": "<1@relay>" })).toEqual({ suivi: "cmabc", messageId: "1@relay" });
+    expect(identifiantsBrevo({ "message-id": "2@relay" })).toEqual({ suivi: null, messageId: "2@relay" });
+  });
+
+  it("lit l'heure de l'événement, en secondes ou en millisecondes", () => {
+    expect(momentBrevo({ ts_event: 1794132000 }).toISOString()).toBe(new Date(1794132000 * 1000).toISOString());
+    expect(momentBrevo({ ts_epoch: 1794132000123 }).getTime()).toBe(1794132000123);
   });
 });

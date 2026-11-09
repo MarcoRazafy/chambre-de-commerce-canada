@@ -32,7 +32,7 @@ donne un mot de passe aux comptes de démonstration qui n'en ont pas.
 
 Mot de passe oublié, invitation d'un contact, accusé de réception et
 validation d'une demande d'adhésion, relance de
-cotisation : les e-mails partent par Resend. Sans `RESEND_API_KEY`, en local,
+cotisation : les e-mails partent par Brevo (SMTP). Sans identifiants SMTP, en local,
 ils sont écrits dans le terminal du serveur, lien compris.
 
 ## Règle d'accès liée à la cotisation
@@ -217,5 +217,5 @@ dans les e-mails), fin des événements. Voir [`tests/`](./tests/).
 
 ## Déploiement
 
-Sur Railway, avec un volume pour les fichiers et Resend pour les e-mails :
+Sur Railway, avec un volume pour les fichiers et Brevo pour les e-mails :
 voir [`DEPLOIEMENT.md`](./DEPLOIEMENT.md).

@@ -83,12 +83,21 @@ export interface CanchamEvent {
   fin?: string | null;
   pourQui?: string | null;
   programme?: EtapeProgramme[];
+  intervenants?: Intervenant[];
 }
 
 export interface EtapeProgramme {
   heure: string;
   titre: string;
   detail?: string | null;
+}
+
+export interface Intervenant {
+  nom: string;
+  fonction: string | null;
+  entreprise: string | null;
+  bio: string | null;
+  photo: string | null;
 }
 
 export type AttendeeStatus = "confirmé" | "présent" | "absent";

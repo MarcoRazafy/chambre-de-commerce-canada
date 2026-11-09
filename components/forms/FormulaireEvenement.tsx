@@ -1,12 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowDown, ArrowUp, Check, Plus, Trash2 } from "lucide-react";
+import { ArrowDown, ArrowUp, Check, Plus, Trash2, UserPlus } from "lucide-react";
 import { ChampPhoto, Field, INPUT, SubmitButton } from "@/components/form-bits";
 import { ChoixDiffusion } from "@/components/forms/ChoixDiffusion";
 import { Card } from "@/components/ui";
 import { saveEvent } from "@/lib/actions/events";
-import type { CanchamEvent, EtapeProgramme } from "@/lib/types";
+import type { CanchamEvent, EtapeProgramme, Intervenant } from "@/lib/types";
 
 interface Etape extends EtapeProgramme {
   cle: number;
@@ -38,6 +38,27 @@ function Rubrique({
   );
 }
 
+interface LigneIntervenant extends Intervenant {
+  cle: number;
+}
+
+const nouvelIntervenant = (i?: Intervenant): LigneIntervenant => ({
+  cle: prochaineCle++,
+  nom: i?.nom ?? "",
+  fonction: i?.fonction ?? "",
+  entreprise: i?.entreprise ?? "",
+  bio: i?.bio ?? "",
+  photo: i?.photo ?? null,
+});
+
+function deplace<T>(l: T[], i: number, sens: -1 | 1): T[] {
+  const j = i + sens;
+  if (j < 0 || j >= l.length) return l;
+  const copie = [...l];
+  [copie[i], copie[j]] = [copie[j], copie[i]];
+  return copie;
+}
+
 export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
   const [payant, setPayant] = useState(event?.payant ?? false);
   const [publique, setPublique] = useState(event?.public ?? true);
@@ -50,14 +71,11 @@ export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
       : [nouvelleEtape()],
   );
 
-  const deplacer = (i: number, sens: -1 | 1) =>
-    setEtapes((l) => {
-      const j = i + sens;
-      if (j < 0 || j >= l.length) return l;
-      const copie = [...l];
-      [copie[i], copie[j]] = [copie[j], copie[i]];
-      return copie;
-    });
+  const [intervenants, setIntervenants] = useState<LigneIntervenant[]>(() =>
+    (event?.intervenants ?? []).map(nouvelIntervenant),
+  );
+
+  const deplacer = (i: number, sens: -1 | 1) => setEtapes((l) => deplace(l, i, sens));
 
   return (
     <form action={saveEvent} className="flex flex-col gap-4">
@@ -236,6 +254,106 @@ export function FormulaireEvenement({ event }: { event?: CanchamEvent }) {
               className="self-start btn-contour btn-contour-sm text-ink hover:bg-surface-2"
             >
               <Plus size={14} /> Ajouter une étape
+            </button>
+          </Rubrique>
+
+          <Rubrique
+            titre="Intervenants"
+            aide="Un ou plusieurs, dans l’ordre d’affichage. Un intervenant sans nom est ignoré."
+          >
+            {intervenants.length ? (
+              <ol className="list-none m-0 p-0 flex flex-col gap-3">
+                {intervenants.map((p, i) => (
+                  <li
+                    key={p.cle}
+                    className="border border-line rounded-[var(--radius-m)] p-3.5 bg-surface-2"
+                  >
+                    {/* Photo déjà enregistrée : gardée si rien n’est choisi ni retiré */}
+                    <input type="hidden" name="intervenantPhotoActuelle" value={p.photo ?? ""} />
+                    <div className="flex items-start justify-between gap-3">
+                      <ChampPhoto
+                        name={`intervenantPhoto-${i}`}
+                        retirer={`intervenantRetirer-${i}`}
+                        apercu={p.photo}
+                        libelle={`Intervenant ${i + 1}`}
+                        aide="Un portrait, de préférence carré."
+                        rond
+                      />
+                      <div className="flex gap-1 shrink-0">
+                        <BoutonIcone
+                          libelle="Monter l’intervenant"
+                          onClick={() => setIntervenants((l) => deplace(l, i, -1))}
+                          disabled={i === 0}
+                        >
+                          <ArrowUp size={15} />
+                        </BoutonIcone>
+                        <BoutonIcone
+                          libelle="Descendre l’intervenant"
+                          onClick={() => setIntervenants((l) => deplace(l, i, 1))}
+                          disabled={i === intervenants.length - 1}
+                        >
+                          <ArrowDown size={15} />
+                        </BoutonIcone>
+                        <BoutonIcone
+                          libelle="Retirer l’intervenant"
+                          onClick={() =>
+                            setIntervenants((l) => l.filter((x) => x.cle !== p.cle))
+                          }
+                          danger
+                        >
+                          <Trash2 size={15} />
+                        </BoutonIcone>
+                      </div>
+                    </div>
+                    <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                      <Field label="Nom">
+                        <input
+                          name="intervenantNom"
+                          defaultValue={p.nom}
+                          maxLength={120}
+                          placeholder="Ex. Hanta Rasoa"
+                          className={INPUT}
+                        />
+                      </Field>
+                      <Field label="Fonction">
+                        <input
+                          name="intervenantFonction"
+                          defaultValue={p.fonction ?? ""}
+                          maxLength={120}
+                          placeholder="Ex. Conseillère en immigration"
+                          className={INPUT}
+                        />
+                      </Field>
+                      <Field label="Entreprise ou organisme">
+                        <input
+                          name="intervenantEntreprise"
+                          defaultValue={p.entreprise ?? ""}
+                          maxLength={120}
+                          className={INPUT}
+                        />
+                      </Field>
+                    </div>
+                    <div className="mt-3">
+                      <textarea
+                        name="intervenantBio"
+                        rows={2}
+                        defaultValue={p.bio ?? ""}
+                        maxLength={600}
+                        placeholder="Quelques mots de présentation (facultatif)"
+                        aria-label={`Présentation de l’intervenant ${i + 1}`}
+                        className={INPUT}
+                      />
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
+            <button
+              type="button"
+              onClick={() => setIntervenants((l) => [...l, nouvelIntervenant()])}
+              className="self-start btn-contour btn-contour-sm text-ink hover:bg-surface-2"
+            >
+              <UserPlus size={14} /> Ajouter un intervenant
             </button>
           </Rubrique>
         </div>

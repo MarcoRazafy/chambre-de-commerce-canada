@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Partage } from "@/components/Partage";
 import Link from "next/link";
+import { ListeIntervenants } from "@/components/Intervenants";
 import { notFound } from "next/navigation";
 import {
   ArrowLeft,
@@ -25,6 +26,7 @@ import {
 } from "lucide-react";
 import { Compteur, Jauge, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { ScannerQr } from "@/components/admin/ScannerQr";
+import { CourrielEvenement } from "@/components/admin/CourrielEvenement";
 import {
   AddAttendeeButton,
   ValiderInscriptionButton,
@@ -38,7 +40,7 @@ import { plageHoraire } from "@/lib/agenda";
 import { fmtDate, fmtMoney } from "@/lib/format";
 import { getEvent, getMembers } from "@/lib/queries";
 import { getParticipants } from "@/lib/queries-admin";
-import { estTermine, marquerAbsentsPasses } from "@/lib/presences";
+import { estTermine, maintenant, marquerAbsentsPasses } from "@/lib/presences";
 import { plat } from "@/lib/texte";
 
 const ONGLETS = [
@@ -116,6 +118,7 @@ export default async function EvenementAdmin({
   const restantes = Math.max(0, e.cap - participants.length);
 
   const vueListe = sp.vue === "inscrits";
+  const vueCourriel = sp.vue === "courriel";
   const par = TAILLES.some((t) => t.cle === sp.par)
     ? (sp.par as (typeof TAILLES)[number]["cle"])
     : "10";
@@ -288,7 +291,18 @@ export default async function EvenementAdmin({
         />
       </div>
 
-      {vueListe ? (
+      <Onglets
+        actif={vueListe ? "inscrits" : vueCourriel ? "courriel" : "presentation"}
+        onglets={[
+          { cle: "presentation", libelle: "Présentation", href: base },
+          { cle: "inscrits", libelle: "Liste d’accueil", href: `${base}?vue=inscrits`, compte: participants.length },
+          { cle: "courriel", libelle: "Courriel", href: `${base}?vue=courriel` },
+        ]}
+      />
+
+      {vueCourriel ? (
+        <CourrielEvenement eventId={e.id} passe={passe} maintenant={maintenant()} />
+      ) : vueListe ? (
         <Card className="p-0 min-w-0">
           <div className="px-6 pt-5 flex items-end justify-between gap-4 flex-wrap">
             <div>
@@ -477,6 +491,27 @@ export default async function EvenementAdmin({
                   className="text-accent font-semibold no-underline hover:underline"
                 >
                   L’ajouter
+                </Link>
+              </p>
+            )}
+          </Panneau>
+
+          <Panneau
+            titre="Intervenants"
+            sousTitre={e.intervenants?.length ? `${e.intervenants.length} intervenant${e.intervenants.length > 1 ? "s" : ""}` : undefined}
+            teinte="bleu"
+            className="lg:col-span-2"
+          >
+            {e.intervenants?.length ? (
+              <ListeIntervenants intervenants={e.intervenants} />
+            ) : (
+              <p className="m-0 text-[13px] text-muted">
+                Aucun intervenant.{" "}
+                <Link
+                  href={`/admin/evenements/${e.id}/modifier`}
+                  className="text-accent font-semibold no-underline hover:underline"
+                >
+                  En ajouter
                 </Link>
               </p>
             )}

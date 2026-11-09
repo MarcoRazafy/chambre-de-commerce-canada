@@ -7,8 +7,6 @@ import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { exigerEquipe } from "@/lib/autorisations";
 import { fmtDateHeure, lireCsvAbonnes, lireProgrammation } from "@/lib/lettres";
 import {
-  annulerEnvois,
-  annulerEnvoisProgrammesPour,
   destinataires,
   envoyerLettre,
   envoyerTest,
@@ -19,7 +17,7 @@ import {
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const ADRESSE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ABONNES = "/admin/abonnes";
-const SANS_COURRIELS = "L’envoi de courriels n’est pas configuré (RESEND_API_KEY) : rien n’est parti.";
+const SANS_COURRIELS = "L’envoi de courriels n’est pas configuré (variables SMTP de Brevo) : rien n’est parti.";
 
 function audienceDe(fd: FormData): Audience {
   return lireAudience({
@@ -27,6 +25,7 @@ function audienceDe(fd: FormData): Audience {
     etiquettes: fd.getAll("etiquettes").map(String),
     contacts: texte(fd, "contacts"),
     abonnes: fd.get("abonnes") === "1",
+    evenement: texte(fd, "evenement"),
   });
 }
 
@@ -48,6 +47,7 @@ export async function enregistrerLettre(formData: FormData) {
     if (!avant) redirectWithErreur("/admin/newsletter", "Lettre introuvable.");
     if (avant.statut === "envoyee") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est déjà partie : dupliquez-la pour en écrire une nouvelle.");
     if (avant.statut === "programmee") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est programmée : annulez la programmation pour la modifier.");
+    if (avant.statut === "envoi") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est en cours d’envoi.");
   }
   // Le texte est toujours enregistré, même si l'heure choisie est refusée : rien ne se perd
   const programmation = intention === "programmer" ? lireProgrammation(texte(formData, "programmeeLe")) : null;
@@ -60,7 +60,7 @@ export async function enregistrerLettre(formData: FormData) {
 
   if (intention === "test") {
     const ok = await envoyerTest(sujet, contenu, moi.email, moi.nom);
-    if (!ok) redirectWithErreur(page, courrielsActifs() ? "Le test n’a pas pu partir. Réessayez." : "L’envoi de courriels n’est pas configuré (RESEND_API_KEY) : le test est écrit dans le journal du serveur.");
+    if (!ok) redirectWithErreur(page, courrielsActifs() ? "Le test n’a pas pu partir. Réessayez." : "L’envoi de courriels n’est pas configuré (variables SMTP de Brevo) : le test est écrit dans le journal du serveur.");
     redirectWithFlash(page, `Test envoyé à ${moi.email}`);
   }
 
@@ -70,12 +70,13 @@ export async function enregistrerLettre(formData: FormData) {
     const liste = await destinataires(audience);
     if (!liste.length) redirectWithErreur(page, "Aucun destinataire pour cette audience.");
     if (!courrielsActifs()) redirectWithErreur(page, SANS_COURRIELS);
-    const partis = await envoyerLettre(lettre.id, sujet, contenu, liste, quand);
-    if (!partis) redirectWithErreur(page, "Aucun courriel n’a pu partir. Réessayez dans un instant.");
+    // Programmée : rien ne part maintenant, le serveur l'enverra à l'heure dite (destinataires lus à ce moment-là)
+    const partis = quand ? 0 : await envoyerLettre(lettre.id, sujet, contenu, liste);
+    if (!quand && !partis) redirectWithErreur(page, "Aucun courriel n’a pu partir. Réessayez dans un instant.");
     await prisma.lettre.update({
       where: { id: lettre.id },
       data: quand
-        ? { statut: "programmee", programmeeLe: quand, destinataires: liste.length, envoyes: partis }
+        ? { statut: "programmee", programmeeLe: quand, destinataires: liste.length, envoyes: 0 }
         : { statut: "envoyee", envoyeeLe: new Date(), destinataires: liste.length, envoyes: partis },
     });
     await prisma.auditLog.create({
@@ -84,38 +85,32 @@ export async function enregistrerLettre(formData: FormData) {
         entite: "Lettre",
         entiteId: lettre.id,
         acteur: moi.nom,
-        detail: `« ${sujet} » · ${partis} sur ${liste.length} destinataires${quand ? ` · le ${fmtDateHeure(quand)}` : ""}.`,
+        detail: quand ? `« ${sujet} » · le ${fmtDateHeure(quand)} · ${liste.length} destinataires prévus.` : `« ${sujet} » · ${partis} sur ${liste.length} destinataires.`,
       },
     });
     revalidatePath("/admin/newsletter");
     redirectWithFlash(
       "/admin/newsletter",
       quand
-        ? `Lettre programmée le ${fmtDateHeure(quand)} pour ${pluriel(partis, "destinataire")}`
+        ? `Lettre programmée le ${fmtDateHeure(quand)} · ${pluriel(liste.length, "destinataire")} aujourd’hui`
         : `Lettre envoyée à ${pluriel(partis, "destinataire")}`,
     );
   }
   redirectWithFlash(page, "Brouillon enregistré");
 }
 
-// Annuler un envoi programmé : les courriels sont retirés chez Resend et la lettre redevient un brouillon
+// Annuler un envoi programmé : la lettre redevient un brouillon, tant que son envoi n'a pas commencé
 export async function annulerProgrammation(formData: FormData) {
   const moi = await exigerEquipe();
   const id = texte(formData, "id");
   const retour = texte(formData, "retour") === "lettre" ? `/admin/newsletter/${id}` : "/admin/newsletter";
-  const l = await prisma.lettre.findUnique({ where: { id }, select: { statut: true, programmeeLe: true, sujet: true } });
-  if (!l || l.statut !== "programmee") redirectWithErreur(retour, "Cette lettre n’est pas programmée.");
-  if (!l.programmeeLe || l.programmeeLe.getTime() <= Date.now() + 60_000) {
-    redirectWithErreur(retour, "L’envoi est en cours ou déjà parti : il ne peut plus être annulé.");
-  }
-  const envois = await prisma.envoiLettre.findMany({ where: { lettreId: id }, select: { id: true, resendId: true } });
-  const restants = await annulerEnvois(envois);
-  if (restants) {
-    await prisma.lettre.update({ where: { id }, data: { envoyes: restants } });
-    revalidatePath("/admin/newsletter");
-    redirectWithErreur(retour, `${pluriel(restants, "courriel")} n’ont pas pu être retirés de l’envoi. Réessayez « Annuler ».`);
-  }
-  await prisma.lettre.update({ where: { id }, data: { statut: "brouillon", programmeeLe: null, destinataires: 0, envoyes: 0 } });
+  const l = await prisma.lettre.findUnique({ where: { id }, select: { sujet: true } });
+  if (!l) redirectWithErreur(retour, "Lettre introuvable.");
+  const { count } = await prisma.lettre.updateMany({
+    where: { id, statut: "programmee" },
+    data: { statut: "brouillon", programmeeLe: null, destinataires: 0, envoyes: 0 },
+  });
+  if (!count) redirectWithErreur(retour, "L’envoi est en cours ou déjà parti : il ne peut plus être annulé.");
   await prisma.auditLog.create({
     data: { action: "lettre_deprogrammee", entite: "Lettre", entiteId: id, acteur: moi.nom, detail: `« ${l.sujet} » repasse en brouillon.` },
   });
@@ -156,7 +151,6 @@ export async function ajouterAbonne(formData: FormData) {
 export async function desabonner(formData: FormData) {
   await exigerEquipe();
   const a = await prisma.abonne.update({ where: { id: texte(formData, "id") }, data: { desabonneLe: new Date() } });
-  await annulerEnvoisProgrammesPour(a.email);
   revalidatePath(ABONNES);
   redirectWithFlash(ABONNES, `${a.email} est désabonné(e)`);
 }

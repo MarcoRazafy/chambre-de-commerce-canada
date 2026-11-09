@@ -20,7 +20,6 @@ export default async function AdminNewsletter({ searchParams }: { searchParams: 
   // Ancienne adresse de l'onglet « Abonnés »
   if ((await searchParams).onglet === "abonnes") redirect("/admin/abonnes");
 
-  const maintenant = new Date();
   const [brutes, audience] = await Promise.all([
     prisma.lettre.findMany({
       orderBy: { updatedAt: "desc" },
@@ -31,7 +30,7 @@ export default async function AdminNewsletter({ searchParams }: { searchParams: 
   const lettres = brutes
     .map((l) => {
       const suivi = suiviDe(l.envois);
-      const etat = etatLettre(l, maintenant);
+      const etat = etatLettre(l);
       // Le suivi ne porte que sur les lettres parties depuis sa mise en place
       const mesuree = etat === "envoyee" && suivi.envoyes > 0;
       return {
@@ -100,7 +99,7 @@ export default async function AdminNewsletter({ searchParams }: { searchParams: 
                 </Td>
                 <Td><Pill tone={PASTILLE[l.etat][1]}>{PASTILLE[l.etat][0]}</Pill></Td>
                 <Td className="whitespace-nowrap tabular-nums">{l.etat !== "brouillon" && l.quand ? fmtDateHeure(l.quand) : "—"}</Td>
-                <Td className="text-right tabular-nums">{l.etat === "brouillon" ? "—" : l.envoyes}</Td>
+                <Td className="text-right tabular-nums">{l.etat === "brouillon" ? "—" : l.etat === "programmee" ? l.destinataires : l.envoyes}</Td>
                 <Td className="text-right tabular-nums">{fmtTaux(l.ouverture)}</Td>
                 <Td className="text-right tabular-nums">{fmtTaux(l.clics)}</Td>
                 <Td className="text-right whitespace-nowrap">

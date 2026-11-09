@@ -4,10 +4,10 @@ import { FUSEAU_CHAMBRE } from "@/lib/rendezvous";
 
 export type EtatLettre = "brouillon" | "programmee" | "envoyee";
 
-// Une lettre programmée dont l'heure est passée est partie : Resend l'a envoyée sans nous
-export function etatLettre(l: { statut: string; programmeeLe: Date | null }, maintenant = new Date()): EtatLettre {
-  if (l.statut === "envoyee") return "envoyee";
-  if (l.statut === "programmee") return l.programmeeLe && l.programmeeLe > maintenant ? "programmee" : "envoyee";
+// Une lettre programmée le reste jusqu'à ce que le serveur l'envoie (« envoi » : en cours, compté comme partie)
+export function etatLettre(l: { statut: string; programmeeLe: Date | null }): EtatLettre {
+  if (l.statut === "envoyee" || l.statut === "envoi") return "envoyee";
+  if (l.statut === "programmee") return "programmee";
   return "brouillon";
 }
 
@@ -16,9 +16,9 @@ export function dateEnvoi(l: { envoyeeLe: Date | null; programmeeLe: Date | null
   return l.programmeeLe ?? l.envoyeeLe;
 }
 
-// Resend garde un courriel programmé 30 jours au plus ; on laisse quelques minutes pour tout transmettre
+// Le serveur passe toutes les 5 minutes : une lettre part au plus 5 minutes après l'heure choisie
 export const DELAI_MIN_MINUTES = 5;
-export const DELAI_MAX_JOURS = 30;
+export const DELAI_MAX_JOURS = 90;
 
 // « 2026-11-20T09:00 » (champ date et heure, heure de Madagascar) → instant ; erreur lisible sinon
 export function lireProgrammation(

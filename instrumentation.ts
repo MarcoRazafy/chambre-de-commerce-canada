@@ -1,7 +1,9 @@
 import type { Instrumentation } from "next";
 
-export function register() {
+export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  // En local, les tâches ne tournent que sur demande (TACHES_EN_DEV=1) : la base de démo a de fausses adresses
+  if (process.env.NODE_ENV === "production" || process.env.TACHES_EN_DEV === "1") await lancerTaches();
   if (process.env.NODE_ENV !== "production") return;
 
   const alertes: string[] = [];
@@ -13,14 +15,17 @@ export function register() {
       "STOCKAGE_RACINE manquant : les fichiers envoyés seront perdus au prochain déploiement.",
     );
   }
-  if (!process.env.RESEND_API_KEY) {
-    alertes.push("RESEND_API_KEY manquant : aucun e-mail ne partira.");
-  } else if (!process.env.COURRIEL_EXPEDITEUR) {
-    alertes.push(
-      "COURRIEL_EXPEDITEUR manquant : l'adresse de test de Resend n'écrit qu'au propriétaire du compte.",
-    );
+  const smtp = !!(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS);
+  if (!smtp && !process.env.RESEND_API_KEY) {
+    alertes.push("SMTP_HOST, SMTP_USER, SMTP_PASS (Brevo) manquants : aucun e-mail ne partira.");
+  } else if (!process.env.COURRIEL_EXPEDITEUR && !process.env.MAIL_FROM) {
+    alertes.push("MAIL_FROM manquant : indiquez l'expéditeur, sur une adresse validée chez Brevo.");
   }
-  if (process.env.RESEND_API_KEY && !process.env.RESEND_WEBHOOK_SECRET) {
+  if (smtp && !process.env.BREVO_WEBHOOK_SECRET) {
+    alertes.push(
+      "BREVO_WEBHOOK_SECRET manquant : la newsletter part, mais ses ouvertures, clics et adresses en erreur ne sont pas suivis.",
+    );
+  } else if (!smtp && process.env.RESEND_API_KEY && !process.env.RESEND_WEBHOOK_SECRET) {
     alertes.push(
       "RESEND_WEBHOOK_SECRET manquant : la newsletter part, mais ses ouvertures, clics et adresses en erreur ne sont pas suivis.",
     );
@@ -72,3 +77,29 @@ export const onRequestError: Instrumentation.onRequestError = (
     }),
   );
 };
+
+// Tâches régulières : toutes les 5 minutes, le serveur s'appelle lui-même pour envoyer les newsletters
+// programmées et les rappels d'événements dus. Le jeton, tiré au démarrage, ne sort pas du processus.
+const PERIODE_TACHES = 5 * 60 * 1000;
+
+async function lancerTaches() {
+  if (process.env.TACHES_DESACTIVEES === "1") return;
+  const { randomUUID } = await import("node:crypto");
+  // TACHES_SECRET, s'il est défini, sert aussi ici (utile si une tâche externe appelle la même route)
+  const jeton = process.env.TACHES_SECRET || randomUUID();
+  process.env.TACHES_JETON = jeton;
+  const adresse = `http://127.0.0.1:${process.env.PORT || 3000}/api/taches`;
+  const tourner = async () => {
+    try {
+      const r = await fetch(adresse, { method: "POST", headers: { "x-taches-jeton": jeton } });
+      if (!r.ok) console.error(`[taches] réponse ${r.status}`);
+    } catch (e) {
+      console.error("[taches] route injoignable", e);
+    }
+  };
+  // Premier passage une minute après le démarrage, le temps que le serveur écoute
+  setTimeout(() => {
+    void tourner();
+    setInterval(() => void tourner(), PERIODE_TACHES).unref();
+  }, 60_000).unref();
+}

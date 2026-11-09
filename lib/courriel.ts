@@ -2,6 +2,7 @@ import "server-only";
 
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
+import nodemailer, { type Transporter } from "nodemailer";
 import { COORDONNEES } from "@/lib/coordonnees";
 
 export interface Courriel {
@@ -19,35 +20,93 @@ export interface PieceCourriel {
   cid?: string;
 }
 
+// Expéditeur : COURRIEL_EXPEDITEUR, ou MAIL_FROM (réglage Brevo historique), sur un domaine vérifié
 const EXPEDITEUR =
-  process.env.COURRIEL_EXPEDITEUR || "CanCham Connect <onboarding@resend.dev>";
+  process.env.COURRIEL_EXPEDITEUR ||
+  process.env.MAIL_FROM ||
+  "CanCham Connect <onboarding@resend.dev>";
 
 export const COURRIEL_EQUIPE = process.env.COURRIEL_EQUIPE || COORDONNEES.email;
 
-export function courrielsActifs(): boolean {
-  return !!process.env.RESEND_API_KEY;
+// Fournisseur d'envoi : Brevo (ou tout serveur SMTP) avec SMTP_HOST, SMTP_USER et SMTP_PASS ; sinon Resend
+export function fournisseurCourriel(): "smtp" | "resend" | null {
+  if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) return "smtp";
+  if (process.env.RESEND_API_KEY) return "resend";
+  return null;
 }
+
+export function courrielsActifs(): boolean {
+  return fournisseurCourriel() !== null;
+}
+
+export const SANS_ENVOI = "L’envoi de courriels n’est pas configuré (SMTP_HOST, SMTP_USER et SMTP_PASS pour Brevo)";
 
 export async function envoyerCourriel(c: Courriel): Promise<boolean> {
   return (await envoyerCourrielSuivi(c)) !== null;
 }
 
-// Envoie (ou programme, avec « programmeLe ») et renvoie l'identifiant Resend du courriel,
-// qui sert à le suivre (webhooks) ou à annuler un envoi programmé ; null si rien n'est parti
+// Envoie et renvoie l'identifiant du courriel chez le fournisseur ; null si rien n'est parti.
+// « suivi » revient dans les webhooks (Brevo : en-tête X-Mailin-custom) pour relier remises, ouvertures et clics.
 export async function envoyerCourrielSuivi(
   c: Courriel,
-  { programmeLe }: { programmeLe?: Date } = {},
+  { suivi }: { suivi?: string } = {},
 ): Promise<string | null> {
-  const cle = process.env.RESEND_API_KEY;
-  if (!cle) {
+  const fournisseur = fournisseurCourriel();
+  if (!fournisseur) {
     const jointes = c.pieces?.length
       ? `\n[pièces jointes] ${c.pieces.map((p) => p.nom).join(", ")}`
       : "";
     console.info(
-      `[courriel] non envoyé (RESEND_API_KEY absente) — à ${c.a} — « ${c.sujet} »\n${c.texte}${jointes}`,
+      `[courriel] non envoyé (aucun envoi configuré) — à ${c.a} — « ${c.sujet} »\n${c.texte}${jointes}`,
     );
     return null;
   }
+  return fournisseur === "smtp" ? envoyerSmtp(c, suivi) : envoyerResend(c, suivi);
+}
+
+let transport: Transporter | null = null;
+function transporteur(): Transporter {
+  transport ??= nodemailer.createTransport({
+    host: process.env.SMTP_HOST,
+    port: Number(process.env.SMTP_PORT) || 587,
+    secure: process.env.SMTP_SECURE === "true",
+    auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+  });
+  return transport;
+}
+
+async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> {
+  for (let essai = 1; essai <= ESSAIS_ENVOI; essai++) {
+    try {
+      const info = await transporteur().sendMail({
+        from: EXPEDITEUR,
+        to: c.a,
+        replyTo: COURRIEL_EQUIPE,
+        subject: c.sujet,
+        html: c.html,
+        text: c.texte,
+        attachments: c.pieces?.map((p) => ({
+          filename: p.nom,
+          content: p.contenu,
+          contentType: p.type,
+          ...(p.cid ? { cid: p.cid } : {}),
+        })),
+        ...(suivi ? { headers: { "X-Mailin-custom": suivi } } : {}),
+      });
+      return (info.messageId ?? "").replace(/^<|>$/g, "");
+    } catch (e) {
+      if (essai < ESSAIS_ENVOI) {
+        await new Promise((r) => setTimeout(r, 800));
+        continue;
+      }
+      console.error(`[courriel] échec SMTP — à ${c.a} — « ${c.sujet} »`, e);
+    }
+  }
+  return null;
+}
+
+async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null> {
+  const cle = process.env.RESEND_API_KEY!;
   const idempotence = randomUUID();
   let limites = 0;
   for (let essai = 1; essai <= ESSAIS_ENVOI; essai++) {
@@ -76,7 +135,7 @@ export async function envoyerCourrielSuivi(
               }
             : {}),
           reply_to: COURRIEL_EQUIPE,
-          ...(programmeLe ? { scheduled_at: programmeLe.toISOString() } : {}),
+          ...(suivi ? { tags: [{ name: "suivi", value: suivi.replace(/[^A-Za-z0-9_-]/g, "") }] } : {}),
         }),
       });
       // Trop de courriels à la seconde (envoi d'une lettre) : on attend et on recommence, sans compter l'essai
@@ -103,23 +162,6 @@ export async function envoyerCourrielSuivi(
     }
   }
   return null;
-}
-
-// Annule un courriel programmé (avant son heure d'envoi) ; true si Resend l'a bien retiré
-export async function annulerCourrielProgramme(id: string): Promise<boolean> {
-  const cle = process.env.RESEND_API_KEY;
-  if (!cle || !id) return false;
-  try {
-    const r = await fetch(`https://api.resend.com/emails/${encodeURIComponent(id)}/cancel`, {
-      method: "POST",
-      headers: { Authorization: `Bearer ${cle}` },
-    });
-    if (!r.ok) console.error(`[courriel] annulation refusée (${r.status}) — ${id} : ${await r.text()}`);
-    return r.ok;
-  } catch (e) {
-    console.error(`[courriel] annulation impossible — ${id}`, e);
-    return false;
-  }
 }
 
 const LIMITES_TOLEREES = 20;

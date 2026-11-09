@@ -1,3 +1,4 @@
+import { ListeIntervenants } from "@/components/Intervenants";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
@@ -189,6 +190,16 @@ export default async function EvenementDetailPage({
                   </li>
                 ))}
               </ol>
+            </Card>
+          ) : null}
+
+          {e.intervenants?.length ? (
+            <Card className="carte-filet filet-fixe filet-bleu p-[22px]">
+              <Kicker>{e.intervenants.length > 1 ? "Les intervenants" : "L’intervenant"}</Kicker>
+              <h2 className="mt-1.5 mb-4 text-[19px]">
+                Qui {e.intervenants.length > 1 ? "interviennent" : "intervient"} {<Saillant>pendant la séance</Saillant>}
+              </h2>
+              <ListeIntervenants intervenants={e.intervenants} />
             </Card>
           ) : null}
 
