@@ -1,10 +1,10 @@
-import { Contact as IconeContact, Search, Trash2, User } from "lucide-react";
+import { Contact as IconeContact, Search } from "lucide-react";
+import { LigneContactSeul } from "@/components/admin/LigneContactSeul";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
-import { retirerContactSeul } from "@/lib/actions/contacts";
 import { prisma } from "@/lib/db";
 import { fmtDate } from "@/lib/format";
-import { Card, Pill, Saillant } from "@/components/ui";
+import { Card, Saillant } from "@/components/ui";
 import Link from "next/link";
 import { FiltreCoches } from "@/components/FiltreCoches";
 import {
@@ -138,23 +138,18 @@ export default async function AdminContacts({
         <Panneau titre="Contacts sans entreprise" sousTitre={`${seuls.length} personne${seuls.length > 1 ? "s" : ""} · reçoivent la newsletter envoyée à tous`} teinte="bleu" className="mt-4" corpsClassName="px-0 pb-0">
           <ul className="list-none m-0 p-0">
             {seuls.map((a) => (
-              <li key={a.id} className="flex items-center gap-3.5 px-6 py-3 border-t border-line">
-                <span className="w-9 h-9 shrink-0 rounded-full bg-surface-2 border border-line text-muted grid place-items-center"><User size={16} aria-hidden /></span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-semibold text-ink truncate">{a.prenom || a.email}</div>
-                  <a href={`mailto:${a.email}`} className="text-[12.5px] text-accent no-underline hover:underline break-all">{a.email}</a>
-                </div>
-                <span className="hidden sm:block text-[12px] text-muted whitespace-nowrap">
-                  {a.source === "vitrine" ? "Inscrit depuis le site" : a.source === "import" ? "Importé" : "Ajouté par l’équipe"} · {fmtDate(a.createdAt.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}
-                </span>
-                {a.erreurLe ? <Pill tone="warn">Adresse en erreur</Pill> : null}
-                <form action={retirerContactSeul}>
-                  <input type="hidden" name="id" value={a.id} />
-                  <input type="hidden" name="retour" value={retour} />
-                  <button type="submit" aria-label={`Retirer ${a.prenom || a.email}`} title="Retirer"
-                    className="w-9 h-9 grid place-items-center rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-bad hover:border-bad"><Trash2 size={15} /></button>
-                </form>
-              </li>
+              <LigneContactSeul
+                key={a.id}
+                retour={retour}
+                contact={{
+                  id: a.id,
+                  prenom: a.prenom,
+                  email: a.email,
+                  origine: a.source === "vitrine" ? "Inscrit depuis le site" : a.source === "import" ? "Importé" : "Ajouté par l’équipe",
+                  depuis: fmtDate(a.createdAt.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" }),
+                  erreur: !!a.erreurLe,
+                }}
+              />
             ))}
           </ul>
         </Panneau>
