@@ -30,14 +30,7 @@ const STATUTS: Statut[] = ["a_jour", "en_retard", "en_attente", "candidature"];
 // Case « Sans tag » du filtre des tags
 export const SANS_TAG = "__sans_tag__";
 
-// Contacts avec ou sans entreprise (les deux, ou aucun coché : tous)
-export const TYPES_CONTACT = [
-  { valeur: "avec", libelle: "Avec entreprise" },
-  { valeur: "sans", libelle: "Sans entreprise" },
-] as const;
-export type TypeContact = (typeof TYPES_CONTACT)[number]["valeur"];
-
-export type FiltresContacts = { q: string; situations: Situation[]; tags: string[]; types: TypeContact[] };
+export type FiltresContacts = { q: string; situations: Situation[]; tags: string[] };
 
 type Parametres = Record<string, string | string[] | undefined>;
 const liste = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? [v] : []);
@@ -48,8 +41,7 @@ export function lireFiltresContacts(p: Parametres): FiltresContacts {
   // Anciennes adresses : ?acces=actif
   for (const a of liste(p.acces)) if ((a === "actif" || a === "invite") && !situations.includes(a)) situations.push(a);
   const tags = [...new Set(liste(p.tag).map((t) => t.trim().slice(0, 60)).filter(Boolean))];
-  const types = [...new Set(liste(p.type))].filter((t): t is TypeContact => t === "avec" || t === "sans");
-  return { q, situations, tags, types };
+  return { q, situations, tags };
 }
 
 // Les mêmes filtres en paramètres d'adresse (pour l'export et le retour après une action)
@@ -58,7 +50,6 @@ export function parametresContacts(f: FiltresContacts): URLSearchParams {
   if (f.q) p.set("q", f.q);
   for (const s of f.situations) p.append("situation", s);
   for (const t of f.tags) p.append("tag", t);
-  for (const t of f.types) p.append("type", t);
   return p;
 }
 
