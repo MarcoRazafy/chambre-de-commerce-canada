@@ -35,9 +35,9 @@ export function AjouterContact({ entreprises, retour }: { entreprises: { id: str
         <form action={ajouterContact}>
           <input type="hidden" name="retour" value={retour} />
           <ModalBody>
-            <Field label="Entreprise">
-              <select name={nouvelle ? undefined : "memberId"} required value={choix} onChange={(e) => setChoix(e.target.value)} className={INPUT}>
-                <option value="">Choisissez l’entreprise…</option>
+            <Field label="Entreprise (facultatif)">
+              <select name={nouvelle ? undefined : "memberId"} value={choix} onChange={(e) => setChoix(e.target.value)} className={INPUT}>
+                <option value="">Aucune entreprise (contact seul)</option>
                 <option value={NOUVELLE}>＋ Nouvelle entreprise</option>
                 {entreprises.map((e) => (
                   <option key={e.id} value={e.id}>{e.nom}</option>
@@ -82,7 +82,9 @@ export function AjouterContact({ entreprises, retour }: { entreprises: { id: str
                 En faire le contact principal de l’entreprise
               </label>
             ) : (
-              <p className="m-0 text-[12.5px] text-muted">Le premier contact d’une entreprise en devient le contact principal.</p>
+              <p className="m-0 text-[12.5px] text-muted">
+                {nouvelle ? "Le premier contact d’une entreprise en devient le contact principal." : "Sans entreprise, il reçoit la newsletter envoyée à tous."}
+              </p>
             )}
           </ModalBody>
           <ModalFooter>

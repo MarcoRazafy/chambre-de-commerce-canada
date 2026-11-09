@@ -55,7 +55,7 @@ export function EditeurLettre({
                 <div>
                   <div className="text-[12.5px] font-semibold text-ink mb-1">Envoyer aux entreprises avec le tag</div>
                   <SelecteurTags name="etiquettes" options={etiquettes} initiaux={audience.etiquettes} bouton="Ajouter un tag" />
-                  <p className="m-0 mt-1.5 text-[11.5px] text-faint">Sans tag : tous les membres.</p>
+                  <p className="m-0 mt-1.5 text-[11.5px] text-faint">Sans tag : tous les membres et les contacts sans entreprise.</p>
                 </div>
                 <div>
                   <div className="text-[12.5px] font-semibold text-ink mb-1">Ne pas envoyer aux entreprises avec le tag</div>

@@ -26,7 +26,8 @@ function audienceDe(fd: FormData): Audience {
     etiquettes: fd.getAll("etiquettes").map(String),
     exclus: fd.getAll("exclus").map(String),
     contacts: texte(fd, "contacts"),
-    abonnes: fd.get("abonnes") === "1",
+    // Les contacts sans entreprise reçoivent la lettre envoyée à tous (sans tag choisi)
+    abonnes: fd.getAll("etiquettes").length === 0,
     evenement: texte(fd, "evenement"),
   });
 }

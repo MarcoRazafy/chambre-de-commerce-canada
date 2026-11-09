@@ -47,7 +47,7 @@ function nouvelleEntreprise(nom: string, secteur: string, ville: string, logo: s
   });
 }
 
-// « Ajouter un contact » : à une entreprise existante, ou avec une nouvelle entreprise
+// « Ajouter un contact » : à une entreprise existante, avec une nouvelle entreprise, ou seul (sans entreprise)
 export async function ajouterContact(formData: FormData) {
   const equipe = await exigerEquipe();
   const retour = retourContacts(formData);
@@ -58,7 +58,16 @@ export async function ajouterContact(formData: FormData) {
 
   if (!nom || !email) redirectWithErreur(retour, "Le nom et le courriel du contact sont obligatoires.");
   if (!ADRESSE.test(email)) redirectWithErreur(retour, `« ${email} » n’est pas un courriel valide.`);
-  if (!memberIdChoisi && !nomEntreprise) redirectWithErreur(retour, "Choisissez l’entreprise, ou donnez le nom de la nouvelle.");
+  // Sans entreprise : un contact seul, qui reçoit la newsletter envoyée à tous
+  if (!memberIdChoisi && !nomEntreprise) {
+    await prisma.abonne.upsert({
+      where: { email },
+      update: { prenom: nom, desabonneLe: null, erreurLe: null },
+      create: { prenom: nom, email, source: "equipe" },
+    });
+    revalidatePath("/admin/contacts");
+    redirectWithFlash(retour, `${nom} a été ajouté (sans entreprise)`);
+  }
   const occupe = await prisma.user.findUnique({ where: { email }, select: { member: { select: { nom: true } } } });
   if (occupe) redirectWithErreur(retour, `${email} a déjà un compte${occupe.member ? ` (${occupe.member.nom})` : ""}.`);
 
@@ -196,4 +205,13 @@ export async function retirerTagsEntreprises(formData: FormData) {
   for (const m of ms) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: m.etiquettes.filter((t) => !tags.includes(t)) } });
   revalidatePath("/admin", "layout");
   redirectWithFlash(retour, `${pluriel(tags.length, "tag")} retiré${tags.length > 1 ? "s" : ""} de ${pluriel(ms.length, "entreprise")}`);
+}
+
+// Retirer un contact sans entreprise : il ne reçoit plus la newsletter (son adresse reste connue)
+export async function retirerContactSeul(formData: FormData) {
+  await exigerEquipe();
+  const retour = retourContacts(formData);
+  const a = await prisma.abonne.update({ where: { id: texte(formData, "id") }, data: { desabonneLe: new Date() } });
+  revalidatePath("/admin/contacts");
+  redirectWithFlash(retour, `${a.prenom || a.email} a été retiré`);
 }
