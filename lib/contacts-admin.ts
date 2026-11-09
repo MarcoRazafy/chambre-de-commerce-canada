@@ -23,6 +23,12 @@ export async function getTagsContacts(): Promise<string[]> {
   return [...new Set(cs.flatMap((c) => c.etiquettes))].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
+// Tous les tags qui existent : créés par l'équipe (même sans contact) ou posés sur un contact
+export async function getTousLesTags(): Promise<string[]> {
+  const [crees, poses] = await Promise.all([prisma.tag.findMany({ select: { nom: true } }), getTagsContacts()]);
+  return [...new Set([...crees.map((t) => t.nom), ...poses])].sort((a, b) => a.localeCompare(b, "fr"));
+}
+
 export async function getTousContacts(f: FiltresContacts) {
   const mots = f.q ? { contains: f.q, mode: "insensitive" as const } : undefined;
   const rows = await prisma.user.findMany({
