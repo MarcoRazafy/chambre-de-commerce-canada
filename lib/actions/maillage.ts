@@ -155,7 +155,7 @@ export async function majEtiquettes(memberId: string, champ: ChampEtiquettes, va
   return { ok: true as const, valeurs: propres };
 }
 
-/* ===== Page Étiquettes (équipe) : renommer, supprimer, attribuer à plusieurs membres ===== */
+/* ===== Page Tags (équipe) : renommer, supprimer, attribuer à plusieurs membres ===== */
 const propreEtiquette = (v: string) => v.trim().replace(/\s+/g, " ").slice(0, 60);
 
 export async function renommerEtiquette(formData: FormData) {
@@ -167,7 +167,7 @@ export async function renommerEtiquette(formData: FormData) {
     await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...new Set(m.etiquettes.map((e) => (e === ancien ? nouveau : e)))] } });
   }
   revalidatePath("/admin", "layout");
-  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nouveau)}`, `« ${ancien} » renommée en « ${nouveau} »`);
+  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nouveau)}`, `« ${ancien} » renommé en « ${nouveau} »`);
 }
 
 export async function supprimerEtiquette(formData: FormData) {
@@ -176,18 +176,18 @@ export async function supprimerEtiquette(formData: FormData) {
   const ms = await prisma.member.findMany({ where: { etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
   for (const m of ms) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: m.etiquettes.filter((e) => e !== nom) } });
   revalidatePath("/admin", "layout");
-  redirectWithFlash("/admin/etiquettes", `Étiquette « ${nom} » retirée de ${ms.length} membre${ms.length > 1 ? "s" : ""}`);
+  redirectWithFlash("/admin/etiquettes", `Tag « ${nom} » retiré de ${ms.length} membre${ms.length > 1 ? "s" : ""}`);
 }
 
 export async function attribuerEtiquette(formData: FormData) {
   await exigerEquipe();
   const nom = propreEtiquette(texte(formData, "nom"));
   const ids = formData.getAll("membres").map(String).filter(Boolean);
-  if (!nom || !ids.length) redirectWithErreur("/admin/etiquettes", "Choisissez une étiquette et au moins un membre.");
+  if (!nom || !ids.length) redirectWithErreur("/admin/etiquettes", "Choisissez un tag et au moins un membre.");
   const ms = await prisma.member.findMany({ where: { id: { in: ids } }, select: { id: true, etiquettes: true } });
   for (const m of ms) if (!m.etiquettes.includes(nom)) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...m.etiquettes, nom] } });
   revalidatePath("/admin", "layout");
-  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nom)}`, `« ${nom} » ajoutée à ${ms.length} membre${ms.length > 1 ? "s" : ""}`);
+  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nom)}`, `« ${nom} » ajouté à ${ms.length} membre${ms.length > 1 ? "s" : ""}`);
 }
 
 export async function retirerEtiquetteMembre(formData: FormData) {
@@ -196,5 +196,5 @@ export async function retirerEtiquetteMembre(formData: FormData) {
   const m = await prisma.member.findUnique({ where: { id }, select: { etiquettes: true } });
   if (m) await prisma.member.update({ where: { id }, data: { etiquettes: m.etiquettes.filter((e) => e !== nom) } });
   revalidatePath("/admin", "layout");
-  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nom)}`, "Étiquette retirée");
+  redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nom)}`, "Tag retiré");
 }

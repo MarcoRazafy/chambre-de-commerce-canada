@@ -53,7 +53,7 @@ export default async function Page({
               <Sparkles size={13} /> Comment une mise en relation est proposée
             </span>
             <p className="m-0 mt-2 text-[13.4px] text-ink leading-relaxed max-w-[110ch]">
-              Une paire n’est proposée que si l’un des membres <b>recherche</b> ce que l’autre <b>propose</b> (leurs étiquettes de maillage),
+              Une paire n’est proposée que si l’un des membres <b>recherche</b> ce que l’autre <b>propose</b> (leurs tags de maillage),
               et que ce besoin se retrouve dans ce que le membre a écrit (fiche, motivation ou questionnaire). Chaque paire reçoit alors un score :
               le besoin couvert d’abord, puis les intérêts communs et le lien Canada–Madagascar. Trois suggestions au plus par membre ;
               une paire mise en relation ou écartée ne revient pas. « Mettre en relation » prévient les deux membres.

@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent";
 
-// Étiquettes : repères internes posés sur les membres (segments pour la newsletter, suivis…)
+// Tags : repères internes posés sur les membres (segments pour la newsletter, suivis…)
 export default async function AdminEtiquettes({ searchParams }: { searchParams: Promise<{ e?: string }> }) {
   const choisie = (await searchParams).e ?? null;
   const membres = await prisma.member.findMany({
@@ -23,13 +23,13 @@ export default async function AdminEtiquettes({ searchParams }: { searchParams: 
 
   return (
     <>
-      <EnTeteAdmin surtitre="Communication" titre={<>Les <Saillant>étiquettes</Saillant></>}>
+      <EnTeteAdmin surtitre="Communication" titre={<>Les <Saillant>tags</Saillant></>}>
         Des repères internes sur les membres : ils servent à cibler une newsletter ou à suivre un groupe. Le membre ne les voit pas.
       </EnTeteAdmin>
 
       <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[320px_minmax(0,1fr)]">
         <Card className="p-0 overflow-hidden">
-          <div className="px-5 pt-4 pb-3 border-b border-line font-semibold">{etiquettes.length} étiquette{etiquettes.length > 1 ? "s" : ""}</div>
+          <div className="px-5 pt-4 pb-3 border-b border-line font-semibold">{etiquettes.length} tag{etiquettes.length > 1 ? "s" : ""}</div>
           {etiquettes.length ? (
             <ul className="list-none m-0 p-2">
               {etiquettes.map(([nom, n]) => (
@@ -42,7 +42,7 @@ export default async function AdminEtiquettes({ searchParams }: { searchParams: 
                 </li>
               ))}
             </ul>
-          ) : <Vide icone={<Tag size={24} />}>Aucune étiquette pour l’instant.</Vide>}
+          ) : <Vide icone={<Tag size={24} />}>Aucun tag pour l’instant.</Vide>}
         </Card>
 
         <div className="flex flex-col gap-4 min-w-0">
@@ -54,7 +54,7 @@ export default async function AdminEtiquettes({ searchParams }: { searchParams: 
               action={
                 <form action={supprimerEtiquette}>
                   <input type="hidden" name="nom" value={choisie} />
-                  <button type="submit" className="btn-contour btn-contour-sm text-bad"><Trash2 size={14} /> Supprimer l’étiquette</button>
+                  <button type="submit" className="btn-contour btn-contour-sm text-bad"><Trash2 size={14} /> Supprimer le tag</button>
                 </form>
               }
             >
@@ -76,19 +76,19 @@ export default async function AdminEtiquettes({ searchParams }: { searchParams: 
                     </li>
                   ))}
                 </ul>
-              ) : <p className="m-0 text-[13px] text-muted">Aucun membre n’a cette étiquette.</p>}
+              ) : <p className="m-0 text-[13px] text-muted">Aucun membre n’a ce tag.</p>}
             </Panneau>
           ) : null}
 
-          <Panneau titre={choisie ? `Ajouter « ${choisie} » à des membres` : "Poser une étiquette"} sousTitre="Choisissez les membres (Ctrl ou Maj pour en sélectionner plusieurs)" teinte="bleu">
+          <Panneau titre={choisie ? `Ajouter « ${choisie} » à des membres` : "Poser un tag"} sousTitre="Choisissez les membres (Ctrl ou Maj pour en sélectionner plusieurs)" teinte="bleu">
             <form action={attribuerEtiquette} className="flex flex-col gap-3">
               {choisie ? <input type="hidden" name="nom" value={choisie} /> : (
-                <input name="nom" required placeholder="Nom de l’étiquette, ex. « Exportateurs », « VIP gala »" aria-label="Nom de l’étiquette" className={CHAMP} />
+                <input name="nom" required placeholder="Nom du tag, ex. « Exportateurs », « VIP gala »" aria-label="Nom du tag" className={CHAMP} />
               )}
               <select name="membres" multiple size={10} required aria-label="Membres" className={CHAMP}>
                 {sans.map((m) => <option key={m.id} value={m.id}>{m.nom}</option>)}
               </select>
-              <button type="submit" className="btn-action btn-action-sm self-start"><Tag size={14} /> Ajouter l’étiquette</button>
+              <button type="submit" className="btn-action btn-action-sm self-start"><Tag size={14} /> Ajouter le tag</button>
             </form>
           </Panneau>
         </div>

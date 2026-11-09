@@ -364,7 +364,7 @@ export default async function AdminMembreDetail({
             </div>
           </Panneau>
 
-          <Panneau titre="Étiquettes" sousTitre="Repères internes de l’équipe, invisibles pour le membre" teinte="degrade">
+          <Panneau titre="Tags" sousTitre="Repères internes de l’équipe, invisibles pour le membre" teinte="degrade">
             <EtiquettesMembre memberId={m.id} champ="etiquettes" valeurs={etiquettes?.etiquettes ?? []} />
           </Panneau>
 

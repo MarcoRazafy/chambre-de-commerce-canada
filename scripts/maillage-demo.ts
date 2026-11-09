@@ -112,7 +112,7 @@ async function main() {
       questionnaires++;
     }
   }
-  console.log(`  Étiquettes de maillage : ${etiquetes} membre(s) ; questionnaires : ${questionnaires}.`);
+  console.log(`  Tags de maillage : ${etiquetes} membre(s) ; questionnaires : ${questionnaires}.`);
 
   const presents = new Set(membres.map((m) => m.id));
   const liens: [string, string, string, string | null, number][] = [

@@ -94,7 +94,7 @@ export function ListeSuggestions({
 }) {
   const liste = limite ? suggestions.slice(0, limite) : suggestions;
   if (!liste.length) {
-    return <Vide>{espace === "membre" ? "Pas encore de suggestion : complétez le questionnaire et vos étiquettes « Ce que vous recherchez »." : "Aucune suggestion pour l’instant."}</Vide>;
+    return <Vide>{espace === "membre" ? "Pas encore de suggestion : complétez le questionnaire et vos tags « Ce que vous recherchez »." : "Aucune suggestion pour l’instant."}</Vide>;
   }
   return (
     <ul className="list-none m-0 p-0 flex flex-col gap-3">

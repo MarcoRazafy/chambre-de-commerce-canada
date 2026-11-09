@@ -9,7 +9,7 @@ export function EtiquettesMembre({
   champ,
   valeurs,
   ton = "accent",
-  vide = "Aucune étiquette.",
+  vide = "Aucun tag.",
   lectureSeule = false,
 }: {
   memberId: string;
@@ -60,8 +60,8 @@ export function EtiquettesMembre({
             onChange={(e) => setT(e.target.value)}
             onBlur={ajouter}
             onKeyDown={(e) => { if (e.key === "Enter" || e.key === ",") { e.preventDefault(); ajouter(); } }}
-            placeholder={liste.length ? "Ajouter…" : "Ajouter une étiquette puis Entrée"}
-            aria-label="Ajouter une étiquette"
+            placeholder={liste.length ? "Ajouter…" : "Ajouter un tag puis Entrée"}
+            aria-label="Ajouter un tag"
             className="flex-1 min-w-[150px] border border-dashed border-line rounded-full bg-transparent px-3 py-1 text-[12.5px] text-ink outline-none focus:border-accent"
           />
         )}
