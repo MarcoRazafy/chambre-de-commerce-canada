@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft, Globe, LockKeyhole, Pencil } from "lucide-react";
+import { Globe, LockKeyhole, Pencil } from "lucide-react";
 import {
   AvatarRond,
   MediaBanner,
@@ -38,10 +38,7 @@ export async function ArticlePage({ space, id }: { space: Space; id: string }) {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-3 flex-wrap">
-        <BtnLink href={`/${space}/actualites`} variant="ghost" sm>
-          <ArrowLeft size={14} /> Retour aux actualités
-        </BtnLink>
+      <div className="mb-4 flex items-center justify-end gap-3 flex-wrap empty:hidden">
         {admin ? (
           <div className="flex items-center gap-2 flex-wrap">
             <span className="inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-muted">

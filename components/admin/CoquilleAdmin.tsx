@@ -2,15 +2,16 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
-import { ArrowLeft, ChevronRight, Menu, Search } from "lucide-react";
+import { ChevronRight, Menu, Search } from "lucide-react";
 import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
 import { BoutonInstaller } from "@/components/Application";
 import { MenuNotifications } from "@/components/MenuNotifications";
 import { EnCoursLien, TirerPourRafraichir } from "@/components/Mouvement";
+import { FilAriane } from "@/components/FilAriane";
 import { NAV_ICONS } from "@/components/nav-icons";
-import { titrePour, type NavGroup } from "@/lib/nav";
+import type { NavGroup } from "@/lib/nav";
 import type { Notification } from "@/lib/notifications";
 import type { User } from "@/lib/types";
 
@@ -29,7 +30,6 @@ export function CoquilleAdmin({
 }) {
   const pathname = usePathname();
   const [menuOuvert, setMenuOuvert] = useState(false);
-  const [fil, titre] = titrePour(pathname, ["Back-office", ""]);
 
   return (
     <div className="espace-admin flex min-h-screen">
@@ -160,12 +160,7 @@ export function CoquilleAdmin({
             <Menu size={18} />
           </button>
 
-          <Retour racine="/admin" />
-
-          <div className="text-[13px] text-white/60 whitespace-nowrap hidden sm:block">
-            {fil} <span className="mx-1.5 opacity-50">/</span>
-            <span className="text-white font-semibold">{titre}</span>
-          </div>
+          <FilAriane racine="/admin" />
 
           <Suspense fallback={<div className="flex-1" />}>
             <Recherche />
@@ -246,24 +241,3 @@ function Recherche() {
   );
 }
 
-// Bouton « Retour » à gauche de la barre du haut (absent sur l'accueil de l'espace)
-function Retour({ racine }: { racine: string }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  if (pathname === racine) return null;
-  return (
-    <button
-      type="button"
-      onClick={() =>
-        window.history.length > 1
-          ? router.back()
-          : router.push(pathname.split("/").slice(0, -1).join("/") || racine)
-      }
-      aria-label="Retour"
-      className="shrink-0 inline-flex items-center gap-1.5 border border-white/20 bg-white/10 text-white rounded-lg px-3 py-2 text-[13px] font-semibold cursor-pointer hover:bg-white/15"
-    >
-      <ArrowLeft size={16} />
-      <span className="hidden sm:inline">Retour</span>
-    </button>
-  );
-}

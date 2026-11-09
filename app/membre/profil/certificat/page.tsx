@@ -1,6 +1,4 @@
 import { notFound } from "next/navigation";
-import { ArrowLeft } from "lucide-react";
-import { BtnLink } from "@/components/ui";
 import { CertificatAdhesion } from "@/components/Certificat";
 import { PrintButton } from "@/components/forms/PrintButton";
 import { getInvoices, getMember } from "@/lib/queries";
@@ -23,10 +21,7 @@ export default async function CertificatPage() {
 
   return (
     <>
-      <div className="flex justify-between gap-3 flex-wrap mb-4 no-print">
-        <BtnLink href="/membre/profil" variant="ghost" sm>
-          <ArrowLeft size={14} /> Retour au profil
-        </BtnLink>
+      <div className="flex justify-end gap-3 flex-wrap mb-4 no-print">
         <PrintButton />
       </div>
 

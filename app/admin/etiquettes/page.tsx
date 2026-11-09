@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronLeft, Mail, Trash2, X } from "lucide-react";
+import { Mail, Trash2, X } from "lucide-react";
 import { ListeTags, type ResumeTag } from "@/components/admin/ListeTags";
 import { AjouterEntreprisesTag, NouveauTag, type EntrepriseTag } from "@/components/admin/Tags";
 import { EnTeteAdmin } from "@/components/admin/ui";
@@ -45,9 +45,6 @@ export default async function AdminEtiquettes({
     const sans = entreprises.filter((e) => !e.etiquettes.includes(choisi));
     return (
       <>
-        <Link href="/admin/etiquettes" className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted no-underline hover:text-accent mb-3">
-          <ChevronLeft size={15} /> Tous les tags
-        </Link>
         <EnTeteAdmin
           surtitre="Tag"
           titre={choisi}

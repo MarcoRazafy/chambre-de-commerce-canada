@@ -181,3 +181,60 @@ export function titrePour(
     .sort((a, b) => b.length - a.length)[0];
   return cle ? TITLES[cle] : defaut;
 }
+
+// Fil d'Ariane de la barre du haut : l'espace (accueil), puis chaque niveau jusqu'à la page affichée.
+// Les sous-pages sans titre propre (une fiche, « modifier »…) prennent un libellé générique.
+export type Miette = { libelle: string; href: string | null };
+
+const SOUS_PAGES: Record<string, string> = {
+  modifier: "Modifier",
+  nouvelle: "Nouvelle",
+  nouveau: "Nouveau",
+  apercu: "Aperçu",
+  inscrits: "Inscrits",
+  certificat: "Certificat",
+  retour: "Retour du paiement",
+};
+
+const FICHES: Record<string, string> = {
+  "/admin/membres": "Fiche du membre",
+  "/admin/annuaire": "Fiche",
+  "/admin/evenements": "Événement",
+  "/admin/actualites": "Actualité",
+  "/admin/ressources": "Ressource",
+  "/admin/newsletter": "Lettre",
+  "/admin/paiements": "Facture",
+  "/membre/annuaire": "Fiche",
+  "/membre/evenements": "Événement",
+  "/membre/actualites": "Actualité",
+  "/membre/ressources": "Ressource",
+  "/membre/cotisations": "Facture",
+  "/membre/cotisations/payer": "Règlement",
+};
+
+// Pages dont le détail est dans l'adresse (« /admin/etiquettes?e=VIP ») : le paramètre donne le dernier niveau
+const DETAIL_PAR_PARAMETRE: Record<string, string> = { "/admin/etiquettes": "e" };
+
+export function filPour(chemin: string, racine: string, params?: URLSearchParams | null): Miette[] {
+  const propre = chemin.replace(/\/+$/, "") || "/";
+  const [espace, accueil] = TITLES[racine] ?? ["", ""];
+  const fil: Miette[] = [{ libelle: espace, href: propre === racine ? null : racine }];
+  if (propre === racine) return [...fil, { libelle: accueil, href: null }];
+
+  // Le niveau connu le plus profond qui contient la page
+  const connue = (c: string) => c !== racine && c.startsWith(`${racine}/`) && (propre === c || propre.startsWith(`${c}/`));
+  const cles = Object.keys(TITLES).filter(connue).sort((a, b) => a.length - b.length);
+  for (const cle of cles) fil.push({ libelle: TITLES[cle][1], href: cle });
+
+  // La suite du chemin, au-delà du dernier niveau connu
+  let base = cles.at(-1) ?? racine;
+  for (const segment of propre.slice(base.length).split("/").filter(Boolean)) {
+    const libelle = SOUS_PAGES[segment] ?? FICHES[base] ?? "Détail";
+    base = `${base}/${segment}`;
+    fil.push({ libelle, href: base });
+  }
+  const detail = DETAIL_PAR_PARAMETRE[propre] ? params?.get(DETAIL_PAR_PARAMETRE[propre])?.trim() : "";
+  if (detail) fil.push({ libelle: detail, href: null });
+  else fil[fil.length - 1] = { ...fil[fil.length - 1], href: null };
+  return fil;
+}
