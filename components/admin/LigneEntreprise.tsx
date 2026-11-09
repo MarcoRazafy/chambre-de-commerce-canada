@@ -8,7 +8,7 @@ import { Modal } from "@/components/Modal";
 import { LogoMark } from "@/components/domain";
 import { INPUT } from "@/components/form-bits";
 import { Pill, StatusPill } from "@/components/ui";
-import { majTagsEntreprise } from "@/lib/actions/maillage";
+import { majTagsEntreprise, retirerEtiquetteEntreprise } from "@/lib/actions/maillage";
 import type { EntrepriseContact } from "@/lib/contacts-admin";
 import { plat } from "@/lib/texte";
 
@@ -316,5 +316,55 @@ function FicheEntreprise({ entreprise: e, tousTags }: { entreprise: EntrepriseCo
         Ouvrir la fiche du membre <ExternalLink size={14} aria-hidden />
       </Link>
     </div>
+  );
+}
+
+// Une entreprise sur la page d'un tag : un clic ouvre sa fiche (contact principal, tags) ; « Retirer » la sort du tag
+export function LigneEntrepriseTag({ entreprise: e, tousTags, tag }: { entreprise: EntrepriseContact; tousTags: string[]; tag: string }) {
+  const [ouvert, setOuvert] = useState(false);
+  const c = e.contact;
+  return (
+    <tr
+      className="border-b border-line last:border-b-0 hover:bg-surface-2 cursor-pointer transition-colors duration-150"
+      onClick={(ev) => {
+        if ((ev.target as HTMLElement).closest("a,button,dialog,form")) return;
+        setOuvert(true);
+      }}
+    >
+      <td className="px-5 py-3">
+        <div className="flex items-center gap-3.5">
+          <span className="w-[64px] flex justify-center shrink-0"><LogoMark member={e} size={36} /></span>
+          <span className="min-w-0">
+            <button type="button" onClick={() => setOuvert(true)} className="block p-0 border-0 bg-transparent font-semibold text-[14px] text-ink text-left cursor-pointer hover:text-accent">{e.nom}</button>
+            <span className="block text-[12.3px] text-muted">{e.secteur} · {e.ville}</span>
+          </span>
+        </div>
+        <Modal title="Fiche de l’entreprise" ouvert={ouvert} onFermer={() => setOuvert(false)}>
+          {() => <FicheEntreprise entreprise={e} tousTags={tousTags} />}
+        </Modal>
+      </td>
+      <td className="px-5 py-3">
+        {c ? (
+          <>
+            <div className="font-semibold text-ink">{c.nom}</div>
+            <div className="text-[12.3px] text-muted">{c.fonction}</div>
+          </>
+        ) : <span className="text-faint">Aucun contact</span>}
+      </td>
+      <td className="px-5 py-3">
+        {c ? (
+          <a href={`mailto:${c.email}`} className="inline-flex items-center gap-1.5 text-accent no-underline hover:underline"><Mail size={13} />{c.email}</a>
+        ) : <span className="text-faint">—</span>}
+      </td>
+      <td className="px-5 py-3 text-right">
+        <form action={retirerEtiquetteEntreprise}>
+          <input type="hidden" name="nom" value={tag} />
+          <input type="hidden" name="memberId" value={e.id} />
+          <button type="submit" aria-label={`Retirer ${e.nom} du tag`} className="inline-flex items-center gap-1 border-0 bg-transparent text-[13px] font-semibold text-muted hover:text-bad cursor-pointer whitespace-nowrap">
+            <X size={14} /> Retirer
+          </button>
+        </form>
+      </td>
+    </tr>
   );
 }

@@ -1,12 +1,11 @@
-import Link from "next/link";
-import { Mail, Trash2, X } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { ListeTags, type ResumeTag } from "@/components/admin/ListeTags";
 import { AjouterEntreprisesTag, NouveauTag, type EntrepriseTag } from "@/components/admin/Tags";
 import { EnTeteAdmin } from "@/components/admin/ui";
-import { LogoMark } from "@/components/domain";
 import { Card, Saillant } from "@/components/ui";
-import { renommerEtiquette, retirerEtiquetteEntreprise, supprimerEtiquette } from "@/lib/actions/maillage";
-import { getEntreprisesContacts, type EntrepriseContact } from "@/lib/contacts-admin";
+import { renommerEtiquette, supprimerEtiquette } from "@/lib/actions/maillage";
+import { getEntreprisesContacts, getTousLesTags, type EntrepriseContact } from "@/lib/contacts-admin";
+import { LigneEntrepriseTag } from "@/components/admin/LigneEntreprise";
 import { prisma } from "@/lib/db";
 import { plat } from "@/lib/texte";
 
@@ -33,7 +32,7 @@ export default async function AdminEtiquettes({
 }) {
   const sp = await searchParams;
   const choisi = sp.e ?? null;
-  const [entreprises, crees] = await Promise.all([getEntreprisesContacts(), prisma.tag.findMany({ select: { nom: true } })]);
+  const [entreprises, crees, tousTags] = await Promise.all([getEntreprisesContacts(), prisma.tag.findMany({ select: { nom: true } }), getTousLesTags()]);
 
   // Les tags créés (même sans entreprise) et ceux posés sur des entreprises
   const parTag = new Map<string, EntrepriseContact[]>();
@@ -76,41 +75,7 @@ export default async function AdminEtiquettes({
                 </tr>
               </thead>
               <tbody>
-                {avec.map((e) => (
-                  <tr key={e.id} className="border-b border-line last:border-b-0 hover:bg-surface-2">
-                    <td className="px-5 py-3">
-                      <Link href={`/admin/membres/${e.id}`} className="flex items-center gap-3.5 no-underline">
-                        <span className="w-[64px] flex justify-center shrink-0"><LogoMark member={e} size={36} /></span>
-                        <span className="min-w-0">
-                          <span className="block font-semibold text-ink hover:text-accent">{e.nom}</span>
-                          <span className="block text-[12.3px] text-muted">{e.secteur} · {e.ville}</span>
-                        </span>
-                      </Link>
-                    </td>
-                    <td className="px-5 py-3">
-                      {e.contact ? (
-                        <>
-                          <div className="font-semibold text-ink">{e.contact.nom}</div>
-                          <div className="text-[12.3px] text-muted">{e.contact.fonction}</div>
-                        </>
-                      ) : <span className="text-faint">Aucun contact</span>}
-                    </td>
-                    <td className="px-5 py-3">
-                      {e.contact ? (
-                        <a href={`mailto:${e.contact.email}`} className="inline-flex items-center gap-1.5 text-accent no-underline hover:underline"><Mail size={13} />{e.contact.email}</a>
-                      ) : <span className="text-faint">—</span>}
-                    </td>
-                    <td className="px-5 py-3 text-right">
-                      <form action={retirerEtiquetteEntreprise}>
-                        <input type="hidden" name="nom" value={choisi} />
-                        <input type="hidden" name="memberId" value={e.id} />
-                        <button type="submit" aria-label={`Retirer ${e.nom} du tag`} className="inline-flex items-center gap-1 border-0 bg-transparent text-[13px] font-semibold text-muted hover:text-bad cursor-pointer whitespace-nowrap">
-                          <X size={14} /> Retirer
-                        </button>
-                      </form>
-                    </td>
-                  </tr>
-                ))}
+                {avec.map((e) => <LigneEntrepriseTag key={e.id} entreprise={e} tousTags={tousTags} tag={choisi} />)}
               </tbody>
             </table>
           ) : (
