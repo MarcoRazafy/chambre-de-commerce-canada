@@ -75,36 +75,3 @@ export function fmtTaux(t: number | null): string {
   return t === null ? "—" : `${(Math.round(t * 10) / 10).toString().replace(".", ",")} %`;
 }
 
-// Abonnés à la lettre
-export type StatutAbonne = "abonne" | "desabonne" | "erreur";
-export const STATUTS_ABONNE: [StatutAbonne, string][] = [
-  ["abonne", "Abonné"],
-  ["desabonne", "Désabonné"],
-  ["erreur", "Adresse en erreur"],
-];
-export function statutAbonne(a: { desabonneLe: Date | null; erreurLe: Date | null }): StatutAbonne {
-  if (a.desabonneLe) return "desabonne";
-  if (a.erreurLe) return "erreur";
-  return "abonne";
-}
-const SOURCES: Record<string, string> = { vitrine: "Page publique", equipe: "Ajout manuel", import: "Import CSV" };
-export const libelleSource = (s: string) => SOURCES[s] ?? s;
-
-// Import CSV : une adresse par ligne, le reste de la ligne donne le nom ; séparateurs , ; ou tabulation
-const ADRESSE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-export const LIGNES_IMPORT_MAX = 5000;
-export function lireCsvAbonnes(texte: string): { email: string; prenom: string }[] {
-  const vus = new Set<string>();
-  const sortie: { email: string; prenom: string }[] = [];
-  for (const ligne of texte.replace(/^﻿/, "").split(/\r?\n/).slice(0, LIGNES_IMPORT_MAX)) {
-    const cellules = ligne.split(/[;,\t]/).map((c) => c.trim().replace(/^"(.*)"$/, "$1").trim());
-    const brute = cellules.find((c) => ADRESSE.test(c));
-    if (!brute) continue;
-    const email = brute.toLowerCase();
-    if (vus.has(email)) continue;
-    vus.add(email);
-    const prenom = cellules.filter((c) => c && c !== brute).join(" ").replace(/\s+/g, " ").slice(0, 80) || email.split("@")[0];
-    sortie.push({ email, prenom });
-  }
-  return sortie;
-}

@@ -4,11 +4,9 @@ import {
   etatLettre,
   fmtDateHeure,
   fmtTaux,
-  lireCsvAbonnes,
   lireProgrammation,
   moyenne,
   programmationParDefaut,
-  statutAbonne,
   suiviDe,
   taux,
 } from "@/lib/lettres";
@@ -89,24 +87,6 @@ describe("suivi d'une lettre", () => {
     expect(moyenne([null])).toBeNull();
     expect(fmtTaux(49.25)).toBe("49,3 %");
     expect(fmtTaux(null)).toBe("—");
-  });
-});
-
-describe("abonnés à la lettre", () => {
-  it("donnent priorité au désabonnement sur l'erreur d'adresse", () => {
-    const d = new Date();
-    expect(statutAbonne({ desabonneLe: null, erreurLe: null })).toBe("abonne");
-    expect(statutAbonne({ desabonneLe: null, erreurLe: d })).toBe("erreur");
-    expect(statutAbonne({ desabonneLe: d, erreurLe: d })).toBe("desabonne");
-  });
-
-  it("lisent un CSV : séparateurs variés, guillemets, doublons, en-tête et lignes sans adresse", () => {
-    const csv = "﻿nom;email\n\"Louis Bergeron\";\"Louis@Bergeron-Import.ca\"\nChantal Dubé,cdube@exemple.ca\nrien ici\ncdube@exemple.ca\ttoky\nhaja@exemple.mg\n";
-    expect(lireCsvAbonnes(csv)).toEqual([
-      { email: "louis@bergeron-import.ca", prenom: "Louis Bergeron" },
-      { email: "cdube@exemple.ca", prenom: "Chantal Dubé" },
-      { email: "haja@exemple.mg", prenom: "haja" },
-    ]);
   });
 });
 

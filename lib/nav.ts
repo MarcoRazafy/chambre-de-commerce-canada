@@ -95,7 +95,6 @@ export const NAV_ADMIN: NavGroup[] = [
     items: [
       { href: "/admin/messagerie", label: "Messagerie", icon: "chat" },
       { href: "/admin/newsletter", label: "Newsletter", icon: "newsletter" },
-      { href: "/admin/abonnes", label: "Abonnés à la lettre", icon: "abonnes" },
       { href: "/admin/etiquettes", label: "Tags", icon: "tag" },
     ],
   },
@@ -157,7 +156,6 @@ export const TITLES: Record<string, [string, string]> = {
   "/admin/maillage": ["Back-office", "Maillage"],
   "/admin/newsletter": ["Back-office", "Newsletter"],
   "/admin/newsletter/nouvelle": ["Back-office", "Nouvelle lettre"],
-  "/admin/abonnes": ["Back-office", "Abonnés à la lettre"],
   "/admin/abonnement": ["Back-office", "Abonnement & utilisateurs"],
   "/admin/etiquettes": ["Back-office", "Tags"],
   "/admin/evenements": ["Back-office", "Événements"],

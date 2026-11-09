@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { redirect } from "next/navigation";
-import { CalendarClock, ListChecks, Mail, MousePointerClick, Plus, Send, Trash2, Users } from "lucide-react";
+import { CalendarClock, Mail, MousePointerClick, Plus, Send, Trash2, Users } from "lucide-react";
 import { Compteur, EnTeteAdmin, Vide } from "@/components/admin/ui";
 import { Card, Pill, Saillant, TableWrap, Td, Th } from "@/components/ui";
 import { annulerProgrammation, supprimerLettre } from "@/lib/actions/newsletter";
@@ -16,10 +15,7 @@ const PASTILLE: Record<EtatLettre, [string, "info" | "muted" | "ok"]> = {
 };
 
 // Newsletter : la lettre d'information, envoyée tout de suite ou programmée, et son suivi (ouvertures, clics)
-export default async function AdminNewsletter({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
-  // Ancienne adresse de l'onglet « Abonnés »
-  if ((await searchParams).onglet === "abonnes") redirect("/admin/abonnes");
-
+export default async function AdminNewsletter() {
   const [brutes, audience] = await Promise.all([
     prisma.lettre.findMany({
       orderBy: { updatedAt: "desc" },
@@ -55,10 +51,7 @@ export default async function AdminNewsletter({ searchParams }: { searchParams: 
         surtitre="Communication"
         titre={<Saillant>Newsletter</Saillant>}
         actions={
-          <>
-            <Link href="/admin/abonnes" className="btn-contour btn-contour-sm text-ink no-underline"><ListChecks size={15} /> Abonnés à la lettre</Link>
-            <Link href="/admin/newsletter/nouvelle" className="btn-action btn-action-sm no-underline"><Plus size={15} /> Nouvelle lettre</Link>
-          </>
+          <Link href="/admin/newsletter/nouvelle" className="btn-action btn-action-sm no-underline"><Plus size={15} /> Nouvelle lettre</Link>
         } />
 
       <div className="grid gap-4 mb-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">

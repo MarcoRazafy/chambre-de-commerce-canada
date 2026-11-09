@@ -2,10 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
-import { courrielsActifs, envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
+import { courrielsActifs } from "@/lib/courriel";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { exigerEquipe } from "@/lib/autorisations";
-import { fmtDateHeure, lireCsvAbonnes, lireProgrammation } from "@/lib/lettres";
+import { fmtDateHeure, lireProgrammation } from "@/lib/lettres";
 import {
   destinataires,
   envoyerLettre,
@@ -15,8 +15,6 @@ import {
 } from "@/lib/newsletter";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
-const ADRESSE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const ABONNES = "/admin/abonnes";
 const SANS_COURRIELS = "L’envoi de courriels n’est pas configuré (variables SMTP de Brevo) : rien n’est parti.";
 
 function audienceDe(fd: FormData): Audience {
@@ -131,89 +129,4 @@ export async function supprimerLettre(formData: FormData) {
   await prisma.lettre.deleteMany({ where: { id: texte(formData, "id"), statut: "brouillon" } });
   revalidatePath("/admin/newsletter");
   redirectWithFlash("/admin/newsletter", "Brouillon supprimé");
-}
-
-// Abonnés à la lettre (personnes extérieures au réseau)
-export async function ajouterAbonne(formData: FormData) {
-  await exigerEquipe();
-  const email = texte(formData, "email").toLowerCase();
-  const prenom = texte(formData, "prenom").slice(0, 80) || email.split("@")[0];
-  if (!ADRESSE.test(email)) redirectWithErreur(ABONNES, "Adresse e-mail invalide.");
-  await prisma.abonne.upsert({
-    where: { email },
-    update: { prenom, desabonneLe: null, erreurLe: null },
-    create: { prenom, email, source: "equipe" },
-  });
-  revalidatePath(ABONNES);
-  redirectWithFlash(ABONNES, `${email} est abonné(e)`);
-}
-
-export async function desabonner(formData: FormData) {
-  await exigerEquipe();
-  const a = await prisma.abonne.update({ where: { id: texte(formData, "id") }, data: { desabonneLe: new Date() } });
-  revalidatePath(ABONNES);
-  redirectWithFlash(ABONNES, `${a.email} est désabonné(e)`);
-}
-
-// Réabonner : aussi pour une adresse en erreur, une fois corrigée chez le destinataire
-export async function reabonner(formData: FormData) {
-  await exigerEquipe();
-  const a = await prisma.abonne.update({ where: { id: texte(formData, "id") }, data: { desabonneLe: null, erreurLe: null } });
-  revalidatePath(ABONNES);
-  redirectWithFlash(ABONNES, `${a.email} reçoit de nouveau la lettre`);
-}
-
-// Import CSV : les adresses nouvelles sont abonnées ; celles déjà connues (même désabonnées) ne changent pas
-export async function importerAbonnes(formData: FormData) {
-  const moi = await exigerEquipe();
-  const fichier = formData.get("fichier");
-  if (!(fichier instanceof File) || !fichier.size) redirectWithErreur(ABONNES, "Choisissez un fichier CSV.");
-  if (fichier.size > 2_000_000) redirectWithErreur(ABONNES, "Fichier trop lourd (2 Mo au plus).");
-  const lus = lireCsvAbonnes(await fichier.text());
-  if (!lus.length) redirectWithErreur(ABONNES, "Aucune adresse e-mail trouvée dans ce fichier.");
-  const connues = new Set(
-    (await prisma.abonne.findMany({ where: { email: { in: lus.map((l) => l.email) } }, select: { email: true } })).map((a) => a.email),
-  );
-  const nouveaux = lus.filter((l) => !connues.has(l.email));
-  const { count } = await prisma.abonne.createMany({
-    data: nouveaux.map((n) => ({ ...n, source: "import" })),
-    skipDuplicates: true,
-  });
-  if (count) {
-    await prisma.auditLog.create({
-      data: { action: "abonnes_importes", entite: "Abonne", entiteId: "import", acteur: moi.nom, detail: `${pluriel(count, "abonné")} importé${count > 1 ? "s" : ""} depuis « ${fichier.name.slice(0, 80)} ».` },
-    });
-  }
-  revalidatePath(ABONNES);
-  const deja = lus.length - count;
-  redirectWithFlash(ABONNES, `${pluriel(count, "abonné")} importé${count > 1 ? "s" : ""}${deja ? ` · ${deja} adresse${deja > 1 ? "s" : ""} déjà connue${deja > 1 ? "s" : ""}, laissée${deja > 1 ? "s" : ""} telle${deja > 1 ? "s" : ""} quelle${deja > 1 ? "s" : ""}` : ""}`);
-}
-
-// Inviter un abonné à devenir membre : un courriel avec le lien de la demande d'adhésion
-export async function inviterAAdherer(formData: FormData) {
-  const moi = await exigerEquipe();
-  const a = await prisma.abonne.findUnique({ where: { id: texte(formData, "id") } });
-  if (!a) redirectWithErreur(ABONNES, "Abonné introuvable.");
-  if (a.desabonneLe || a.erreurLe) redirectWithErreur(ABONNES, "Cette adresse ne reçoit plus nos courriels.");
-  if (!courrielsActifs()) redirectWithErreur(ABONNES, SANS_COURRIELS);
-  const ok = await envoyerCourriel({
-    a: a.email,
-    sujet: "Rejoignez la CanCham",
-    ...gabarit({
-      titre: `Bonjour ${a.prenom},`,
-      paragraphes: [
-        "Vous suivez la lettre d’information de la Chambre de Commerce et de Coopération Canada–Madagascar. Merci de votre intérêt !",
-        "En devenant membre, vous accédez à l’annuaire des entreprises, aux mises en relation entre membres, aux événements et aux ressources réservées, et votre entreprise gagne en visibilité des deux côtés de l’océan.",
-        "La demande d’adhésion se fait en ligne en quelques minutes.",
-      ],
-      bouton: { libelle: "Demander mon adhésion", url: await urlPublique("/auth/inscription") },
-    }),
-  });
-  if (!ok) redirectWithErreur(ABONNES, "L’invitation n’a pas pu partir. Réessayez.");
-  await prisma.abonne.update({ where: { id: a.id }, data: { inviteLe: new Date() } });
-  await prisma.auditLog.create({
-    data: { action: "abonne_invite", entite: "Abonne", entiteId: a.id, acteur: moi.nom, detail: `Invitation à adhérer envoyée à ${a.email}.` },
-  });
-  revalidatePath(ABONNES);
-  redirectWithFlash(ABONNES, `Invitation envoyée à ${a.email}`);
 }

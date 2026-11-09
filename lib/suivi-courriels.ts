@@ -32,6 +32,5 @@ export async function appliquerSuivi({
   }
   if (effet.envoi || effet.abonne) {
     revalidatePath("/admin/newsletter");
-    revalidatePath("/admin/abonnes");
   }
 }
