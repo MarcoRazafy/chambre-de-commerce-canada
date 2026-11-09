@@ -8,6 +8,7 @@ import { AddMemberButton } from "@/components/forms/MemberForms";
 import { Card, Saillant, StatusPill } from "@/components/ui";
 import {
   STATUTS_FILTRE,
+  dansOnglet,
   filtrerHorsStatut,
   lireFiltres,
   parametresFiltres,
@@ -36,7 +37,7 @@ export default async function AdminMembres({
 
   const membres = await getMembers();
   const retenus = filtrerHorsStatut(membres, filtres);
-  const liste = retenus.filter((m) => statut === "tous" || m.statut === statut);
+  const liste = retenus.filter((m) => dansOnglet(m.statut, statut));
   const acces = await getAccesMembres(liste.map((m) => m.id));
   const retourListe = `/admin/membres${parametresFiltres(filtres)}`;
 
@@ -72,10 +73,7 @@ export default async function AdminMembres({
           cle: s.cle,
           libelle: s.libelle,
           href: lien({ statut: s.cle === "tous" ? null : s.cle }),
-          compte:
-            s.cle === "tous"
-              ? retenus.length
-              : retenus.filter((m) => m.statut === s.cle).length,
+          compte: retenus.filter((m) => dansOnglet(m.statut, s.cle)).length,
         }))}
       />
 

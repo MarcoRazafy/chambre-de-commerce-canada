@@ -12,6 +12,18 @@ export const STATUTS_FILTRE: { cle: MemberStatus | "tous"; libelle: string }[] =
     { cle: "refusee", libelle: "Refusées" },
   ];
 
+// Les demandes (et celles refusées) ne sont pas encore des membres : « Tous » ne les compte pas
+const PAS_ENCORE_MEMBRE: MemberStatus[] = ["candidature", "refusee"];
+
+export function dansOnglet(
+  statut: MemberStatus,
+  onglet: MemberStatus | "tous",
+): boolean {
+  return onglet === "tous"
+    ? !PAS_ENCORE_MEMBRE.includes(statut)
+    : statut === onglet;
+}
+
 export interface FiltresMembres {
   statut: MemberStatus | "tous";
   recherche: string;
@@ -48,8 +60,8 @@ export function filtrerHorsStatut(membres: Member[], f: FiltresMembres) {
 }
 
 export function filtrerMembres(membres: Member[], f: FiltresMembres) {
-  return filtrerHorsStatut(membres, f).filter(
-    (m) => f.statut === "tous" || m.statut === f.statut,
+  return filtrerHorsStatut(membres, f).filter((m) =>
+    dansOnglet(m.statut, f.statut),
   );
 }
 
