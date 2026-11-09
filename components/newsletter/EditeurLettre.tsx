@@ -1,4 +1,4 @@
-import { CalendarClock, Save, Send, TestTube } from "lucide-react";
+import { CalendarClock, Save, Send } from "lucide-react";
 import { Panneau } from "@/components/admin/ui";
 import { enregistrerLettre } from "@/lib/actions/newsletter";
 import { DELAI_MAX_JOURS, programmationParDefaut } from "@/lib/lettres";
@@ -71,10 +71,7 @@ export function EditeurLettre({
                 <button type="submit" name="intention" value="programmer" className="btn-contour btn-contour-sm text-ink shrink-0" title={`Envoi automatique à la date choisie (heure de Madagascar, jusqu’à ${DELAI_MAX_JOURS} jours à l’avance)`}><CalendarClock size={14} /> Programmer</button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink flex-1"><Save size={14} /> Brouillon</button>
-              <button type="submit" name="intention" value="test" className="btn-contour btn-contour-sm text-ink flex-1"><TestTube size={14} /> M’envoyer un test</button>
-            </div>
+            <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink"><Save size={14} /> Enregistrer le brouillon</button>
           </div>
         </Panneau>
       </div>

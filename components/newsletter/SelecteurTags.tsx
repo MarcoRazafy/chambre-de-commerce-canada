@@ -22,7 +22,8 @@ export function SelecteurTags({
   const [ouvert, setOuvert] = useState(false);
   const [q, setQ] = useState("");
   const ref = useRef<HTMLDivElement>(null);
-  const restants = options.filter((t) => !choisis.includes(t) && (!q || plat(t).includes(plat(q))));
+  const visibles = options.filter((t) => !q || plat(t).includes(plat(q)));
+  const basculer = (t: string) => setChoisis((c) => (c.includes(t) ? c.filter((x) => x !== t) : [...c, t]));
 
   useEffect(() => {
     if (!ouvert) return;
@@ -49,9 +50,9 @@ export function SelecteurTags({
               className="w-5 h-5 grid place-items-center rounded-full border-0 bg-transparent text-inherit cursor-pointer hover:bg-black/10 no-underline"><X size={12} /></button>
           </span>
         ))}
-        <button type="button" onClick={() => setOuvert((o) => !o)} disabled={!options.length || choisis.length === options.length} aria-expanded={ouvert}
+        <button type="button" onClick={() => setOuvert((o) => !o)} disabled={!options.length} aria-expanded={ouvert}
           className="inline-flex items-center gap-1 rounded-full border border-dashed border-line bg-transparent px-2.5 py-1 text-[12.5px] font-semibold text-muted cursor-pointer hover:border-accent hover:text-accent disabled:opacity-40 disabled:cursor-not-allowed">
-          <Plus size={13} /> {bouton}
+          <Plus size={13} /> {choisis.length ? "Modifier" : bouton}
         </button>
       </div>
       {ouvert ? (
@@ -63,14 +64,21 @@ export function SelecteurTags({
                 className="w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink pl-8 pr-2 py-1.5 text-[13px] outline-none focus:border-accent" />
             </div>
           ) : null}
-          <div className="max-h-[220px] overflow-y-auto">
-            {restants.map((t) => (
-              <button key={t} type="button" onClick={() => { setChoisis((c) => [...c, t]); setQ(""); }}
-                className="w-full flex items-center gap-2 rounded-[var(--radius-s)] border-0 bg-transparent px-2.5 py-2 text-left text-[13px] text-ink cursor-pointer hover:bg-surface-2">
-                <Tag size={13} className="text-muted shrink-0" aria-hidden /> {t}
-              </button>
+          <div className="max-h-[240px] overflow-y-auto" role="group" aria-label="Tags">
+            {visibles.map((t) => (
+              <label key={t} className="flex items-center gap-2.5 rounded-[var(--radius-s)] px-2.5 py-2 text-[13px] text-ink cursor-pointer hover:bg-surface-2">
+                <input type="checkbox" checked={choisis.includes(t)} onChange={() => basculer(t)} className="w-4 h-4 accent-[var(--accent)] cursor-pointer" />
+                <span className="truncate">{t}</span>
+              </label>
             ))}
-            {!restants.length ? <p className="m-0 px-2.5 py-2 text-[12.5px] text-muted">Aucun autre tag.</p> : null}
+            {!visibles.length ? <p className="m-0 px-2.5 py-2 text-[12.5px] text-muted">Aucun tag trouvé.</p> : null}
+          </div>
+          <div className="flex items-center justify-between gap-2 border-t border-line mt-1 pt-1.5 px-1">
+            <button type="button" onClick={() => setChoisis(choisis.length === options.length ? [] : [...options])}
+              className="border-0 bg-transparent text-[12.5px] font-semibold text-muted cursor-pointer hover:text-accent">
+              {choisis.length === options.length ? "Tout décocher" : "Tout cocher"}
+            </button>
+            <button type="button" onClick={() => setOuvert(false)} className="btn-action btn-action-sm">OK · {choisis.length}</button>
           </div>
         </div>
       ) : null}
