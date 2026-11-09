@@ -1038,3 +1038,23 @@ model RappelEvenement {
   @@index([eventId])
   @@map("rappels_evenement")
 }
+
+// Facture mensuelle de l'abonnement de la Chambre à la plateforme : forfait + comptes de l'équipe ce jour-là
+model FacturePlateforme {
+  id             String    @id @default(cuid())
+  numero         String    @unique // PLT-AAAA-MM
+  date           DateTime  @db.Date
+  forfait        Float
+  utilisateurs   Int
+  parUtilisateur Float
+  tauxTps        Float
+  tauxTvq        Float
+  sousTotal      Float
+  tps            Float
+  tvq            Float
+  total          Float
+  payeeLe        DateTime?
+  createdAt      DateTime  @default(now())
+
+  @@map("factures_plateforme")
+}

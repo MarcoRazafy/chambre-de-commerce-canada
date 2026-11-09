@@ -387,7 +387,7 @@ export function lienJournal(
     case "MessageThread":
       return `/admin/messagerie?t=${entiteId}`;
     case "User":
-      return "/admin/equipe";
+      return "/admin/abonnement?onglet=equipe";
     default:
       return null;
   }

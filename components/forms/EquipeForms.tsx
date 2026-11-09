@@ -11,6 +11,7 @@ import {
   Send,
   ShieldCheck,
   ShieldOff,
+  UserPlus,
 } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import {
@@ -430,6 +431,27 @@ export function CarteEquipier({
             </ModalFooter>
           ) : null}
         </>
+      )}
+    </Modal>
+  );
+}
+
+// « Ajouter un utilisateur » (Abonnement & utilisateurs) : le formulaire de création de compte, dans une fenêtre
+export function AjouterUtilisateur() {
+  return (
+    <Modal
+      title="Ajouter un utilisateur"
+      wide
+      trigger={(ouvrir) => (
+        <button type="button" onClick={ouvrir} className="btn-action btn-action-sm">
+          <UserPlus size={15} /> Ajouter un utilisateur
+        </button>
+      )}
+    >
+      {() => (
+        <div className="px-5 py-5">
+          <FormulaireNouvelEquipier />
+        </div>
       )}
     </Modal>
   );

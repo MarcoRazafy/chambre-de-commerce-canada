@@ -46,3 +46,12 @@ export function prochaineFacturation(aujourdhui: string, jour: number): string {
 const DOLLARS = new Intl.NumberFormat("fr-CA", { style: "currency", currency: "CAD" });
 export const fmtDollars = (n: number) => DOLLARS.format(n);
 export const fmtPourcent = (n: number) => `${String(n).replace(".", ",")} %`;
+
+// Factures de l'abonnement : une par mois, numérotée PLT-AAAA-MM, datée du jour de facturation
+export const numeroFacturePlateforme = (date: string) => `PLT-${date.slice(0, 7)}`;
+
+// La facture du mois en cours, si son jour est arrivé (« AAAA-MM-JJ »), sinon null
+export function dateFactureDuMois(aujourdhui: string, jour: number): string | null {
+  const date = `${aujourdhui.slice(0, 8)}${String(jour).padStart(2, "0")}`;
+  return aujourdhui >= date ? date : null;
+}

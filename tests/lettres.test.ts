@@ -12,7 +12,7 @@ import {
 } from "@/lib/lettres";
 import { effetEvenement, signatureResendValide } from "@/lib/resend-webhook";
 import { effetBrevo, identifiantsBrevo, momentBrevo } from "@/lib/brevo-webhook";
-import { configPlateforme, facturePlateforme, prochaineFacturation } from "@/lib/plateforme";
+import { configPlateforme, dateFactureDuMois, facturePlateforme, numeroFacturePlateforme, prochaineFacturation } from "@/lib/plateforme";
 
 const MAINTENANT = new Date("2026-11-08T10:00:00Z"); // 13 h à Antananarivo
 
@@ -150,6 +150,13 @@ describe("abonnement à la plateforme", () => {
       tvq: 20.45,
       total: 235.7,
     });
+  });
+
+  it("numérote la facture du mois et ne l'émet qu'une fois son jour arrivé", () => {
+    expect(numeroFacturePlateforme("2026-11-01")).toBe("PLT-2026-11");
+    expect(dateFactureDuMois("2026-11-10", 1)).toBe("2026-11-01");
+    expect(dateFactureDuMois("2026-11-10", 15)).toBeNull();
+    expect(dateFactureDuMois("2026-11-15", 15)).toBe("2026-11-15");
   });
 
   it("donne la prochaine date de facturation", () => {

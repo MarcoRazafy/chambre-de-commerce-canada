@@ -56,7 +56,13 @@ export function FiltresAuto({
           el.type !== "hidden" &&
           el.type !== "submit") ||
         el instanceof HTMLSelectElement;
-      if (saisie) el.value = params.get(el.name) ?? "";
+      if (!saisie) continue;
+      const valeur = params.get(el.name);
+      // Sans paramètre, un menu revient à son choix par défaut (pas à une valeur vide qu'il ne propose pas)
+      if (el instanceof HTMLSelectElement && valeur === null) {
+        const defaut = Array.from(el.options).find((o) => o.defaultSelected) ?? el.options[0];
+        el.value = defaut?.value ?? "";
+      } else el.value = valeur ?? "";
     }
   }, [chaine, params]);
 
