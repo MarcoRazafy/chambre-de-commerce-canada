@@ -32,7 +32,9 @@ describe("lettre de la newsletter", () => {
     expect(d.sections.map((s) => s.type)).toEqual(["bouton", "bandeau", "reseaux"]);
     expect(d.sections[0]).toMatchObject({ url: "", libelle: "Go", couleurBouton: "rouge", taille: 22 });
     expect(d.sections[1]).toMatchObject({ image: "", titre: "T", fond: "degrade" });
-    expect(d.sections[2]).toMatchObject({ liens: { facebook: "https://fb.com/x", tiktok: "" } });
+    expect(d.sections[2]).toMatchObject({ liens: { facebook: "https://fb.com/x", tiktok: "" }, couleurIcone: "rouge" });
+    expect(lireDoc(JSON.stringify({ v: 3, sections: [{ type: "reseaux", couleurIcone: "vert" }, { type: "reseaux", couleurIcone: "#123456" }] }))!.sections)
+      .toMatchObject([{ couleurIcone: "vert" }, { couleurIcone: "rouge" }]);
     expect(lireDoc("Bonjour,\n\ntexte simple")).toBeNull();
   });
 
@@ -55,8 +57,8 @@ describe("lettre de la newsletter", () => {
     expect(html).toContain("Chez <strong>Bio Sud</strong>");
     expect(html).toContain("background-color:#e3f3ea");
     expect(html).toContain("color:#007140");
-    expect(html).toContain("/marque/reseaux/linkedin.png");
-    expect(html).not.toContain("/marque/reseaux/facebook.png");
+    expect(html).toContain("/marque/reseaux/linkedin-rouge.png");
+    expect(html).not.toContain("/marque/reseaux/facebook-");
     expect(html).toContain("https://site.mg/desabonnement?x");
     expect(versTexte(doc, O)).toContain("Chez Bio Sud");
   });

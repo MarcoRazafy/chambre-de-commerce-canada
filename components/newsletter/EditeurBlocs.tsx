@@ -295,6 +295,7 @@ function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
       {s.type === "espace" ? <Curseur libelle="Hauteur" valeur={s.hauteur} min={4} max={120} onChange={(hauteur) => m({ hauteur })} /> : null}
       {"couleur" in s ? <Nuancier libelle={s.type === "separateur" ? "Couleur de la ligne" : "Couleur du texte"} valeur={s.couleur} onChange={((couleur: Couleur) => m({ couleur })) as never} /> : null}
       {"couleurBouton" in s ? <Nuancier libelle="Couleur du bouton" valeur={s.couleurBouton} onChange={((couleurBouton: Couleur) => m({ couleurBouton })) as never} /> : null}
+      {s.type === "reseaux" ? <Nuancier libelle="Couleur des icônes" valeur={s.couleurIcone} onChange={((couleurIcone: Couleur) => m({ couleurIcone })) as never} /> : null}
       {s.type === "appel" ? <Nuancier libelle="Texte du bouton" valeur={s.couleurTexteBouton} onChange={((couleurTexteBouton: Couleur) => m({ couleurTexteBouton })) as never} /> : null}
       <Nuancier fond libelle="Fond de la section" valeur={s.fond} onChange={((fond: Fond) => m({ fond })) as never} />
       {s.type !== "espace" && s.type !== "separateur" ? <Alignement valeur={s.align} onChange={(align) => m({ align })} /> : null}
@@ -518,7 +519,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
                 title={url ? `${nom} : ${url}` : `${nom} : ajouter l’adresse`}
                 className={`relative p-0 border-0 bg-transparent cursor-pointer rounded-full hover:opacity-100 ${url ? "" : "opacity-25"}`}>
                 {/* eslint-disable-next-line @next/next/no-img-element -- mêmes icônes que dans le courriel */}
-                <img src={`/marque/reseaux/${r}.png`} alt={nom} width={44} height={44} className="block" />
+                <img src={`/marque/reseaux/${r}-${s.couleurIcone ?? "rouge"}.png`} alt={nom} width={44} height={44} className="block" />
                 {url ? null : <span className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full text-white grid place-items-center" style={{ background: BLEU }}><Plus size={12} /></span>}
               </button>
             );

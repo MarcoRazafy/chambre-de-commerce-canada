@@ -40,7 +40,7 @@ export type Section =
   | (Base & { type: "image"; url: string; lien: string; alt: string; largeur: number })
   | (Base & { type: "bouton"; libelle: string; url: string; couleurBouton: Couleur; couleur: Couleur; taille: number })
   | (Base & { type: "appel"; titre: string; bouton: string; url: string; taille: number; couleur: Couleur; couleurBouton: Couleur; couleurTexteBouton: Couleur })
-  | (Base & { type: "reseaux"; liens: Record<Reseau, string> })
+  | (Base & { type: "reseaux"; liens: Record<Reseau, string>; couleurIcone: Couleur })
   | (Base & { type: "pied"; texte: string; confidentialite: string; adresse: string; email: string; telephone: string; copyright: string; couleur: Couleur; taille: number })
   | (Base & { type: "separateur"; couleur: Couleur })
   | (Base & { type: "espace"; hauteur: number });
@@ -170,7 +170,7 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
     case "appel":
       return { id, type, fond: "marine", align: "center", titre: "Rejoignez-nous au prochain événement", bouton: "Je m’inscris", url: "", taille: 26, couleur: "blanc", couleurBouton: "rouge", couleurTexteBouton: "blanc" };
     case "reseaux":
-      return { id, type, fond: "brume", align: "center", liens: { facebook: "", youtube: "", linkedin: "", instagram: "", tiktok: "", ...reseaux } };
+      return { id, type, fond: "brume", align: "center", couleurIcone: "rouge", liens: { facebook: "", youtube: "", linkedin: "", instagram: "", tiktok: "", ...reseaux } };
     case "pied":
       return { id, type, fond: "brume", align: "center", texte: PIED, ...PIED_DEFAUT, couleur: "ardoise", taille: 12 };
     case "separateur":
@@ -232,7 +232,7 @@ function lireSection(s: unknown): Section | null {
       return { ...d, ...base, titre: riche(o.titre, 1000), bouton: riche(o.bouton, 400), url: urlSure(o.url), taille: entier(o.taille, 16, 40, d.taille), couleur: couleur(o.couleur, d.couleur), couleurBouton: couleur(o.couleurBouton, d.couleurBouton), couleurTexteBouton: couleur(o.couleurTexteBouton, d.couleurTexteBouton) };
     case "reseaux": {
       const l = (o.liens ?? {}) as Record<string, unknown>;
-      return { ...d, ...base, liens: Object.fromEntries(RESEAUX.map((r) => [r, urlSure(l[r])])) as Record<Reseau, string> };
+      return { ...d, ...base, couleurIcone: couleur(o.couleurIcone, d.couleurIcone), liens: Object.fromEntries(RESEAUX.map((r) => [r, urlSure(l[r])])) as Record<Reseau, string> };
     }
     case "pied": {
       const champ = (k: keyof typeof PIED_DEFAUT, max = 1000) => (typeof o[k] === "string" ? riche(o[k], max) : d[k]);
@@ -343,7 +343,7 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
         return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.25;font-weight:700;letter-spacing:-0.015em;color:${hex(s.couleur)};margin:0 0 16px">${r(s.titre)}</div>${s.bouton ? `<a href="${echapper(abs(s.url) || "#")}" style="display:inline-block;background:${hex(s.couleurBouton)};color:${hex(s.couleurTexteBouton)};text-decoration:none;font-weight:700;font-size:15px;padding:11px 22px;border-radius:8px">${r(s.bouton)}</a>` : ""}`, "34px 32px");
       case "reseaux": {
         const liens = RESEAUX.filter((r) => s.liens[r])
-          .map((r) => `<a href="${echapper(s.liens[r])}" style="display:inline-block;margin:0 5px"><img src="${o.base}/marque/reseaux/${r}.png" width="44" height="44" alt="${r}" style="display:block;border:0;width:44px;height:44px"></a>`)
+          .map((r) => `<a href="${echapper(s.liens[r])}" style="display:inline-block;margin:0 5px"><img src="${o.base}/marque/reseaux/${r}-${s.couleurIcone}.png" width="44" height="44" alt="${r}" style="display:block;border:0;width:44px;height:44px"></a>`)
           .join("");
         return liens ? cellule(s, liens, "24px 32px 8px") : "";
       }
