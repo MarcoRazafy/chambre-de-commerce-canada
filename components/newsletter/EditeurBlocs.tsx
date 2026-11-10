@@ -7,6 +7,7 @@ import {
   AlignLeft,
   AlignRight,
   ArrowDown,
+  ArrowRight,
   ArrowUp,
   Baseline,
   Bold,
@@ -133,7 +134,7 @@ function TexteRiche({ html, onChange, style, ligne = false, placeholder = "Texte
   return (
     <div className="relative" onFocus={() => setActif(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setActif(false); setTeintes(false); } }}>
       {actif ? (
-        <div className="absolute -top-12 left-0 z-30 flex items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white px-1.5 py-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)]" onMouseDown={(e) => e.preventDefault()} style={{ fontFamily: "var(--font-texte)" }}>
+        <div className="absolute top-full mt-2 left-0 z-30 flex items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white px-1.5 py-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)]" onMouseDown={(e) => e.preventDefault()} style={{ fontFamily: "var(--font-texte)" }}>
           <button type="button" className={B} onClick={() => commande("bold")} aria-label="Gras" title="Gras"><Bold size={15} /></button>
           <button type="button" className={B} onClick={() => commande("italic")} aria-label="Italique" title="Italique"><Italic size={15} /></button>
           <button type="button" className={B} onClick={() => commande("underline")} aria-label="Souligné" title="Souligné"><Underline size={15} /></button>
@@ -247,7 +248,7 @@ function Catalogue({ onChoix, onFermer, types }: { onChoix: (t: TypeSection) => 
 function BoutonPlus({ onClick, libelle, cache = false, ouvert = false, discret = false }: { onClick: () => void; libelle: string; cache?: boolean; ouvert?: boolean; discret?: boolean }) {
   return (
     <button type="button" onClick={(e) => { e.stopPropagation(); onClick(); }} aria-label={libelle} title={libelle} aria-expanded={ouvert}
-      className={`relative w-7 h-7 rounded-full grid place-items-center cursor-pointer transition-[opacity,transform,background-color,color] duration-150 ${discret ? "border-0 bg-[#e5eaf0] text-[#5b6b7a] hover:bg-[#d5dce4] hover:text-[#16202b]" : "border-2 border-white text-white shadow"} ${ouvert ? "rotate-45" : ""} ${cache ? "opacity-0 group-hover/ins:opacity-100 focus:opacity-100" : ""}`} style={discret ? undefined : { background: BLEU }}>
+      className={`relative w-7 h-7 rounded-full grid place-items-center cursor-pointer transition-[opacity,transform,background-color,color] duration-150 ${discret ? "border-0 bg-[#e5eaf0] text-[#5b6b7a] hover:bg-[#d5dce4] hover:text-[#16202b]" : "border-2 border-white text-white shadow"} ${ouvert ? "rotate-45" : ""} ${cache ? "opacity-0 group-hover/ins:opacity-100 focus:opacity-100 [@media(hover:none)]:opacity-100" : ""}`} style={discret ? undefined : { background: BLEU }}>
       <Plus size={15} />
     </button>
   );
@@ -315,7 +316,7 @@ function Emplacement({ onChoix, types, compact = false }: { onChoix: (t: TypeSec
   const [ouvert, setOuvert] = useState(false);
   const zone = useFermeture(ouvert, () => setOuvert(false));
   return (
-    <div ref={zone} className={`relative flex justify-center ${compact ? "py-1.5" : "py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm"}`}>
+    <div ref={zone} className={`relative flex justify-center ${compact ? `py-1.5 ${ouvert ? "" : "opacity-0 group-hover/col:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-100"}` : "py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm"}`}>
       <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} discret />
       {ouvert ? <Catalogue types={types} onChoix={(t) => { setOuvert(false); onChoix(t); }} onFermer={() => setOuvert(false)} /> : null}
     </div>
@@ -551,7 +552,7 @@ export function EditeurBlocs({
               <div key={`${s.id}-${generation}`}>
                 <div className="group/sec relative" onClick={() => setChoisie(s.id)}>
                   <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sec:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
-                  <div className={`absolute right-1 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sec:flex"}`} style={{ fontFamily: "var(--font-texte)" }}>
+                  <div className={`absolute right-1 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sec:flex"} group-has-[.sous:hover]/sec:!hidden group-has-[.sous-actif]/sec:!hidden`} style={{ fontFamily: "var(--font-texte)" }}>
                     <span className="px-2 text-[11.5px] font-semibold text-[#5b6b7a]">{libelle}</span>
                     {estSection(s) ? <Outil libelle="Style" actif={style === s.id} onClick={() => setStyle(style === s.id ? null : s.id)}><Paintbrush size={13} /></Outil> : null}
                     <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
@@ -604,8 +605,26 @@ function ActionLien({ libelle, url, onChange }: { libelle: string; url: string; 
   );
 }
 
+// Dupliquer dans une colonne : en dessous (même colonne) ou à côté (colonne de droite, ou une nouvelle)
+function DupliquerVers({ onDessous, onACote }: { onDessous: () => void; onACote: () => void }) {
+  const [ouvert, setOuvert] = useState(false);
+  const zone = useFermeture(ouvert, () => setOuvert(false));
+  const choix = "flex items-center gap-2 w-full px-2.5 py-1.5 rounded-md border-0 bg-transparent text-left text-[12.5px] font-semibold text-[#16202b] cursor-pointer hover:bg-[#f1f4f7]";
+  return (
+    <div ref={zone} className="relative">
+      <Outil libelle="Dupliquer" actif={ouvert} onClick={() => setOuvert((o) => !o)}><Copy size={13} /></Outil>
+      {ouvert ? (
+        <div className="absolute right-0 top-full mt-1.5 z-40 w-[150px] rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_12px_28px_-10px_rgb(15_29_44/0.3)]" onClick={(e) => e.stopPropagation()}>
+          <button type="button" className={choix} onClick={() => { setOuvert(false); onDessous(); }}><ArrowDown size={13} /> En dessous</button>
+          <button type="button" className={choix} onClick={() => { setOuvert(false); onACote(); }}><ArrowRight size={13} /> À côté</button>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 // Une colonne : ses sections (modifiables, déplaçables, supprimables) et un « + » pour en ajouter
-function Colonne({ sections, onChange }: { sections: Section[]; onChange: (c: Section[]) => void }) {
+function Colonne({ sections, onChange, aCote }: { sections: Section[]; onChange: (c: Section[]) => void; aCote?: (copie: Section) => void }) {
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
   const zone = useRef<HTMLDivElement>(null);
@@ -630,18 +649,22 @@ function Colonne({ sections, onChange }: { sections: Section[]; onChange: (c: Se
   };
   return (
     <DansColonne.Provider value={true}>
-    <div ref={zone} className="flex flex-col min-w-0">
+    <div ref={zone} className="group/col flex flex-col min-w-0">
       {sections.map((x, i) => {
         const actif = choisie === x.id;
         return (
           <div key={x.id}>
-            <div className="group/sous relative" onClick={() => setChoisie(x.id)}>
+            <div className={`group/sous sous relative ${actif ? "sous-actif" : ""}`} onClick={() => setChoisie(x.id)}>
               <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sous:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
               <div className={`absolute right-0 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sous:flex"}`} style={{ fontFamily: "var(--font-texte)" }}>
                 <Outil libelle="Style" actif={style === x.id} onClick={() => setStyle(style === x.id ? null : x.id)}><Paintbrush size={13} /></Outil>
                 <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
                 <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === sections.length - 1}><ArrowDown size={13} /></Outil>
-                <Outil libelle="Dupliquer" onClick={() => { const c = copier(x); onChange([...sections.slice(0, i + 1), c, ...sections.slice(i + 1)]); setChoisie(c.id); }}><Copy size={13} /></Outil>
+                {aCote ? (
+                  <DupliquerVers onDessous={() => { const c = copier(x); onChange([...sections.slice(0, i + 1), c, ...sections.slice(i + 1)]); setChoisie(c.id); }} onACote={() => aCote(copier(x))} />
+                ) : (
+                  <Outil libelle="Dupliquer" onClick={() => { const c = copier(x); onChange([...sections.slice(0, i + 1), c, ...sections.slice(i + 1)]); setChoisie(c.id); }}><Copy size={13} /></Outil>
+                )}
                 <Outil libelle="Supprimer" onClick={() => onChange(sections.filter((y) => y.id !== x.id))}><Trash2 size={13} /></Outil>
               </div>
               <RenduSection s={x} maj={(c) => maj(x.id, c)} actif={actif} />
@@ -706,7 +729,10 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
       return cadre(
         <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${s.colonnes.length}, minmax(0, 1fr))` }}>
           {s.colonnes.map((col, k) => (
-            <Colonne key={k} sections={col} onChange={(c) => m({ colonnes: s.colonnes.map((x, j) => (j === k ? c : x)) })} />
+            <Colonne key={k} sections={col} onChange={(c) => m({ colonnes: s.colonnes.map((x, j) => (j === k ? c : x)) })}
+              aCote={s.colonnes.length >= 2 && (k + 1 < s.colonnes.length || s.colonnes.length < COLONNES_MAX)
+                ? (copie) => m({ colonnes: k + 1 < s.colonnes.length ? s.colonnes.map((x, j) => (j === k + 1 ? [...x, copie] : x)) : [...s.colonnes, [copie]] })
+                : undefined} />
           ))}
         </div>,
         "12px 24px",

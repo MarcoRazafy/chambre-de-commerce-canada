@@ -358,7 +358,7 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
       case "colonnes": {
         const l = Math.floor(100 / s.colonnes.length);
         imbrique = true;
-        const cols = s.colonnes.map((col) => `<td valign="top" width="${l}%" style="width:${l}%;padding:0 4px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${col.map(section).join("")}</table></td>`).join("");
+        const cols = s.colonnes.map((col) => `<td class="col" valign="top" width="${l}%" style="width:${l}%;padding:0 4px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${col.map(section).join("")}</table></td>`).join("");
         imbrique = false;
         return cellule(s, `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>${cols}</tr></table>`, "12px 24px");
       }
@@ -395,7 +395,7 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
   const bas = `<tr><td style="padding:16px 24px;text-align:center;font-size:11.5px;line-height:1.5;color:${hex("ardoise")}">${echapper(o.mention)}${o.desabonnement ? ` Pour ne plus recevoir ces courriels, <a href="${echapper(o.desabonnement)}" style="${lien}">cliquez ici</a>.` : ""}</td></tr>`;
 
   return `<!doctype html>
-<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"></head>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet"><style>@media (max-width:520px){.col{display:block!important;width:100%!important}}</style></head>
 <body style="margin:0;padding:24px 8px;background:${hex(doc.fond)};font-family:${POLICE}">
 ${doc.apercu ? `<div style="display:none;max-height:0;overflow:hidden;opacity:0">${v(doc.apercu)}</div>` : ""}
 <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center">
