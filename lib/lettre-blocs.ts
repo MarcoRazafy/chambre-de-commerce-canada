@@ -4,7 +4,7 @@
 // rendu HTML de courriel et texte brut — partagés par l'éditeur et l'envoi.
 
 export const LARGEUR = 600;
-export const COLONNES_MAX = 6;
+export const COLONNES_MAX = 5;
 // Ce qu'une colonne peut contenir
 export const TYPES_DANS_COLONNE = ["titre", "texte", "image", "bouton", "logo", "separateur", "espace"] as const;
 export const POLICE = "Inter, 'Helvetica Neue', Arial, sans-serif";
@@ -55,7 +55,7 @@ export const TYPES_SECTION: { type: TypeSection; libelle: string }[] = [
   { type: "bandeau", libelle: "Bandeau" },
   { type: "titre", libelle: "Titre" },
   { type: "texte", libelle: "Texte" },
-  { type: "colonnes", libelle: "Colonnes" },
+  { type: "colonnes", libelle: "Colonnes" }, // choisie par le « + » (nombre de colonnes), pas dans la liste
   { type: "image", libelle: "Image" },
   { type: "bouton", libelle: "Bouton" },
   { type: "appel", libelle: "Encadré d’appel" },

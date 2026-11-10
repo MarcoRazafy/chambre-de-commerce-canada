@@ -228,7 +228,7 @@ function Catalogue({ onChoix, onFermer, types }: { onChoix: (t: TypeSection) => 
         <button type="button" onClick={onFermer} aria-label="Fermer" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-[#5b6b7a] cursor-pointer hover:bg-[#f1f4f7]"><X size={15} /></button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-        {TYPES_SECTION.filter((t) => !types || types.includes(t.type)).map((t) => (
+        {TYPES_SECTION.filter((t) => t.type !== "colonnes" && (!types || types.includes(t.type))).map((t) => (
           <button key={t.type} type="button" onClick={() => onChoix(t.type)}
             className="flex items-start gap-2.5 rounded-xl border border-[#e5eaf0] bg-white p-2.5 text-left cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50 group/carte">
             <span className="w-9 h-9 shrink-0 rounded-lg bg-[#f1f4f7] text-[#16202b] grid place-items-center group-hover/carte:bg-[#ad0707] group-hover/carte:text-white transition-colors duration-150">{CATALOGUE[t.type].icone}</span>
@@ -254,11 +254,58 @@ function BoutonPlus({ onClick, libelle, cache = false, ouvert = false, discret =
 }
 
 // Entre deux sections, au survol : ajoute un emplacement vide
-function Inserer({ onAjout }: { onAjout: () => void }) {
+// Ferme un menu d'un clic ailleurs ou avec Échap (sans quitter le plein écran en même temps)
+function useFermeture(ouvert: boolean, fermer: () => void) {
+  const zone = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!ouvert) return;
+    const dehors = (e: PointerEvent) => { if (!zone.current?.contains(e.target as Node)) fermer(); };
+    const echap = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); fermer(); } };
+    document.addEventListener("pointerdown", dehors);
+    document.addEventListener("keydown", echap, true);
+    return () => { document.removeEventListener("pointerdown", dehors); document.removeEventListener("keydown", echap, true); };
+  }, [ouvert, fermer]);
+  return zone;
+}
+
+// Nombre de colonnes de la nouvelle section (1 à COLONNES_MAX), chacune dessinée
+function ChoixColonnes({ onChoix }: { onChoix: (n: number) => void }) {
+  return (
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)]" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
+      <b className="block px-1 pb-2 text-[13px] text-[#16202b]">Nombre de colonnes</b>
+      <div className="flex gap-1.5">
+        {Array.from({ length: COLONNES_MAX }, (_, k) => k + 1).map((n) => (
+          <button key={n} type="button" onClick={() => onChoix(n)} title={`${n} colonne${n > 1 ? "s" : ""}`} aria-label={`${n} colonne${n > 1 ? "s" : ""}`}
+            className="group/nb w-[74px] flex flex-col items-center gap-1.5 rounded-xl border border-[#e5eaf0] bg-white p-2 cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50">
+            <span className="flex w-full h-7 gap-[3px]">
+              {Array.from({ length: n }, (_, j) => <span key={j} className="flex-1 rounded-[3px] bg-[#e5eaf0] group-hover/nb:bg-[#ad0707]/70 transition-colors duration-150" />)}
+            </span>
+            <span className="text-[12px] font-semibold text-[#16202b]">{n}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// « + » qui demande d'abord le nombre de colonnes
+function PlusColonnes({ onAjout, libelle, cache = false }: { onAjout: (n: number) => void; libelle: string; cache?: boolean }) {
+  const [ouvert, setOuvert] = useState(false);
+  const zone = useFermeture(ouvert, () => setOuvert(false));
+  return (
+    <div ref={zone} className={`relative ${ouvert ? "[&>button]:opacity-100" : ""}`}>
+      <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle={libelle} cache={cache} ouvert={ouvert} />
+      {ouvert ? <ChoixColonnes onChoix={(n) => { setOuvert(false); onAjout(n); }} /> : null}
+    </div>
+  );
+}
+
+// Entre deux sections, au survol
+function Inserer({ onAjout }: { onAjout: (n: number) => void }) {
   return (
     <div className="group/ins relative h-4 -my-2 z-20 flex items-center justify-center">
       <span className="absolute inset-x-0 h-0.5 opacity-0 group-hover/ins:opacity-100" style={{ background: BLEU }} />
-      <BoutonPlus onClick={onAjout} libelle="Ajouter une section ici" cache />
+      <PlusColonnes onAjout={onAjout} libelle="Ajouter une section ici" cache />
     </div>
   );
 }
@@ -266,16 +313,7 @@ function Inserer({ onAjout }: { onAjout: () => void }) {
 // Emplacement vide : une petite section blanche, son « + » propose les types de section
 function Emplacement({ onChoix, types, compact = false }: { onChoix: (t: TypeSection) => void; types?: readonly TypeSection[]; compact?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
-  const zone = useRef<HTMLDivElement>(null);
-  // Un clic ailleurs ou Échap referme la liste (Échap ne quitte pas le plein écran en même temps)
-  useEffect(() => {
-    if (!ouvert) return;
-    const dehors = (e: PointerEvent) => { if (!zone.current?.contains(e.target as Node)) setOuvert(false); };
-    const echap = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setOuvert(false); } };
-    document.addEventListener("pointerdown", dehors);
-    document.addEventListener("keydown", echap, true);
-    return () => { document.removeEventListener("pointerdown", dehors); document.removeEventListener("keydown", echap, true); };
-  }, [ouvert]);
+  const zone = useFermeture(ouvert, () => setOuvert(false));
   return (
     <div ref={zone} className={`relative flex justify-center ${compact ? "py-1.5" : "py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm"}`}>
       <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} discret />
@@ -442,8 +480,11 @@ export function EditeurBlocs({
 
   const maj = (id: string, c: Partial<Section>) => setDoc((d) => ({ ...d, sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...c } as Bloc) : s)) }));
   // « + » : un emplacement vide, dont on choisit ensuite le type
-  const inserer = (i: number) => {
-    const e: Bloc = { id: nouvelId(), type: "emplacement" };
+  // Une colonne : un emplacement vide ; plusieurs : une section de colonnes vides
+  const inserer = (i: number, n = 1) => {
+    const e: Bloc = n > 1
+      ? { ...(sectionVide("colonnes") as Extract<Section, { type: "colonnes" }>), colonnes: Array.from({ length: n }, () => []) }
+      : { id: nouvelId(), type: "emplacement" };
     setDoc((d) => ({ ...d, sections: [...d.sections.slice(0, i), e, ...d.sections.slice(i)] }));
     setChoisie(e.id);
   };
@@ -494,7 +535,7 @@ export function EditeurBlocs({
         {doc.sections.length ? (
         <>
         <div ref={feuille} className="mx-auto w-full bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
-          <Inserer onAjout={() => inserer(0)} />
+          <Inserer onAjout={(n) => inserer(0, n)} />
           {doc.sections.map((s, i) => {
             const actif = choisie === s.id;
             const libelle = estSection(s) ? TYPES_SECTION.find((t) => t.type === s.type)!.libelle : "Section vide";
@@ -513,7 +554,7 @@ export function EditeurBlocs({
                   {estSection(s) ? <RenduSection s={s} maj={(c) => maj(s.id, c)} actif={actif} /> : <Emplacement onChoix={(t) => remplir(s.id, t)} />}
                 </div>
                 {style === s.id && estSection(s) ? <Style s={s} maj={(c) => maj(s.id, c)} /> : null}
-                <Inserer onAjout={() => inserer(i + 1)} />
+                <Inserer onAjout={(n) => inserer(i + 1, n)} />
               </div>
             );
           })}
@@ -524,7 +565,7 @@ export function EditeurBlocs({
         </>
         ) : (
           <div className="flex justify-center pt-4">
-            <BoutonPlus onClick={() => inserer(0)} libelle="Ajouter une section" />
+            <PlusColonnes onAjout={(n) => inserer(0, n)} libelle="Ajouter une section" />
           </div>
         )}
       </div>
