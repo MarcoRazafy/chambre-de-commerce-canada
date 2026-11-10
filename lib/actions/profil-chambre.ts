@@ -20,11 +20,10 @@ async function image(fd: FormData, champ: string, actuelle: string | null | unde
 export async function enregistrerProfilChambre(formData: FormData) {
   await exigerEquipe();
   const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" } });
-  let logo: string | null, couverture: string | null, logoFacture: string | null;
+  let logo: string | null, couverture: string | null;
   try {
     logo = await image(formData, "logo", actuel?.logo, { largeur: 600, transparence: true });
     couverture = await image(formData, "couverture", actuel?.couverture, { largeur: 1600 });
-    logoFacture = await image(formData, "logoFacture", actuel?.logoFacture, { largeur: 600, transparence: true });
   } catch (e) {
     if (e instanceof ImageRefusee) redirectWithErreur(PAGE, e.message);
     throw e;
@@ -47,10 +46,6 @@ export async function enregistrerProfilChambre(formData: FormData) {
     neq: texte(formData, "neq", 40),
     tps: texte(formData, "tps", 40),
     tvq: texte(formData, "tvq", 40),
-    nif: texte(formData, "nif", 40),
-    stat: texte(formData, "stat", 60),
-    logoFacture,
-    mentionFacture: texte(formData, "mentionFacture", 1000),
   };
   await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", ...data }, update: data });
   revalidatePath("/", "layout");

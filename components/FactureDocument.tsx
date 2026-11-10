@@ -4,7 +4,7 @@ import { numerosFiscaux, type ProfilChambre } from "@/lib/profil-chambre-defauts
 import { fmtMontant } from "@/lib/membership";
 import type { FactureDetaillee } from "@/lib/factures";
 
-// Facture d'un membre ; l'émetteur (logo, raison sociale, adresse, numéros fiscaux, mention) vient de « Mon entreprise »
+// Facture d'un membre ; l'émetteur (logo, raison sociale, adresse, numéros fiscaux) vient de « Mon entreprise »
 export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureDetaillee; emetteur: ProfilChambre }) {
   const fiscaux = numerosFiscaux(e);
   const payee = f.statut === "payee";
@@ -20,7 +20,7 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
       <div className="px-8 sm:px-12 py-10 print:px-[16mm] print:py-[14mm] print:flex-1 print:flex print:flex-col">
         <header className="flex justify-between items-start gap-8 flex-wrap">
           <Image
-            src={e.logoFacture}
+            src={e.logo}
             alt={e.raisonSociale}
             width={1600}
             height={647}
@@ -155,12 +155,6 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
 
         <footer className="mt-12 print:mt-auto pt-5 border-t border-[#dfe5ec] text-[11px] text-[#8797a6] leading-relaxed flex justify-between items-end gap-4 flex-wrap">
           <span>
-            {e.mentionFacture ? (
-              <>
-                <span className="whitespace-pre-line">{e.mentionFacture}</span>
-                <br />
-              </>
-            ) : null}
             {e.raisonSociale} · {e.email} · {e.telephone}
             {fiscaux.length ? (
               <>

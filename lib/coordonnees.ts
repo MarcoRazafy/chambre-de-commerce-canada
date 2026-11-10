@@ -4,9 +4,6 @@ export const COORDONNEES = {
   adresse: "Antananarivo, Madagascar",
   site: "https://cancham.mg/",
 
-  nif: "500 292 559 8",
-  stat: "94951 11 2018 000293",
-
   whatsapp: "+261 34 50 280 53" as string | null,
 
   horaires: null as string | null,
