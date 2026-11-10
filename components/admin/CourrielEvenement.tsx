@@ -174,7 +174,7 @@ function FormulaireRappel({
 
         <div>
           <span className="block text-[12.5px] font-semibold text-muted mb-2">Message</span>
-          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} apercuBoite={false}
+          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL}
             mention="Vous recevez ce rappel car vous êtes inscrit(e) à cet événement." />
           <p className="m-0 mt-2 text-[12px] text-faint">Les QR codes d’entrée s’ajoutent à la fin, pour les inscrits confirmés.</p>
         </div>

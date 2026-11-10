@@ -191,6 +191,11 @@ export function docVide(reseaux: Partial<Record<Reseau, string>> = {}): DocLettr
   };
 }
 
+// Nouvelle lettre : une page blanche, une seule section de texte vide
+export function docBlanc(): DocLettre {
+  return { v: 3, apercu: "", fond: "brume", sections: [{ ...(sectionVide("texte") as Extract<Section, { type: "texte" }>), html: "" }] };
+}
+
 // Une lettre écrite en texte simple devient une lettre de ce modèle
 export function docDepuisTexte(sujet: string, contenu: string, reseaux: Partial<Record<Reseau, string>> = {}): DocLettre {
   const bandeau = { ...(sectionVide("bandeau") as Extract<Section, { type: "bandeau" }>), titre: sujet || "La lettre de la Chambre" };

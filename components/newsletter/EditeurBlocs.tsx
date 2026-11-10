@@ -309,14 +309,12 @@ export function EditeurBlocs({
   reseaux,
   name = "contenu",
   variables = VARIABLES,
-  apercuBoite = true,
   mention = "Vous recevez ce message en tant que membre de la Chambre.",
 }: {
   initial: DocLettre;
   reseaux: Partial<Record<Reseau, string>>;
   name?: string;
   variables?: readonly { cle: string; libelle: string }[];
-  apercuBoite?: boolean;
   mention?: string;
 }) {
   const [doc, setDoc] = useState<DocLettre>(initial);
@@ -347,11 +345,6 @@ export function EditeurBlocs({
     <VariablesProposees.Provider value={variables}>
     <div className="flex flex-col gap-3">
       <input type="hidden" name={name} value={JSON.stringify(doc)} />
-      {apercuBoite ? <label className="block">
-        <span className="block text-[12.5px] font-semibold text-muted mb-1">Aperçu dans la boîte de réception</span>
-        <input value={doc.apercu} maxLength={200} onChange={(e) => setDoc({ ...doc, apercu: e.target.value })} placeholder="Le texte qui suit l’objet, ex. le programme du mois"
-          className="w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent" />
-      </label> : null}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-[12px] text-muted">
           Fond autour :

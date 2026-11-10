@@ -5,7 +5,7 @@ import { DELAI_MAX_JOURS, programmationParDefaut } from "@/lib/lettres";
 import type { Audience } from "@/lib/newsletter";
 import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
 import { SelecteurTags } from "@/components/newsletter/SelecteurTags";
-import { docDepuisTexte, docVide, lireDoc } from "@/lib/lettre-blocs";
+import { docBlanc, docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
 import { COORDONNEES } from "@/lib/coordonnees";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
@@ -28,7 +28,7 @@ export function EditeurLettre({
 }) {
   const contenu = lettre?.contenu ?? "";
   const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
-  const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux) : docVide(reseaux));
+  const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux) : docBlanc());
   return (
     <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
       {lettre?.id ? <input type="hidden" name="id" value={lettre.id} /> : null}
