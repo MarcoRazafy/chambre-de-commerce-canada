@@ -12,7 +12,7 @@ import { ListeFils, type ResumeFil } from "@/components/messagerie/ListeFils";
 import { MarquerLu } from "@/components/messagerie/MarquerLu";
 import { Saillant, ViewHead } from "@/components/ui";
 import { initialesDe } from "@/lib/avatars";
-import { COORDONNEES } from "@/lib/coordonnees";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import { heureExacte, jourLisible } from "@/lib/enums";
 import {
   getMembresJoignables,
@@ -132,7 +132,7 @@ export async function MessageriePage({
   );
 }
 
-function Conversation({
+async function Conversation({
   fil,
   fils,
   personnes,
@@ -167,7 +167,7 @@ function Conversation({
         ? { nom: fil.membre.nom, lienProfil, siteweb: fil.membre.siteweb }
         : null,
     equipe: equipe
-      ? { telephone: COORDONNEES.telephone, email: COORDONNEES.email }
+      ? await getProfilChambre().then((p) => ({ telephone: p.telephone, email: p.email }))
       : null,
   };
 

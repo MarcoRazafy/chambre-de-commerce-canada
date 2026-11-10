@@ -13,8 +13,9 @@ import {
 } from "lucide-react";
 import { CentreAide } from "@/components/CentreAide";
 import { Card, Saillant, ViewHead } from "@/components/ui";
-import { AIDE_CONTACT, THEMES } from "@/lib/aide";
+import { THEMES } from "@/lib/aide";
 import { chiffres } from "@/lib/coordonnees";
+import { getProfilChambre } from "@/lib/profil-chambre";
 
 const ACCES = [
   {
@@ -50,7 +51,9 @@ const ACCES = [
   },
 ];
 
-export default function AidePage() {
+export default async function AidePage() {
+  // Les coordonnées saisies dans « Mon entreprise » (admin)
+  const AIDE_CONTACT = await getProfilChambre();
   return (
     <>
       <div className="grid gap-6 items-start xl:grid-cols-[minmax(0,1fr)_360px]">

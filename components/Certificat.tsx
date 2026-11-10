@@ -12,9 +12,12 @@ const TITRE_CHARTE =
 export function CertificatAdhesion({
   membre: m,
   fin,
+  site = COORDONNEES.site,
 }: {
   membre: Pick<Member, "nom" | "formule">;
   fin?: string | null;
+  /** Le site de la Chambre (celui de « Mon entreprise ») */
+  site?: string;
 }) {
   return (
     <ProtectionDocument className="mx-auto w-full max-w-[1000px] print:max-w-none">
@@ -113,7 +116,7 @@ export function CertificatAdhesion({
 
               <div className="mt-[1.5cqw] text-[1.15cqw] text-[#4a5a6b]">
                 Le présent certificat est délivré pour servir et valoir ce que
-                de droit. · {affichageSite(COORDONNEES.site)}
+                de droit. · {affichageSite(site)}
               </div>
             </div>
           </div>

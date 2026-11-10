@@ -60,6 +60,7 @@ import { getContacts, getInvoices, getMember } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/session";
 import { affichageSite } from "@/lib/liens";
 import { positionObjet } from "@/lib/cadrage";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import { fmtJour, renouvellementCotisation } from "@/lib/agenda";
 import { fmtDate, fmtDateShort } from "@/lib/format";
 import { fmtCotisation, fmtMontant, libelleFormule } from "@/lib/membership";
@@ -81,7 +82,7 @@ export default async function ProfilPage({
   const user = await getCurrentUser("membre");
   const m = await getMember(user.memberId!);
   if (!m) notFound();
-  const [myInvoices, contacts, maillage, sugg, rels, activite, tags] = await Promise.all([
+  const [myInvoices, contacts, maillage, sugg, rels, activite, tags, chambre] = await Promise.all([
     getInvoices(m.id),
     getContacts(m.id),
     chargerMaillage(m.id),
@@ -89,6 +90,7 @@ export default async function ProfilPage({
     relations(m.id),
     activiteMembre(m.id),
     prisma.member.findUnique({ where: { id: m.id }, select: { offresTags: true, besoinsTags: true, interetsTags: true } }),
+    getProfilChambre(),
   ]);
   const page = "/membre/profil";
 
@@ -123,7 +125,7 @@ export default async function ProfilPage({
             />
             {!pending ? (
               <BoutonCertificat>
-                <CertificatAdhesion membre={m} fin={renouvellement} />
+                <CertificatAdhesion membre={m} fin={renouvellement} site={chambre.site} />
               </BoutonCertificat>
             ) : null}
           </div>

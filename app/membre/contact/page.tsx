@@ -13,6 +13,7 @@ import { SubmitButton } from "@/components/form-bits";
 import { Banner, Card, Kicker, Saillant, ViewHead } from "@/components/ui";
 import { envoyerDemandeContact } from "@/lib/actions/messages";
 import { COORDONNEES, MOTIFS_CONTACT, chiffres } from "@/lib/coordonnees";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import { getCurrentUser } from "@/lib/session";
 
 const INPUT =
@@ -26,8 +27,9 @@ export default async function ContactPage({
   const { envoye } = await searchParams;
   const user = await getCurrentUser("membre");
 
-  const { telephone, email, adresse, whatsapp, horaires, reseaux } =
-    COORDONNEES;
+  // Téléphone, courriel et adresse : ceux de « Mon entreprise » (admin) ; le reste vient des coordonnées fixes
+  const { telephone, email, adresse } = await getProfilChambre();
+  const { whatsapp, horaires, reseaux } = COORDONNEES;
   const messageWhatsapp = encodeURIComponent(
     `Bonjour, je suis ${user.nom}, membre CanCham. `,
   );
