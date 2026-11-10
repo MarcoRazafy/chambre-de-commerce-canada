@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import {
   AlignCenter,
   AlignJustify,
@@ -21,7 +21,9 @@ import {
   List,
   ListOrdered,
   Loader2,
+  Maximize2,
   Megaphone,
+  Minimize2,
   Minus,
   MousePointerClick,
   MoveVertical,
@@ -320,6 +322,17 @@ export function EditeurBlocs({
   const [doc, setDoc] = useState<DocLettre>(initial);
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
+  const [plein, setPlein] = useState(false);
+
+  // Plein écran : la page ne défile plus derrière, Échap le referme
+  useEffect(() => {
+    if (!plein) return;
+    const avant = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const echap = (e: KeyboardEvent) => { if (e.key === "Escape") setPlein(false); };
+    window.addEventListener("keydown", echap);
+    return () => { document.body.style.overflow = avant; window.removeEventListener("keydown", echap); };
+  }, [plein]);
 
   const maj = (id: string, c: Partial<Section>) => setDoc((d) => ({ ...d, sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...c } as Section) : s)) }));
   const inserer = (i: number, t: TypeSection) => {
@@ -343,7 +356,7 @@ export function EditeurBlocs({
 
   return (
     <VariablesProposees.Provider value={variables}>
-    <div className="flex flex-col gap-3">
+    <div className={plein ? "fixed inset-0 z-[100] flex flex-col gap-3 bg-surface p-4 overflow-y-auto" : "flex flex-col gap-3"}>
       <input type="hidden" name={name} value={JSON.stringify(doc)} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-[12px] text-muted">
@@ -353,10 +366,14 @@ export function EditeurBlocs({
               className={`w-5 h-5 rounded-full border cursor-pointer ${doc.fond === c ? "ring-2 ring-offset-1 ring-[#3b82f6]" : "border-[#d5d8dd]"}`} style={{ background: hex(c) }} />
           ))}
         </div>
+        <button type="button" onClick={() => setPlein((v) => !v)} aria-pressed={plein}
+          className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">
+          {plein ? <><Minimize2 size={14} /> Quitter le plein écran</> : <><Maximize2 size={14} /> Plein écran</>}
+        </button>
       </div>
 
-      <div className="rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto" style={{ background: hex(doc.fond) }}>
-        <div className="mx-auto bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
+      <div className={`rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto flex flex-col ${plein ? "flex-1" : "min-h-[100vh]"}`} style={{ background: hex(doc.fond) }}>
+        <div className="mx-auto w-full flex-1 bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
           <Inserer onAjout={(t) => inserer(0, t)} />
           {doc.sections.map((s, i) => {
             const actif = choisie === s.id;
