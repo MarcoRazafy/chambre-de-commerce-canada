@@ -134,7 +134,7 @@ function TexteRiche({ html, onChange, style, ligne = false, placeholder = "Texte
   return (
     <div className="relative" onFocus={() => setActif(true)} onBlur={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) { setActif(false); setTeintes(false); } }}>
       {actif ? (
-        <div className="absolute top-full mt-2 left-0 z-30 flex items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white px-1.5 py-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)]" onMouseDown={(e) => e.preventDefault()} style={{ fontFamily: "var(--font-texte)" }}>
+        <div className="absolute top-full mt-2 left-0 z-30 flex flex-wrap w-max max-w-full items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white px-1.5 py-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)]" onMouseDown={(e) => e.preventDefault()} style={{ fontFamily: "var(--font-texte)" }}>
           <button type="button" className={B} onClick={() => commande("bold")} aria-label="Gras" title="Gras"><Bold size={15} /></button>
           <button type="button" className={B} onClick={() => commande("italic")} aria-label="Italique" title="Italique"><Italic size={15} /></button>
           <button type="button" className={B} onClick={() => commande("underline")} aria-label="Souligné" title="Souligné"><Underline size={15} /></button>
@@ -223,7 +223,7 @@ const CATALOGUE: Record<TypeSection, { icone: ReactNode; aide: string }> = {
 // Le choix du type de section (le « + » d'un emplacement vide)
 function Catalogue({ onChoix, onFermer, types }: { onChoix: (t: TypeSection) => void; onFermer: () => void; types?: readonly TypeSection[] }) {
   return (
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] text-left" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] text-left max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:left-3 max-sm:translate-x-0 max-sm:mt-0 max-sm:w-auto max-sm:max-h-[70vh] max-sm:overflow-y-auto" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between px-1 pb-2">
         <b className="text-[13px] text-[#16202b]">Ajouter une section</b>
         <button type="button" onClick={onFermer} aria-label="Fermer" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-[#5b6b7a] cursor-pointer hover:bg-[#f1f4f7]"><X size={15} /></button>
@@ -272,12 +272,12 @@ function useFermeture(ouvert: boolean, fermer: () => void) {
 // Nombre de colonnes de la nouvelle section (1 à COLONNES_MAX), chacune dessinée
 function ChoixColonnes({ onChoix }: { onChoix: (n: number) => void }) {
   return (
-    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)]" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:left-3 max-sm:translate-x-0 max-sm:mt-0 max-sm:w-auto max-sm:max-h-[70vh] max-sm:overflow-y-auto" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
       <b className="block px-1 pb-2 text-[13px] text-[#16202b]">Nombre de colonnes</b>
       <div className="flex gap-1.5">
         {Array.from({ length: COLONNES_MAX }, (_, k) => k + 1).map((n) => (
           <button key={n} type="button" onClick={() => onChoix(n)} title={`${n} colonne${n > 1 ? "s" : ""}`} aria-label={`${n} colonne${n > 1 ? "s" : ""}`}
-            className="group/nb w-[74px] flex flex-col items-center gap-1.5 rounded-xl border border-[#e5eaf0] bg-white p-2 cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50">
+            className="group/nb w-[74px] max-sm:w-auto max-sm:flex-1 max-sm:min-w-0 flex flex-col items-center gap-1.5 rounded-xl border border-[#e5eaf0] bg-white p-2 cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50">
             <span className="flex w-full h-7 gap-[3px]">
               {Array.from({ length: n }, (_, j) => <span key={j} className="flex-1 rounded-[3px] bg-[#e5eaf0] group-hover/nb:bg-[#ad0707]/70 transition-colors duration-150" />)}
             </span>
@@ -727,7 +727,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
       return cadre(<TexteRiche html={s.html} onChange={(html) => m({ html })} style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />, "12px 32px");
     case "colonnes":
       return cadre(
-        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${s.colonnes.length}, minmax(0, 1fr))` }}>
+        <div className="grid gap-3 max-sm:!grid-cols-1" style={{ gridTemplateColumns: `repeat(${s.colonnes.length}, minmax(0, 1fr))` }}>
           {s.colonnes.map((col, k) => (
             <Colonne key={k} sections={col} onChange={(c) => m({ colonnes: s.colonnes.map((x, j) => (j === k ? c : x)) })}
               aCote={s.colonnes.length >= 2 && (k + 1 < s.colonnes.length || s.colonnes.length < COLONNES_MAX)
