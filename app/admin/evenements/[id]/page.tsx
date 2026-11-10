@@ -27,9 +27,6 @@ import {
 import { Compteur, Jauge, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { ScannerQr } from "@/components/admin/ScannerQr";
 import { CourrielEvenement } from "@/components/admin/CourrielEvenement";
-import { TagsEvenement } from "@/components/admin/TagsEvenement";
-import { getTousLesTags } from "@/lib/contacts-admin";
-import { prisma } from "@/lib/db";
 import {
   AddAttendeeButton,
   ValiderInscriptionButton,
@@ -93,12 +90,9 @@ export default async function EvenementAdmin({
   if (!e) notFound();
 
   await marquerAbsentsPasses(id);
-  const [participants, membres, tousTags, tagsEvenement, inscrites] = await Promise.all([
+  const [participants, membres] = await Promise.all([
     getParticipants(id),
     getMembers(),
-    getTousLesTags(),
-    prisma.event.findUnique({ where: { id }, select: { etiquettes: true } }),
-    prisma.registration.count({ where: { eventId: id } }),
   ]);
 
   const onglet = ONGLETS.some((o) => o.cle === sp.onglet)
@@ -224,12 +218,6 @@ export default async function EvenementAdmin({
                 <MapPin size={15} /> {e.lieu}
               </span>
             </div>
-            <TagsEvenement
-              eventId={e.id}
-              tags={tagsEvenement?.etiquettes ?? []}
-              tousTags={tousTags}
-              inscrites={inscrites}
-            />
             <div className="flex gap-2.5 flex-wrap mt-auto pt-2">
               <ScannerQr eventId={e.id} termine={passe} />
               <Link

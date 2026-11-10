@@ -992,23 +992,3 @@ export async function retirerParticipant(formData: FormData) {
   revalideTout();
   redirectWithFlash(retour, `${a.nom} retiré de la liste`);
 }
-
-// Tags des inscrits, depuis la page de l'événement : enregistrés, et posés sur les entreprises déjà inscrites
-export async function majTagsEvenement(formData: FormData) {
-  await exigerEquipe();
-  const eventId = texte(formData, "eventId");
-  const page = pageEvenement(eventId);
-  const ev = await prisma.event.findUnique({ where: { id: eventId }, select: { titre: true } });
-  if (!ev) redirectWithErreur("/admin/evenements", "Événement introuvable.");
-  const etiquettes = lireTags(formData.getAll("etiquettes"));
-  await prisma.event.update({ where: { id: eventId }, data: { etiquettes } });
-  const inscrites = (await prisma.registration.findMany({ where: { eventId }, select: { memberId: true } })).map((r) => r.memberId);
-  const taguees = await poserTags(inscrites, etiquettes);
-  revalidatePath("/admin", "layout");
-  redirectWithFlash(
-    page,
-    etiquettes.length
-      ? `Tags des inscrits enregistrés${taguees ? ` · posés sur ${taguees} entreprise${taguees > 1 ? "s" : ""}` : ""}`
-      : "Plus aucun tag pour les prochains inscrits",
-  );
-}
