@@ -384,6 +384,14 @@ function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
   );
 }
 
+// Copie d'une section (ou d'un emplacement) avec de nouveaux identifiants, sections des colonnes comprises
+function copier<T extends { id: string }>(b: T): T {
+  const c = structuredClone(b) as T & { colonnes?: Section[][] };
+  c.id = nouvelId();
+  if (c.colonnes) c.colonnes = c.colonnes.map((col) => col.map((x) => copier(x)));
+  return c;
+}
+
 // Dans l'éditeur seulement : un emplacement vide en attente de son type (jamais enregistré)
 type Bloc = Section | { id: string; type: "emplacement" };
 const estSection = (b: Bloc): b is Section => b.type !== "emplacement";
@@ -501,7 +509,7 @@ export function EditeurBlocs({
     return { ...d, sections };
   });
   const dupliquer = (i: number) => {
-    const copie = { ...structuredClone(doc.sections[i]), id: nouvelId() };
+    const copie = copier(doc.sections[i]);
     setDoc((d) => ({ ...d, sections: [...d.sections.slice(0, i + 1), copie, ...d.sections.slice(i + 1)] }));
     setChoisie(copie.id);
   };
@@ -633,6 +641,7 @@ function Colonne({ sections, onChange }: { sections: Section[]; onChange: (c: Se
                 <Outil libelle="Style" actif={style === x.id} onClick={() => setStyle(style === x.id ? null : x.id)}><Paintbrush size={13} /></Outil>
                 <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
                 <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === sections.length - 1}><ArrowDown size={13} /></Outil>
+                <Outil libelle="Dupliquer" onClick={() => { const c = copier(x); onChange([...sections.slice(0, i + 1), c, ...sections.slice(i + 1)]); setChoisie(c.id); }}><Copy size={13} /></Outil>
                 <Outil libelle="Supprimer" onClick={() => onChange(sections.filter((y) => y.id !== x.id))}><Trash2 size={13} /></Outil>
               </div>
               <RenduSection s={x} maj={(c) => maj(x.id, c)} actif={actif} />
