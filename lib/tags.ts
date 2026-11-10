@@ -19,3 +19,25 @@ export function ajouterTags(existants: string[], nouveaux: string[]): string[] |
   const ajout = nouveaux.filter((t) => !existants.includes(t));
   return ajout.length ? [...existants, ...ajout] : null;
 }
+
+// Tags automatiques : une règle « situation → tag ». Une entreprise porte le tag d'une règle active quand
+// elle est dans la situation, et le perd sinon. Les autres tags (posés à la main) ne bougent pas.
+export type RegleTagAuto = { statut: string; tag: string; actif: boolean };
+
+export function tagsSelonRegles(etiquettes: string[], statut: string, regles: RegleTagAuto[]): string[] | null {
+  const actives = regles.filter((r) => r.actif);
+  const geres = new Set(actives.map((r) => r.tag));
+  const voulus = new Set(actives.filter((r) => r.statut === statut).map((r) => r.tag));
+  const suite = [...etiquettes.filter((t) => !geres.has(t) || voulus.has(t)), ...[...voulus].filter((t) => !etiquettes.includes(t))];
+  const change = suite.length !== etiquettes.length || suite.some((t, i) => t !== etiquettes[i]);
+  return change ? suite : null;
+}
+
+// Les situations d'une entreprise proposées dans les règles
+export const SITUATIONS_REGLE: [string, string][] = [
+  ["a_jour", "À jour"],
+  ["en_attente", "Paiement attendu"],
+  ["en_retard", "En retard"],
+  ["candidature", "Demande d’adhésion"],
+  ["refusee", "Demande refusée"],
+];

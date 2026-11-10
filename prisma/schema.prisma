@@ -1058,3 +1058,15 @@ model FacturePlateforme {
 
   @@map("factures_plateforme")
 }
+
+// Tag automatique : toute entreprise dans cette situation reçoit le tag, et le perd quand elle n'y est plus
+model RegleTag {
+  id        String       @id @default(cuid())
+  statut    MemberStatus
+  tag       String
+  actif     Boolean      @default(true)
+  createdAt DateTime     @default(now())
+
+  @@unique([statut, tag])
+  @@map("regles_tags")
+}

@@ -3,6 +3,7 @@ import { LigneContactSeul } from "@/components/admin/LigneContactSeul";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { prisma } from "@/lib/db";
+import { appliquerReglesTags } from "@/lib/tags-auto";
 import { fmtDate } from "@/lib/format";
 import { Card, Saillant } from "@/components/ui";
 import Link from "next/link";
@@ -28,6 +29,7 @@ export default async function AdminContacts({
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
+  await appliquerReglesTags();
   // Deux onglets : les entreprises (avec leur contact principal), et les contacts sans entreprise
   const onglet = sp.onglet === "sans" ? "sans" : "avec";
   const f = lireFiltresContacts(sp);

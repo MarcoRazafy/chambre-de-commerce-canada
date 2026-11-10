@@ -1,5 +1,6 @@
 import { timingSafeEqual } from "node:crypto";
 import { assurerFactureDuMois } from "@/lib/factures-plateforme";
+import { appliquerReglesTags } from "@/lib/tags-auto";
 import { envoyerLettresDues } from "@/lib/newsletter";
 import { envoyerRappelsDus } from "@/lib/rappels-envoi";
 
@@ -21,5 +22,7 @@ export async function POST(req: Request) {
   const lettres = await envoyerLettresDues();
   const rappels = await envoyerRappelsDus();
   await assurerFactureDuMois();
+  // Tags automatiques : suivent la situation des entreprises (paiements, retards…)
+  await appliquerReglesTags();
   return Response.json({ lettres, rappels }, { headers: { "Cache-Control": "no-store" } });
 }

@@ -9,6 +9,8 @@ let abonnes: { email: string; prenom: string }[] = [];
 
 vi.mock("@/lib/db", () => ({
   prisma: {
+    // Aucune règle de tag automatique : les tags ne bougent pas
+    regleTag: { findMany: async () => [] },
     lettre: {
       findMany: async ({ where }: { where: { statut: string; programmeeLe: { lte: Date } } }) =>
         lettres.filter((l) => l.statut === where.statut && l.programmeeLe && l.programmeeLe <= where.programmeeLe.lte),
