@@ -1,10 +1,12 @@
 import Image from "next/image";
-import { COORDONNEES } from "@/lib/coordonnees";
 import { fmtDate } from "@/lib/format";
+import { numerosFiscaux, type ProfilChambre } from "@/lib/profil-chambre-defauts";
 import { fmtMontant } from "@/lib/membership";
 import type { FactureDetaillee } from "@/lib/factures";
 
-export function FactureDocument({ facture: f }: { facture: FactureDetaillee }) {
+// Facture d'un membre ; l'émetteur (logo, raison sociale, adresse, numéros fiscaux, mention) vient de « Mon entreprise »
+export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureDetaillee; emetteur: ProfilChambre }) {
+  const fiscaux = numerosFiscaux(e);
   const payee = f.statut === "payee";
   const devise = f.devise === "CAD" ? "dollars canadiens" : "ariary";
 
@@ -18,11 +20,11 @@ export function FactureDocument({ facture: f }: { facture: FactureDetaillee }) {
       <div className="px-8 sm:px-12 py-10 print:px-[16mm] print:py-[14mm] print:flex-1 print:flex print:flex-col">
         <header className="flex justify-between items-start gap-8 flex-wrap">
           <Image
-            src="/marque/logo-couleur.png"
-            alt="IMPACT 261"
+            src={e.logoFacture}
+            alt={e.raisonSociale}
             width={1600}
             height={647}
-            className="w-[220px] h-auto"
+            className="w-[220px] max-h-[110px] h-auto object-contain object-left"
             priority
           />
           <div className="text-right">
@@ -39,23 +41,25 @@ export function FactureDocument({ facture: f }: { facture: FactureDetaillee }) {
         <div className="grid gap-8 sm:grid-cols-2 mt-10">
           <div>
             <div className="surtitre text-[#8797a6] mb-2">Émetteur</div>
-            <div className="font-bold text-[14.5px]">
-              Chambre de Commerce et de Coopération Canada–Madagascar
-            </div>
+            <div className="font-bold text-[14.5px]">{e.raisonSociale}</div>
             <div className="text-[13px] text-[#5b6b7a] mt-1 leading-relaxed">
-              {COORDONNEES.adresse}
+              <span className="whitespace-pre-line">{e.adresseFacturation}</span>
               <br />
-              {COORDONNEES.email} · {COORDONNEES.telephone}
-              <br />
-              {COORDONNEES.site}
-              <br />
-              <span className="whitespace-nowrap">
-                NIF : {COORDONNEES.nif}
-              </span>{" "}
-              ·{" "}
-              <span className="whitespace-nowrap">
-                STAT : {COORDONNEES.stat}
-              </span>
+              {e.email} · {e.telephone}
+              {e.site ? (
+                <>
+                  <br />
+                  {e.site}
+                </>
+              ) : null}
+              {fiscaux.length ? (
+                <>
+                  <br />
+                  {fiscaux.map((n, i) => (
+                    <span key={n} className="whitespace-nowrap">{i ? " · " : ""}{n}</span>
+                  ))}
+                </>
+              ) : null}
             </div>
           </div>
           <div>
@@ -151,15 +155,21 @@ export function FactureDocument({ facture: f }: { facture: FactureDetaillee }) {
 
         <footer className="mt-12 print:mt-auto pt-5 border-t border-[#dfe5ec] text-[11px] text-[#8797a6] leading-relaxed flex justify-between items-end gap-4 flex-wrap">
           <span>
-            CanCham Madagascar · {COORDONNEES.email} · {COORDONNEES.telephone}
-            <br />
-            NIF : {COORDONNEES.nif} · STAT : {COORDONNEES.stat}
-            <br />
-            Document émis par la plateforme CanCham Connect.
+            {e.mentionFacture ? (
+              <>
+                <span className="whitespace-pre-line">{e.mentionFacture}</span>
+                <br />
+              </>
+            ) : null}
+            {e.raisonSociale} · {e.email} · {e.telephone}
+            {fiscaux.length ? (
+              <>
+                <br />
+                {fiscaux.join(" · ")}
+              </>
+            ) : null}
           </span>
-          <span className="font-semibold text-[#5b6b7a]">
-            {COORDONNEES.site}
-          </span>
+          <span className="font-semibold text-[#5b6b7a]">{e.site}</span>
         </footer>
       </div>
     </article>

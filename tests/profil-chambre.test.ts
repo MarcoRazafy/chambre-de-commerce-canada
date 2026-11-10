@@ -1,0 +1,16 @@
+import { describe, expect, it } from "vitest";
+import { completerProfil, NOM_CHAMBRE, numerosFiscaux } from "@/lib/profil-chambre-defauts";
+import { COORDONNEES } from "@/lib/coordonnees";
+
+describe("profil de la Chambre", () => {
+  it("reprend les valeurs par défaut tant que rien n'est rempli", () => {
+    const p = completerProfil(null);
+    expect(p).toMatchObject({ nom: NOM_CHAMBRE, raisonSociale: NOM_CHAMBRE, email: COORDONNEES.email, nif: COORDONNEES.nif, logo: "/marque/logo-couleur.png", logoFacture: "/marque/logo-couleur.png" });
+  });
+
+  it("la facturation suit la Chambre, sauf ce qui est précisé", () => {
+    const p = completerProfil({ nom: "IMPACT 261", adresse: "Montréal", logo: "/televersements/l.png", raisonSociale: "  ", neq: "1234567890", tps: "123456789 RT0001" });
+    expect(p).toMatchObject({ raisonSociale: "IMPACT 261", adresseFacturation: "Montréal", logoFacture: "/televersements/l.png" });
+    expect(numerosFiscaux(p)).toEqual(["NEQ : 1234567890", "TPS : 123456789 RT0001", `NIF : ${COORDONNEES.nif}`, `STAT : ${COORDONNEES.stat}`]);
+  });
+});

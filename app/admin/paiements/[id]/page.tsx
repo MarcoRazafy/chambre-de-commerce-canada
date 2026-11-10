@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ExternalLink } from "lucide-react";
 import { FactureDocument } from "@/components/FactureDocument";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import {
   MarquerPayeeButton,
   SupprimerFactureButton,
@@ -60,7 +61,7 @@ export default async function FactureAdmin({
         </div>
       </div>
 
-      <FactureDocument facture={f} />
+      <FactureDocument facture={f} emetteur={await getProfilChambre()} />
     </>
   );
 }

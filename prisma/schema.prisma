@@ -1070,3 +1070,32 @@ model RegleTag {
   @@unique([statut, tag])
   @@map("regles_tags")
 }
+
+// « Mon entreprise » : la Chambre elle-même (une seule ligne). Présentation, logo et couverture,
+// et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ, NIF, STAT, logo, mention).
+// Un champ vide reprend la valeur par défaut de la plateforme.
+model ProfilChambre {
+  id          String  @id @default("unique")
+  nom         String  @default("")
+  description String  @default("")
+  adresse     String  @default("")
+  telephone   String  @default("")
+  email       String  @default("")
+  site        String  @default("")
+  logo        String?
+  couverture  String?
+
+  raisonSociale      String  @default("")
+  adresseFacturation String  @default("")
+  neq                String  @default("")
+  tps                String  @default("")
+  tvq                String  @default("")
+  nif                String  @default("")
+  stat               String  @default("")
+  logoFacture        String?
+  mentionFacture     String  @default("")
+
+  updatedAt DateTime @updatedAt
+
+  @@map("profil_chambre")
+}

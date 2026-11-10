@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { FactureDocument } from "@/components/FactureDocument";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import { PrintButton } from "@/components/forms/PrintButton";
 import { getFacture } from "@/lib/factures";
 import { getCurrentUser } from "@/lib/session";
@@ -27,7 +28,7 @@ export default async function FactureMembre({
         </Link>
         <PrintButton />
       </div>
-      <FactureDocument facture={f} />
+      <FactureDocument facture={f} emetteur={await getProfilChambre()} />
     </>
   );
 }
