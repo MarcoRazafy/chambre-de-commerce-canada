@@ -134,9 +134,9 @@ export default async function ProfilPage({
               </BtnLink>
             }
           >
-            Présentez-vous, votre entreprise, votre formule et votre activité en
-            quatre étapes rapides : votre fiche sera complète dans l’annuaire,
-            et l’équipe pourra examiner votre demande.
+            Quatre étapes : vous, votre entreprise, votre formule et votre
+            activité. Une fois terminées, votre fiche est complète dans
+            l’annuaire et l’équipe peut examiner votre demande.
           </Banner>
         </div>
       ) : null}

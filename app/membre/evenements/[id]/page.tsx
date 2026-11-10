@@ -303,7 +303,7 @@ export default async function EvenementDetailPage({
                     />
                   </div>
                   <div className="mt-1.5 text-[11.8px] text-faint">
-                    {e.inscrits} inscrits sur {e.cap} places — {remplissage} %
+                    {e.inscrits} inscrits sur {e.cap} places · {remplissage} %
                   </div>
                 </div>
                 <div className="mt-3.5">

@@ -37,13 +37,13 @@ export const THEMES: Theme[] = [
       {
         id: "formules",
         question: "Quelles sont les formules d’adhésion et leurs tarifs ?",
-        reponse: `La cotisation dépend de votre formule, choisie à l’inscription :\n\n${grille}\n\nVotre formule et son tarif figurent sur « Mon entreprise », dans le bloc « Statut d’adhésion ».`,
-        liens: [{ href: "/membre/profil", libelle: "Voir ma formule" }],
+        reponse: `La cotisation dépend de votre formule, choisie à l’inscription :\n\n${grille}\n\nVotre formule et son tarif sont indiqués dans « Cotisations & factures ».`,
+        liens: [{ href: "/membre/cotisations", libelle: "Voir ma formule" }],
       },
       {
         id: "acces-restreint",
         question: "Pourquoi mon accès est-il restreint ?",
-        reponse: `Deux situations restreignent l’accès. Votre candidature n’est pas encore validée, ou la cotisation n’est pas encore réglée : l’espace s’ouvre dès l’enregistrement du paiement. Ou votre cotisation est en retard depuis plus de ${RETARD_BLOCAGE_JOURS} jours.\n\nTant que le retard ne dépasse pas ${RETARD_BLOCAGE_JOURS} jours, tout reste accessible et un bandeau vous le signale. Au-delà, seules « Mon entreprise », « Cotisations & factures », ce centre d’aide et la page de contact restent ouvertes, le temps de régulariser.`,
+        reponse: `L’accès est restreint dans deux cas. Soit votre adhésion n’est pas encore active (candidature à valider ou cotisation à régler) : l’espace s’ouvre dès que le paiement est enregistré. Soit votre cotisation a plus de ${RETARD_BLOCAGE_JOURS} jours de retard.\n\nTant que le retard ne dépasse pas ${RETARD_BLOCAGE_JOURS} jours, tout reste accessible et un bandeau vous le signale. Au-delà, seules « Mon entreprise », « Cotisations & factures », ce centre d’aide et la page de contact restent ouvertes, le temps de régulariser.`,
         liens: [
           { href: "/membre/cotisations", libelle: "Mes cotisations" },
           { href: "/membre/contact", libelle: "Contacter l’équipe" },
@@ -113,7 +113,7 @@ export const THEMES: Theme[] = [
         id: "trouver",
         question: "Comment trouver une entreprise ou un secteur ?",
         reponse:
-          "La barre de recherche, en haut de chaque page, cherche à la fois dans les entreprises, les événements, les actualités et les ressources. Dans l’annuaire, vous pouvez aussi filtrer par secteur.",
+          "La barre de recherche, en haut de chaque page, cherche dans les entreprises, les événements et les ressources. Dans l’annuaire, vous pouvez aussi filtrer par secteur.",
         liens: [{ href: "/membre/annuaire", libelle: "Annuaire" }],
       },
       {
@@ -133,7 +133,7 @@ export const THEMES: Theme[] = [
         id: "inscription",
         question: "Comment m’inscrire à un événement ?",
         reponse:
-          "Ouvrez l’événement depuis la liste des événements ou depuis l’agenda, et cliquez sur « S’inscrire ». La fiche indique les places restantes. Pour un événement payant, une facture est générée à l’inscription.\n\nVous pouvez annuler votre inscription depuis la même fiche.",
+          "Ouvrez l’événement depuis « Événements » et cliquez sur « S’inscrire ». La fiche indique les places restantes. Pour un événement payant, une facture est générée à l’inscription.\n\nVous pouvez annuler votre inscription depuis la même fiche.",
         liens: [
           { href: "/membre/evenements", libelle: "Événements" },
           // { href: "/membre/agenda", libelle: "Agenda" }, // Agenda retiré pour l'instant
@@ -151,7 +151,7 @@ export const THEMES: Theme[] = [
         id: "rendez-vous",
         question: "Comment prendre rendez-vous avec l’équipe ?",
         reponse:
-          "Ouvrez « Rendez-vous » dans le menu, choisissez le type de rencontre, le jour puis l’heure : seuls les créneaux encore libres sont proposés. Une confirmation part aussitôt par courriel, et le rendez-vous rejoint votre agenda.\n\nLes heures affichées sont celles de Madagascar (UTC+3), là où l’équipe reçoit.\n\nUn empêchement s’annule depuis la même page : le créneau repart aussitôt à quelqu’un d’autre, et l’équipe est prévenue.",
+          "Ouvrez « Rendez-vous » dans le menu, choisissez le type de rencontre, le jour puis l’heure : seuls les créneaux encore libres sont proposés. Une confirmation vous est envoyée par courriel.\n\nLes heures affichées sont celles de Madagascar (UTC+3), là où l’équipe reçoit.\n\nEn cas d’empêchement, annulez depuis la même page : le créneau se libère pour quelqu’un d’autre et l’équipe est prévenue.",
         liens: [
           { href: "/membre/rendez-vous", libelle: "Prendre rendez-vous" },
         ],
@@ -173,7 +173,7 @@ export const THEMES: Theme[] = [
         id: "telecharger",
         question: "Pourquoi ne puis-je pas télécharger une ressource ?",
         reponse:
-          "Les ressources sont réservées aux membres et se consultent dans la plateforme : « Lire » pour un document, « Regarder » pour une vidéo. Elles ne sont ni téléchargeables ni imprimables.\n\nChaque page est marquée à votre nom : c’est ce qui permet à la chambre de continuer à partager des contenus de valeur avec ses membres.",
+          "Les ressources sont réservées aux membres et se consultent dans la plateforme : « Lire » pour un document, « Regarder » pour une vidéo. Elles ne sont ni téléchargeables ni imprimables.\n\nChaque page est marquée à votre nom, pour que ces contenus restent entre membres.",
         liens: [{ href: "/membre/ressources", libelle: "Ressources" }],
       },
       {

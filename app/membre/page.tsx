@@ -113,9 +113,6 @@ export default async function VueDEnsemble() {
             <h2 className="text-[19px] m-0">
               Offres &amp; promotions {<Saillant ton="vert">membres</Saillant>}
             </h2>
-            <p className="text-[13.5px] text-muted m-0 mt-1">
-              Les avantages que les adhérents se réservent entre eux
-            </p>
           </div>
           {/* Retiré pour l'instant (Actualités) : à décommenter pour le remettre
           <Link
@@ -284,7 +281,7 @@ export default async function VueDEnsemble() {
           icone={<Mail size={24} />}
           surtitre="Vos échanges"
           titre={`${nonLus} nouveau${nonLus > 1 ? "x" : ""} message${nonLus > 1 ? "s" : ""}`}
-          detail="Poursuivez vos discussions avec le réseau."
+          detail="Avec les membres et l’équipe CanCham."
           lien="Ouvrir la messagerie"
           href="/membre/messagerie"
           teinte="bleu"
@@ -342,7 +339,7 @@ function BandeauAdhesion({
     : bloque
       ? {
           icone: <Lock size={22} />,
-          titre: `Accès restreint — ${jours} jours de retard`,
+          titre: `Accès restreint : ${jours} jours de retard`,
           texte:
             "Régularisez votre cotisation pour retrouver l’ensemble de vos services.",
           pastille: "Restreint",

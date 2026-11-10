@@ -103,8 +103,8 @@ export default async function RetourPaiementPage({
             icon={<XCircle size={18} />}
             title="Paiement refusé"
           >
-            Rien n’a été débité. Vous pouvez recommencer, ou régler par virement
-            — l’équipe enregistrera le règlement.
+            Rien n’a été débité. Vous pouvez réessayer, ou régler par virement :
+            l’équipe enregistrera alors le règlement.
           </Banner>
         ) : (
           <Banner

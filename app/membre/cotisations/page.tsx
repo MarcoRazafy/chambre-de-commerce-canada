@@ -90,9 +90,9 @@ export default async function CotisationsPage({
                 {enAttente
                   ? "Cotisation à régler"
                   : bloque
-                    ? `Accès restreint — ${jours} jours de retard`
+                    ? `Accès restreint : ${jours} jours de retard`
                     : enRetard
-                      ? `Cotisation en retard — ${jours}/${RETARD_BLOCAGE_JOURS} jours`
+                      ? `Cotisation en retard : ${jours}/${RETARD_BLOCAGE_JOURS} jours`
                       : "Votre adhésion est à jour"}
               </h2>
               <p className="text-[13.5px] text-muted m-0 mt-1">
