@@ -105,6 +105,24 @@ export async function enregistrerLettre(formData: FormData) {
   redirectWithFlash(page, "Brouillon enregistré");
 }
 
+// Sauvegarde automatique pendant la rédaction : le brouillon est créé puis mis à jour, sans recharger la page
+export async function sauverBrouillon(formData: FormData): Promise<{ id: string } | { erreur: string }> {
+  const moi = await exigerEquipe();
+  const id = texte(formData, "id");
+  const sujet = texte(formData, "sujet").slice(0, 200);
+  const brut = texte(formData, "contenu").slice(0, 200000);
+  const doc = lireDoc(brut);
+  const contenu = doc ? (doc.sections.length ? JSON.stringify(doc) : "") : brut.slice(0, 20000);
+  if (!sujet && !contenu) return { erreur: "Rien à enregistrer." };
+  const audience = audienceDe(formData);
+  if (id) {
+    const { count } = await prisma.lettre.updateMany({ where: { id, statut: "brouillon" }, data: { sujet, contenu, audience } });
+    return count ? { id } : { erreur: "Cette lettre n’est plus un brouillon." };
+  }
+  const lettre = await prisma.lettre.create({ data: { sujet, contenu, audience, auteur: moi.nom }, select: { id: true } });
+  return { id: lettre.id };
+}
+
 // Annuler un envoi programmé : la lettre redevient un brouillon, tant que son envoi n'a pas commencé
 export async function annulerProgrammation(formData: FormData) {
   const moi = await exigerEquipe();

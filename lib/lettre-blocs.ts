@@ -4,6 +4,7 @@
 // rendu HTML de courriel et texte brut — partagés par l'éditeur et l'envoi.
 
 export const LARGEUR = 600;
+export const COLONNES_MAX = 6;
 export const POLICE = "Inter, 'Helvetica Neue', Arial, sans-serif";
 
 // Palette de la plateforme (charte IMPACT 261) : seules ces couleurs sont proposées
@@ -37,6 +38,7 @@ export type Section =
   | (Base & { type: "bandeau"; image: string; titre: string; sousTitre: string; taille: number; couleur: Couleur })
   | (Base & { type: "titre"; texte: string; taille: number; couleur: Couleur })
   | (Base & { type: "texte"; html: string; taille: number; couleur: Couleur })
+  | (Base & { type: "colonnes"; colonnes: string[]; taille: number; couleur: Couleur })
   | (Base & { type: "image"; url: string; lien: string; alt: string; largeur: number })
   | (Base & { type: "bouton"; libelle: string; url: string; couleurBouton: Couleur; couleur: Couleur; taille: number })
   | (Base & { type: "appel"; titre: string; bouton: string; url: string; taille: number; couleur: Couleur; couleurBouton: Couleur; couleurTexteBouton: Couleur })
@@ -51,6 +53,7 @@ export const TYPES_SECTION: { type: TypeSection; libelle: string }[] = [
   { type: "bandeau", libelle: "Bandeau" },
   { type: "titre", libelle: "Titre" },
   { type: "texte", libelle: "Texte" },
+  { type: "colonnes", libelle: "Colonnes" },
   { type: "image", libelle: "Image" },
   { type: "bouton", libelle: "Bouton" },
   { type: "appel", libelle: "Encadré d’appel" },
@@ -163,6 +166,8 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
       return { id, type, fond: "", align: "left", texte: "Un titre de rubrique", taille: 22, couleur: "encre" };
     case "texte":
       return { id, type, fond: "", align: "left", html: "Votre texte ici.", taille: 15, couleur: "ardoise" };
+    case "colonnes":
+      return { id, type, fond: "", align: "left", colonnes: ["", ""], taille: 15, couleur: "ardoise" };
     case "image":
       return { id, type, fond: "", align: "center", url: "", lien: "", alt: "", largeur: 100 };
     case "bouton":
@@ -229,6 +234,10 @@ function lireSection(s: unknown): Section | null {
       return { ...d, ...base, texte: riche(o.texte, 1000), taille: entier(o.taille, 14, 44, d.taille), couleur: couleur(o.couleur, d.couleur) };
     case "texte":
       return { ...d, ...base, html: nettoyerHtml(typeof o.html === "string" ? o.html : enHtml(chaine(o.texte))), taille: entier(o.taille, 11, 24, d.taille), couleur: couleur(o.couleur, d.couleur) };
+    case "colonnes": {
+      const c = (Array.isArray(o.colonnes) ? o.colonnes : []).slice(0, COLONNES_MAX).map((h) => nettoyerHtml(typeof h === "string" ? h : ""));
+      return { ...d, ...base, colonnes: c.length ? c : d.colonnes, taille: entier(o.taille, 11, 24, d.taille), couleur: couleur(o.couleur, d.couleur) };
+    }
     case "image":
       return { ...d, ...base, url: urlSure(o.url), lien: urlSure(o.lien), alt: chaine(o.alt, 200), largeur: entier(o.largeur, 20, 100, d.largeur) };
     case "bouton":
@@ -336,6 +345,11 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
         return cellule(s, `<h2 style="margin:0;font-size:${s.taille}px;line-height:1.3;font-weight:700;letter-spacing:-0.015em;color:${hex(s.couleur)}">${r(s.texte)}</h2>`, "16px 32px 6px");
       case "texte":
         return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.65;color:${hex(s.couleur)}">${riche(s.html)}</div>`);
+      case "colonnes": {
+        const l = Math.floor(100 / s.colonnes.length);
+        const cols = s.colonnes.map((h) => `<td valign="top" width="${l}%" style="width:${l}%;padding:0 8px;font-size:${s.taille}px;line-height:1.65;color:${hex(s.couleur)};text-align:${s.align}">${riche(h)}</td>`).join("");
+        return cellule(s, `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 -8px"><tr>${cols}</tr></table>`, "12px 24px");
+      }
       case "image": {
         if (!s.url) return "";
         const l = Math.round(((LARGEUR - 64) * s.largeur) / 100);
@@ -404,6 +418,8 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
         return [r(s.texte), ""];
       case "texte":
         return [brut(s.html), ""];
+      case "colonnes":
+        return [...s.colonnes.map(brut).filter(Boolean), ""];
       case "bouton":
         return s.url ? [`${r(s.libelle)} : ${s.url}`, ""] : [];
       case "appel":

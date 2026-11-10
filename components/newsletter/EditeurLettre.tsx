@@ -4,6 +4,7 @@ import { enregistrerLettre } from "@/lib/actions/newsletter";
 import { DELAI_MAX_JOURS, programmationParDefaut } from "@/lib/lettres";
 import type { Audience } from "@/lib/newsletter";
 import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
+import { SauvegardeAuto } from "@/components/newsletter/SauvegardeAuto";
 import { SelecteurTags } from "@/components/newsletter/SelecteurTags";
 import { docBlanc, docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
 import { COORDONNEES } from "@/lib/coordonnees";
@@ -31,7 +32,6 @@ export function EditeurLettre({
   const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux) : docBlanc());
   return (
     <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
-      {lettre?.id ? <input type="hidden" name="id" value={lettre.id} /> : null}
       <Panneau titre="La lettre" teinte="degrade">
         <div className="flex flex-col gap-3">
           <label className="block">
@@ -72,6 +72,7 @@ export function EditeurLettre({
               </div>
             </div>
             <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink"><Save size={14} /> Enregistrer le brouillon</button>
+            <SauvegardeAuto id={lettre?.id} />
           </div>
         </Panneau>
       </div>

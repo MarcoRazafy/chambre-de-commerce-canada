@@ -10,6 +10,7 @@ import {
   ArrowUp,
   Baseline,
   Bold,
+  Columns3,
   BadgeCheck,
   Copy,
   Eraser,
@@ -31,10 +32,12 @@ import {
   PanelBottom,
   PanelTop,
   Plus,
+  Redo2,
   Share2,
   Trash2,
   Type,
   Underline,
+  Undo2,
   X,
 } from "lucide-react";
 import { televerserImageLettre } from "@/lib/actions/newsletter";
@@ -42,6 +45,7 @@ import {
   COULEURS,
   DEGRADE,
   hex,
+  COLONNES_MAX,
   LARGEUR,
   nettoyerHtml,
   nouvelId,
@@ -200,6 +204,7 @@ const CATALOGUE: Record<TypeSection, { icone: ReactNode; aide: string }> = {
   bandeau: { icone: <PanelTop size={18} />, aide: "Grand titre sur image ou couleur" },
   titre: { icone: <Heading size={18} />, aide: "Titre de rubrique" },
   texte: { icone: <Type size={18} />, aide: "Paragraphe mis en forme" },
+  colonnes: { icone: <Columns3 size={18} />, aide: "Textes côte à côte" },
   image: { icone: <IconeImage size={18} />, aide: "Téléversée ou par lien" },
   bouton: { icone: <MousePointerClick size={18} />, aide: "Lien bien visible" },
   appel: { icone: <Megaphone size={18} />, aide: "Titre et bouton sur fond" },
@@ -360,6 +365,52 @@ export function EditeurBlocs({
     initial.sections.length ? initial : { ...initial, sections: [{ id: nouvelId(), type: "emplacement" }] });
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
+
+  // Historique (Annuler / Rétablir) : une frappe continue compte pour une seule étape
+  type Etat = typeof doc;
+  const passe = useRef<Etat[]>([]);
+  const futur = useRef<Etat[]>([]);
+  const dernier = useRef(doc);
+  const derniereEtape = useRef(0);
+  const viaHistorique = useRef(false);
+  const [pile, setPile] = useState({ passe: 0, futur: 0 });
+  // Remonte les sections après Annuler / Rétablir (les zones de texte ne relisent pas leur contenu sinon)
+  const [generation, setGeneration] = useState(0);
+  useEffect(() => {
+    if (dernier.current === doc) return;
+    if (viaHistorique.current) {
+      viaHistorique.current = false;
+    } else {
+      const maintenant = Date.now();
+      if (maintenant - derniereEtape.current > 800) {
+        passe.current = [...passe.current.slice(-99), dernier.current];
+      }
+      derniereEtape.current = maintenant;
+      futur.current = [];
+    }
+    dernier.current = doc;
+    setPile({ passe: passe.current.length, futur: futur.current.length });
+  }, [doc]);
+  const annuler = () => {
+    const precedent = passe.current.at(-1);
+    if (!precedent) return;
+    passe.current = passe.current.slice(0, -1);
+    futur.current = [doc, ...futur.current];
+    viaHistorique.current = true;
+    derniereEtape.current = 0;
+    setDoc(precedent);
+    setGeneration((g) => g + 1);
+  };
+  const retablir = () => {
+    const suivant = futur.current[0];
+    if (!suivant) return;
+    futur.current = futur.current.slice(1);
+    passe.current = [...passe.current, doc];
+    viaHistorique.current = true;
+    derniereEtape.current = 0;
+    setDoc(suivant);
+    setGeneration((g) => g + 1);
+  };
   const [plein, setPlein] = useState(false);
   const feuille = useRef<HTMLDivElement>(null);
 
@@ -423,10 +474,16 @@ export function EditeurBlocs({
               className={`w-5 h-5 rounded-full border cursor-pointer ${doc.fond === c ? "ring-2 ring-offset-1 ring-[#3b82f6]" : "border-[#d5d8dd]"}`} style={{ background: hex(c) }} />
           ))}
         </div>
+        <div className="flex items-center gap-2 ml-auto">
+        <button type="button" onClick={annuler} disabled={!pile.passe} title="Annuler" aria-label="Annuler"
+          className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed"><Undo2 size={14} /></button>
+        <button type="button" onClick={retablir} disabled={!pile.futur} title="Rétablir" aria-label="Rétablir"
+          className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed"><Redo2 size={14} /></button>
         <button type="button" onClick={() => setPlein((v) => !v)} aria-pressed={plein}
           className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">
           {plein ? <><Minimize2 size={14} /> Quitter le plein écran</> : <><Maximize2 size={14} /> Plein écran</>}
         </button>
+        </div>
       </div>
 
       <div className={`rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto flex flex-col ${plein ? "flex-1" : "min-h-[100vh]"}`} style={{ background: hex(doc.fond) }}>
@@ -438,7 +495,7 @@ export function EditeurBlocs({
             const actif = choisie === s.id;
             const libelle = estSection(s) ? TYPES_SECTION.find((t) => t.type === s.type)!.libelle : "Section vide";
             return (
-              <div key={s.id}>
+              <div key={`${s.id}-${generation}`}>
                 <div className="group/sec relative" onClick={() => setChoisie(s.id)}>
                   <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sec:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
                   <div className={`absolute right-1 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sec:flex"}`} style={{ fontFamily: "var(--font-texte)" }}>
@@ -539,6 +596,27 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
         style={{ fontSize: s.taille, lineHeight: 1.3, fontWeight: 700, letterSpacing: "-0.015em", color: hex(s.couleur) }} />, "16px 32px 6px");
     case "texte":
       return cadre(<TexteRiche html={s.html} onChange={(html) => m({ html })} style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />, "12px 32px");
+    case "colonnes":
+      return cadre(
+        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${s.colonnes.length}, minmax(0, 1fr))` }}>
+          {s.colonnes.map((h, k) => (
+            <TexteRiche key={`${s.colonnes.length}-${k}`} html={h} placeholder={`Colonne ${k + 1}`} onChange={(html) => m({ colonnes: s.colonnes.map((x, j) => (j === k ? html : x)) })}
+              style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />
+          ))}
+        </div>,
+        "12px 24px",
+        <Actions>
+          <label className="inline-flex items-center gap-2 h-8 px-3 rounded-md bg-[#0f1d2c] text-white text-[12.5px] font-semibold">
+            Colonnes
+            <input type="number" min={1} max={COLONNES_MAX} value={s.colonnes.length}
+              onChange={(e) => {
+                const n = Math.min(COLONNES_MAX, Math.max(1, Math.round(Number(e.target.value)) || 1));
+                m({ colonnes: Array.from({ length: n }, (_, j) => s.colonnes[j] ?? "") });
+              }}
+              className="w-12 h-6 rounded border-0 bg-white text-[#16202b] text-center text-[12.5px]" />
+          </label>
+        </Actions>,
+      );
     case "image":
       return cadre(
         s.url ? (
