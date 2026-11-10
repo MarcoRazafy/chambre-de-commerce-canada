@@ -235,10 +235,10 @@ function Catalogue({ onChoix, onFermer }: { onChoix: (t: TypeSection) => void; o
 }
 
 // Bouton rond « + »
-function BoutonPlus({ onClick, libelle, cache = false, ouvert = false }: { onClick: () => void; libelle: string; cache?: boolean; ouvert?: boolean }) {
+function BoutonPlus({ onClick, libelle, cache = false, ouvert = false, discret = false }: { onClick: () => void; libelle: string; cache?: boolean; ouvert?: boolean; discret?: boolean }) {
   return (
     <button type="button" onClick={(e) => { e.stopPropagation(); onClick(); }} aria-label={libelle} title={libelle} aria-expanded={ouvert}
-      className={`relative w-7 h-7 rounded-full border-2 border-white text-white grid place-items-center cursor-pointer shadow transition-[opacity,transform] duration-150 ${ouvert ? "rotate-45" : ""} ${cache ? "opacity-0 group-hover/ins:opacity-100 focus:opacity-100" : ""}`} style={{ background: BLEU }}>
+      className={`relative w-7 h-7 rounded-full grid place-items-center cursor-pointer transition-[opacity,transform,background-color,color] duration-150 ${discret ? "border-0 bg-[#e5eaf0] text-[#5b6b7a] hover:bg-[#d5dce4] hover:text-[#16202b]" : "border-2 border-white text-white shadow"} ${ouvert ? "rotate-45" : ""} ${cache ? "opacity-0 group-hover/ins:opacity-100 focus:opacity-100" : ""}`} style={discret ? undefined : { background: BLEU }}>
       <Plus size={15} />
     </button>
   );
@@ -259,7 +259,7 @@ function Emplacement({ onChoix }: { onChoix: (t: TypeSection) => void }) {
   const [ouvert, setOuvert] = useState(false);
   return (
     <div className="relative flex justify-center py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm">
-      <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} />
+      <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} discret />
       {ouvert ? <Catalogue onChoix={(t) => { setOuvert(false); onChoix(t); }} onFermer={() => setOuvert(false)} /> : null}
     </div>
   );
@@ -345,7 +345,9 @@ export function EditeurBlocs({
   variables?: readonly { cle: string; libelle: string }[];
   mention?: string;
 }) {
-  const [doc, setDoc] = useState<Omit<DocLettre, "sections"> & { sections: Bloc[] }>(initial);
+  // Une lettre sans section commence par un emplacement vide
+  const [doc, setDoc] = useState<Omit<DocLettre, "sections"> & { sections: Bloc[] }>(() =>
+    initial.sections.length ? initial : { ...initial, sections: [{ id: nouvelId(), type: "emplacement" }] });
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
   const [plein, setPlein] = useState(false);
