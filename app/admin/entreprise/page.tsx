@@ -6,7 +6,7 @@ import { Field, INPUT, SubmitButton } from "@/components/form-bits";
 import { Card, Saillant } from "@/components/ui";
 import { enregistrerProfilChambre } from "@/lib/actions/profil-chambre";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
-import { completerProfil, NOM_CHAMBRE, numerosFiscaux } from "@/lib/profil-chambre-defauts";
+import { completerProfil, numerosFiscaux } from "@/lib/profil-chambre-defauts";
 
 // « Mon entreprise » : la Chambre elle-même. Sa présentation (logo, couverture, coordonnées)
 // et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ ; le logo est celui de l'entreprise)
@@ -50,41 +50,41 @@ export default async function MonEntreprise() {
         <Panneau titre="La Chambre" sousTitre="Sa présentation, ses coordonnées et ce qui figure sur ses factures" teinte="rouge">
           <div className="flex flex-col gap-4">
             <Field label="Nom">
-              <input name="nom" maxLength={200} defaultValue={v("nom")} placeholder={NOM_CHAMBRE} className={INPUT} />
+              <input name="nom" maxLength={200} defaultValue={v("nom")} placeholder="Nom de l’entreprise" className={INPUT} />
             </Field>
             <Field label="Présentation">
-              <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait la Chambre, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
+              <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait l’entreprise, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
             </Field>
             <Field label="Adresse">
-              <input name="adresse" maxLength={500} defaultValue={v("adresse")} placeholder={p.adresse} className={INPUT} />
+              <input name="adresse" maxLength={500} defaultValue={v("adresse")} placeholder="Rue, ville, pays" className={INPUT} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Courriel">
-                <input name="email" type="email" maxLength={200} defaultValue={v("email")} placeholder={p.email} className={INPUT} />
+                <input name="email" type="email" maxLength={200} defaultValue={v("email")} placeholder="contact@entreprise.com" className={INPUT} />
               </Field>
               <Field label="Téléphone">
-                <input name="telephone" maxLength={60} defaultValue={v("telephone")} placeholder={p.telephone} className={INPUT} />
+                <input name="telephone" maxLength={60} defaultValue={v("telephone")} placeholder="Numéro principal" className={INPUT} />
               </Field>
             </div>
             <Field label="Raison sociale">
-              <input name="raisonSociale" maxLength={200} defaultValue={v("raisonSociale")} placeholder={p.nom} className={INPUT} />
+              <input name="raisonSociale" maxLength={200} defaultValue={v("raisonSociale")} placeholder="Nom légal, s’il diffère du nom" className={INPUT} />
             </Field>
             <Field label="Adresse de facturation">
-              <textarea name="adresseFacturation" rows={2} maxLength={500} defaultValue={v("adresseFacturation")} placeholder={p.adresse} className={`${INPUT} block w-full resize-y`} />
+              <textarea name="adresseFacturation" rows={2} maxLength={500} defaultValue={v("adresseFacturation")} placeholder="Si elle diffère de l’adresse" className={`${INPUT} block w-full resize-y`} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="NEQ">
-                <input name="neq" maxLength={40} defaultValue={v("neq")} placeholder="1234567890" className={INPUT} />
+                <input name="neq" maxLength={40} defaultValue={v("neq")} placeholder="10 chiffres" className={INPUT} />
               </Field>
               <Field label="N° TPS">
-                <input name="tps" maxLength={40} defaultValue={v("tps")} placeholder="123456789 RT0001" className={INPUT} />
+                <input name="tps" maxLength={40} defaultValue={v("tps")} placeholder="9 chiffres + RT0001" className={INPUT} />
               </Field>
               <Field label="N° TVQ">
-                <input name="tvq" maxLength={40} defaultValue={v("tvq")} placeholder="1234567890 TQ0001" className={INPUT} />
+                <input name="tvq" maxLength={40} defaultValue={v("tvq")} placeholder="10 chiffres + TQ0001" className={INPUT} />
               </Field>
             </div>
             <Field label="Site web">
-              <input name="site" maxLength={300} defaultValue={v("site")} placeholder={p.site} className={INPUT} />
+              <input name="site" maxLength={300} defaultValue={v("site")} placeholder="www.entreprise.com" className={INPUT} />
             </Field>
           </div>
         </Panneau>
@@ -101,11 +101,9 @@ export default async function MonEntreprise() {
               <div className="text-muted">{numerosFiscaux(p).join(" · ")}</div>
             </div>
           </div>
-          <p className="m-0 mt-3 text-[12px] text-faint">Le logo des factures est celui de l’entreprise.</p>
         </Card>
 
-        <div className="lg:col-span-2 sticky bottom-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-between gap-3 flex-wrap">
-          <span className="text-[12.5px] text-muted">Un champ vide garde la valeur affichée en gris.</span>
+        <div className="lg:col-span-2 sticky bottom-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-end gap-3 flex-wrap">
           <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer les modifications</SubmitButton>
         </div>
       </form>

@@ -6,6 +6,7 @@
   --color-surface-2: var(--surface-2);
   --color-surface-3: var(--surface-3);
   --color-line: var(--border);
+  --color-line-champ: var(--border-champ);
   --color-ink: var(--text);
   --color-muted: var(--text-muted);
   --color-faint: var(--text-faint);
@@ -56,6 +57,7 @@
   --surface-2: #f4f6f4;
   --surface-3: #e8ebe6;
   --border: #e1e4de;
+  --border-champ: #c4c9c0;
   --text: #1a1a1a;
   --text-muted: #5f5f5f;
   --text-faint: #8b8f87;
@@ -147,6 +149,7 @@ h3 {
   --surface-2: #f4f6f9;
   --surface-3: #e8edf2;
   --border: #e1e7ee;
+  --border-champ: #bfc9d4;
   --text: var(--marque-nuit);
   --text-muted: #4f6072;
   --text-faint: #7d8c9b;
@@ -353,6 +356,7 @@ label:has(.sr-only) {
   --surface-2: #f1f4f7;
   --surface-3: #e5eaf0;
   --border: #dfe5ec;
+  --border-champ: #bcc6d1;
   --text: #16202b;
   --text-muted: #5b6b7a;
   --text-faint: #8797a6;
