@@ -407,7 +407,7 @@ export function EditeurBlocs({
       <div className={`rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto flex flex-col ${plein ? "flex-1" : "min-h-[100vh]"}`} style={{ background: hex(doc.fond) }}>
         {doc.sections.length ? (
         <>
-        <div className="mx-auto w-full flex-1 bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
+        <div className="mx-auto w-full bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
           <Inserer onAjout={() => inserer(0)} />
           {doc.sections.map((s, i) => {
             const actif = choisie === s.id;
