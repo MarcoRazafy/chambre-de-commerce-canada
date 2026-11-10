@@ -76,7 +76,7 @@ export async function modifierProfilEquipe(formData: FormData) {
   redirectWithFlash(retour, "Profil mis à jour");
 }
 
-const EQUIPE = "/admin/abonnement";
+const EQUIPE = "/admin/abonnement?onglet=equipe";
 
 function niveauSaisi(fd: FormData): NiveauEquipe {
   return texte(fd, "niveau") === "administrateur"

@@ -30,7 +30,7 @@ export default async function FactureAbonnement({
     <>
       {pdf ? <ImpressionAuto /> : null}
       <div className="flex justify-between items-center gap-3 flex-wrap mb-4 print:hidden">
-        <Link href="/admin/abonnement#factures" className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted no-underline hover:text-accent">
+        <Link href="/admin/abonnement?onglet=factures#onglets" className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted no-underline hover:text-accent">
           <ChevronLeft size={15} /> Factures
         </Link>
         <PrintButton />

@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Download, Eye, FileText } from "lucide-react";
 import { OngletEquipe } from "@/components/admin/OngletEquipe";
-import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
+import { EnTeteAdmin, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { AjouterUtilisateur } from "@/components/forms/EquipeForms";
 import { estAdministrateur } from "@/lib/autorisations";
 import { assurerFactureDuMois, getFacturesPlateforme } from "@/lib/factures-plateforme";
@@ -12,8 +12,9 @@ import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 
 // Abonnement de la Chambre à la plateforme (forfait + comptes actifs de l'équipe), l'équipe et ses accès, les factures
-export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
+export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string; q?: string }> }) {
   const sp = await searchParams;
+  const onglet = sp.onglet === "factures" ? "factures" : "equipe";
   await assurerFactureDuMois();
   const [moi, equipe, factures] = await Promise.all([getCurrentUser("admin"), getAdministrateurs(), getFacturesPlateforme()]);
   const c = configPlateforme();
@@ -64,47 +65,53 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         </Panneau>
       </div>
 
-      <section id="equipe" className="scroll-mt-6 mt-10">
-        <h2 className="text-[18px] m-0 mb-4">Équipe &amp; accès</h2>
-        <OngletEquipe q={sp.q} />
-      </section>
+      <section id="onglets" className="scroll-mt-6 mt-10">
+        <Onglets
+          actif={onglet}
+          onglets={[
+            { cle: "equipe", libelle: "Équipe & accès", href: "/admin/abonnement?onglet=equipe#onglets", compte: n },
+            { cle: "factures", libelle: "Factures", href: "/admin/abonnement?onglet=factures#onglets", compte: factures.length },
+          ]}
+        />
 
-      <section id="factures" className="scroll-mt-6 mt-10">
-        <h2 className="text-[18px] m-0 mb-4">Factures</h2>
-        <Panneau titre="Factures de l’abonnement" sousTitre={`Émises le ${c.jourFacturation === 1 ? "1er" : c.jourFacturation} du mois`} teinte="degrade" corpsClassName="px-0 pb-0">
-          {factures.length ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[13.4px]">
-                <thead>
-                  <tr className="bg-surface-2">
-                    {["N°", "Date", "Détail", "Total TTC", "Statut", "Facture"].map((t, i) => (
-                      <th key={t} className={`surtitre text-faint font-semibold px-5 py-3 border-b border-line ${i === 3 || i === 5 ? "text-right" : "text-left"}`}>{t}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {factures.map((x) => (
-                    <tr key={x.id} className="border-b border-line last:border-b-0 hover:bg-surface-2">
-                      <td className="px-5 py-3.5 font-semibold text-ink tabular-nums">{x.numero}</td>
-                      <td className="px-5 py-3.5 tabular-nums">{fmtDate(x.date.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</td>
-                      <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {x.utilisateurs} utilisateur{x.utilisateurs > 1 ? "s" : ""}</td>
-                      <td className="px-5 py-3.5 text-right font-bold text-ink tabular-nums">{fmtDollars(x.total)}</td>
-                      <td className="px-5 py-3.5">{x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex justify-end gap-2">
-                          <Link href={`/admin/abonnement/factures/${x.numero}`} className="btn-contour btn-contour-sm text-ink no-underline"><Eye size={14} /> Afficher</Link>
-                          <Link href={`/admin/abonnement/factures/${x.numero}?pdf=1`} className="btn-contour btn-contour-sm text-ink no-underline"><Download size={14} /> PDF</Link>
-                        </div>
-                      </td>
+        {onglet === "equipe" ? <OngletEquipe q={sp.q} /> : null}
+
+        {onglet === "factures" ? (
+          <Panneau titre="Factures de l’abonnement" sousTitre={`Émises le ${c.jourFacturation === 1 ? "1er" : c.jourFacturation} du mois`} teinte="degrade" corpsClassName="px-0 pb-0">
+            {factures.length ? (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-[13.4px]">
+                  <thead>
+                    <tr className="bg-surface-2">
+                      {["N°", "Date", "Détail", "Total TTC", "Statut", "Facture"].map((t, i) => (
+                        <th key={t} className={`surtitre text-faint font-semibold px-5 py-3 border-b border-line ${i === 3 || i === 5 ? "text-right" : "text-left"}`}>{t}</th>
+                      ))}
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="px-6 pb-6"><Vide icone={<FileText size={24} />}>La première facture sera émise le {fmtDate(echeance)}.</Vide></div>
-          )}
-        </Panneau>
+                  </thead>
+                  <tbody>
+                    {factures.map((x) => (
+                      <tr key={x.id} className="border-b border-line last:border-b-0 hover:bg-surface-2">
+                        <td className="px-5 py-3.5 font-semibold text-ink tabular-nums">{x.numero}</td>
+                        <td className="px-5 py-3.5 tabular-nums">{fmtDate(x.date.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</td>
+                        <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {x.utilisateurs} utilisateur{x.utilisateurs > 1 ? "s" : ""}</td>
+                        <td className="px-5 py-3.5 text-right font-bold text-ink tabular-nums">{fmtDollars(x.total)}</td>
+                        <td className="px-5 py-3.5">{x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</td>
+                        <td className="px-5 py-3.5">
+                          <div className="flex justify-end gap-2">
+                            <Link href={`/admin/abonnement/factures/${x.numero}`} className="btn-contour btn-contour-sm text-ink no-underline"><Eye size={14} /> Afficher</Link>
+                            <Link href={`/admin/abonnement/factures/${x.numero}?pdf=1`} className="btn-contour btn-contour-sm text-ink no-underline"><Download size={14} /> PDF</Link>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <div className="px-6 pb-6"><Vide icone={<FileText size={24} />}>La première facture sera émise le {fmtDate(echeance)}.</Vide></div>
+            )}
+          </Panneau>
+        ) : null}
       </section>
     </>
   );

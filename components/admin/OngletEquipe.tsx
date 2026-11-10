@@ -1,4 +1,4 @@
-// Section « Équipe & accès » de la page Abonnement & utilisateurs : promouvoir un compte existant, l'équipe et ses rôles
+// Onglet « Équipe & accès » de la page Abonnement & utilisateurs (sous l'abonnement) : promouvoir un compte existant, l'équipe et ses rôles
 import Link from "next/link";
 import { Lock, Search } from "lucide-react";
 import { Panneau, Vide } from "@/components/admin/ui";
@@ -41,6 +41,7 @@ export async function OngletEquipe({ q }: { q?: string }) {
               corpsClassName="px-6 pb-3"
             >
               <FiltresAuto action="/admin/abonnement" className="relative mb-4">
+                <input type="hidden" name="onglet" value="equipe" />
                 <Search
                   size={15}
                   className="absolute left-3 top-1/2 -translate-y-1/2 text-faint pointer-events-none"
