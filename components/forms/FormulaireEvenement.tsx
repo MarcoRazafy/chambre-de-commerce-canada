@@ -166,6 +166,10 @@ export function FormulaireEvenement({
                 />
               </Field>
             </div>
+            <div>
+              <span className="block text-[12.3px] font-semibold text-muted mb-1.5">Tags</span>
+              <ChoixTags name="etiquettes" options={tousTags} initiaux={tags} creation />
+            </div>
           </Rubrique>
 
           <Rubrique
@@ -438,13 +442,6 @@ export function FormulaireEvenement({
                 ) : null}
               </>
             ) : null}
-          </Rubrique>
-
-          <Rubrique
-            titre="Tags des inscrits"
-            aide="Chaque entreprise membre qui s’inscrit reçoit ces tags (celles déjà inscrites aussi, à l’enregistrement). Pratique pour leur écrire ensuite."
-          >
-            <ChoixTags name="etiquettes" options={tousTags} initiaux={tags} creation />
           </Rubrique>
 
           <SubmitButton pendingLabel="Enregistrement…" className="w-full">
