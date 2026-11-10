@@ -1095,6 +1095,10 @@ model ProfilChambre {
   logoFacture        String?
   mentionFacture     String  @default("")
 
+  // Expéditeur des courriels (vide : celui de la configuration du serveur)
+  expediteurNom   String @default("")
+  expediteurEmail String @default("")
+
   updatedAt DateTime @updatedAt
 
   @@map("profil_chambre")

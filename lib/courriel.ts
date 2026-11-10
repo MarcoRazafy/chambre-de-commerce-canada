@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import nodemailer, { type Transporter } from "nodemailer";
 import { COORDONNEES } from "@/lib/coordonnees";
+import { prisma } from "@/lib/db";
 
 export interface Courriel {
   a: string;
@@ -27,6 +28,43 @@ const EXPEDITEUR =
   "CanCham Connect <onboarding@resend.dev>";
 
 export const COURRIEL_EQUIPE = process.env.COURRIEL_EQUIPE || COORDONNEES.email;
+
+type Adresse = { name: string; address: string };
+const enTexte = (a: Adresse) => (a.name ? `"${a.name.replace(/["\\]/g, "")}" <${a.address}>` : a.address);
+// « Nom <adresse> » ou « adresse » de la configuration du serveur
+function lireAdresse(v: string): Adresse {
+  const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(v);
+  return m ? { name: m[1].trim(), address: m[2].trim() } : { name: "", address: v.trim() };
+}
+const SERVEUR = lireAdresse(EXPEDITEUR);
+const valide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
+
+// Expéditeur réglé dans « Mon entreprise » (nom, adresse), réponse au courriel de l'entreprise.
+// Relu au plus toutes les 30 s ; « secours » : l'adresse du serveur, si le fournisseur refuse celle de l'entreprise
+let memoire: { jusqua: number; valeur: { de: Adresse; secours: Adresse | null; reponse: string } } | null = null;
+// Après un changement dans « Mon entreprise » : relire l'expéditeur au prochain envoi
+export function oublierExpediteur() {
+  memoire = null;
+}
+async function expediteur() {
+  if (memoire && memoire.jusqua > Date.now()) return memoire.valeur;
+  let p: { nom: string; email: string; expediteurNom: string; expediteurEmail: string } | null = null;
+  try {
+    p = await prisma.profilChambre.findUnique({ where: { id: "unique" }, select: { nom: true, email: true, expediteurNom: true, expediteurEmail: true } });
+  } catch (e) {
+    console.error("[courriel] profil de l'entreprise illisible, expéditeur du serveur utilisé", e);
+  }
+  const nom = p?.expediteurNom.trim() || p?.nom.trim() || SERVEUR.name;
+  const adresse = p?.expediteurEmail.trim() ?? "";
+  const de = { name: nom, address: valide(adresse) ? adresse : SERVEUR.address };
+  const valeur = {
+    de,
+    secours: de.address !== SERVEUR.address ? { name: nom, address: SERVEUR.address } : null,
+    reponse: p?.email.trim() && valide(p.email.trim()) ? p.email.trim() : COURRIEL_EQUIPE,
+  };
+  memoire = { jusqua: Date.now() + 30_000, valeur };
+  return valeur;
+}
 
 // Fournisseur d'envoi : Brevo (ou tout serveur SMTP) avec SMTP_HOST, SMTP_USER et SMTP_PASS ; sinon Resend
 export function fournisseurCourriel(): "smtp" | "resend" | null {
@@ -76,12 +114,14 @@ function transporteur(): Transporter {
 }
 
 async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> {
+  const exp = await expediteur();
+  let de = exp.de;
   for (let essai = 1; essai <= ESSAIS_ENVOI; essai++) {
     try {
       const info = await transporteur().sendMail({
-        from: EXPEDITEUR,
+        from: de,
         to: c.a,
-        replyTo: COURRIEL_EQUIPE,
+        replyTo: exp.reponse,
         subject: c.sujet,
         html: c.html,
         text: c.texte,
@@ -95,6 +135,13 @@ async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> 
       });
       return (info.messageId ?? "").replace(/^<|>$/g, "");
     } catch (e) {
+      // Adresse de l'entreprise refusée (domaine non vérifié chez le fournisseur) : on repart avec celle du serveur
+      if (exp.secours && de !== exp.secours) {
+        console.warn(`[courriel] ${de.address} refusée comme expéditeur, envoi avec ${exp.secours.address}`, e);
+        de = exp.secours;
+        essai--;
+        continue;
+      }
       if (essai < ESSAIS_ENVOI) {
         await new Promise((r) => setTimeout(r, 800));
         continue;
@@ -107,7 +154,9 @@ async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> 
 
 async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null> {
   const cle = process.env.RESEND_API_KEY!;
-  const idempotence = randomUUID();
+  const exp = await expediteur();
+  let de = exp.de;
+  let idempotence = randomUUID();
   let limites = 0;
   for (let essai = 1; essai <= ESSAIS_ENVOI; essai++) {
     try {
@@ -119,7 +168,7 @@ async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null
           "Idempotency-Key": idempotence,
         },
         body: JSON.stringify({
-          from: EXPEDITEUR,
+          from: enTexte(de),
           to: [c.a],
           subject: c.sujet,
           html: c.html,
@@ -134,7 +183,7 @@ async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null
                 })),
               }
             : {}),
-          reply_to: COURRIEL_EQUIPE,
+          reply_to: exp.reponse,
           ...(suivi ? { tags: [{ name: "suivi", value: suivi.replace(/[^A-Za-z0-9_-]/g, "") }] } : {}),
         }),
       });
@@ -143,6 +192,14 @@ async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null
         limites++;
         essai--;
         await new Promise((r) => setTimeout(r, 1100));
+        continue;
+      }
+      // Domaine de l'entreprise non vérifié chez Resend : on repart avec l'adresse du serveur
+      if ((reponse.status === 403 || reponse.status === 422) && exp.secours && de !== exp.secours) {
+        console.warn(`[courriel] ${de.address} refusée comme expéditeur (${reponse.status}), envoi avec ${exp.secours.address}`);
+        de = exp.secours;
+        idempotence = randomUUID();
+        essai--;
         continue;
       }
       if (!reponse.ok) {

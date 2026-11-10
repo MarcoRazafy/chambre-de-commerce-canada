@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
+import { oublierExpediteur } from "@/lib/courriel";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 
 const PAGE = "/admin/entreprise";
@@ -31,6 +32,8 @@ export async function enregistrerProfilChambre(formData: FormData) {
 
   const email = texte(formData, "email", 200);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirectWithErreur(PAGE, `« ${email} » n’est pas une adresse e-mail valide.`);
+  const expediteurEmail = texte(formData, "expediteurEmail", 200);
+  if (expediteurEmail && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(expediteurEmail)) redirectWithErreur(PAGE, `« ${expediteurEmail} » n’est pas une adresse e-mail valide.`);
 
   const data = {
     nom: texte(formData, "nom", 200),
@@ -46,8 +49,11 @@ export async function enregistrerProfilChambre(formData: FormData) {
     neq: texte(formData, "neq", 40),
     tps: texte(formData, "tps", 40),
     tvq: texte(formData, "tvq", 40),
+    expediteurNom: texte(formData, "expediteurNom", 100).replace(/["<>]/g, ""),
+    expediteurEmail,
   };
   await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", ...data }, update: data });
+  oublierExpediteur();
   revalidatePath("/", "layout");
   redirectWithFlash(PAGE, "Mon entreprise est à jour");
 }
