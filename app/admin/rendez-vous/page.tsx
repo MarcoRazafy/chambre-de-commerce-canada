@@ -304,7 +304,7 @@ export default async function RendezvousEquipePage({
           </TableWrap>
           <p className="m-0 text-[12.5px] text-muted">
             Les types sans personne désignée sont reçus par « l’équipe CanCham » et restent toujours proposés. Les comptes se gèrent dans{" "}
-            <Link href="/admin/abonnement?onglet=equipe" className="text-accent">Équipe &amp; accès</Link>.
+            <Link href="/admin/abonnement#equipe" className="text-accent">Équipe &amp; accès</Link>.
           </p>
         </div>
       ) : null}

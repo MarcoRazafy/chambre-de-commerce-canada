@@ -1,22 +1,19 @@
 import Link from "next/link";
 import { Download, Eye, FileText } from "lucide-react";
 import { OngletEquipe } from "@/components/admin/OngletEquipe";
-import { EnTeteAdmin, Onglets, Panneau, Vide } from "@/components/admin/ui";
+import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { AjouterUtilisateur } from "@/components/forms/EquipeForms";
 import { estAdministrateur } from "@/lib/autorisations";
 import { assurerFactureDuMois, getFacturesPlateforme } from "@/lib/factures-plateforme";
-import { Card, Pill, Saillant, TableWrap, Td, Th } from "@/components/ui";
+import { Card, Pill, Saillant } from "@/components/ui";
 import { aujourdhuiISO, fmtDate } from "@/lib/format";
 import { configPlateforme, facturePlateforme, fmtDollars, fmtPourcent, prochaineFacturation } from "@/lib/plateforme";
 import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 
-const ONGLETS = ["abonnement", "equipe", "factures"] as const;
-
 // Abonnement de la Chambre à la plateforme (forfait + comptes actifs de l'équipe), l'équipe et ses accès, les factures
-export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string; q?: string }> }) {
+export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const sp = await searchParams;
-  const onglet = ONGLETS.find((o) => o === sp.onglet) ?? "abonnement";
   await assurerFactureDuMois();
   const [moi, equipe, factures] = await Promise.all([getCurrentUser("admin"), getAdministrateurs(), getFacturesPlateforme()]);
   const c = configPlateforme();
@@ -33,56 +30,6 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         titre={<>Abonnement &amp; <Saillant>utilisateurs</Saillant></>}
         actions={estAdministrateur(moi) ? <AjouterUtilisateur /> : undefined}
       />
-      <Onglets
-        actif={onglet}
-        onglets={[
-          { cle: "abonnement", libelle: "Abonnement", href: "/admin/abonnement" },
-          { cle: "equipe", libelle: "Équipe & accès", href: "/admin/abonnement?onglet=equipe", compte: n },
-          { cle: "factures", libelle: "Factures", href: "/admin/abonnement?onglet=factures", compte: factures.length },
-        ]}
-      />
-
-      {onglet === "equipe" ? <OngletEquipe q={sp.q} /> : null}
-
-      {onglet === "factures" ? (
-        <Panneau titre="Factures de l’abonnement" sousTitre={`Émises le ${c.jourFacturation === 1 ? "1er" : c.jourFacturation} du mois`} teinte="degrade" corpsClassName="px-0 pb-0">
-          {factures.length ? (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-[13.4px]">
-                <thead>
-                  <tr className="bg-surface-2">
-                    {["N°", "Date", "Détail", "Total TTC", "Statut", "Facture"].map((t, i) => (
-                      <th key={t} className={`surtitre text-faint font-semibold px-5 py-3 border-b border-line ${i === 3 || i === 5 ? "text-right" : "text-left"}`}>{t}</th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {factures.map((x) => (
-                    <tr key={x.id} className="border-b border-line last:border-b-0 hover:bg-surface-2">
-                      <td className="px-5 py-3.5 font-semibold text-ink tabular-nums">{x.numero}</td>
-                      <td className="px-5 py-3.5 tabular-nums">{fmtDate(x.date.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</td>
-                      <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {x.utilisateurs} utilisateur{x.utilisateurs > 1 ? "s" : ""}</td>
-                      <td className="px-5 py-3.5 text-right font-bold text-ink tabular-nums">{fmtDollars(x.total)}</td>
-                      <td className="px-5 py-3.5">{x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex justify-end gap-2">
-                          <Link href={`/admin/abonnement/factures/${x.numero}`} className="btn-contour btn-contour-sm text-ink no-underline"><Eye size={14} /> Afficher</Link>
-                          <Link href={`/admin/abonnement/factures/${x.numero}?pdf=1`} className="btn-contour btn-contour-sm text-ink no-underline"><Download size={14} /> PDF</Link>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : (
-            <div className="px-6 pb-6"><Vide icone={<FileText size={24} />}>La première facture sera émise le {fmtDate(echeance)}.</Vide></div>
-          )}
-        </Panneau>
-      ) : null}
-
-      {onglet === "abonnement" ? (
-      <>
 
       <div className="grid gap-4 mb-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
         <Card className="p-6 flex flex-col gap-4">
@@ -117,38 +64,48 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         </Panneau>
       </div>
 
-      <Panneau
-        titre="Utilisateurs payants"
-        sousTitre={`${n} compte${n > 1 ? "s" : ""} actif${n > 1 ? "s" : ""}`}
-        teinte="bleu"
-      >
-        <TableWrap>
-          <thead>
-            <tr>
-              <Th>Utilisateur</Th>
-              <Th>Rôle</Th>
-              <Th className="text-right">Par mois</Th>
-            </tr>
-          </thead>
-          <tbody>
-            {equipe.map((u) => (
-              <tr key={u.id}>
-                <Td>
-                  <div className="font-semibold text-ink">{u.nom}{u.id === moi.id ? <span className="ml-2 text-[11.5px] font-semibold text-muted">Vous</span> : null}</div>
-                  <div className="text-[12.5px] text-muted break-all">{u.email}</div>
-                </Td>
-                <Td>
-                  <Pill tone={u.niveau === "administrateur" ? "bad" : "info"}>{u.niveau === "administrateur" ? "Administrateur" : "Manager"}</Pill>
-                </Td>
-                <Td className="text-right tabular-nums">{fmtDollars(c.parUtilisateur)}</Td>
-              </tr>
-            ))}
-          </tbody>
-        </TableWrap>
-        <p className="m-0 mt-3 text-[12.5px] text-muted">Pour retirer un compte de l’équipe (et de la facture), passez par l’onglet <Link href="/admin/abonnement?onglet=equipe" className="text-accent">Équipe &amp; accès</Link>.</p>
-      </Panneau>
-      </>
-      ) : null}
+      <section id="equipe" className="scroll-mt-6 mt-10">
+        <h2 className="text-[18px] m-0 mb-4">Équipe &amp; accès</h2>
+        <OngletEquipe q={sp.q} />
+      </section>
+
+      <section id="factures" className="scroll-mt-6 mt-10">
+        <h2 className="text-[18px] m-0 mb-4">Factures</h2>
+        <Panneau titre="Factures de l’abonnement" sousTitre={`Émises le ${c.jourFacturation === 1 ? "1er" : c.jourFacturation} du mois`} teinte="degrade" corpsClassName="px-0 pb-0">
+          {factures.length ? (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-[13.4px]">
+                <thead>
+                  <tr className="bg-surface-2">
+                    {["N°", "Date", "Détail", "Total TTC", "Statut", "Facture"].map((t, i) => (
+                      <th key={t} className={`surtitre text-faint font-semibold px-5 py-3 border-b border-line ${i === 3 || i === 5 ? "text-right" : "text-left"}`}>{t}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {factures.map((x) => (
+                    <tr key={x.id} className="border-b border-line last:border-b-0 hover:bg-surface-2">
+                      <td className="px-5 py-3.5 font-semibold text-ink tabular-nums">{x.numero}</td>
+                      <td className="px-5 py-3.5 tabular-nums">{fmtDate(x.date.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</td>
+                      <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {x.utilisateurs} utilisateur{x.utilisateurs > 1 ? "s" : ""}</td>
+                      <td className="px-5 py-3.5 text-right font-bold text-ink tabular-nums">{fmtDollars(x.total)}</td>
+                      <td className="px-5 py-3.5">{x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</td>
+                      <td className="px-5 py-3.5">
+                        <div className="flex justify-end gap-2">
+                          <Link href={`/admin/abonnement/factures/${x.numero}`} className="btn-contour btn-contour-sm text-ink no-underline"><Eye size={14} /> Afficher</Link>
+                          <Link href={`/admin/abonnement/factures/${x.numero}?pdf=1`} className="btn-contour btn-contour-sm text-ink no-underline"><Download size={14} /> PDF</Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="px-6 pb-6"><Vide icone={<FileText size={24} />}>La première facture sera émise le {fmtDate(echeance)}.</Vide></div>
+          )}
+        </Panneau>
+      </section>
     </>
   );
 }
