@@ -5,6 +5,8 @@ import { Plus, Tag } from "lucide-react";
 import { INPUT } from "@/components/form-bits";
 import { plat } from "@/lib/texte";
 
+const LIMITE = 5;
+
 // Tags à cocher, avec la création d'un nouveau tag (« Ajouter des tags »)
 export function ChoixTags({
   options,
@@ -19,8 +21,12 @@ export function ChoixTags({
 }) {
   const [choisis, setChoisis] = useState<string[]>(initiaux);
   const [saisie, setSaisie] = useState("");
+  const [tout, setTout] = useState(false);
   const proposes = [...new Set([...options, ...choisis])].filter((t) => !saisie || plat(t).includes(plat(saisie)));
   const nouveau = creation && saisie.trim() && ![...options, ...choisis].some((t) => plat(t) === plat(saisie.trim()));
+  // Au-delà de LIMITE, seuls les premiers (et ceux déjà choisis) s'affichent, sauf pendant une recherche
+  const replie = !tout && !saisie && proposes.length > LIMITE;
+  const visibles = replie ? proposes.filter((t, i) => i < LIMITE || choisis.includes(t)) : proposes;
   const basculer = (t: string) => setChoisis((c) => (c.includes(t) ? c.filter((x) => x !== t) : [...c, t]));
 
   return (
@@ -50,7 +56,7 @@ export function ChoixTags({
         />
       ) : null}
       <div className="flex flex-wrap gap-1.5" role="group" aria-label="Tags">
-        {proposes.map((t) => {
+        {visibles.map((t) => {
           const actif = choisis.includes(t);
           return (
             <button
@@ -76,6 +82,16 @@ export function ChoixTags({
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-accent bg-surface px-2.5 py-1 text-[12.5px] font-semibold text-accent cursor-pointer hover:bg-accent-soft"
           >
             <Plus size={12} aria-hidden /> Créer « {saisie.trim()} »
+          </button>
+        ) : null}
+        {!saisie && proposes.length > LIMITE ? (
+          <button
+            type="button"
+            onClick={() => setTout((v) => !v)}
+            aria-expanded={tout}
+            className="inline-flex items-center rounded-full border-0 bg-transparent px-2 py-1 text-[12.5px] font-semibold text-accent cursor-pointer hover:underline"
+          >
+            {tout ? "Voir moins" : `Voir tout (${proposes.length})`}
           </button>
         ) : null}
         {!proposes.length && !nouveau ? <span className="text-[12.5px] text-muted">Aucun tag.</span> : null}
