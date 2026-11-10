@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Building2, Globe, Mail, MapPin, Phone, Save } from "lucide-react";
+import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
 import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
 import { ChampPhoto, Field, INPUT, SubmitButton } from "@/components/form-bits";
 import { Card, Saillant } from "@/components/ui";
@@ -19,15 +20,19 @@ export default async function MonEntreprise() {
       <EnTeteAdmin surtitre="Administration" titre={<>Mon <Saillant>entreprise</Saillant></>} />
 
       <Card className="p-0 overflow-hidden mb-5">
-        <div
-          className="h-[160px] sm:h-[200px] bg-cover bg-center"
-          style={{ backgroundColor: "#ad0707", backgroundImage: p.couverture ? `url('${p.couverture}')` : "linear-gradient(120deg,#ad0707 0%,#5c1220 52%,#007140 100%)" }}
-          role="img"
-          aria-label="Couverture de la Chambre"
-        />
+        <div className="relative">
+          <div
+            className="h-[160px] sm:h-[200px] bg-cover bg-center"
+            style={{ backgroundColor: "#ad0707", backgroundImage: p.couverture ? `url('${p.couverture}')` : "linear-gradient(120deg,#ad0707 0%,#5c1220 52%,#007140 100%)" }}
+            role="img"
+            aria-label="Couverture de la Chambre"
+          />
+          <IconesImageChambre champ="couverture" personnalisee={Boolean(brut?.couverture)} className="absolute top-3 right-3" />
+        </div>
         <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
           <span className="relative -mt-12 w-[168px] h-[92px] shrink-0 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)] grid place-items-center p-3">
             <Image src={p.logo} alt={p.nom} width={320} height={180} className="max-w-full max-h-full w-auto h-auto object-contain" />
+            <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} className="absolute -bottom-3 -right-3" />
           </span>
           <div className="min-w-0 flex-1 sm:pt-3">
             <h2 className="m-0 text-[21px] leading-tight text-balance">{p.nom}</h2>
@@ -42,10 +47,8 @@ export default async function MonEntreprise() {
       </Card>
 
       <form action={enregistrerProfilChambre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-2">
-        <Panneau titre="La Chambre" sousTitre="Sa présentation, son logo et sa couverture" teinte="rouge">
+        <Panneau titre="La Chambre" sousTitre="Sa présentation et ses coordonnées" teinte="rouge">
           <div className="flex flex-col gap-4">
-            <ChampPhoto name="couverture" retirer="retirer-couverture" apercu={brut?.couverture} libelle="Couverture" ratio="aspect-[16/5]" large aide="Une image large, en paysage (1600 × 500 px environ)." />
-            <ChampPhoto name="logo" retirer="retirer-logo" apercu={brut?.logo} libelle="Logo" ratio="aspect-[2/1]" entier aide="PNG sur fond transparent de préférence." />
             <Field label="Nom">
               <input name="nom" maxLength={200} defaultValue={v("nom")} placeholder={NOM_CHAMBRE} className={INPUT} />
             </Field>

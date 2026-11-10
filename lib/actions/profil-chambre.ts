@@ -56,3 +56,22 @@ export async function enregistrerProfilChambre(formData: FormData) {
   revalidatePath("/", "layout");
   redirectWithFlash(PAGE, "Mon entreprise est à jour");
 }
+
+// Icônes posées sur le logo et la couverture de « Mon entreprise » : change ou retire l'image tout de suite, sans toucher au reste
+export async function changerImageChambre(formData: FormData) {
+  await exigerEquipe();
+  const champ = texte(formData, "champ");
+  if (champ !== "logo" && champ !== "couverture") redirectWithErreur(PAGE, "Image inconnue.");
+  const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" }, select: { [champ]: true } });
+  let valeur: string | null;
+  try {
+    valeur = await image(formData, champ, actuel?.[champ] as string | null | undefined, champ === "logo" ? { largeur: 600, transparence: true } : { largeur: 1600 });
+  } catch (e) {
+    if (e instanceof ImageRefusee) redirectWithErreur(PAGE, e.message);
+    throw e;
+  }
+  await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", [champ]: valeur }, update: { [champ]: valeur } });
+  revalidatePath("/", "layout");
+  const quoi = champ === "logo" ? "Logo" : "Couverture";
+  redirectWithFlash(PAGE, valeur ? `${quoi} mis${champ === "logo" ? "" : "e"} à jour` : `${quoi} retiré${champ === "logo" ? "" : "e"}`);
+}
