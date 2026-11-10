@@ -43,11 +43,8 @@ import {
 } from "@/lib/actions/content";
 import { ChoixDiffusion } from "@/components/forms/ChoixDiffusion";
 import { CouvertureRessource } from "@/components/forms/CouvertureRessource";
-import {
-  EMPLACEMENTS_OFFRE,
-  OFFRE_CANCHAM,
-  type EmplacementOffre,
-} from "@/lib/offres";
+// EMPLACEMENTS_OFFRE et EmplacementOffre servent au choix « Où afficher l'offre » (en commentaire)
+import { OFFRE_CANCHAM } from "@/lib/offres";
 import type { NewsCategory, NewsItem, Offer } from "@/lib/types";
 
 const CATEGORIES: NewsCategory[] = [
@@ -293,6 +290,8 @@ export function OffreButton({
                 className={INPUT}
               />
             </Field>
+            {/* Actualités retirées pour l'instant : l'offre va partout (l'accueil des membres).
+                Pour remettre le choix, décommenter le bloc ci-dessous et retirer ce champ caché.
             <fieldset className="m-0 min-w-0 border-0 p-0">
               <legend className="mb-1.5 block p-0 text-[12.3px] font-semibold text-muted">
                 Où afficher l’offre
@@ -323,6 +322,8 @@ export function OffreButton({
                 deux endroits.
               </span>
             </fieldset>
+            */}
+            <input type="hidden" name="emplacement" value="partout" />
           </ModalBody>
           <ModalFooter>
             <CancelButton onClick={fermer} />

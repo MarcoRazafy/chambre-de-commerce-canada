@@ -8,6 +8,7 @@ import {
   CalendarRange,
   CreditCard,
   FolderClosed,
+  Gift,
   Gauge,
   Headset,
   Handshake,
@@ -52,5 +53,6 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   abonnes: MailCheck,
   abonnement: Star,
   tag: Tag,
+  offre: Gift,
   contacts: Contact,
 };

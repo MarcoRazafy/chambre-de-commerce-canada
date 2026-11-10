@@ -82,6 +82,7 @@ export const NAV_ADMIN: NavGroup[] = [
       // Retiré pour l'instant (Agenda et Actualités) : à décommenter pour le remettre
       // { href: "/admin/agenda", label: "Agenda", icon: "agenda" },
       { href: "/admin/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
+      { href: "/admin/offres", label: "Offres & promotions", icon: "offre" },
       // { href: "/admin/actualites", label: "Actualités", icon: "news" },
       {
         href: "/admin/ressources",
@@ -153,6 +154,7 @@ export const TITLES: Record<string, [string, string]> = {
   "/admin/newsletter/nouvelle": ["Back-office", "Nouvelle lettre"],
   "/admin/abonnement": ["Back-office", "Abonnement & utilisateurs"],
   "/admin/etiquettes": ["Back-office", "Tags"],
+  "/admin/offres": ["Back-office", "Offres & promotions"],
   "/admin/entreprise": ["Back-office", "Mon entreprise"],
   "/admin/evenements": ["Back-office", "Événements"],
   "/admin/agenda": ["Back-office", "Agenda"],

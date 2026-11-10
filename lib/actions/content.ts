@@ -3,11 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import {
-  EMPLACEMENTS_OFFRE,
-  OFFRE_CANCHAM,
-  estEmplacementOffre,
-} from "@/lib/offres";
+import { OFFRE_CANCHAM, estEmplacementOffre } from "@/lib/offres";
 import { RESOURCE_CAT_DB } from "@/lib/enums";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { jourBase, jourSaisi } from "@/lib/format";
@@ -1066,7 +1062,7 @@ export async function enregistrerOffre(formData: FormData) {
   const titre = texte(formData, "titre");
   const desc = texte(formData, "desc");
   const memberId = texte(formData, "memberId");
-  const retour = "/admin/actualites";
+  const retour = "/admin/offres";
 
   if (!titre || !desc) {
     redirectWithErreur(retour, "Le titre et la description sont requis.");
@@ -1126,7 +1122,7 @@ export async function enregistrerOffre(formData: FormData) {
   revalideTout();
   redirectWithFlash(
     retour,
-    `${id ? "Offre mise à jour" : `Offre de ${membre.nom} publiée`} · affichée : ${EMPLACEMENTS_OFFRE[emplacement].toLowerCase()}`,
+    id ? "Offre mise à jour" : `Offre de ${membre.nom} publiée`,
   );
 }
 
@@ -1134,7 +1130,7 @@ export async function deleteOffer(formData: FormData) {
   await exigerEquipe();
   await prisma.offer.deleteMany({ where: { id: texte(formData, "offerId") } });
   revalideTout();
-  redirectWithFlash("/admin/actualites", "Offre retirée");
+  redirectWithFlash("/admin/offres", "Offre retirée");
 }
 
 async function originesPlateforme(): Promise<string[]> {

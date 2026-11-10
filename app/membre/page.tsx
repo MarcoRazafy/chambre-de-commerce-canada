@@ -40,6 +40,7 @@ import {
   getUnreadTotal,
 } from "@/lib/queries";
 import { modesProposes } from "@/lib/reglements";
+import { OFFRES_ACCUEIL } from "@/lib/offres";
 import { getCurrentUser } from "@/lib/session";
 import { initialesDe, teinteDe } from "@/lib/avatars";
 
@@ -67,7 +68,7 @@ export default async function VueDEnsemble() {
     getMembresAnnuaire(),
     getRegistrations(me.id),
     getUnreadTotal(user.id),
-    getDernieresOffres(3),
+    getDernieresOffres(OFFRES_ACCUEIL),
     getResources(),
     getServices(),
     getAgenda(
