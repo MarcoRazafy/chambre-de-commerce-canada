@@ -35,13 +35,15 @@ export const NAV_MEMBRE: NavGroup[] = [
     label: "Activités",
     items: [
       { href: "/membre/evenements", label: "Événements", icon: "calendar" },
-      {
-        href: "/membre/agenda",
-        label: "Agenda & rendez-vous",
-        icon: "agenda",
-        aussi: ["/membre/rendez-vous"],
-      },
-      { href: "/membre/actualites", label: "Actualités", icon: "news" },
+      { href: "/membre/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
+      // Retiré pour l'instant (Agenda et Actualités) : à décommenter pour le remettre, et retirer la ligne « Rendez-vous » ci-dessus
+      // {
+      //   href: "/membre/agenda",
+      //   label: "Agenda & rendez-vous",
+      //   icon: "agenda",
+      //   aussi: ["/membre/rendez-vous"],
+      // },
+      // { href: "/membre/actualites", label: "Actualités", icon: "news" },
       {
         href: "/membre/ressources",
         label: "Ressources & services",
@@ -77,9 +79,10 @@ export const NAV_ADMIN: NavGroup[] = [
     label: "Activités",
     items: [
       { href: "/admin/evenements", label: "Événements", icon: "calendar" },
-      { href: "/admin/agenda", label: "Agenda", icon: "agenda" },
+      // Retiré pour l'instant (Agenda et Actualités) : à décommenter pour le remettre
+      // { href: "/admin/agenda", label: "Agenda", icon: "agenda" },
       { href: "/admin/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
-      { href: "/admin/actualites", label: "Actualités", icon: "news" },
+      // { href: "/admin/actualites", label: "Actualités", icon: "news" },
       {
         href: "/admin/ressources",
         label: "Ressources & services",

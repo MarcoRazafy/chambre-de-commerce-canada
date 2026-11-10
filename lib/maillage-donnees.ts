@@ -171,6 +171,7 @@ export async function relations(memberId?: string) {
 
 // Activité d'un membre, vue depuis son espace : ses inscriptions, ses rendez-vous, ses publications, ses mises en relation
 export async function activiteMembre(memberId: string) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
   const [inscriptions, rdv, publications, rels] = await Promise.all([
     prisma.registration.findMany({ where: { memberId }, include: { event: { select: { id: true, titre: true, date: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.rendezvous.findMany({ where: { memberId }, include: { type: { select: { titre: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
@@ -181,7 +182,8 @@ export async function activiteMembre(memberId: string) {
   const l: Ligne[] = [
     ...inscriptions.map((i) => ({ quand: i.createdAt.toISOString(), icone: "evenement" as const, texte: `Inscription à « ${i.event.titre} »`, lien: `/membre/evenements/${i.event.id}` })),
     ...rdv.map((r) => ({ quand: r.createdAt.toISOString(), icone: "rendezvous" as const, texte: `${r.annuleLe ? "Rendez-vous annulé" : "Rendez-vous pris"} : ${r.type.titre}, le ${r.jour.toISOString().slice(0, 10).split("-").reverse().join("/")} à ${r.debut}`, lien: "/membre/rendez-vous" })),
-    ...publications.map((n) => ({ quand: n.createdAt.toISOString(), icone: "publication" as const, texte: `Publication : ${n.titre}`, lien: `/membre/actualites/${n.id}` })),
+    // Actualités retirées pour l'instant : à décommenter pour le remettre
+    // ...publications.map((n) => ({ quand: n.createdAt.toISOString(), icone: "publication" as const, texte: `Publication : ${n.titre}`, lien: `/membre/actualites/${n.id}` })),
     ...rels.map((r) => ({ quand: r.createdAt, icone: "relation" as const, texte: `Mise en relation avec ${r.autre?.nom ?? ""}`, lien: `/membre/annuaire/${r.autre?.id ?? ""}` })),
   ];
   return l.sort((a, b) => b.quand.localeCompare(a.quand));

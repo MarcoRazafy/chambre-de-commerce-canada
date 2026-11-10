@@ -136,16 +136,17 @@ export const THEMES: Theme[] = [
           "Ouvrez l’événement depuis la liste des événements ou depuis l’agenda, et cliquez sur « S’inscrire ». La fiche indique les places restantes. Pour un événement payant, une facture est générée à l’inscription.\n\nVous pouvez annuler votre inscription depuis la même fiche.",
         liens: [
           { href: "/membre/evenements", libelle: "Événements" },
-          { href: "/membre/agenda", libelle: "Agenda" },
+          // { href: "/membre/agenda", libelle: "Agenda" }, // Agenda retiré pour l'instant
         ],
       },
-      {
-        id: "agenda",
-        question: "À quoi sert l’agenda ?",
-        reponse:
-          "L’agenda s’ouvre depuis le menu, sous « Événements ». Il se consulte par mois, par semaine ou en liste.\n\nIl réunit les événements de la chambre — ceux où vous êtes inscrit en vert —, vos échéances et vos rappels personnels.\n\nLes échéances se calculent seules : le renouvellement de la cotisation au 31 janvier, et chaque facture à régler dans les 30 jours suivant son émission. Vos rappels ne sont visibles que par vous ; ceux du jour et du lendemain s’affichent aussi dans la cloche de notifications.",
-        liens: [{ href: "/membre/agenda", libelle: "Ouvrir l’agenda" }],
-      },
+      // Agenda retiré pour l'instant : à décommenter pour le remettre
+      // {
+      //   id: "agenda",
+      //   question: "À quoi sert l’agenda ?",
+      //   reponse:
+      //     "L’agenda s’ouvre depuis le menu, sous « Événements ». Il se consulte par mois, par semaine ou en liste.\n\nIl réunit les événements de la chambre — ceux où vous êtes inscrit en vert —, vos échéances et vos rappels personnels.\n\nLes échéances se calculent seules : le renouvellement de la cotisation au 31 janvier, et chaque facture à régler dans les 30 jours suivant son émission. Vos rappels ne sont visibles que par vous ; ceux du jour et du lendemain s’affichent aussi dans la cloche de notifications.",
+      //   liens: [{ href: "/membre/agenda", libelle: "Ouvrir l’agenda" }],
+      // },
       {
         id: "rendez-vous",
         question: "Comment prendre rendez-vous avec l’équipe ?",

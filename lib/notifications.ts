@@ -86,7 +86,8 @@ async function rappelsProches(
       temps: `${jour === aujourdhui ? "Aujourd’hui" : "Demain"}${
         r.heure ? ` · ${fmtHeure(r.heure)}` : ""
       }`,
-      href: `/${espace}/agenda?date=${jour}&jour=${jour}`,
+      // Agenda retiré pour l'instant : à remettre « `/${espace}/agenda?date=${jour}&jour=${jour}` »
+      href: `/${espace}`,
       ton: jour === aujourdhui ? "warn" : "info",
       categorie: "rappel",
     };
@@ -286,6 +287,7 @@ async function notificationsMembre(
     fil,
     inscription,
     offre,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
     actualite,
     rappels,
     rendezvous,
@@ -411,23 +413,24 @@ async function notificationsMembre(
       temps: offre.member ? "Offres membres" : "Offre CanCham",
       href: offre.memberId
         ? `/membre/annuaire/${offre.memberId}`
-        : "/membre/actualites",
+        : "/membre", // Actualités retirées pour l'instant : « /membre/actualites »
       ton: "info",
       categorie: "offre",
     });
 
-  if (actualite)
-    liste.push({
-      id: "actualite",
-      titre: `Actualité : ${actualite.titre}`,
-      temps: fmtDate(toISODate(actualite.date), {
-        day: "numeric",
-        month: "short",
-      }),
-      href: `/membre/actualites/${actualite.id}`,
-      ton: "info",
-      categorie: "actualite",
-    });
+  // Actualités retirées pour l'instant : à décommenter pour le remettre
+  // if (actualite)
+  //   liste.push({
+  //     id: "actualite",
+  //     titre: `Actualité : ${actualite.titre}`,
+  //     temps: fmtDate(toISODate(actualite.date), {
+  //       day: "numeric",
+  //       month: "short",
+  //     }),
+  //     href: `/membre/actualites/${actualite.id}`,
+  //     ton: "info",
+  //     categorie: "actualite",
+  //   });
 
   return liste;
 }
