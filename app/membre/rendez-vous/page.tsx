@@ -1,4 +1,5 @@
 import { CalendarClock } from "lucide-react";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda retiré pour l'instant, gardé pour le remettre
 import { OngletsAgenda } from "@/components/OngletsAgenda";
 import { CarteRendezvous } from "@/components/rendezvous/CarteRendezvous";
 import { ConfirmationRendezvous } from "@/components/rendezvous/ConfirmationRendezvous";
@@ -39,7 +40,9 @@ export default async function RendezvousPage({
 
   return (
     <>
+      {/* Agenda retiré pour l'instant : à décommenter pour remettre les onglets Agenda / Rendez-vous
       <OngletsAgenda espace="membre" actif="rdv" />
+      */}
       <ViewHead title="Rendez-vous" />
 
       {confirmation ? <ConfirmationRendezvous rdv={confirmation} base={BASE} /> : null}

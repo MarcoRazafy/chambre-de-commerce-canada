@@ -382,12 +382,14 @@ export default async function EvenementDetailPage({
                 Autres rendez-vous {<Saillant>à venir</Saillant>}
               </h2>
             </div>
+            {/* Retiré pour l'instant (Agenda) : à décommenter pour le remettre
             <Link
               href="/membre/agenda?vue=liste"
               className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent no-underline hover:underline"
             >
               Tout l’agenda <ArrowRight size={14} />
             </Link>
+            */}
           </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {autres.map((a) => (

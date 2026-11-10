@@ -3,6 +3,7 @@ import {
   ArrowRight,
   Briefcase,
   Building2,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
   CalendarRange,
   CreditCard,
   Headset,
@@ -34,12 +35,13 @@ const ACCES = [
     detail: "Membres, groupes et équipe CanCham",
     Icone: MessageSquare,
   },
-  {
-    href: "/membre/agenda",
-    libelle: "Agenda",
-    detail: "Événements, échéances et rappels",
-    Icone: CalendarRange,
-  },
+  // Agenda retiré pour l'instant : à décommenter pour le remettre
+  // {
+  //   href: "/membre/agenda",
+  //   libelle: "Agenda",
+  //   detail: "Événements, échéances et rappels",
+  //   Icone: CalendarRange,
+  // },
   {
     href: "/membre/offres-cancham",
     libelle: "Services CanCham",

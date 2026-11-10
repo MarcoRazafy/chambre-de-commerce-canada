@@ -16,6 +16,7 @@ import { AvatarRond, OfferCard } from "@/components/domain";
 import { TexteLie } from "@/components/TexteLie";
 import { RegisterButton } from "@/components/forms/EventForms";
 import { Card, Saillant } from "@/components/ui";
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
 import { CetteSemaine } from "@/components/agenda/CetteSemaine";
 import { ajouterJours, plageHoraire } from "@/lib/agenda";
 import { aujourdhuiISO, fmtMoney, isPast, parseISO } from "@/lib/format";
@@ -57,6 +58,7 @@ export default async function VueDEnsemble() {
     offres,
     ressources,
     services,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
     semaine,
     contacts,
     modesPaiement,
@@ -125,12 +127,14 @@ export default async function VueDEnsemble() {
               Les avantages que les adhérents se réservent entre eux
             </p>
           </div>
+          {/* Retiré pour l'instant (Actualités) : à décommenter pour le remettre
           <Link
             href="/membre/actualites"
             className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent no-underline hover:underline"
           >
             Toutes les offres <ArrowRight size={14} />
           </Link>
+          */}
         </div>
 
         {offres.length ? (
@@ -278,10 +282,12 @@ export default async function VueDEnsemble() {
         </Card>
       </div>
 
+      {/* Retiré pour l'instant (Agenda) : à décommenter pour le remettre
       <CetteSemaine
         elements={semaine.filter((e) => !e.fait).slice(0, 5)}
         aujourdhui={aujourdhui}
       />
+      */}
 
       <div className="grid gap-4 md:grid-cols-3">
         <Raccourci

@@ -376,8 +376,9 @@ export function lienJournal(
       return `/admin/paiements?q=${encodeURIComponent(entiteId)}`;
     case "Event":
       return `/admin/evenements/${entiteId}`;
-    case "News":
-      return `/admin/actualites/${entiteId}`;
+    // Actualités retirées pour l'instant : à décommenter pour le remettre
+    // case "News":
+    //   return `/admin/actualites/${entiteId}`;
     case "Resource":
       return "/admin/ressources";
     case "CanchamService":
