@@ -52,6 +52,7 @@ import {
   PALETTE,
   RESEAUX,
   sectionVide,
+  TYPES_DANS_COLONNE,
   TYPES_SECTION,
   urlSure,
   VARIABLES,
@@ -68,6 +69,9 @@ import {
 const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
 // Variables proposées dans la barre de mise en forme (newsletter par défaut ; un rappel a les siennes)
 const VariablesProposees = createContext<readonly { cle: string; libelle: string }[]>(VARIABLES);
+// Une section posée dans une colonne : marges des côtés resserrées
+const DansColonne = createContext(false);
+const serre = (p: string) => { const t = p.split(" "); return t.length >= 2 ? [t[0], "4px", ...t.slice(2)].join(" ") : p; };
 const BLEU = "#3b82f6"; // repères de l'éditeur (survol, sélection) : jamais dans la lettre
 
 // Lettre envoyée : son rendu exact, dans un cadre
@@ -216,7 +220,7 @@ const CATALOGUE: Record<TypeSection, { icone: ReactNode; aide: string }> = {
 
 // « + » entre deux sections : une carte avec toutes les sections possibles
 // Le choix du type de section (le « + » d'un emplacement vide)
-function Catalogue({ onChoix, onFermer }: { onChoix: (t: TypeSection) => void; onFermer: () => void }) {
+function Catalogue({ onChoix, onFermer, types }: { onChoix: (t: TypeSection) => void; onFermer: () => void; types?: readonly TypeSection[] }) {
   return (
     <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] text-left" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
       <div className="flex items-center justify-between px-1 pb-2">
@@ -224,7 +228,7 @@ function Catalogue({ onChoix, onFermer }: { onChoix: (t: TypeSection) => void; o
         <button type="button" onClick={onFermer} aria-label="Fermer" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-[#5b6b7a] cursor-pointer hover:bg-[#f1f4f7]"><X size={15} /></button>
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-        {TYPES_SECTION.map((t) => (
+        {TYPES_SECTION.filter((t) => !types || types.includes(t.type)).map((t) => (
           <button key={t.type} type="button" onClick={() => onChoix(t.type)}
             className="flex items-start gap-2.5 rounded-xl border border-[#e5eaf0] bg-white p-2.5 text-left cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50 group/carte">
             <span className="w-9 h-9 shrink-0 rounded-lg bg-[#f1f4f7] text-[#16202b] grid place-items-center group-hover/carte:bg-[#ad0707] group-hover/carte:text-white transition-colors duration-150">{CATALOGUE[t.type].icone}</span>
@@ -260,7 +264,7 @@ function Inserer({ onAjout }: { onAjout: () => void }) {
 }
 
 // Emplacement vide : une petite section blanche, son « + » propose les types de section
-function Emplacement({ onChoix }: { onChoix: (t: TypeSection) => void }) {
+function Emplacement({ onChoix, types, compact = false }: { onChoix: (t: TypeSection) => void; types?: readonly TypeSection[]; compact?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
   const zone = useRef<HTMLDivElement>(null);
   // Un clic ailleurs ou Échap referme la liste (Échap ne quitte pas le plein écran en même temps)
@@ -273,9 +277,9 @@ function Emplacement({ onChoix }: { onChoix: (t: TypeSection) => void }) {
     return () => { document.removeEventListener("pointerdown", dehors); document.removeEventListener("keydown", echap, true); };
   }, [ouvert]);
   return (
-    <div ref={zone} className="relative flex justify-center py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm">
+    <div ref={zone} className={`relative flex justify-center ${compact ? "py-1.5" : "py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm"}`}>
       <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} discret />
-      {ouvert ? <Catalogue onChoix={(t) => { setOuvert(false); onChoix(t); }} onFermer={() => setOuvert(false)} /> : null}
+      {ouvert ? <Catalogue types={types} onChoix={(t) => { setOuvert(false); onChoix(t); }} onFermer={() => setOuvert(false)} /> : null}
     </div>
   );
 }
@@ -551,10 +555,62 @@ function ActionLien({ libelle, url, onChange }: { libelle: string; url: string; 
   );
 }
 
+// Une colonne : ses sections (modifiables, déplaçables, supprimables) et un « + » pour en ajouter
+function Colonne({ sections, onChange }: { sections: Section[]; onChange: (c: Section[]) => void }) {
+  const [choisie, setChoisie] = useState<string | null>(null);
+  const [style, setStyle] = useState<string | null>(null);
+  const zone = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!choisie && !style) return;
+    const dehors = (e: PointerEvent) => { if (!zone.current?.contains(e.target as Node)) { setChoisie(null); setStyle(null); } };
+    document.addEventListener("pointerdown", dehors);
+    return () => document.removeEventListener("pointerdown", dehors);
+  }, [choisie, style]);
+  const maj = (id: string, c: Partial<Section>) => onChange(sections.map((x) => (x.id === id ? ({ ...x, ...c } as Section) : x)));
+  const deplacer = (i: number, sens: -1 | 1) => {
+    const j = i + sens;
+    if (j < 0 || j >= sections.length) return;
+    const c = [...sections];
+    [c[i], c[j]] = [c[j], c[i]];
+    onChange(c);
+  };
+  const ajouter = (t: TypeSection) => {
+    const x = sectionVide(t);
+    onChange([...sections, x]);
+    setChoisie(x.id);
+  };
+  return (
+    <DansColonne.Provider value={true}>
+    <div ref={zone} className="flex flex-col min-w-0">
+      {sections.map((x, i) => {
+        const actif = choisie === x.id;
+        return (
+          <div key={x.id}>
+            <div className="group/sous relative" onClick={() => setChoisie(x.id)}>
+              <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sous:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
+              <div className={`absolute right-0 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sous:flex"}`} style={{ fontFamily: "var(--font-texte)" }}>
+                <Outil libelle="Style" actif={style === x.id} onClick={() => setStyle(style === x.id ? null : x.id)}><Paintbrush size={13} /></Outil>
+                <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
+                <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === sections.length - 1}><ArrowDown size={13} /></Outil>
+                <Outil libelle="Supprimer" onClick={() => onChange(sections.filter((y) => y.id !== x.id))}><Trash2 size={13} /></Outil>
+              </div>
+              <RenduSection s={x} maj={(c) => maj(x.id, c)} actif={actif} />
+            </div>
+            {style === x.id ? <Style s={x} maj={(c) => maj(x.id, c)} /> : null}
+          </div>
+        );
+      })}
+      <Emplacement types={TYPES_DANS_COLONNE} compact={sections.length > 0} onChoix={ajouter} />
+    </div>
+    </DansColonne.Provider>
+  );
+}
+
 function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>) => void; actif: boolean }) {
   const m = maj as (c: Record<string, unknown>) => void;
+  const imbrique = useContext(DansColonne);
   const cadre = (contenu: ReactNode, padding: string, extra?: ReactNode) => (
-    <div className="relative" style={{ ...fondCss(s.fond), padding, textAlign: s.align }}>
+    <div className="relative" style={{ ...fondCss(s.fond), padding: imbrique ? serre(padding) : padding, textAlign: s.align }}>
       {actif ? extra : null}
       {contenu}
     </div>
@@ -598,10 +654,9 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
       return cadre(<TexteRiche html={s.html} onChange={(html) => m({ html })} style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />, "12px 32px");
     case "colonnes":
       return cadre(
-        <div className="grid gap-4" style={{ gridTemplateColumns: `repeat(${s.colonnes.length}, minmax(0, 1fr))` }}>
-          {s.colonnes.map((h, k) => (
-            <TexteRiche key={`${s.colonnes.length}-${k}`} html={h} placeholder={`Colonne ${k + 1}`} onChange={(html) => m({ colonnes: s.colonnes.map((x, j) => (j === k ? html : x)) })}
-              style={{ fontSize: s.taille, lineHeight: 1.65, color: hex(s.couleur) }} />
+        <div className="grid gap-3" style={{ gridTemplateColumns: `repeat(${s.colonnes.length}, minmax(0, 1fr))` }}>
+          {s.colonnes.map((col, k) => (
+            <Colonne key={k} sections={col} onChange={(c) => m({ colonnes: s.colonnes.map((x, j) => (j === k ? c : x)) })} />
           ))}
         </div>,
         "12px 24px",
@@ -611,7 +666,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
             <input type="number" min={1} max={COLONNES_MAX} value={s.colonnes.length}
               onChange={(e) => {
                 const n = Math.min(COLONNES_MAX, Math.max(1, Math.round(Number(e.target.value)) || 1));
-                m({ colonnes: Array.from({ length: n }, (_, j) => s.colonnes[j] ?? "") });
+                m({ colonnes: Array.from({ length: n }, (_, j) => s.colonnes[j] ?? []) });
               }}
               className="w-12 h-6 rounded border-0 bg-white text-[#16202b] text-center text-[12.5px]" />
           </label>

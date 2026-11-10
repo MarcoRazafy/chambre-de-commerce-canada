@@ -5,6 +5,8 @@
 
 export const LARGEUR = 600;
 export const COLONNES_MAX = 6;
+// Ce qu'une colonne peut contenir
+export const TYPES_DANS_COLONNE = ["titre", "texte", "image", "bouton", "logo", "separateur", "espace"] as const;
 export const POLICE = "Inter, 'Helvetica Neue', Arial, sans-serif";
 
 // Palette de la plateforme (charte IMPACT 261) : seules ces couleurs sont proposées
@@ -38,7 +40,7 @@ export type Section =
   | (Base & { type: "bandeau"; image: string; titre: string; sousTitre: string; taille: number; couleur: Couleur })
   | (Base & { type: "titre"; texte: string; taille: number; couleur: Couleur })
   | (Base & { type: "texte"; html: string; taille: number; couleur: Couleur })
-  | (Base & { type: "colonnes"; colonnes: string[]; taille: number; couleur: Couleur })
+  | (Base & { type: "colonnes"; colonnes: Section[][] })
   | (Base & { type: "image"; url: string; lien: string; alt: string; largeur: number })
   | (Base & { type: "bouton"; libelle: string; url: string; couleurBouton: Couleur; couleur: Couleur; taille: number })
   | (Base & { type: "appel"; titre: string; bouton: string; url: string; taille: number; couleur: Couleur; couleurBouton: Couleur; couleurTexteBouton: Couleur })
@@ -167,7 +169,7 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
     case "texte":
       return { id, type, fond: "", align: "left", html: "Votre texte ici.", taille: 15, couleur: "ardoise" };
     case "colonnes":
-      return { id, type, fond: "", align: "left", colonnes: ["", ""], taille: 15, couleur: "ardoise" };
+      return { id, type, fond: "", align: "left", colonnes: [[], []] };
     case "image":
       return { id, type, fond: "", align: "center", url: "", lien: "", alt: "", largeur: 100 };
     case "bouton":
@@ -235,8 +237,13 @@ function lireSection(s: unknown): Section | null {
     case "texte":
       return { ...d, ...base, html: nettoyerHtml(typeof o.html === "string" ? o.html : enHtml(chaine(o.texte))), taille: entier(o.taille, 11, 24, d.taille), couleur: couleur(o.couleur, d.couleur) };
     case "colonnes": {
-      const c = (Array.isArray(o.colonnes) ? o.colonnes : []).slice(0, COLONNES_MAX).map((h) => nettoyerHtml(typeof h === "string" ? h : ""));
-      return { ...d, ...base, colonnes: c.length ? c : d.colonnes, taille: entier(o.taille, 11, 24, d.taille), couleur: couleur(o.couleur, d.couleur) };
+      // Chaque colonne : ses sections (un ancien texte simple devient une section de texte)
+      const c = (Array.isArray(o.colonnes) ? o.colonnes : []).slice(0, COLONNES_MAX).map((col): Section[] => {
+        if (typeof col === "string") return col.trim() ? [lireSection({ ...sectionVide("texte"), html: col })!] : [];
+        return (Array.isArray(col) ? col : []).slice(0, 20).map(lireSection)
+          .filter((x): x is Section => !!x && (TYPES_DANS_COLONNE as readonly string[]).includes(x.type));
+      });
+      return { ...d, ...base, colonnes: c.length ? c : d.colonnes };
     }
     case "image":
       return { ...d, ...base, url: urlSure(o.url), lien: urlSure(o.lien), alt: chaine(o.alt, 200), largeur: entier(o.largeur, 20, 100, d.largeur) };
@@ -332,8 +339,11 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
       .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 12px;padding-left:22px">');
   const v = (t: string) => echapper(remplacer(t, o.vars));
   const r = (h: string) => riche(h).replace(/<p( style="text-align:\w+")?>/g, "<div$1>").replace(/<\/p>/g, "</div>");
+  // Dans une colonne, les marges sur les côtés se resserrent
+  let imbrique = false;
+  const serre = (p: string) => { const t = p.split(" "); return t.length >= 2 ? [t[0], "4px", ...t.slice(2)].join(" ") : p; };
   const cellule = (s: Section, contenu: string, pad = "12px 32px") =>
-    `<tr><td align="${s.align}" style="${styleFond(s.fond)}padding:${pad};text-align:${s.align}">${contenu}</td></tr>`;
+    `<tr><td align="${s.align}" style="${styleFond(s.fond)}padding:${imbrique ? serre(pad) : pad};text-align:${s.align}">${contenu}</td></tr>`;
 
   const section = (s: Section): string => {
     switch (s.type) {
@@ -347,8 +357,10 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
         return cellule(s, `<div style="font-size:${s.taille}px;line-height:1.65;color:${hex(s.couleur)}">${riche(s.html)}</div>`);
       case "colonnes": {
         const l = Math.floor(100 / s.colonnes.length);
-        const cols = s.colonnes.map((h) => `<td valign="top" width="${l}%" style="width:${l}%;padding:0 8px;font-size:${s.taille}px;line-height:1.65;color:${hex(s.couleur)};text-align:${s.align}">${riche(h)}</td>`).join("");
-        return cellule(s, `<table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin:0 -8px"><tr>${cols}</tr></table>`, "12px 24px");
+        imbrique = true;
+        const cols = s.colonnes.map((col) => `<td valign="top" width="${l}%" style="width:${l}%;padding:0 4px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0">${col.map(section).join("")}</table></td>`).join("");
+        imbrique = false;
+        return cellule(s, `<table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr>${cols}</tr></table>`, "12px 24px");
       }
       case "image": {
         if (!s.url) return "";
@@ -410,7 +422,7 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
       .replace(/&gt;/g, ">")
       .trim();
   const r = (t: string) => sansBalise(remplacer(nettoyerHtml(t), o.vars));
-  const lignes = doc.sections.flatMap((s) => {
+  const lignesDe = (s: Section): string[] => {
     switch (s.type) {
       case "bandeau":
         return [r(s.titre), r(s.sousTitre), ""];
@@ -419,7 +431,7 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
       case "texte":
         return [brut(s.html), ""];
       case "colonnes":
-        return [...s.colonnes.map(brut).filter(Boolean), ""];
+        return s.colonnes.flat().flatMap(lignesDe);
       case "bouton":
         return s.url ? [`${r(s.libelle)} : ${s.url}`, ""] : [];
       case "appel":
@@ -431,7 +443,8 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
       default:
         return [];
     }
-  });
+  };
+  const lignes = doc.sections.flatMap(lignesDe);
   return [...lignes, o.mention, ...(o.desabonnement ? [`Se désabonner : ${o.desabonnement}`] : [])]
     .filter((l, i, t) => !(l === "" && t[i - 1] === ""))
     .join("\n");
