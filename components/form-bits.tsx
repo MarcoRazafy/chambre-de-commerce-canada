@@ -179,6 +179,8 @@ export function ChampPhoto({
   aide = "JPEG, PNG ou WebP. Elle est redimensionnée à l’envoi.",
   ratio = "aspect-[16/9]",
   rond = false,
+  entier = false,
+  large = false,
 }: {
   name: string;
   retirer?: string;
@@ -187,6 +189,10 @@ export function ChampPhoto({
   aide?: string;
   ratio?: string;
   rond?: boolean;
+  /** Montrer l'image en entier (un logo), sans la recadrer */
+  entier?: boolean;
+  /** Aperçu sur toute la largeur (une couverture), bouton en dessous */
+  large?: boolean;
 }) {
   const [choisie, setChoisie] = useState<string | null>(null);
   const [fichiers, setFichiers] = useState<File[]>([]);
@@ -200,18 +206,18 @@ export function ChampPhoto({
       <span className="block text-[12.3px] font-semibold text-muted mb-1.5">
         {libelle}
       </span>
-      <div className="flex gap-4 items-center flex-wrap sm:flex-nowrap">
+      <div className={large ? "flex flex-col gap-3" : "flex gap-4 items-center flex-wrap sm:flex-nowrap"}>
         <div
           className={`shrink-0 border border-line bg-surface-2 overflow-hidden flex items-center justify-center ${
             rond
               ? "w-[112px] h-[112px] rounded-full"
-              : `${ratio} w-full sm:w-[220px] rounded-[var(--radius-m)]`
+              : `${ratio} w-full ${large ? "" : "sm:w-[220px]"} rounded-[var(--radius-m)] ${entier ? "bg-white" : ""}`
           }`}
         >
           {vue ? (
             <span className="relative block h-full w-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={vue} alt="" className="w-full h-full object-cover" />
+              <img src={vue} alt="" className={`w-full h-full ${entier ? "object-contain p-3" : "object-cover"}`} />
               {envoi && !envoi.masque ? <VoileEnvoi envoi={envoi} /> : null}
             </span>
           ) : (

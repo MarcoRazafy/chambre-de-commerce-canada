@@ -19,18 +19,23 @@ export default async function MonEntreprise() {
       <EnTeteAdmin surtitre="Administration" titre={<>Mon <Saillant>entreprise</Saillant></>} />
 
       <Card className="p-0 overflow-hidden mb-5">
-        <div className="relative h-[180px] bg-cover bg-center" style={{ backgroundColor: "#ad0707", backgroundImage: p.couverture ? `url('${p.couverture}')` : "linear-gradient(120deg,#ad0707 0%,#5c1220 52%,#007140 100%)" }} />
-        <div className="px-6 pb-5 flex items-end gap-5 flex-wrap -mt-10">
-          <span className="relative w-[150px] h-[80px] rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)] grid place-items-center p-2.5">
-            <Image src={p.logo} alt={p.nom} width={300} height={160} className="max-w-full max-h-full w-auto h-auto object-contain" />
+        <div
+          className="h-[160px] sm:h-[200px] bg-cover bg-center"
+          style={{ backgroundColor: "#ad0707", backgroundImage: p.couverture ? `url('${p.couverture}')` : "linear-gradient(120deg,#ad0707 0%,#5c1220 52%,#007140 100%)" }}
+          role="img"
+          aria-label="Couverture de la Chambre"
+        />
+        <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
+          <span className="relative -mt-12 w-[168px] h-[92px] shrink-0 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)] grid place-items-center p-3">
+            <Image src={p.logo} alt={p.nom} width={320} height={180} className="max-w-full max-h-full w-auto h-auto object-contain" />
           </span>
-          <div className="min-w-0 flex-1 pb-1">
-            <h2 className="m-0 text-[22px]">{p.nom}</h2>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-[13px] text-muted">
-              <span className="inline-flex items-center gap-1.5"><MapPin size={14} />{p.adresse}</span>
-              <span className="inline-flex items-center gap-1.5"><Mail size={14} />{p.email}</span>
-              <span className="inline-flex items-center gap-1.5"><Phone size={14} />{p.telephone}</span>
-              {p.site ? <span className="inline-flex items-center gap-1.5"><Globe size={14} />{p.site.replace(/^https?:\/\//, "")}</span> : null}
+          <div className="min-w-0 flex-1 sm:pt-3">
+            <h2 className="m-0 text-[21px] leading-tight text-balance">{p.nom}</h2>
+            <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-2 text-[13px] text-muted">
+              <span className="inline-flex items-center gap-1.5"><MapPin size={14} className="shrink-0" aria-hidden />{p.adresse}</span>
+              <span className="inline-flex items-center gap-1.5 break-all"><Mail size={14} className="shrink-0" aria-hidden />{p.email}</span>
+              <span className="inline-flex items-center gap-1.5"><Phone size={14} className="shrink-0" aria-hidden />{p.telephone}</span>
+              {p.site ? <span className="inline-flex items-center gap-1.5 break-all"><Globe size={14} className="shrink-0" aria-hidden />{p.site.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span> : null}
             </div>
           </div>
         </div>
@@ -39,15 +44,13 @@ export default async function MonEntreprise() {
       <form action={enregistrerProfilChambre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-2">
         <Panneau titre="La Chambre" sousTitre="Sa présentation, son logo et sa couverture" teinte="rouge">
           <div className="flex flex-col gap-4">
-            <div className="grid gap-4 sm:grid-cols-[180px_minmax(0,1fr)]">
-              <ChampPhoto name="logo" retirer="retirer-logo" apercu={brut?.logo} libelle="Logo" ratio="aspect-[2/1]" aide="PNG sur fond transparent de préférence." />
-              <ChampPhoto name="couverture" retirer="retirer-couverture" apercu={brut?.couverture} libelle="Couverture" ratio="aspect-[16/6]" aide="Une image large, en paysage." />
-            </div>
+            <ChampPhoto name="couverture" retirer="retirer-couverture" apercu={brut?.couverture} libelle="Couverture" ratio="aspect-[16/5]" large aide="Une image large, en paysage (1600 × 500 px environ)." />
+            <ChampPhoto name="logo" retirer="retirer-logo" apercu={brut?.logo} libelle="Logo" ratio="aspect-[2/1]" entier aide="PNG sur fond transparent de préférence." />
             <Field label="Nom">
               <input name="nom" maxLength={200} defaultValue={v("nom")} placeholder={NOM_CHAMBRE} className={INPUT} />
             </Field>
             <Field label="Présentation">
-              <textarea name="description" rows={4} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait la Chambre, pour qui…" className={`${INPUT} leading-relaxed`} />
+              <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait la Chambre, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
             </Field>
             <Field label="Adresse">
               <input name="adresse" maxLength={500} defaultValue={v("adresse")} placeholder={p.adresse} className={INPUT} />
@@ -69,14 +72,14 @@ export default async function MonEntreprise() {
         <div className="flex flex-col gap-4">
           <Panneau titre="Facturation" sousTitre="Ce qui figure sur les factures de la Chambre" teinte="vert">
             <div className="flex flex-col gap-4">
-              <ChampPhoto name="logoFacture" retirer="retirer-logoFacture" apercu={brut?.logoFacture} libelle="Logo des factures" ratio="aspect-[2/1]" aide="Vide : le logo de la Chambre." />
+              <ChampPhoto name="logoFacture" retirer="retirer-logoFacture" apercu={brut?.logoFacture} libelle="Logo des factures" ratio="aspect-[2/1]" entier aide="Vide : le logo de la Chambre." />
               <Field label="Raison sociale">
                 <input name="raisonSociale" maxLength={200} defaultValue={v("raisonSociale")} placeholder={p.nom} className={INPUT} />
               </Field>
               <Field label="Adresse de facturation">
-                <textarea name="adresseFacturation" rows={2} maxLength={500} defaultValue={v("adresseFacturation")} placeholder={p.adresse} className={INPUT} />
+                <textarea name="adresseFacturation" rows={2} maxLength={500} defaultValue={v("adresseFacturation")} placeholder={p.adresse} className={`${INPUT} block w-full resize-y`} />
               </Field>
-              <div className="grid gap-4 sm:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
                 <Field label="NEQ">
                   <input name="neq" maxLength={40} defaultValue={v("neq")} placeholder="1234567890" className={INPUT} />
                 </Field>
@@ -96,7 +99,7 @@ export default async function MonEntreprise() {
                 </Field>
               </div>
               <Field label="Mention en bas des factures">
-                <textarea name="mentionFacture" rows={2} maxLength={1000} defaultValue={v("mentionFacture")} placeholder="Ex. Merci de votre confiance. Paiement à 30 jours." className={INPUT} />
+                <textarea name="mentionFacture" rows={2} maxLength={1000} defaultValue={v("mentionFacture")} placeholder="Ex. Merci de votre confiance. Paiement à 30 jours." className={`${INPUT} block w-full resize-y`} />
               </Field>
             </div>
           </Panneau>
@@ -115,7 +118,11 @@ export default async function MonEntreprise() {
             </div>
           </Card>
 
-          <SubmitButton pendingLabel="Enregistrement…" className="self-start"><Save size={15} /> Enregistrer</SubmitButton>
+        </div>
+
+        <div className="lg:col-span-2 sticky bottom-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-between gap-3 flex-wrap">
+          <span className="text-[12.5px] text-muted">Un champ vide garde la valeur affichée en gris.</span>
+          <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer les modifications</SubmitButton>
         </div>
       </form>
     </>
