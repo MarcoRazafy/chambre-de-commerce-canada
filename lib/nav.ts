@@ -59,8 +59,8 @@ export const NAV_MEMBRE: NavGroup[] = [
   {
     label: "Aide",
     items: [
-      { href: "/membre/aide", label: "Besoin d’aide ?", icon: "help" },
-      { href: "/membre/contact", label: "Contacter l’équipe", icon: "support" },
+      // « Contacter l'équipe » s'ouvre depuis « Besoin d'aide ? » (aussi : messagerie, bulle d'aide)
+      { href: "/membre/aide", label: "Besoin d’aide ?", icon: "help", aussi: ["/membre/contact"] },
     ],
   },
 ];

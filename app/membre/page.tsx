@@ -18,8 +18,8 @@ import { RegisterButton } from "@/components/forms/EventForms";
 import { Card, Saillant } from "@/components/ui";
 // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
 import { CetteSemaine } from "@/components/agenda/CetteSemaine";
-import { ajouterJours, plageHoraire } from "@/lib/agenda";
-import { aujourdhuiISO, fmtMoney, isPast, parseISO } from "@/lib/format";
+import { plageHoraire } from "@/lib/agenda";
+import { fmtMoney, isPast, parseISO } from "@/lib/format";
 import {
   ADHESION_PENDING,
   isOverdueWarning,
@@ -28,7 +28,6 @@ import {
   RETARD_BLOCAGE_JOURS,
 } from "@/lib/membership";
 import {
-  getAgenda,
   getContacts,
   getEvents,
   getMember,
@@ -50,7 +49,6 @@ export default async function VueDEnsemble() {
   if (!membreOuNull) notFound();
   const me = membreOuNull;
 
-  const aujourdhui = aujourdhuiISO();
   const [
     events,
     annuaire,
@@ -59,8 +57,6 @@ export default async function VueDEnsemble() {
     offres,
     ressources,
     services,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
-    semaine,
     contacts,
     modesPaiement,
   ] = await Promise.all([
@@ -71,11 +67,8 @@ export default async function VueDEnsemble() {
     getDernieresOffres(OFFRES_ACCUEIL),
     getResources(),
     getServices(),
-    getAgenda(
-      { userId: user.id, memberId: me.id },
-      aujourdhui,
-      ajouterJours(aujourdhui, 6),
-    ),
+    // Agenda retiré pour l'instant (bloc « Cette semaine » plus bas) : remettre « semaine » ci-dessus et
+    // getAgenda({ userId: user.id, memberId: me.id }, aujourdhuiISO(), ajouterJours(aujourdhuiISO(), 6)),
     getContacts(me.id),
     modesProposes(),
   ]);
@@ -105,10 +98,6 @@ export default async function VueDEnsemble() {
             Bonjour <Saillant>{user.nom.split(" ")[0]}</Saillant>,
           </h1>
         </div>
-
-        <Link href="/membre/annuaire" className="btn-action">
-          Explorer l’annuaire <ArrowRight size={16} />
-        </Link>
       </div>
 
       <BandeauAdhesion

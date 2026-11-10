@@ -30,7 +30,7 @@ export function RepondreQuestionnaire({
   const fermer = () => {
     setOuvert(false);
     setFerme(true);
-    router.replace("/membre/profil?onglet=maillage", { scroll: false });
+    router.replace("/membre/maillage", { scroll: false });
     router.refresh();
   };
   return (

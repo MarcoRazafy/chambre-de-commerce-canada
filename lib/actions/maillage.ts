@@ -69,14 +69,14 @@ export async function relancerMaillage(formData: FormData) {
       entreprise: m.nom,
       faites: p.faites,
       total: p.total,
-      lien: await urlPublique("/membre/profil?onglet=maillage&repondre=1"),
+      lien: await urlPublique("/membre/maillage?repondre=1"),
     }),
   );
   after(() =>
     notifierMembre(id, {
       titre: "Questionnaire de maillage",
       corps: "La Chambre vous invite à répondre au questionnaire pour vous présenter des partenaires.",
-      url: "/membre/profil?onglet=maillage&repondre=1",
+      url: "/membre/maillage?repondre=1",
     }),
   );
   const acteur = (await getCurrentUser("admin")).nom;
@@ -117,8 +117,8 @@ export async function mettreEnRelation(formData: FormData) {
   const [na, nb] = [noms.find((n) => n.id === x)!.nom, noms.find((n) => n.id === y)!.nom];
   await journal("mise_en_relation", x, acteur, `${na} ↔ ${nb}`);
   after(async () => {
-    await notifierMembre(x, { titre: "Nouvelle mise en relation", corps: `La Chambre vous présente ${nb}.`, url: "/membre/profil?onglet=maillage" });
-    await notifierMembre(y, { titre: "Nouvelle mise en relation", corps: `La Chambre vous présente ${na}.`, url: "/membre/profil?onglet=maillage" });
+    await notifierMembre(x, { titre: "Nouvelle mise en relation", corps: `La Chambre vous présente ${nb}.`, url: "/membre/maillage" });
+    await notifierMembre(y, { titre: "Nouvelle mise en relation", corps: `La Chambre vous présente ${na}.`, url: "/membre/maillage" });
   });
   revalidatePath("/", "layout");
   redirectWithFlash(retour, `${na} et ${nb} sont mis en relation`);
@@ -153,7 +153,11 @@ export async function majEtiquettes(memberId: string, champ: ChampEtiquettes, va
   if (!acces.ok) return { ok: false as const, erreur: acces.erreur };
   const propres = propresTags(valeurs);
   await prisma.member.update({ where: { id: acces.memberId }, data: { [champ]: propres } });
-  revalidatePath(acces.estEquipe ? `/admin/membres/${acces.memberId}` : "/membre/profil");
+  if (acces.estEquipe) revalidatePath(`/admin/membres/${acces.memberId}`);
+  else {
+    revalidatePath("/membre/maillage");
+    revalidatePath("/membre/profil");
+  }
   return { ok: true as const, valeurs: propres };
 }
 

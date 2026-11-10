@@ -1,4 +1,4 @@
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { BoutonCertificat } from "@/components/BoutonCertificat";
 import { CertificatAdhesion } from "@/components/Certificat";
 import {
@@ -7,7 +7,6 @@ import {
   CalendarDays,
   Newspaper,
   Globe,
-  CreditCard,
   User as UserIcon,
   MapPin,
   Sparkles,
@@ -24,11 +23,8 @@ import { CouvertureReglable } from "@/components/CouvertureReglable";
 import { VideoPresentation } from "@/components/VideoPresentation";
 import Link from "next/link";
 import { Onglets, Panneau, Vide } from "@/components/admin/ui";
-import { EtiquettesMembre } from "@/components/maillage/EtiquettesMembre";
-import { Avancement, ListeRelations, ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
-import { RepondreQuestionnaire } from "@/components/maillage/RepondreQuestionnaire";
-import { activiteMembre, chargerMaillage, relations, suggestions } from "@/lib/maillage-donnees";
-import { prisma } from "@/lib/db";
+import { ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
+import { activiteMembre, suggestions } from "@/lib/maillage-donnees";
 import { TexteLie } from "@/components/TexteLie";
 import { CarrouselSection } from "@/components/CarrouselSection";
 import { CarteService } from "@/components/CarteService";
@@ -48,12 +44,7 @@ import {
   Card,
   Pill,
   Saillant,
-  SectionTitle,
-  Stat,
   StatusPill,
-  TableWrap,
-  Td,
-  Th,
   ViewHead,
 } from "@/components/ui";
 import { getContacts, getInvoices, getMember } from "@/lib/queries";
@@ -61,35 +52,34 @@ import { getCurrentUser } from "@/lib/session";
 import { affichageSite } from "@/lib/liens";
 import { positionObjet } from "@/lib/cadrage";
 import { getProfilChambre } from "@/lib/profil-chambre";
-import { fmtJour, renouvellementCotisation } from "@/lib/agenda";
-import { fmtDate, fmtDateShort } from "@/lib/format";
-import { fmtCotisation, fmtMontant, libelleFormule } from "@/lib/membership";
+import { renouvellementCotisation } from "@/lib/agenda";
+import { fmtDate } from "@/lib/format";
 import { ADHESION_PENDING } from "@/lib/membership";
 
 const CADRE_COUVERTURE = "h-[190px] w-full sm:h-[260px]";
 
-const ONGLETS = ["profil", "factures", "activite", "maillage"] as const;
+const ONGLETS = ["profil", "activite"] as const;
 type Onglet = (typeof ONGLETS)[number];
 const ICONES_ACTIVITE = { evenement: CalendarDays, rendezvous: CalendarClock, publication: Newspaper, relation: Sparkles };
 
 export default async function ProfilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ onglet?: string }>;
+  searchParams: Promise<{ onglet?: string; repondre?: string }>;
 }) {
-  const demande = (await searchParams).onglet;
+  const { onglet: demande, repondre } = await searchParams;
+  // Anciens onglets (liens déjà envoyés) : les factures et le maillage ont leur propre page
+  if (demande === "factures") redirect("/membre/cotisations");
+  if (demande === "maillage") redirect(repondre === "1" ? "/membre/maillage?repondre=1" : "/membre/maillage");
   const onglet: Onglet = ONGLETS.includes(demande as Onglet) ? (demande as Onglet) : "profil";
   const user = await getCurrentUser("membre");
   const m = await getMember(user.memberId!);
   if (!m) notFound();
-  const [myInvoices, contacts, maillage, sugg, rels, activite, tags, chambre] = await Promise.all([
+  const [myInvoices, contacts, sugg, activite, chambre] = await Promise.all([
     getInvoices(m.id),
     getContacts(m.id),
-    chargerMaillage(m.id),
     suggestions(m.id),
-    relations(m.id),
     activiteMembre(m.id),
-    prisma.member.findUnique({ where: { id: m.id }, select: { offresTags: true, besoinsTags: true, interetsTags: true } }),
     getProfilChambre(),
   ]);
   const page = "/membre/profil";
@@ -234,9 +224,7 @@ export default async function ProfilPage({
         actif={onglet}
         onglets={[
           { cle: "profil", libelle: "Profil", href: page },
-          { cle: "factures", libelle: "Factures", href: `${page}?onglet=factures`, compte: myInvoices.length },
           { cle: "activite", libelle: "Activité", href: `${page}?onglet=activite` },
-          { cle: "maillage", libelle: "Maillage", href: `${page}?onglet=maillage` },
         ]}
       />
 
@@ -316,7 +304,7 @@ export default async function ProfilPage({
               titre="Suggestions de maillage"
               sousTitre="Les membres qui proposent ce que vous recherchez"
               teinte="rouge"
-              lien={{ href: `${page}?onglet=maillage`, libelle: "Tout voir" }}
+              lien={{ href: "/membre/maillage", libelle: "Tout voir" }}
             >
               <ListeSuggestions suggestions={sugg} memberId={m.id} espace="membre" limite={3} />
             </Panneau>
@@ -324,112 +312,8 @@ export default async function ProfilPage({
         </div>
       ) : null}
 
-      {onglet === "factures" ? (
-        <>
-      <SectionTitle>Statut d’adhésion</SectionTitle>
-      <div className="grid gap-4 mb-[22px] md:grid-cols-2 xl:grid-cols-4">
-        <Stat
-          k="Formule"
-          v={
-            <span className="flex flex-col gap-0.5">
-              <span className="text-[14px] font-semibold leading-snug">
-                {libelleFormule(m.formule)}
-              </span>
-              <span className="text-[13px] text-accent-strong font-semibold">
-                {m.formule ? (
-                  <>
-                    {fmtCotisation(m.formule)}{" "}
-                    <span className="text-muted font-normal">/ par an</span>
-                  </>
-                ) : (
-                  <span className="text-muted font-normal">
-                    Choisissez votre formule pour connaître votre cotisation.
-                  </span>
-                )}
-              </span>
-            </span>
-          }
-        />
-        <Stat
-          k="Adhésion"
-          v={
-            <span className="flex flex-col gap-1">
-              <span className="text-[19px]">
-                <StatusPill status={m.statut} />
-              </span>
-              <span className="text-[12.5px] text-muted">
-                {renouvellement
-                  ? `Renouvellement le ${fmtJour(renouvellement)}`
-                  : "Renouvellement au premier règlement"}
-              </span>
-            </span>
-          }
-        />
-        <Stat
-          k="Membre depuis"
-          v={<span className="text-[19px]">{fmtDateShort(m.adhesion)}</span>}
-        />
-        <Stat
-          k={m.paiementNote ? "Dernier paiement" : "Prochain renouvellement"}
-          v={
-            <span className="text-[14px] font-semibold leading-snug">
-              {m.paiementNote ??
-                (renouvellement
-                  ? fmtJour(renouvellement)
-                  : "Au premier règlement")}
-            </span>
-          }
-        />
-      </div>
-
-      <SectionTitle>Historique des paiements</SectionTitle>
-      <TableWrap>
-        <thead>
-          <tr>
-            <Th>Facture</Th>
-            <Th>Date</Th>
-            <Th>Objet</Th>
-            <Th>Montant</Th>
-            <Th>Statut</Th>
-          </tr>
-        </thead>
-        <tbody>
-          {myInvoices.length ? (
-            myInvoices.map((f) => (
-              <tr key={f.id} className="hover:bg-surface-2">
-                <Td className="font-[family-name:var(--font-mono)]">
-                  {f.numero}
-                </Td>
-                <Td className="text-muted">{fmtDateShort(f.date)}</Td>
-                <Td>{f.objet}</Td>
-                <Td className="font-[family-name:var(--font-mono)]">
-                  {fmtMontant(f.montant, f.devise)}
-                </Td>
-                <Td>
-                  <StatusPill status={f.statut} />
-                </Td>
-              </tr>
-            ))
-          ) : (
-            <tr>
-              <Td className="text-muted text-center py-5">
-                Aucune facture pour le moment.
-              </Td>
-            </tr>
-          )}
-        </tbody>
-      </TableWrap>
-
-      <p className="text-[11.5px] text-faint mt-4 flex items-center gap-1.5">
-        <CreditCard size={12} />
-        Paiement en ligne non branché : en V1 l’équipe CanCham enregistre les
-        règlements depuis le back-office.
-      </p>
-        </>
-      ) : null}
-
       {onglet === "activite" ? (
-        <Panneau titre="Mon activité" sousTitre="Vos inscriptions, rendez-vous, publications et mises en relation" teinte="degrade" corpsClassName="px-6 pb-4">
+        <Panneau titre="Mon activité" sousTitre="Vos inscriptions, rendez-vous et mises en relation" teinte="degrade" corpsClassName="px-6 pb-4">
           {activite.length ? (
             <ul className="list-none m-0 p-0">
               {activite.map((a, i) => {
@@ -451,38 +335,6 @@ export default async function ProfilPage({
         </Panneau>
       ) : null}
 
-      {onglet === "maillage" && maillage ? (
-        <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="flex flex-col gap-4 min-w-0">
-            <Panneau titre="Questionnaire de maillage" sousTitre="Seize questions pour que la Chambre vous présente les bons partenaires" teinte={maillage.pct === 100 ? "vert" : "rouge"}>
-              <Avancement d={maillage} />
-              <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
-                <p className="m-0 text-[13px] text-muted">
-                  {maillage.pct === 100 ? "Merci : vos réponses servent aux suggestions." : "Environ 15 minutes ; vos réponses s’enregistrent au fur et à mesure."}
-                </p>
-                <RepondreQuestionnaire memberId={m.id} reponses={maillage.reponses} secteurs={maillage.secteurs} commence={maillage.commence} fini={maillage.pct === 100} />
-              </div>
-            </Panneau>
-            <Panneau titre="Mes mises en relation" sousTitre="Les entreprises que la Chambre vous a présentées" teinte="bleu">
-              <ListeRelations relations={rels} espace="membre" />
-            </Panneau>
-            <Panneau titre="Suggestions" sousTitre="Membres qui proposent ce que vous recherchez : écrivez à la Chambre pour être présentés" teinte="rouge">
-              <ListeSuggestions suggestions={sugg} memberId={m.id} espace="membre" />
-            </Panneau>
-          </div>
-          <div className="flex flex-col gap-4">
-            <Panneau titre="Ce que vous proposez" teinte="degrade">
-              <EtiquettesMembre memberId={m.id} champ="offresTags" valeurs={tags?.offresTags ?? []} ton="bleu" />
-            </Panneau>
-            <Panneau titre="Ce que vous recherchez" teinte="rouge">
-              <EtiquettesMembre memberId={m.id} champ="besoinsTags" valeurs={tags?.besoinsTags ?? []} />
-            </Panneau>
-            <Panneau titre="Vos centres d’intérêt" teinte="vert">
-              <EtiquettesMembre memberId={m.id} champ="interetsTags" valeurs={tags?.interetsTags ?? []} ton="vert" />
-            </Panneau>
-          </div>
-        </div>
-      ) : null}
     </>
   );
 }
