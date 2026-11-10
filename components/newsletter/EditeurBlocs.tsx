@@ -257,8 +257,18 @@ function Inserer({ onAjout }: { onAjout: () => void }) {
 // Emplacement vide : une petite section blanche, son « + » propose les types de section
 function Emplacement({ onChoix }: { onChoix: (t: TypeSection) => void }) {
   const [ouvert, setOuvert] = useState(false);
+  const zone = useRef<HTMLDivElement>(null);
+  // Un clic ailleurs ou Échap referme la liste (Échap ne quitte pas le plein écran en même temps)
+  useEffect(() => {
+    if (!ouvert) return;
+    const dehors = (e: PointerEvent) => { if (!zone.current?.contains(e.target as Node)) setOuvert(false); };
+    const echap = (e: KeyboardEvent) => { if (e.key === "Escape") { e.stopPropagation(); setOuvert(false); } };
+    document.addEventListener("pointerdown", dehors);
+    document.addEventListener("keydown", echap, true);
+    return () => { document.removeEventListener("pointerdown", dehors); document.removeEventListener("keydown", echap, true); };
+  }, [ouvert]);
   return (
-    <div className="relative flex justify-center py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm">
+    <div ref={zone} className="relative flex justify-center py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm">
       <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} discret />
       {ouvert ? <Catalogue onChoix={(t) => { setOuvert(false); onChoix(t); }} onFermer={() => setOuvert(false)} /> : null}
     </div>
@@ -351,6 +361,19 @@ export function EditeurBlocs({
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
   const [plein, setPlein] = useState(false);
+  const feuille = useRef<HTMLDivElement>(null);
+
+  // Un clic hors de la lettre désélectionne la section (et referme son style)
+  useEffect(() => {
+    if (!choisie && !style) return;
+    const dehors = (e: PointerEvent) => {
+      if (feuille.current?.contains(e.target as Node)) return;
+      setChoisie(null);
+      setStyle(null);
+    };
+    document.addEventListener("pointerdown", dehors);
+    return () => document.removeEventListener("pointerdown", dehors);
+  }, [choisie, style]);
 
   // Plein écran : la page ne défile plus derrière, Échap le referme
   useEffect(() => {
@@ -409,7 +432,7 @@ export function EditeurBlocs({
       <div className={`rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto flex flex-col ${plein ? "flex-1" : "min-h-[100vh]"}`} style={{ background: hex(doc.fond) }}>
         {doc.sections.length ? (
         <>
-        <div className="mx-auto w-full bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
+        <div ref={feuille} className="mx-auto w-full bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
           <Inserer onAjout={() => inserer(0)} />
           {doc.sections.map((s, i) => {
             const actif = choisie === s.id;
