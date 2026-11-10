@@ -191,9 +191,9 @@ export function docVide(reseaux: Partial<Record<Reseau, string>> = {}): DocLettr
   };
 }
 
-// Nouvelle lettre : une page blanche, une seule section de texte vide
+// Nouvelle lettre : aucune section, on part du « + »
 export function docBlanc(): DocLettre {
-  return { v: 3, apercu: "", fond: "brume", sections: [{ ...(sectionVide("texte") as Extract<Section, { type: "texte" }>), html: "" }] };
+  return { v: 3, apercu: "", fond: "brume", sections: [] };
 }
 
 // Une lettre écrite en texte simple devient une lettre de ce modèle

@@ -210,35 +210,57 @@ const CATALOGUE: Record<TypeSection, { icone: ReactNode; aide: string }> = {
 };
 
 // « + » entre deux sections : une carte avec toutes les sections possibles
-function Inserer({ onAjout }: { onAjout: (t: TypeSection) => void }) {
-  const [ouvert, setOuvert] = useState(false);
+// Le choix du type de section (le « + » d'un emplacement vide)
+function Catalogue({ onChoix, onFermer }: { onChoix: (t: TypeSection) => void; onFermer: () => void }) {
+  return (
+    <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] text-left" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
+      <div className="flex items-center justify-between px-1 pb-2">
+        <b className="text-[13px] text-[#16202b]">Ajouter une section</b>
+        <button type="button" onClick={onFermer} aria-label="Fermer" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-[#5b6b7a] cursor-pointer hover:bg-[#f1f4f7]"><X size={15} /></button>
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+        {TYPES_SECTION.map((t) => (
+          <button key={t.type} type="button" onClick={() => onChoix(t.type)}
+            className="flex items-start gap-2.5 rounded-xl border border-[#e5eaf0] bg-white p-2.5 text-left cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50 group/carte">
+            <span className="w-9 h-9 shrink-0 rounded-lg bg-[#f1f4f7] text-[#16202b] grid place-items-center group-hover/carte:bg-[#ad0707] group-hover/carte:text-white transition-colors duration-150">{CATALOGUE[t.type].icone}</span>
+            <span className="min-w-0">
+              <span className="block text-[13px] font-semibold text-[#16202b]">{t.libelle}</span>
+              <span className="block text-[11.5px] leading-snug text-[#5b6b7a]">{CATALOGUE[t.type].aide}</span>
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Bouton rond « + »
+function BoutonPlus({ onClick, libelle, cache = false, ouvert = false }: { onClick: () => void; libelle: string; cache?: boolean; ouvert?: boolean }) {
+  return (
+    <button type="button" onClick={(e) => { e.stopPropagation(); onClick(); }} aria-label={libelle} title={libelle} aria-expanded={ouvert}
+      className={`relative w-7 h-7 rounded-full border-2 border-white text-white grid place-items-center cursor-pointer shadow transition-[opacity,transform] duration-150 ${ouvert ? "rotate-45" : ""} ${cache ? "opacity-0 group-hover/ins:opacity-100 focus:opacity-100" : ""}`} style={{ background: BLEU }}>
+      <Plus size={15} />
+    </button>
+  );
+}
+
+// Entre deux sections, au survol : ajoute un emplacement vide
+function Inserer({ onAjout }: { onAjout: () => void }) {
   return (
     <div className="group/ins relative h-4 -my-2 z-20 flex items-center justify-center">
-      <span className={`absolute inset-x-0 h-0.5 ${ouvert ? "opacity-100" : "opacity-0 group-hover/ins:opacity-100"}`} style={{ background: BLEU }} />
-      <button type="button" onClick={() => setOuvert((o) => !o)} aria-label="Ajouter une section ici" aria-expanded={ouvert} title="Ajouter une section ici"
-        className={`relative w-7 h-7 rounded-full border-2 border-white text-white grid place-items-center cursor-pointer shadow transition-[opacity,transform] duration-150 ${ouvert ? "opacity-100 rotate-45" : "opacity-0 group-hover/ins:opacity-100 focus:opacity-100"}`} style={{ background: BLEU }}>
-        <Plus size={15} />
-      </button>
-      {ouvert ? (
-        <div className="absolute top-6 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)]" style={{ fontFamily: "var(--font-texte)" }}>
-          <div className="flex items-center justify-between px-1 pb-2">
-            <b className="text-[13px] text-[#16202b]">Ajouter une section</b>
-            <button type="button" onClick={() => setOuvert(false)} aria-label="Fermer" className="w-7 h-7 grid place-items-center rounded-md border-0 bg-transparent text-[#5b6b7a] cursor-pointer hover:bg-[#f1f4f7]"><X size={15} /></button>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-            {TYPES_SECTION.map((t) => (
-              <button key={t.type} type="button" onClick={() => { onAjout(t.type); setOuvert(false); }}
-                className="flex items-start gap-2.5 rounded-xl border border-[#e5eaf0] bg-white p-2.5 text-left cursor-pointer transition-colors duration-150 hover:border-[#ad0707] hover:bg-[#fdeaed]/50 group/carte">
-                <span className="w-9 h-9 shrink-0 rounded-lg bg-[#f1f4f7] text-[#16202b] grid place-items-center group-hover/carte:bg-[#ad0707] group-hover/carte:text-white transition-colors duration-150">{CATALOGUE[t.type].icone}</span>
-                <span className="min-w-0">
-                  <span className="block text-[13px] font-semibold text-[#16202b]">{t.libelle}</span>
-                  <span className="block text-[11.5px] leading-snug text-[#5b6b7a]">{CATALOGUE[t.type].aide}</span>
-                </span>
-              </button>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      <span className="absolute inset-x-0 h-0.5 opacity-0 group-hover/ins:opacity-100" style={{ background: BLEU }} />
+      <BoutonPlus onClick={onAjout} libelle="Ajouter une section ici" cache />
+    </div>
+  );
+}
+
+// Emplacement vide : une petite section blanche, son « + » propose les types de section
+function Emplacement({ onChoix }: { onChoix: (t: TypeSection) => void }) {
+  const [ouvert, setOuvert] = useState(false);
+  return (
+    <div className="relative flex justify-center py-6 border-2 border-dashed border-[#d5d8dd] rounded-sm">
+      <BoutonPlus onClick={() => setOuvert((o) => !o)} libelle="Choisir le type de section" ouvert={ouvert} />
+      {ouvert ? <Catalogue onChoix={(t) => { setOuvert(false); onChoix(t); }} onFermer={() => setOuvert(false)} /> : null}
     </div>
   );
 }
@@ -305,6 +327,10 @@ function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
   );
 }
 
+// Dans l'éditeur seulement : un emplacement vide en attente de son type (jamais enregistré)
+type Bloc = Section | { id: string; type: "emplacement" };
+const estSection = (b: Bloc): b is Section => b.type !== "emplacement";
+
 // Éditeur : la lettre telle qu'elle sera reçue, faite de sections modifiables, déplaçables, supprimables
 export function EditeurBlocs({
   initial,
@@ -319,7 +345,7 @@ export function EditeurBlocs({
   variables?: readonly { cle: string; libelle: string }[];
   mention?: string;
 }) {
-  const [doc, setDoc] = useState<DocLettre>(initial);
+  const [doc, setDoc] = useState<Omit<DocLettre, "sections"> & { sections: Bloc[] }>(initial);
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
   const [plein, setPlein] = useState(false);
@@ -334,10 +360,16 @@ export function EditeurBlocs({
     return () => { document.body.style.overflow = avant; window.removeEventListener("keydown", echap); };
   }, [plein]);
 
-  const maj = (id: string, c: Partial<Section>) => setDoc((d) => ({ ...d, sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...c } as Section) : s)) }));
-  const inserer = (i: number, t: TypeSection) => {
+  const maj = (id: string, c: Partial<Section>) => setDoc((d) => ({ ...d, sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...c } as Bloc) : s)) }));
+  // « + » : un emplacement vide, dont on choisit ensuite le type
+  const inserer = (i: number) => {
+    const e: Bloc = { id: nouvelId(), type: "emplacement" };
+    setDoc((d) => ({ ...d, sections: [...d.sections.slice(0, i), e, ...d.sections.slice(i)] }));
+    setChoisie(e.id);
+  };
+  const remplir = (id: string, t: TypeSection) => {
     const s = sectionVide(t, reseaux);
-    setDoc((d) => ({ ...d, sections: [...d.sections.slice(0, i), s, ...d.sections.slice(i)] }));
+    setDoc((d) => ({ ...d, sections: d.sections.map((b) => (b.id === id ? s : b)) }));
     setChoisie(s.id);
   };
   const deplacer = (i: number, sens: -1 | 1) => setDoc((d) => {
@@ -357,7 +389,7 @@ export function EditeurBlocs({
   return (
     <VariablesProposees.Provider value={variables}>
     <div className={plein ? "fixed inset-0 z-[100] flex flex-col gap-3 bg-surface p-4 overflow-y-auto" : "flex flex-col gap-3"}>
-      <input type="hidden" name={name} value={JSON.stringify(doc)} />
+      <input type="hidden" name={name} value={JSON.stringify({ ...doc, sections: doc.sections.filter(estSection) })} />
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-2 text-[12px] text-muted">
           Fond autour :
@@ -373,35 +405,42 @@ export function EditeurBlocs({
       </div>
 
       <div className={`rounded-[var(--radius-m)] border border-line px-3 py-8 overflow-x-auto flex flex-col ${plein ? "flex-1" : "min-h-[100vh]"}`} style={{ background: hex(doc.fond) }}>
+        {doc.sections.length ? (
+        <>
         <div className="mx-auto w-full flex-1 bg-white rounded-[14px]" style={{ maxWidth: LARGEUR, fontFamily: "var(--font-texte), Inter, Arial, sans-serif" }}>
-          <Inserer onAjout={(t) => inserer(0, t)} />
+          <Inserer onAjout={() => inserer(0)} />
           {doc.sections.map((s, i) => {
             const actif = choisie === s.id;
-            const libelle = TYPES_SECTION.find((t) => t.type === s.type)!.libelle;
+            const libelle = estSection(s) ? TYPES_SECTION.find((t) => t.type === s.type)!.libelle : "Section vide";
             return (
               <div key={s.id}>
                 <div className="group/sec relative" onClick={() => setChoisie(s.id)}>
                   <div className={`absolute inset-0 pointer-events-none z-[1] rounded-sm ${actif ? "ring-2" : "ring-0 group-hover/sec:ring-1"}`} style={{ ["--tw-ring-color" as string]: BLEU }} />
                   <div className={`absolute right-1 -top-4 z-20 items-center gap-0.5 rounded-xl border border-[#e5eaf0] bg-white p-1 shadow-[0_8px_24px_-8px_rgb(15_29_44/0.25)] ${actif ? "flex" : "hidden group-hover/sec:flex"}`} style={{ fontFamily: "var(--font-texte)" }}>
                     <span className="px-2 text-[11.5px] font-semibold text-[#5b6b7a]">{libelle}</span>
-                    <Outil libelle="Style" actif={style === s.id} onClick={() => setStyle(style === s.id ? null : s.id)}><Paintbrush size={13} /></Outil>
+                    {estSection(s) ? <Outil libelle="Style" actif={style === s.id} onClick={() => setStyle(style === s.id ? null : s.id)}><Paintbrush size={13} /></Outil> : null}
                     <Outil libelle="Monter" onClick={() => deplacer(i, -1)} disabled={i === 0}><ArrowUp size={13} /></Outil>
                     <Outil libelle="Descendre" onClick={() => deplacer(i, 1)} disabled={i === doc.sections.length - 1}><ArrowDown size={13} /></Outil>
                     <Outil libelle="Dupliquer" onClick={() => dupliquer(i)}><Copy size={13} /></Outil>
                     <Outil libelle="Supprimer la section" onClick={() => supprimer(s.id)}><Trash2 size={13} /></Outil>
                   </div>
-                  <RenduSection s={s} maj={(c) => maj(s.id, c)} actif={actif} />
+                  {estSection(s) ? <RenduSection s={s} maj={(c) => maj(s.id, c)} actif={actif} /> : <Emplacement onChoix={(t) => remplir(s.id, t)} />}
                 </div>
-                {style === s.id ? <Style s={s} maj={(c) => maj(s.id, c)} /> : null}
-                <Inserer onAjout={(t) => inserer(i + 1, t)} />
+                {style === s.id && estSection(s) ? <Style s={s} maj={(c) => maj(s.id, c)} /> : null}
+                <Inserer onAjout={() => inserer(i + 1)} />
               </div>
             );
           })}
-          {!doc.sections.length ? <p className="m-0 py-16 text-center text-[13px] text-muted">Lettre vide. Ajoutez une section avec le « + ».</p> : null}
         </div>
         <p className="mx-auto mt-3 text-center text-[11.5px]" style={{ maxWidth: LARGEUR, color: hex("ardoise") }}>
           {mention}
         </p>
+        </>
+        ) : (
+          <div className="flex justify-center pt-4">
+            <BoutonPlus onClick={() => inserer(0)} libelle="Ajouter une section" />
+          </div>
+        )}
       </div>
     </div>
     </VariablesProposees.Provider>
