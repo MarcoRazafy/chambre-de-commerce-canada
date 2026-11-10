@@ -9,7 +9,7 @@ import { NEWS } from "./fixtures/news";
 import { OFFERS, SERVICES } from "./fixtures/offers";
 import { RESOURCES } from "./fixtures/resources";
 import { THREADS } from "./fixtures/threads";
-import { CONTACTS, USERS } from "./fixtures/users";
+import { CONTACTS, EQUIPE, USERS } from "./fixtures/users";
 import { hacher } from "../lib/mots-de-passe";
 
 const SCHEMA = new URL(process.env.DATABASE_URL ?? "postgres://x/x").searchParams.get("schema") || undefined;
@@ -185,6 +185,21 @@ async function main() {
         memberId: u.memberId,
         motDePasse: MOT_DE_PASSE,
         contactPrincipal: u.role === "membre" || u.role === "visiteur",
+      },
+    });
+  }
+  for (const e of EQUIPE) {
+    await prisma.user.create({
+      data: {
+        id: e.id,
+        role: "admin",
+        niveauEquipe: e.niveau,
+        nom: e.nom,
+        fonction: e.fonction,
+        email: e.email,
+        tel: e.tel,
+        photo: e.photo,
+        motDePasse: e.jamaisConnecte ? null : MOT_DE_PASSE,
       },
     });
   }

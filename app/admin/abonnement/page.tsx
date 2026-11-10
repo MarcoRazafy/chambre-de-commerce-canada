@@ -12,7 +12,7 @@ import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 
 // Abonnement de la Chambre à la plateforme (forfait + comptes actifs de l'équipe), l'équipe et ses accès, les factures
-export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string; q?: string }> }) {
+export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
   const sp = await searchParams;
   const onglet = sp.onglet === "factures" ? "factures" : "equipe";
   await assurerFactureDuMois();
@@ -74,7 +74,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
           ]}
         />
 
-        {onglet === "equipe" ? <OngletEquipe q={sp.q} /> : null}
+        {onglet === "equipe" ? <OngletEquipe /> : null}
 
         {onglet === "factures" ? (
           <Panneau titre="Factures de l’abonnement" sousTitre={`Émises le ${c.jourFacturation === 1 ? "1er" : c.jourFacturation} du mois`} teinte="degrade" corpsClassName="px-0 pb-0">

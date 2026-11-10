@@ -116,7 +116,7 @@ export async function creerCompteEquipe(formData: FormData) {
       EQUIPE,
       existant.role === "admin"
         ? `${email} fait déjà partie de l’équipe.`
-        : `${email} a déjà un compte : cherchez-le plus bas pour le promouvoir.`,
+        : `${email} a déjà un compte de membre.`,
     );
   }
 

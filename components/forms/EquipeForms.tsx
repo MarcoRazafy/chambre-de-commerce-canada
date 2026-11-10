@@ -328,7 +328,7 @@ export function CarteEquipier({
           type="button"
           onClick={ouvrir}
           aria-haspopup="dialog"
-          className="w-full h-full flex gap-3 p-4 rounded-[var(--radius-m)] border border-line bg-transparent text-left cursor-pointer min-w-0 transition-colors hover:border-accent hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
+          className="w-full flex items-center gap-3 px-2 py-3 bg-transparent border-0 text-left cursor-pointer min-w-0 transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-accent"
         >
           <Pastille
             src={a.photo}
@@ -337,17 +337,26 @@ export function CarteEquipier({
             taille={40}
             className="bg-navy-soft text-navy"
           />
-          <span className="min-w-0 flex-1 block">
+          <span className="min-w-0 flex-1 basis-0 block">
             <span className="flex items-center gap-2 flex-wrap">
               <span className="text-[14.5px] font-semibold text-ink">
                 {a.nom}
               </span>
               {pastilles}
             </span>
-            <span className="block text-[12.8px] text-muted">{a.fonction}</span>
-            <span className="block mt-1.5 text-[12.5px] text-faint truncate">
-              {a.email}
+            <span className="block text-[12.8px] text-muted truncate">
+              {a.fonction}
+              <span className="md:hidden"> · {a.email}</span>
             </span>
+          </span>
+          <span className="hidden md:block flex-1 basis-0 min-w-0 text-[13px] text-muted truncate">
+            {a.email}
+          </span>
+          <span className="hidden lg:block w-[150px] shrink-0 text-[13px] text-muted tabular-nums">
+            {a.tel ?? <span className="text-faint">—</span>}
+          </span>
+          <span className="hidden sm:block w-[120px] shrink-0 text-right text-[12.5px] text-faint">
+            Depuis le {fmtDate(a.depuis, { day: "numeric", month: "short", year: "numeric" })}
           </span>
         </button>
       )}

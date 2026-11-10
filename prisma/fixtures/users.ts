@@ -227,3 +227,66 @@ export const CONTACTS: {
     principal: true,
   },
 ];
+
+// Équipe de démonstration : comptes du back-office en plus de u-admin (onglet « Équipe & accès »)
+export const EQUIPE: {
+  id: string;
+  niveau: "administrateur" | "manager";
+  nom: string;
+  fonction: string;
+  email: string;
+  tel: string | null;
+  photo: string | null;
+  jamaisConnecte?: boolean;
+}[] = [
+  {
+    id: "u-equipe-direction",
+    niveau: "administrateur",
+    nom: "Fanja Rabemananjara",
+    fonction: "Directrice adjointe",
+    email: "fanja.rabemananjara@cancham.mg",
+    tel: "+261 32 05 448 12",
+    photo:
+      "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=400&h=400&q=80&auto=format&fit=crop&crop=faces",
+  },
+  {
+    id: "u-equipe-adhesions",
+    niveau: "manager",
+    nom: "Mialy Randriamanantena",
+    fonction: "Chargée des adhésions",
+    email: "mialy.randriamanantena@cancham.mg",
+    tel: "+261 34 22 190 45",
+    photo:
+      "https://images.unsplash.com/photo-1589156280159-27698a70f29e?w=400&h=400&q=80&auto=format&fit=crop&crop=faces",
+  },
+  {
+    id: "u-equipe-evenements",
+    niveau: "manager",
+    nom: "Haja Rakotondrabe",
+    fonction: "Responsable événements",
+    email: "haja.rakotondrabe@cancham.mg",
+    tel: "+261 33 11 760 08",
+    photo:
+      "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&h=400&q=80&auto=format&fit=crop&crop=faces",
+  },
+  {
+    id: "u-equipe-communication",
+    niveau: "manager",
+    nom: "Sitraka Andrianjafy",
+    fonction: "Communication & newsletter",
+    email: "sitraka.andrianjafy@cancham.mg",
+    tel: null,
+    photo: null,
+    jamaisConnecte: true,
+  },
+  {
+    id: "u-equipe-comptabilite",
+    niveau: "administrateur",
+    nom: "Lova Ramaroson",
+    fonction: "Comptabilité & facturation",
+    email: "lova.ramaroson@cancham.mg",
+    tel: "+261 34 40 305 77",
+    photo:
+      "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=400&h=400&q=80&auto=format&fit=crop&crop=faces",
+  },
+];
