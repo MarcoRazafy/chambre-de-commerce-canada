@@ -8,11 +8,12 @@ import { SauvegardeAuto } from "@/components/newsletter/SauvegardeAuto";
 import { SelecteurTags } from "@/components/newsletter/SelecteurTags";
 import { docBlanc, docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
 import { COORDONNEES } from "@/lib/coordonnees";
+import { getProfilChambre } from "@/lib/profil-chambre";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 
 // Rédaction d'une lettre : objet, éditeur visuel en blocs, audience ; brouillon, test, envoi
-export function EditeurLettre({
+export async function EditeurLettre({
   lettre,
   audience,
   etiquettes,
@@ -38,7 +39,7 @@ export function EditeurLettre({
             <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet du courriel</span>
             <input name="sujet" required maxLength={200} defaultValue={lettre?.sujet ?? ""} placeholder="Ex. Les rendez-vous de la Chambre en décembre" className={CHAMP} />
           </label>
-          <EditeurBlocs initial={initial} reseaux={reseaux} />
+          <EditeurBlocs initial={initial} reseaux={reseaux} logo={(await getProfilChambre()).logo} />
         </div>
       </Panneau>
 

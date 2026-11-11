@@ -70,6 +70,8 @@ import {
 const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
 // Variables proposées dans la barre de mise en forme (newsletter par défaut ; un rappel a les siennes)
 const VariablesProposees = createContext<readonly { cle: string; libelle: string }[]>(VARIABLES);
+// Logo de l'entreprise, montré par une section Logo sans image choisie
+const LogoDefaut = createContext("/marque/logo-couleur.png");
 // Une section posée dans une colonne : marges des côtés resserrées
 const DansColonne = createContext(false);
 const serre = (p: string) => { const t = p.split(" "); return t.length >= 2 ? [t[0], "4px", ...t.slice(2)].join(" ") : p; };
@@ -404,12 +406,14 @@ export function EditeurBlocs({
   name = "contenu",
   variables = VARIABLES,
   mention = "Vous recevez ce message en tant que membre de la Chambre.",
+  logo = "/marque/logo-couleur.png",
 }: {
   initial: DocLettre;
   reseaux: Partial<Record<Reseau, string>>;
   name?: string;
   variables?: readonly { cle: string; libelle: string }[];
   mention?: string;
+  logo?: string;
 }) {
   // Une lettre sans section commence par un emplacement vide
   const [doc, setDoc] = useState<Omit<DocLettre, "sections"> & { sections: Bloc[] }>(() =>
@@ -517,6 +521,7 @@ export function EditeurBlocs({
   const supprimer = (id: string) => setDoc((d) => ({ ...d, sections: d.sections.filter((s) => s.id !== id) }));
 
   return (
+    <LogoDefaut.Provider value={logo}>
     <VariablesProposees.Provider value={variables}>
     <div className={plein ? "fixed inset-0 z-[100] flex flex-col gap-3 bg-surface p-4 overflow-y-auto" : "flex flex-col gap-3"}>
       <input type="hidden" name={name} value={JSON.stringify({ ...doc, sections: doc.sections.filter(estSection) })} />
@@ -580,6 +585,7 @@ export function EditeurBlocs({
       </div>
     </div>
     </VariablesProposees.Provider>
+    </LogoDefaut.Provider>
   );
 }
 
@@ -682,6 +688,7 @@ function Colonne({ sections, onChange, aCote }: { sections: Section[]; onChange:
 function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>) => void; actif: boolean }) {
   const m = maj as (c: Record<string, unknown>) => void;
   const imbrique = useContext(DansColonne);
+  const logoDefaut = useContext(LogoDefaut);
   const cadre = (contenu: ReactNode, padding: string, extra?: ReactNode) => (
     <div className="relative" style={{ ...fondCss(s.fond), padding: imbrique ? serre(padding) : padding, textAlign: s.align }}>
       {actif ? extra : null}
@@ -692,7 +699,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
     case "logo":
       return cadre(
         // eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel
-        <img src={s.image || "/marque/logo-couleur.png"} alt="Logo" style={{ width: s.largeur || 150, maxWidth: "100%", height: "auto", display: "inline-block" }} />,
+        <img src={s.image || logoDefaut} alt="Logo" style={{ width: s.largeur || 150, maxWidth: "100%", height: "auto", display: "inline-block" }} />,
         "24px 32px 18px",
         <Actions>
           <BoutonImage libelle="Changer le logo" onUrl={(image) => m({ image })} />

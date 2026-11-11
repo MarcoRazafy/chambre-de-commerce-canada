@@ -4,6 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { prisma } from "@/lib/db";
 import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
 import { COORDONNEES } from "@/lib/coordonnees";
+import { logoPourCourriel } from "@/lib/profil-chambre";
 import { lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 import { appliquerReglesTags } from "@/lib/tags-auto";
 
@@ -94,6 +95,13 @@ export function signatureValide(email: string, s: string) {
   return attendu.length === recu.length && timingSafeEqual(attendu, recu);
 }
 
+// Logo de « Mon entreprise », relu au plus toutes les 30 s (une lettre part vers beaucoup d'adresses)
+let logoMemo: { jusqua: number; url: string | undefined } | null = null;
+async function logoEntreprise() {
+  if (!logoMemo || logoMemo.jusqua < Date.now()) logoMemo = { jusqua: Date.now() + 30_000, url: await logoPourCourriel() };
+  return logoMemo.url;
+}
+
 async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
   const desabonnement = d.abonne
     ? await urlPublique(`/desabonnement?${new URLSearchParams({ e: d.email, s: signature(d.email) })}`)
@@ -107,6 +115,7 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
       mention: d.abonne ? "Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information." : (d.motif ?? "Vous recevez ce message en tant que membre de la Chambre."),
       desabonnement,
       coordonnees: { adresse: COORDONNEES.adresse, email: COORDONNEES.email, telephone: COORDONNEES.telephone, confidentialite: COORDONNEES.legal.confidentialite },
+      logo: await logoEntreprise(),
     };
     return { a: d.email, sujet, html: versHtml(doc, o), texte: versTexte(doc, o) };
   }

@@ -71,6 +71,7 @@ let courrielsOk = true;
 vi.mock("@/lib/db", () => ({
   prisma: {
     rappelEvenement: { findMany: async () => rappels },
+    profilChambre: { findUnique: async () => null },
     attendee: { findMany: async () => inscrits },
     rappelEnvoye: {
       createMany: async ({ data }: { data: { eventId: string; type: string; email: string }[] }) => {

@@ -2,6 +2,7 @@ import Link from "next/link";
 import { BellRing, Pencil, Plus, Save, TestTube, Trash2 } from "lucide-react";
 import { Panneau } from "@/components/admin/ui";
 import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import { Card, Pill } from "@/components/ui";
 import { enregistrerRappel, supprimerRappel } from "@/lib/actions/rappels";
 import { COORDONNEES } from "@/lib/coordonnees";
@@ -55,7 +56,7 @@ export async function CourrielEvenement({
   return (
     <div className="flex flex-col gap-4">
       {formulaire ? (
-        <FormulaireRappel eventId={e.id} titre={e.titre} rappel={ouvert} retour={base} debut={debut} />
+        <FormulaireRappel eventId={e.id} titre={e.titre} rappel={ouvert} retour={base} debut={debut} logo={(await getProfilChambre()).logo} />
       ) : (
         <div>
           {passe ? (
@@ -137,7 +138,9 @@ function FormulaireRappel({
   rappel,
   retour,
   debut,
+  logo,
 }: {
+  logo: string;
   eventId: string;
   titre: string;
   rappel: { id: string; titre: string | null; dates: Date[]; avant: number; sujet: string | null; message: string | null } | null;
@@ -174,7 +177,7 @@ function FormulaireRappel({
 
         <div>
           <span className="block text-[12.5px] font-semibold text-muted mb-2">Message</span>
-          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL}
+          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} logo={logo}
             mention="Vous recevez ce rappel car vous êtes inscrit(e) à cet événement." />
           <p className="m-0 mt-2 text-[12px] text-faint">Les QR codes d’entrée s’ajoutent à la fin, pour les inscrits confirmés.</p>
         </div>

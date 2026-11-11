@@ -5,6 +5,7 @@ import { courrielsActifs, envoyerCourriel, urlPublique, type Courriel } from "@/
 import { COORDONNEES } from "@/lib/coordonnees";
 import { docDepuisTexte, lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 import { prisma } from "@/lib/db";
+import { logoPourCourriel } from "@/lib/profil-chambre";
 import { toISODate } from "@/lib/enums";
 import { pngQr } from "@/lib/qr";
 import {
@@ -58,6 +59,7 @@ export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: 
     desabonnement: null,
     coordonnees: { adresse: COORDONNEES.adresse, email: COORDONNEES.email, telephone: COORDONNEES.telephone, confidentialite: COORDONNEES.legal.confidentialite },
     apres: codes,
+    logo: await logoPourCourriel(),
   };
   return { a: email, sujet, pieces, html: versHtml(doc, o), texte: versTexte(doc, o) };
 }

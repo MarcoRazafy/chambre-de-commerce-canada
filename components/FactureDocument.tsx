@@ -19,14 +19,10 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
 
       <div className="px-8 sm:px-12 py-10 print:px-[16mm] print:py-[14mm] print:flex-1 print:flex print:flex-col">
         <header className="flex justify-between items-start gap-8 flex-wrap">
-          <Image
-            src={e.logo}
-            alt={e.raisonSociale}
-            width={1600}
-            height={647}
-            className="w-[220px] max-h-[110px] h-auto object-contain object-left"
-            priority
-          />
+          {/* Large, carré ou en hauteur : le logo tient entier dans ce cadre, calé à gauche */}
+          <span className="relative block w-[220px] h-[90px] shrink-0">
+            <Image src={e.logo} alt={e.raisonSociale} fill sizes="220px" className="object-contain object-left" priority />
+          </span>
           <div className="text-right">
             <div className="surtitre text-[#ad0707]">Facture</div>
             <div className="font-[family-name:var(--font-mono)] text-[22px] font-bold mt-1">

@@ -318,6 +318,7 @@ export type OptionsRendu = {
   desabonnement: string | null; // lien de désabonnement (abonnés à la lettre)
   coordonnees: { adresse: string; email: string; telephone: string; confidentialite: string };
   apres?: string; // lignes HTML (<tr>) ajoutées après les sections, ex. les QR codes d'un rappel
+  logo?: string; // logo de l'entreprise (« Mon entreprise »), pour une section Logo sans image choisie
 };
 
 // Fond d'une section, pour un courriel (couleur de repli quand le dégradé n'est pas affiché)
@@ -348,7 +349,7 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
   const section = (s: Section): string => {
     switch (s.type) {
       case "logo":
-        return cellule(s, `<img src="${echapper(s.image ? abs(s.image) : `${o.base}/marque/logo-couleur.png`)}" width="${s.largeur}" alt="Logo" style="display:inline-block;width:${s.largeur}px;max-width:100%;height:auto;border:0">`, "24px 32px 18px");
+        return cellule(s, `<img src="${echapper(abs(s.image || o.logo || "/marque/logo-couleur.png"))}" width="${s.largeur}" alt="Logo" style="display:inline-block;width:${s.largeur}px;max-width:100%;height:auto;border:0">`, "24px 32px 18px");
       case "bandeau":
         return `<tr><td style="padding:0 0 24px"><table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="${s.align}" ${s.image ? `background="${echapper(abs(s.image))}" ` : ""}style="${styleFond(s.fond, s.image, abs)}padding:56px 40px;text-align:${s.align}">${s.titre ? `<div style="font-size:${s.taille}px;line-height:1.12;font-weight:800;letter-spacing:-0.02em;color:${hex(s.couleur)}">${r(s.titre)}</div>` : ""}${s.sousTitre ? `<div style="margin-top:10px;font-size:${Math.round(s.taille * 0.5)}px;line-height:1.35;font-weight:600;color:${hex(s.couleur)}">${r(s.sousTitre)}</div>` : ""}</td></tr></table></td></tr>`;
       case "titre":

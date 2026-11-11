@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Building2, Globe, Mail, MapPin, Phone, Save } from "lucide-react";
+import { Globe, Mail, MapPin, Phone, Save } from "lucide-react";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
 import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
@@ -7,7 +7,7 @@ import { Field, SubmitButton } from "@/components/form-bits";
 import { Card, Saillant } from "@/components/ui";
 import { enregistrerProfilChambre } from "@/lib/actions/profil-chambre";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
-import { completerProfil, numerosFiscaux } from "@/lib/profil-chambre-defauts";
+import { completerProfil } from "@/lib/profil-chambre-defauts";
 
 // « Mon entreprise » : la Chambre elle-même. Sa présentation (logo, couverture, coordonnées)
 // et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ ; le logo est celui de l'entreprise)
@@ -31,8 +31,11 @@ export default async function MonEntreprise() {
           <IconesImageChambre champ="couverture" personnalisee={Boolean(brut?.couverture)} className="absolute top-3 right-3" />
         </div>
         <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
-          <span className="relative -mt-12 w-[168px] h-[92px] shrink-0 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)] grid place-items-center p-3">
-            <Image src={p.logo} alt={p.nom} width={320} height={180} className="max-w-full max-h-full w-auto h-auto object-contain" />
+          <span className="relative -mt-12 w-[168px] h-[92px] shrink-0 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]">
+            {/* Large, carré ou en hauteur : le logo tient toujours entier dans le cadre */}
+            <span className="absolute inset-2.5 overflow-hidden">
+              <Image src={p.logo} alt={p.nom} fill sizes="168px" className="object-contain" />
+            </span>
             <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} className="absolute -bottom-3 -right-3" />
           </span>
           <div className="min-w-0 flex-1 sm:pt-3">
@@ -47,7 +50,7 @@ export default async function MonEntreprise() {
         </div>
       </Card>
 
-      <form action={enregistrerProfilChambre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+      <form action={enregistrerProfilChambre} className="flex flex-col gap-4">
         <Panneau titre="La Chambre" sousTitre="Sa présentation, ses coordonnées et ce qui figure sur ses factures" teinte="rouge">
           <div className="flex flex-col gap-4">
             <Field label="Nom">
@@ -95,21 +98,7 @@ export default async function MonEntreprise() {
           </div>
         </Panneau>
 
-        <Card className="p-5 lg:sticky lg:top-4">
-          <div className="text-[11.5px] uppercase tracking-[0.12em] font-semibold text-faint mb-3">Aperçu sur une facture</div>
-          <div className="flex items-start gap-4">
-            <span className="w-[110px] h-[56px] shrink-0 grid place-items-center">
-              <Image src={p.logo} alt="" width={220} height={112} className="max-w-full max-h-full w-auto h-auto object-contain" />
-            </span>
-            <div className="text-[12.5px] leading-relaxed text-ink min-w-0">
-              <div className="font-bold text-[13.5px] inline-flex items-center gap-1.5"><Building2 size={14} className="text-muted shrink-0" />{p.raisonSociale}</div>
-              <div className="text-muted whitespace-pre-line">{p.adresseFacturation}</div>
-              <div className="text-muted">{numerosFiscaux(p).join(" · ")}</div>
-            </div>
-          </div>
-        </Card>
-
-        <div className="lg:col-span-2 sticky bottom-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-end gap-3 flex-wrap">
+        <div className="sticky bottom-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-end gap-3 flex-wrap">
           <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer les modifications</SubmitButton>
         </div>
       </form>
