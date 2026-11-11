@@ -141,15 +141,20 @@ describe("abonnement à la plateforme", () => {
     expect(configPlateforme({ PLATEFORME_FORFAIT: "abc", PLATEFORME_PRIX_UTILISATEUR: "-3" })).toMatchObject({ forfait: 100, parUtilisateur: 15 });
   });
 
-  it("calcule la facture : forfait + comptes d'équipe, puis TPS et TVQ", () => {
-    expect(facturePlateforme(7, configPlateforme({}))).toEqual({
+  it("calcule la facture : forfait + comptes d'équipe (super admin offert), puis TPS et TVQ", () => {
+    expect(facturePlateforme(8, configPlateforme({}))).toEqual({
       forfait: 100,
+      payants: 7,
+      offerts: 1,
       equipe: 105,
       sousTotal: 205,
       tps: 10.25,
       tvq: 20.45,
       total: 235.7,
     });
+    // Le super admin seul : rien en plus du forfait
+    expect(facturePlateforme(1, configPlateforme({}))).toMatchObject({ payants: 0, offerts: 1, equipe: 0, sousTotal: 100 });
+    expect(facturePlateforme(0, configPlateforme({}))).toMatchObject({ payants: 0, offerts: 0, equipe: 0 });
   });
 
   it("numérote la facture du mois et ne l'émet qu'une fois son jour arrivé", () => {

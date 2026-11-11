@@ -8,7 +8,7 @@ import { Pill } from "@/components/ui";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { getFacturePlateforme } from "@/lib/factures-plateforme";
 import { fmtDate } from "@/lib/format";
-import { configPlateforme, fmtDollars, fmtPourcent } from "@/lib/plateforme";
+import { configPlateforme, fmtDollars, fmtPourcent, payantsFacture } from "@/lib/plateforme";
 
 // Une facture de l'abonnement à la plateforme, prête à imprimer ou à enregistrer en PDF (?pdf=1)
 export default async function FactureAbonnement({
@@ -21,6 +21,7 @@ export default async function FactureAbonnement({
   const [{ numero }, { pdf }] = await Promise.all([params, searchParams]);
   const f = await getFacturePlateforme(decodeURIComponent(numero));
   if (!f) notFound();
+  const payants = payantsFacture(f);
   const c = configPlateforme();
   const fournisseur = process.env.PLATEFORME_FOURNISSEUR?.trim() || "L’Alliée Virtuelle";
   const date = f.date.toISOString().slice(0, 10);
@@ -73,7 +74,8 @@ export default async function FactureAbonnement({
             </div>
             <div className="text-[14px]">
               <div className={ligne}><span>Forfait Chambre</span><span>{fmtDollars(f.forfait)}</span></div>
-              <div className={ligne}><span>{f.utilisateurs} utilisateur{f.utilisateurs > 1 ? "s" : ""} × {fmtDollars(f.parUtilisateur)}</span><span>{fmtDollars(f.sousTotal - f.forfait)}</span></div>
+              {f.utilisateurs > payants ? <div className={ligne}><span>Super admin</span><span>Offert</span></div> : null}
+              <div className={ligne}><span>{payants} utilisateur{payants > 1 ? "s" : ""} × {fmtDollars(f.parUtilisateur)}</span><span>{fmtDollars(f.sousTotal - f.forfait)}</span></div>
               <div className={`${ligne} border-t border-[#e5eaf0] mt-1`}><span>Sous-total</span><span>{fmtDollars(f.sousTotal)}</span></div>
               <div className={ligne}><span>TPS ({fmtPourcent(f.tauxTps)})</span><span>{fmtDollars(f.tps)}</span></div>
               <div className={ligne}><span>TVQ ({fmtPourcent(f.tauxTvq)})</span><span>{fmtDollars(f.tvq)}</span></div>

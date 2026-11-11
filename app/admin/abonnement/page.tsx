@@ -7,7 +7,7 @@ import { estAdministrateur } from "@/lib/autorisations";
 import { assurerFactureDuMois, getFacturesPlateforme } from "@/lib/factures-plateforme";
 import { Card, Pill, Saillant } from "@/components/ui";
 import { aujourdhuiISO, fmtDate } from "@/lib/format";
-import { configPlateforme, facturePlateforme, fmtDollars, fmtPourcent, prochaineFacturation } from "@/lib/plateforme";
+import { configPlateforme, facturePlateforme, fmtDollars, fmtPourcent, payantsFacture, prochaineFacturation } from "@/lib/plateforme";
 import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 
@@ -44,7 +44,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
           <div className="flex flex-wrap items-center gap-2.5 text-[16px]">
             <div className={bloc}><small className="text-[12px] text-muted">Forfait Chambre</small><b className="tabular-nums">{fmtDollars(f.forfait)}</b></div>
             <span className="text-muted font-bold">+</span>
-            <div className={bloc}><small className="text-[12px] text-muted">{n} utilisateur{n > 1 ? "s" : ""} × {fmtDollars(c.parUtilisateur)}</small><b className="tabular-nums">{fmtDollars(f.equipe)}</b></div>
+            <div className={bloc}><small className="text-[12px] text-muted">{f.payants} utilisateur{f.payants > 1 ? "s" : ""} × {fmtDollars(c.parUtilisateur)}{f.offerts ? " · super admin offert" : ""}</small><b className="tabular-nums">{fmtDollars(f.equipe)}</b></div>
             <span className="text-muted font-bold">=</span>
             <div className={`${bloc} border-accent`}><small className="text-[12px] text-muted">par mois, avant taxes</small><b className="tabular-nums">{fmtDollars(f.sousTotal)}</b></div>
           </div>
@@ -56,7 +56,8 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         <Panneau titre="Prochaine facture" teinte="rouge">
           <div className="flex flex-col gap-1.5 text-[14px]">
             <div className={ligne}><span>Forfait</span><span>{fmtDollars(f.forfait)}</span></div>
-            <div className={ligne}><span>{n} utilisateur{n > 1 ? "s" : ""}</span><span>{fmtDollars(f.equipe)}</span></div>
+            {f.offerts ? <div className={ligne}><span>Super admin</span><span>Offert</span></div> : null}
+            <div className={ligne}><span>{f.payants} utilisateur{f.payants > 1 ? "s" : ""}</span><span>{fmtDollars(f.equipe)}</span></div>
             <div className={ligne}><span>TPS ({fmtPourcent(c.tps)})</span><span>{fmtDollars(f.tps)}</span></div>
             <div className={ligne}><span>TVQ ({fmtPourcent(c.tvq)})</span><span>{fmtDollars(f.tvq)}</span></div>
             <div className={`${ligne} border-t-2 border-ink pt-2 mt-1 font-bold text-[16px]`}><span>Total le {fmtDate(echeance)}</span><span>{fmtDollars(f.total)}</span></div>
@@ -93,7 +94,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
                       <tr key={x.id} className="border-b border-line last:border-b-0 hover:bg-surface-2">
                         <td className="px-5 py-3.5 font-semibold text-ink tabular-nums">{x.numero}</td>
                         <td className="px-5 py-3.5 tabular-nums">{fmtDate(x.date.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</td>
-                        <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {x.utilisateurs} utilisateur{x.utilisateurs > 1 ? "s" : ""}</td>
+                        <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {payantsFacture(x)} utilisateur{payantsFacture(x) > 1 ? "s" : ""}</td>
                         <td className="px-5 py-3.5 text-right font-bold text-ink tabular-nums">{fmtDollars(x.total)}</td>
                         <td className="px-5 py-3.5">{x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</td>
                         <td className="px-5 py-3.5">

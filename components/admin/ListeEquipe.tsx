@@ -23,6 +23,8 @@ export function ListeEquipe({
   gere: boolean;
 }) {
   const [filtre, setFiltre] = useState<Filtre>("tous");
+  // Le super admin (compte offert) : le plus ancien administrateur (la liste est déjà de la plus ancienne à la plus récente)
+  const superAdminId = comptes.find((c) => c.niveau === "administrateur")?.id;
   const [q, setQ] = useState("");
 
   const onglets: { cle: Filtre; libelle: string; compte: number }[] = [
@@ -86,7 +88,7 @@ export function ListeEquipe({
         <ul className="list-none m-0 p-0">
           {visibles.map((a) => (
             <li key={a.id} className="border-b border-line last:border-b-0">
-              <CarteEquipier compte={a} cestMoi={a.id === moiId} gere={gere} />
+              <CarteEquipier compte={a} cestMoi={a.id === moiId} gere={gere} superAdmin={a.id === superAdminId} />
             </li>
           ))}
         </ul>

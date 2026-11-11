@@ -1,4 +1,5 @@
-// Abonnement de la Chambre à la plateforme : un forfait mensuel, plus chaque compte actif de l'équipe.
+// Abonnement de la Chambre à la plateforme : un forfait mensuel, plus chaque compte actif de l'équipe
+// (le super admin, le plus ancien administrateur, est offert).
 // Les montants (en $ CAD) et les taxes se règlent dans l'environnement ; les membres ne sont jamais facturés.
 
 export type ConfigPlateforme = {
@@ -28,13 +29,24 @@ export function configPlateforme(env: Record<string, string | undefined> = proce
 
 const cents = (n: number) => Math.round(n * 100) / 100;
 
+// Comptes offerts : le super admin
+export const UTILISATEURS_OFFERTS = 1;
+
+// Comptes payants parmi les comptes de l'équipe
+export const utilisateursPayants = (utilisateurs: number) => Math.max(0, utilisateurs - UTILISATEURS_OFFERTS);
+
 export function facturePlateforme(utilisateurs: number, c: ConfigPlateforme) {
-  const equipe = cents(utilisateurs * c.parUtilisateur);
+  const payants = utilisateursPayants(utilisateurs);
+  const equipe = cents(payants * c.parUtilisateur);
   const sousTotal = cents(c.forfait + equipe);
   const tps = cents((sousTotal * c.tps) / 100);
   const tvq = cents((sousTotal * c.tvq) / 100);
-  return { forfait: c.forfait, equipe, sousTotal, tps, tvq, total: cents(sousTotal + tps + tvq) };
+  return { forfait: c.forfait, payants, offerts: utilisateurs - payants, equipe, sousTotal, tps, tvq, total: cents(sousTotal + tps + tvq) };
 }
+
+// Comptes payants d'une facture déjà émise, d'après son montant (les anciennes factures comptaient tout le monde)
+export const payantsFacture = (f: { forfait: number; sousTotal: number; parUtilisateur: number }) =>
+  f.parUtilisateur > 0 ? Math.round((f.sousTotal - f.forfait) / f.parUtilisateur) : 0;
 
 // Prochaine date de facturation (le jour du mois réglé, aujourd'hui compris), en « AAAA-MM-JJ »
 export function prochaineFacturation(aujourdhui: string, jour: number): string {
