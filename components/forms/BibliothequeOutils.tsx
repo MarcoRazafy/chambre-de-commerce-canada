@@ -19,13 +19,8 @@ import {
   X,
 } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { ilYa } from "@/components/admin/LigneJournal";
 import {
   annulerPressePapier,

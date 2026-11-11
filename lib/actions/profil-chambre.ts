@@ -45,7 +45,6 @@ export async function enregistrerProfilChambre(formData: FormData) {
     logo,
     couverture,
     raisonSociale: texte(formData, "raisonSociale", 200),
-    adresseFacturation: texte(formData, "adresseFacturation", 500),
     neq: texte(formData, "neq", 40),
     tps: texte(formData, "tps", 40),
     tvq: texte(formData, "tvq", 40),

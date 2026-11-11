@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { EnTeteAdmin } from "@/components/admin/ui";
-import { Field, INPUT, SubmitButton } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { Field, SubmitButton } from "@/components/form-bits";
 import { Card, Saillant } from "@/components/ui";
 import { enregistrerCoordonneesPaiement } from "@/lib/actions/reglements";
 import { getCoordonneesPaiement } from "@/lib/reglements";

@@ -15,15 +15,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  ChampPhoto,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, ChampPhoto, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import {
   deleteService,
   deplacerService,

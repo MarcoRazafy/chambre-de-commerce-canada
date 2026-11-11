@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { CalendarCheck2, ChevronLeft, ChevronRight, Clock, Info } from "lucide-react";
-import { Field, INPUT, SubmitButton } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { Field, SubmitButton } from "@/components/form-bits";
 import { CarteType, ICONE_LIEU, QuiRecoit } from "@/components/rendezvous/CarteType";
 import { Card, EmptyState, Pill } from "@/components/ui";
 import { reserverRendezvous } from "@/lib/actions/rendezvous";

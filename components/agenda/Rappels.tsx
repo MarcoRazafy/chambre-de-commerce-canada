@@ -3,15 +3,8 @@
 import { useState, type CSSProperties, type ReactNode } from "react";
 import { Check, Pencil, Plus, Trash2 } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  FermerApresEnvoi,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, FermerApresEnvoi, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import {
   basculerRappelFait,
   creerRappel,

@@ -6,7 +6,7 @@ import { useState, useTransition } from "react";
 import { ExternalLink, Mail, Phone, Plus, Tag, User, X } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { LogoMark } from "@/components/domain";
-import { INPUT } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
 import { Pill, StatusPill } from "@/components/ui";
 import { majTagsEntreprise, retirerEtiquetteEntreprise } from "@/lib/actions/maillage";
 import type { EntrepriseContact } from "@/lib/contacts-admin";

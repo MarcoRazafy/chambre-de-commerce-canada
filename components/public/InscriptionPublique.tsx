@@ -2,14 +2,8 @@
 
 import { ArrowRight, Check } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { ChampsCoordonnees } from "@/components/forms/EventForms";
 import { inscriptionPublique } from "@/lib/actions/events";
 import { fmtMoney } from "@/lib/format";

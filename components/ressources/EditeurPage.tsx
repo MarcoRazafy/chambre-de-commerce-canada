@@ -40,7 +40,8 @@ import {
   useEnvois,
   type Envoi,
 } from "@/components/EnvoisSuivis";
-import { Field, INPUT } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { Field } from "@/components/form-bits";
 import { Card } from "@/components/ui";
 import { enregistrerPageRessource } from "@/lib/actions/content";
 import {

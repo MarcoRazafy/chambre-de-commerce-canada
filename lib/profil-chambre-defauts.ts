@@ -36,7 +36,7 @@ export function completerProfil(l: Ligne | null): ProfilChambre {
     logo,
     couverture: l?.couverture?.trim() || null,
     raisonSociale: v("raisonSociale", nom),
-    adresseFacturation: v("adresseFacturation", adresse),
+    adresseFacturation: adresse,
     neq: v("neq", ""),
     tps: v("tps", ""),
     tvq: v("tvq", ""),

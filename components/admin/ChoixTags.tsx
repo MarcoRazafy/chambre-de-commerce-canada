@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Plus, Tag } from "lucide-react";
-import { INPUT } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
 import { plat } from "@/lib/texte";
 
 const LIMITE = 5;

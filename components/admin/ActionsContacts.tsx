@@ -5,7 +5,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { AlertTriangle, ArrowRight, Check, FileUp, FolderOpen, ImagePlus, Plus, User, UserPlus, X } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { OptionsSecteurs } from "@/components/OptionsSecteurs";
-import { CancelButton, Field, INPUT, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { ajouterContact, importerContacts, type BilanImport } from "@/lib/actions/contacts";
 import {
   CHAMPS_IMPORT,

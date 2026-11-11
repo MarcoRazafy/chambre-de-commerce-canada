@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Check, ChevronLeft, ChevronRight, Plus } from "lucide-react";
-import { INPUT } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
 import { enregistrerMaillage } from "@/lib/actions/maillage";
 import {
   QUESTIONS,

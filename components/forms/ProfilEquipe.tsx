@@ -1,7 +1,8 @@
 "use client";
 
 import { Check, KeyRound } from "lucide-react";
-import { ChampPhoto, Field, INPUT, SubmitButton } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { ChampPhoto, Field, SubmitButton } from "@/components/form-bits";
 import { Card } from "@/components/ui";
 import { modifierProfilEquipe } from "@/lib/actions/equipe";
 import { changerMonMotDePasse } from "@/lib/actions/motdepasse";

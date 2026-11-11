@@ -22,16 +22,8 @@ import {
   type Envoi,
 } from "@/components/EnvoisSuivis";
 import { PLAFOND_FICHIER, PLAFOND_FICHIER_MO } from "@/lib/plafonds";
-import {
-  CancelButton,
-  ChampPhoto,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-  VoileEnvoi,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, ChampPhoto, Field, ModalBody, ModalFooter, SubmitButton, VoileEnvoi } from "@/components/form-bits";
 import { Card } from "@/components/ui";
 import {
   deleteNews,

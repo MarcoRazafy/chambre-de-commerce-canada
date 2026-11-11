@@ -2,7 +2,8 @@ import Image from "next/image";
 import { Building2, Globe, Mail, MapPin, Phone, Save } from "lucide-react";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
 import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
-import { Field, INPUT, SubmitButton } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { Field, SubmitButton } from "@/components/form-bits";
 import { Card, Saillant } from "@/components/ui";
 import { enregistrerProfilChambre } from "@/lib/actions/profil-chambre";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
@@ -56,7 +57,7 @@ export default async function MonEntreprise() {
               <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait l’entreprise, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
             </Field>
             <Field label="Adresse">
-              <input name="adresse" maxLength={500} defaultValue={v("adresse")} placeholder="Rue, ville, pays" className={INPUT} />
+              <input name="adresse" maxLength={500} defaultValue={v("adresse")} placeholder="Rue, Code postal, Ville, Pays" className={INPUT} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Courriel">
@@ -68,9 +69,6 @@ export default async function MonEntreprise() {
             </div>
             <Field label="Raison sociale">
               <input name="raisonSociale" maxLength={200} defaultValue={v("raisonSociale")} placeholder="Nom légal, s’il diffère du nom" className={INPUT} />
-            </Field>
-            <Field label="Adresse de facturation">
-              <textarea name="adresseFacturation" rows={2} maxLength={500} defaultValue={v("adresseFacturation")} placeholder="Si elle diffère de l’adresse" className={`${INPUT} block w-full resize-y`} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-3">
               <Field label="NEQ">

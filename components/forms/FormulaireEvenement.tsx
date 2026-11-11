@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { ArrowDown, ArrowUp, Check, Plus, Trash2, UserPlus } from "lucide-react";
-import { ChampPhoto, Field, INPUT, SubmitButton } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { ChampPhoto, Field, SubmitButton } from "@/components/form-bits";
 import { ChoixDiffusion } from "@/components/forms/ChoixDiffusion";
 import { ChoixTags } from "@/components/admin/ChoixTags";
 import { Card } from "@/components/ui";

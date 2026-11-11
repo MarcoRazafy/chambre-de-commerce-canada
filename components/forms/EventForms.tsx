@@ -14,14 +14,8 @@ import {
   X,
 } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import {
   addAttendee,
   cancelRegistration,

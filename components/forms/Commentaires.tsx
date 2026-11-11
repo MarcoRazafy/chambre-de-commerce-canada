@@ -3,14 +3,8 @@
 import { useOptimistic, useRef, useState, useTransition } from "react";
 import { Check, Pencil, Send, ThumbsUp, Trash2 } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  FermerApresEnvoi,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, FermerApresEnvoi, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import {
   SelecteurEmojis,
   insererAuCurseur,

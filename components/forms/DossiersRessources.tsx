@@ -14,15 +14,8 @@ import {
   Users,
 } from "lucide-react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  ChampPhoto,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, ChampPhoto, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { Card } from "@/components/ui";
 import type { MembreChoisissable } from "@/components/forms/BibliothequeOutils";
 import { ChoixEntreprises } from "@/components/forms/ChoixEntreprises";

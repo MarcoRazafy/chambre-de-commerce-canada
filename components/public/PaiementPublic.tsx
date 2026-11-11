@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Clock } from "lucide-react";
-import { SubmitButton, INPUT } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { SubmitButton } from "@/components/form-bits";
 import { Copiable } from "@/components/paiement/Copiable";
 import { VisuelMode } from "@/components/paiement/IconeMode";
 import {

@@ -17,14 +17,8 @@ import { OptionsSecteurs } from "@/components/OptionsSecteurs";
 import { PAYS } from "@/lib/accueil";
 import { useId, useState, type KeyboardEvent } from "react";
 import { Modal } from "@/components/Modal";
-import {
-  CancelButton,
-  Field,
-  INPUT,
-  ModalBody,
-  ModalFooter,
-  SubmitButton,
-} from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
+import { CancelButton, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { modifierDateReglement } from "@/lib/actions/factures";
 import {
   addContact,

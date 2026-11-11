@@ -2,7 +2,7 @@
 
 import { useId, useState } from "react";
 import { Search, Users } from "lucide-react";
-import { INPUT } from "@/components/form-bits";
+import { INPUT } from "@/components/champ-style";
 import type { MembreChoisissable } from "@/components/forms/BibliothequeOutils";
 
 export function ChoixEntreprises({
