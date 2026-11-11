@@ -710,7 +710,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
       );
     case "bandeau":
       return (
-        <div className="relative" style={{ padding: "0 0 24px" }}>
+        <div className="relative">
           {actif ? (
             <Actions>
               <BoutonImage libelle={s.image ? "Changer l’image" : "Image de fond"} onUrl={(image) => m({ image })} />
