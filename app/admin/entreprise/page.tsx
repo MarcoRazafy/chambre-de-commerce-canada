@@ -57,7 +57,7 @@ export default async function MonEntreprise() {
             <Field label="Présentation">
               <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait l’entreprise, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
             </Field>
-            <Field label="Rue">
+            <Field label="Adresse rue">
               <input name="adresseRue" maxLength={300} defaultValue={v("adresseRue")} placeholder="Numéro et nom de la rue" autoComplete="street-address" className={INPUT} />
             </Field>
             <div className="grid gap-4 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)]">
