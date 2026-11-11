@@ -31,12 +31,10 @@ export default async function MonEntreprise() {
           <IconesImageChambre champ="couverture" personnalisee={Boolean(brut?.couverture)} className="absolute top-3 right-3" />
         </div>
         <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
-          <span className="relative -mt-12 w-[168px] h-[92px] shrink-0 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]">
-            {/* Large, carré ou en hauteur : le logo tient toujours entier dans le cadre */}
-            <span className="absolute inset-2.5 overflow-hidden">
-              <Image src={p.logo} alt={p.nom} fill sizes="168px" className="object-contain" />
-            </span>
-            <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} className="absolute -bottom-3 -right-3" />
+          {/* Le cadre prend la forme du logo : hauteur fixe, largeur selon ses proportions (bornée) */}
+          <span className="relative -mt-12 self-start h-[92px] min-w-[92px] max-w-[260px] shrink-0 inline-flex items-center justify-center p-2.5 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]">
+            <Image src={p.logo} alt={p.nom} width={600} height={600} sizes="260px" className="h-full w-auto max-w-full object-contain" />
+            <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} className="absolute -bottom-4 left-1/2 -translate-x-1/2" />
           </span>
           <div className="min-w-0 flex-1 sm:pt-3">
             <h2 className="m-0 text-[21px] leading-tight text-balance">{p.nom}</h2>
