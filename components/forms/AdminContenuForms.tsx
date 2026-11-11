@@ -256,6 +256,15 @@ export function OffreButton({
                 className={INPUT}
               />
             </Field>
+            <Field label="Prix">
+              <input
+                name="prix"
+                maxLength={60}
+                defaultValue={offre?.prix ?? ""}
+                placeholder="Ex. 150 000 Ar, 75 $, Gratuit"
+                className={INPUT}
+              />
+            </Field>
             <Field
               label="Description"
               hint="Conditions, durée, comment en profiter."

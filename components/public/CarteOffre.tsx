@@ -42,6 +42,9 @@ export function CarteOffre({ offre }: { offre: Offer }) {
           >
             {offre.titre}
           </h3>
+          {offre.prix ? (
+            <p className="m-0 mb-2 text-[15px] font-bold text-[var(--marque-rouge)] [overflow-wrap:anywhere]">{offre.prix}</p>
+          ) : null}
           <p className="m-0 text-[13.5px] leading-[1.6] text-[#6b6b6b] line-clamp-3 [overflow-wrap:anywhere]">
             {offre.desc}
           </p>

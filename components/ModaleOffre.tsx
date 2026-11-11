@@ -64,6 +64,9 @@ function Detail({ offre: o }: { offre: Offer }) {
           <p className="m-0 mt-1 text-[13px] text-muted">
             Proposée par <span className="font-semibold">{o.membre}</span>
           </p>
+          {o.prix ? (
+            <p className="m-0 mt-2 text-[16px] font-bold text-accent [overflow-wrap:anywhere]">{o.prix}</p>
+          ) : null}
         </div>
 
         <p className="m-0 text-[14.2px] leading-relaxed text-muted whitespace-pre-line [overflow-wrap:anywhere]">

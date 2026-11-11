@@ -178,6 +178,7 @@ export interface Offer {
   cover?: string | null;
   cadrage?: Cadrage;
   lien?: string | null;
+  prix?: string | null;
   emplacement?: import("@/lib/offres").EmplacementOffre;
   membreSecteur?: string;
   membreVille?: string;

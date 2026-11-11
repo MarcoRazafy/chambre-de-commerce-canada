@@ -627,6 +627,7 @@ model Offer {
   desc        String
   image       String?
   lien        String?
+  prix        String? // texte libre : « 150 000 Ar », « 75 $ », « Gratuit »
   emplacement EmplacementOffre @default(partout)
 
   memberId String?

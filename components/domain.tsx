@@ -811,6 +811,9 @@ export function OfferCard({
           <div className="font-semibold text-[13.2px] mt-2 mb-1 line-clamp-2 [overflow-wrap:anywhere]">
             {offer.titre}
           </div>
+          {offer.prix ? (
+            <div className="text-[13.2px] font-bold text-accent mb-1 [overflow-wrap:anywhere]">{offer.prix}</div>
+          ) : null}
           <div className="text-[12.4px] text-muted leading-relaxed line-clamp-2 [overflow-wrap:anywhere]">
             <TexteLie texte={offer.desc} dansUnLien />
           </div>

@@ -906,6 +906,7 @@ function versOffre(o: {
   desc: string;
   image: string | null;
   lien: string | null;
+  prix: string | null;
   emplacement: EmplacementOffre;
   member: {
     nom: string;
@@ -934,6 +935,7 @@ function versOffre(o: {
       image: o.image,
       cover: o.image,
       lien: o.lien,
+      prix: o.prix,
       emplacement: o.emplacement,
       membreSecteur: "Chambre de commerce et de coopération",
       membreVille: "Antananarivo",
@@ -960,6 +962,7 @@ function versOffre(o: {
         ? { x: o.member.coverX, y: o.member.coverY }
         : undefined,
     lien: o.lien,
+    prix: o.prix,
     emplacement: o.emplacement,
     membreSecteur: o.member.secteur,
     membreVille: o.member.ville,
