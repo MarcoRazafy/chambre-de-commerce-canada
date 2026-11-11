@@ -19,6 +19,7 @@ export async function EditeurLettre({
   etiquettes,
   nbDestinataires,
   evenement = null,
+  retour,
 }: {
   /** Sans « id » : une nouvelle lettre préremplie */
   lettre: { id?: string; sujet: string; contenu: string } | null;
@@ -27,12 +28,15 @@ export async function EditeurLettre({
   nbDestinataires: number | null;
   /** Lettre aux inscrits de cet événement : l'audience est fixée */
   evenement?: { id: string; titre: string } | null;
+  /** Écrite depuis l'onglet Courriel d'un événement : on y revient après l'envoi */
+  retour?: string;
 }) {
   const contenu = lettre?.contenu ?? "";
   const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
   const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux) : docBlanc());
   return (
     <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
+      {retour ? <input type="hidden" name="retour" value={retour} /> : null}
       <Panneau titre="La lettre" teinte="degrade">
         <div className="flex flex-col gap-3">
           <label className="block">
@@ -73,7 +77,7 @@ export async function EditeurLettre({
               </div>
             </div>
             <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink"><Save size={14} /> Enregistrer le brouillon</button>
-            <SauvegardeAuto id={lettre?.id} />
+            <SauvegardeAuto id={lettre?.id} adresse={retour ? `${retour}&lettre=` : undefined} />
           </div>
         </Panneau>
       </div>

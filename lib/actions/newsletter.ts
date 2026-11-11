@@ -45,7 +45,10 @@ export async function enregistrerLettre(formData: FormData) {
   const doc = lireDoc(brut);
   const contenu = doc ? (doc.sections.length ? JSON.stringify(doc) : "") : brut.slice(0, 20000);
   const audience = audienceDe(formData);
-  const retourEdition = id ? `/admin/newsletter/${id}` : "/admin/newsletter/nouvelle";
+  // Écrite depuis l'onglet Courriel d'un événement : on y revient (seule adresse de retour acceptée)
+  const saisieRetour = texte(formData, "retour");
+  const retour = /^\/admin\/evenements\/[\w-]+\?vue=courriel$/.test(saisieRetour) ? saisieRetour : null;
+  const retourEdition = retour ? `${retour}${id ? `&lettre=${id}` : "&ecrire=1"}` : id ? `/admin/newsletter/${id}` : "/admin/newsletter/nouvelle";
   if (!sujet || !contenu) redirectWithErreur(retourEdition, "Indiquez l’objet et le texte de la lettre.");
 
   if (id) {
@@ -61,7 +64,7 @@ export async function enregistrerLettre(formData: FormData) {
   const lettre = id
     ? await prisma.lettre.update({ where: { id }, data: { sujet, contenu, audience } })
     : await prisma.lettre.create({ data: { sujet, contenu, audience, auteur: moi.nom } });
-  const page = `/admin/newsletter/${lettre.id}`;
+  const page = retour ? `${retour}&lettre=${lettre.id}` : `/admin/newsletter/${lettre.id}`;
   revalidatePath("/admin/newsletter");
 
   if (intention === "test") {
@@ -96,7 +99,7 @@ export async function enregistrerLettre(formData: FormData) {
     });
     revalidatePath("/admin/newsletter");
     redirectWithFlash(
-      "/admin/newsletter",
+      retour ?? "/admin/newsletter",
       quand
         ? `Lettre programmée le ${fmtDateHeure(quand)} · ${pluriel(liste.length, "destinataire")} aujourd’hui`
         : `Lettre envoyée à ${pluriel(partis, "destinataire")}`,

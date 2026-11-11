@@ -9,7 +9,7 @@ import { COORDONNEES } from "@/lib/coordonnees";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
-import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
+import { fmtDateHeure } from "@/lib/lettres";
 import {
   DATES_MAX,
   debutEvenement,
@@ -22,9 +22,8 @@ import {
 import { DatesRappel } from "@/components/admin/DatesRappel";
 
 const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
-const PASTILLE = { brouillon: ["Brouillon", "muted"], programmee: ["Programmée", "info"], envoyee: ["Envoyée", "ok"] } as const;
 
-// Onglet « Courriel » d'un événement : les rappels automatiques aux inscrits, ajoutés un à un.
+// Onglet « Rappels » d'un événement : les rappels automatiques aux inscrits, ajoutés un à un.
 // « rappel » : « nouveau » ou l'id du rappel ouvert dans le formulaire.
 export async function CourrielEvenement({
   eventId,
@@ -37,21 +36,16 @@ export async function CourrielEvenement({
   maintenant: number;
   rappel?: string;
 }) {
-  const [e, rappels, envois, lettres] = await Promise.all([
+  const [e, rappels, envois] = await Promise.all([
     prisma.event.findUnique({ where: { id: eventId }, select: { id: true, titre: true, date: true, debut: true } }),
     prisma.rappelEvenement.findMany({ where: { eventId }, orderBy: { createdAt: "asc" } }),
     prisma.rappelEnvoye.groupBy({ by: ["type"], where: { eventId }, _count: { _all: true } }),
-    prisma.lettre.findMany({
-      where: { audience: { path: ["evenement"], equals: eventId } },
-      orderBy: { updatedAt: "desc" },
-      include: { envois: { select: { livreLe: true, ouvertLe: true, clicLe: true, erreurLe: true } } },
-    }),
   ]);
   if (!e) return null;
   const debut = debutEvenement(toISODate(e.date), e.debut);
   const ouvert = rappel === "nouveau" ? null : rappels.find((r) => r.id === rappel) ?? null;
   const formulaire = !passe && (rappel === "nouveau" || ouvert);
-  const base = `/admin/evenements/${e.id}?vue=courriel`;
+  const base = `/admin/evenements/${e.id}?vue=rappel`;
 
   return (
     <div className="flex flex-col gap-4">
@@ -103,31 +97,6 @@ export async function CourrielEvenement({
         </Card>
       ) : null}
 
-      {lettres.length ? (
-        <Panneau titre="Courriels aux inscrits" teinte="bleu">
-          <ul className="list-none m-0 p-0">
-            {lettres.map((l) => {
-              const etat = etatLettre(l);
-              const s = suiviDe(l.envois);
-              const quand = dateEnvoi(l);
-              const nb = etat === "programmee" ? l.destinataires : l.envoyes;
-              return (
-                <li key={l.id} className="py-2.5 border-t border-line first:border-t-0">
-                  <div className="flex items-center justify-between gap-2">
-                    <Link href={`/admin/newsletter/${l.id}`} className="min-w-0 truncate text-[13.4px] font-semibold text-ink no-underline hover:text-accent">{l.sujet}</Link>
-                    <Pill tone={PASTILLE[etat][1]}>{PASTILLE[etat][0]}</Pill>
-                  </div>
-                  <div className="text-[12px] text-muted">
-                    {etat === "brouillon"
-                      ? `Par ${l.auteur}`
-                      : `${quand ? fmtDateHeure(quand) : ""} · ${nb} destinataire${nb > 1 ? "s" : ""}${etat === "envoyee" && s.envoyes ? ` · ouverture ${fmtTaux(taux(s.ouverts, s.envoyes))}` : ""}`}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </Panneau>
-      ) : null}
     </div>
   );
 }

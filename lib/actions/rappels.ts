@@ -11,7 +11,7 @@ import { DATES_MAX, debutEvenement, lireDateEnvoi, SUJET_DEFAUT } from "@/lib/ra
 import { envoyerTestRappel } from "@/lib/rappels-envoi";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
-const pageCourriel = (eventId: string, rappel?: string) => `/admin/evenements/${eventId}?vue=courriel${rappel ? `&rappel=${rappel}` : ""}`;
+const pageCourriel = (eventId: string, rappel?: string) => `/admin/evenements/${eventId}?vue=rappel${rappel ? `&rappel=${rappel}` : ""}`;
 
 // Onglet « Courriel » d'un événement : ajouter ou modifier un rappel (délai, objet, lettre), et s'envoyer un test
 export async function enregistrerRappel(formData: FormData) {

@@ -15,7 +15,7 @@ function empreinte(form: HTMLFormElement): string {
   );
 }
 
-export function SauvegardeAuto({ id: idInitial }: { id?: string }) {
+export function SauvegardeAuto({ id: idInitial, adresse = "/admin/newsletter/" }: { id?: string; /** Adresse du brouillon, suivie de son id */ adresse?: string }) {
   const [id, setId] = useState(idInitial ?? "");
   const [etat, setEtat] = useState<{ quand: Date } | "enCours" | "erreur" | null>(null);
   const ancre = useRef<HTMLInputElement>(null);
@@ -44,7 +44,7 @@ export function SauvegardeAuto({ id: idInitial }: { id?: string }) {
             idCourant.current = r.id;
             setId(r.id);
             // Retour, actualisation : on retrouve la lettre enregistrée
-            window.history.replaceState(window.history.state, "", `/admin/newsletter/${r.id}`);
+            window.history.replaceState(window.history.state, "", `${adresse}${r.id}`);
           }
           setEtat({ quand: new Date() });
         } else {
@@ -60,7 +60,7 @@ export function SauvegardeAuto({ id: idInitial }: { id?: string }) {
 
     const minuterie = window.setInterval(sauver, DELAI);
     return () => window.clearInterval(minuterie);
-  }, []);
+  }, [adresse]);
 
   return (
     <>

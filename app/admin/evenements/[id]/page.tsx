@@ -27,6 +27,7 @@ import {
 import { Compteur, Jauge, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { ScannerQr } from "@/components/admin/ScannerQr";
 import { CourrielEvenement } from "@/components/admin/CourrielEvenement";
+import { CourrielsInscrits } from "@/components/admin/CourrielsInscrits";
 import {
   AddAttendeeButton,
   ValiderInscriptionButton,
@@ -81,6 +82,8 @@ export default async function EvenementAdmin({
     q?: string;
     vue?: string;
     rappel?: string;
+    ecrire?: string;
+    lettre?: string;
     par?: string;
     page?: string;
   }>;
@@ -119,7 +122,9 @@ export default async function EvenementAdmin({
   const restantes = Math.max(0, e.cap - participants.length);
 
   const vueListe = sp.vue === "inscrits";
-  const vueCourriel = sp.vue === "courriel";
+  // « courriel » avec un rappel ouvert : ancien lien, désormais dans l'onglet Rappels
+  const vueRappel = sp.vue === "rappel" || (sp.vue === "courriel" && !!sp.rappel);
+  const vueCourriel = sp.vue === "courriel" && !vueRappel;
   const par = TAILLES.some((t) => t.cle === sp.par)
     ? (sp.par as (typeof TAILLES)[number]["cle"])
     : "10";
@@ -293,16 +298,19 @@ export default async function EvenementAdmin({
       </div>
 
       <Onglets
-        actif={vueListe ? "inscrits" : vueCourriel ? "courriel" : "presentation"}
+        actif={vueListe ? "inscrits" : vueRappel ? "rappel" : vueCourriel ? "courriel" : "presentation"}
         onglets={[
           { cle: "presentation", libelle: "Présentation", href: base },
           { cle: "inscrits", libelle: "Liste d’accueil", href: `${base}?vue=inscrits`, compte: participants.length },
+          { cle: "rappel", libelle: "Rappels", href: `${base}?vue=rappel` },
           { cle: "courriel", libelle: "Courriel", href: `${base}?vue=courriel` },
         ]}
       />
 
-      {vueCourriel ? (
+      {vueRappel ? (
         <CourrielEvenement eventId={e.id} passe={passe} maintenant={maintenant()} rappel={sp.rappel} />
+      ) : vueCourriel ? (
+        <CourrielsInscrits eventId={e.id} passe={passe} ecrire={sp.ecrire === "1"} lettreId={sp.lettre} />
       ) : vueListe ? (
         <Card className="p-0 min-w-0">
           <div className="px-6 pt-5 flex items-end justify-between gap-4 flex-wrap">
