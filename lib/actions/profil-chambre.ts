@@ -5,6 +5,7 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { oublierExpediteur } from "@/lib/courriel";
+import { adresseSurUneLigne } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 
 const PAGE = "/admin/entreprise";
@@ -38,7 +39,16 @@ export async function enregistrerProfilChambre(formData: FormData) {
   const data = {
     nom: texte(formData, "nom", 200),
     description: texte(formData, "description", 3000),
-    adresse: texte(formData, "adresse", 500),
+    adresseRue: texte(formData, "adresseRue", 300),
+    codePostal: texte(formData, "codePostal", 20),
+    ville: texte(formData, "ville", 120),
+    pays: texte(formData, "pays", 120),
+    adresse: adresseSurUneLigne({
+      adresseRue: texte(formData, "adresseRue", 300),
+      codePostal: texte(formData, "codePostal", 20),
+      ville: texte(formData, "ville", 120),
+      pays: texte(formData, "pays", 120),
+    }),
     telephone: texte(formData, "telephone", 60),
     email,
     site: texte(formData, "site", 300),

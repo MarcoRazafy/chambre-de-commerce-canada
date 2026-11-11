@@ -1079,7 +1079,11 @@ model ProfilChambre {
   id          String  @id @default("unique")
   nom         String  @default("")
   description String  @default("")
-  adresse     String  @default("")
+  adresse     String  @default("") // recomposée à partir des champs ci-dessous
+  adresseRue  String  @default("")
+  codePostal  String  @default("")
+  ville       String  @default("")
+  pays        String  @default("")
   telephone   String  @default("")
   email       String  @default("")
   site        String  @default("")

@@ -17,14 +17,24 @@ export type ProfilChambre = {
   tvq: string;
 };
 
+// L'adresse en parties (rue, code postal, ville, pays) : sur une ligne, ou une ligne par partie (factures)
+export type PartiesAdresse = { adresseRue?: string | null; codePostal?: string | null; ville?: string | null; pays?: string | null };
+function lignesAdresse(p: PartiesAdresse): string[] {
+  const t = (x?: string | null) => x?.trim() ?? "";
+  return [t(p.adresseRue), [t(p.codePostal), t(p.ville)].filter(Boolean).join(" "), t(p.pays)].filter(Boolean);
+}
+export const adresseSurUneLigne = (p: PartiesAdresse) => lignesAdresse(p).join(", ");
+
 export const NOM_CHAMBRE = "Chambre de Commerce et de Coopération Canada–Madagascar";
 
-type Ligne = Partial<Record<keyof ProfilChambre, string | null>>;
+type Ligne = Partial<Record<keyof ProfilChambre, string | null>> & PartiesAdresse;
 
 export function completerProfil(l: Ligne | null): ProfilChambre {
   const v = (k: keyof ProfilChambre, defaut: string) => (l?.[k]?.trim() ? l[k]!.trim() : defaut);
   const nom = v("nom", NOM_CHAMBRE);
-  const adresse = v("adresse", COORDONNEES.adresse);
+  // L'adresse vient de ses parties si elles sont remplies, sinon de l'ancienne adresse d'un seul tenant
+  const lignes = l ? lignesAdresse(l) : [];
+  const adresse = lignes.length ? lignes.join(", ") : v("adresse", COORDONNEES.adresse);
   const logo = v("logo", "/marque/logo-couleur.png");
   return {
     nom,
@@ -36,7 +46,7 @@ export function completerProfil(l: Ligne | null): ProfilChambre {
     logo,
     couverture: l?.couverture?.trim() || null,
     raisonSociale: v("raisonSociale", nom),
-    adresseFacturation: adresse,
+    adresseFacturation: lignes.length ? lignes.join("\n") : adresse,
     neq: v("neq", ""),
     tps: v("tps", ""),
     tvq: v("tvq", ""),
