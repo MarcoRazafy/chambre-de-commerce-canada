@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { Plus, Tag } from "lucide-react";
 import { INPUT } from "@/components/champ-style";
+import { enregistrerTag } from "@/lib/actions/maillage";
 import { plat } from "@/lib/texte";
 
 const LIMITE = 5;
@@ -28,6 +29,12 @@ export function ChoixTags({
   const replie = !tout && !saisie && proposes.length > LIMITE;
   const visibles = replie ? proposes.filter((t, i) => i < LIMITE || choisis.includes(t)) : proposes;
   const basculer = (t: string) => setChoisis((c) => (c.includes(t) ? c.filter((x) => x !== t) : [...c, t]));
+  // Nouveau tag : choisi tout de suite et enregistré dans la liste des tags (sinon il le sera avec le formulaire)
+  const creer = (t: string) => {
+    basculer(t);
+    setSaisie("");
+    enregistrerTag(t).catch(() => {});
+  };
 
   return (
     <div className="flex flex-col gap-2.5">
@@ -43,9 +50,12 @@ export function ChoixTags({
               e.preventDefault();
               const t = saisie.trim().replace(/\s+/g, " ");
               if (t && creation) {
-                const existant = options.find((o) => plat(o) === plat(t)) ?? t;
-                if (!choisis.includes(existant)) basculer(existant);
-                setSaisie("");
+                const existant = options.find((o) => plat(o) === plat(t));
+                if (!existant && !choisis.some((c) => plat(c) === plat(t))) creer(t);
+                else {
+                  if (existant && !choisis.includes(existant)) basculer(existant);
+                  setSaisie("");
+                }
               }
             }
           }}
@@ -75,10 +85,7 @@ export function ChoixTags({
         {nouveau ? (
           <button
             type="button"
-            onClick={() => {
-              basculer(saisie.trim().replace(/\s+/g, " "));
-              setSaisie("");
-            }}
+            onClick={() => creer(saisie.trim().replace(/\s+/g, " "))}
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-accent bg-surface px-2.5 py-1 text-[12.5px] font-semibold text-accent cursor-pointer hover:bg-accent-soft"
           >
             <Plus size={12} aria-hidden /> Créer « {saisie.trim()} »

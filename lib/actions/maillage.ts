@@ -178,6 +178,16 @@ const propreEtiquette = (v: string) => v.trim().replace(/\s+/g, " ").slice(0, 60
 const pluriel = (n: number) => `${n} entreprise${n > 1 ? "s" : ""}`;
 const garderTag = (nom: string) => prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
 
+// « Créer » dans le choix des tags (événement, contacts) : le tag rejoint tout de suite la liste des tags
+export async function enregistrerTag(nom: string): Promise<{ nom: string } | { erreur: string }> {
+  await exigerEquipe();
+  const propre = propreEtiquette(nom);
+  if (!propre) return { erreur: "Nom de tag vide." };
+  await garderTag(propre);
+  revalidatePath("/admin/etiquettes");
+  return { nom: propre };
+}
+
 // Créer un tag : son nom suffit, les entreprises s'ajoutent ensuite depuis sa page
 export async function creerTag(formData: FormData) {
   await exigerEquipe();
