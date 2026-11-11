@@ -200,6 +200,11 @@ export async function renommerEtiquette(formData: FormData) {
   for (const m of ms) {
     await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...new Set(m.etiquettes.map((e) => (e === ancien ? nouveau : e)))] } });
   }
+  // Les événements qui rattachent ce tag à leurs inscrits suivent le nouveau nom
+  const evs = await prisma.event.findMany({ where: { etiquettes: { has: ancien } }, select: { id: true, etiquettes: true } });
+  for (const e of evs) {
+    await prisma.event.update({ where: { id: e.id }, data: { etiquettes: [...new Set(e.etiquettes.map((x) => (x === ancien ? nouveau : x)))] } });
+  }
   revalidatePath("/admin", "layout");
   redirectWithFlash(`/admin/etiquettes?e=${encodeURIComponent(nouveau)}`, `« ${ancien} » renommé en « ${nouveau} »`);
 }
@@ -210,6 +215,9 @@ export async function supprimerEtiquette(formData: FormData) {
   await prisma.tag.deleteMany({ where: { nom } });
   const ms = await prisma.member.findMany({ where: { etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
   for (const m of ms) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: m.etiquettes.filter((e) => e !== nom) } });
+  // Un tag supprimé n'est plus rattaché aux inscrits des événements (sinon il reviendrait à la prochaine inscription)
+  const evs = await prisma.event.findMany({ where: { etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
+  for (const e of evs) await prisma.event.update({ where: { id: e.id }, data: { etiquettes: e.etiquettes.filter((x) => x !== nom) } });
   revalidatePath("/admin", "layout");
   redirectWithFlash("/admin/etiquettes", `Tag « ${nom} » retiré de ${pluriel(ms.length)}`);
 }

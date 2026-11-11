@@ -369,7 +369,7 @@ export function FormulaireEvenement({
         </div>
 
         <div className="flex flex-col gap-4 lg:sticky lg:top-[88px]">
-          <Rubrique titre="Tags">
+          <Rubrique titre="Rattacher un tag aux inscrits">
             <ChoixTags name="etiquettes" options={tousTags} initiaux={tags} creation />
           </Rubrique>
 
