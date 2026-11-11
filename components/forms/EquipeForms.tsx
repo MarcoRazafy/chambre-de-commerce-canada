@@ -300,20 +300,20 @@ export function CarteEquipier({
   compte: a,
   cestMoi,
   gere,
-  superAdmin = false,
+  offert = false,
 }: {
   compte: CompteEquipe;
   cestMoi: boolean;
   gere: boolean;
-  /** Le plus ancien administrateur : son compte est offert dans l'abonnement */
-  superAdmin?: boolean;
+  /** Le plus ancien super admin : son compte est offert dans l'abonnement */
+  offert?: boolean;
 }) {
   const pastilles = (
     <>
       <Pill tone={a.niveau === "administrateur" ? "ok" : "muted"}>
         {NIVEAU_EQUIPE_LABEL[a.niveau]}
       </Pill>
-      {superAdmin ? <Pill tone="info">Super admin · offert</Pill> : null}
+      {offert ? <Pill tone="info">Offert</Pill> : null}
       {cestMoi ? <Pill>Vous</Pill> : null}
       {a.sansMotDePasse ? <Pill tone="warn">Jamais connecté</Pill> : null}
     </>

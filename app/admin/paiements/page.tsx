@@ -11,9 +11,11 @@ import {
 } from "lucide-react";
 import { Compteur, EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { NouvelleFactureButton } from "@/components/forms/FactureForms";
-import { Card, Saillant, StatusPill } from "@/components/ui";
+import { Card, Saillant, StatusPill, Pill } from "@/components/ui";
 import {
   filtrerFacturesHorsStatut,
+  enRetard,
+  filtrerFactures,
   lireFiltresFactures,
   parametresFactures,
 } from "@/lib/filtres-factures";
@@ -42,9 +44,7 @@ export default async function AdminPaiements({
   ]);
 
   const retenues = filtrerFacturesHorsStatut(factures, filtres);
-  const liste = retenues.filter(
-    (f) => filtres.statut === "toutes" || f.statut === filtres.statut,
-  );
+  const liste = filtrerFactures(factures, filtres);
   const lien = (changes: Parameters<typeof parametresFactures>[1]) =>
     `/admin/paiements${parametresFactures(filtres, changes)}`;
   const periode = filtres.annee ? `en ${filtres.annee}` : "au total";
@@ -138,6 +138,12 @@ export default async function AdminPaiements({
             libelle: "À régler",
             href: lien({ statut: "envoyee" }),
             compte: retenues.filter((f) => f.statut === "envoyee").length,
+          },
+          {
+            cle: "retard",
+            libelle: "En retard",
+            href: lien({ statut: "retard" }),
+            compte: retenues.filter((f) => enRetard(f)).length,
           },
           {
             cle: "payee",
@@ -270,7 +276,7 @@ export default async function AdminPaiements({
                       {fmtMontant(f.montant, f.devise)}
                     </td>
                     <td className="px-5 py-3.5">
-                      <StatusPill status={f.statut} />
+                      <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f) ? <Pill tone="bad">En retard</Pill> : null}</span>
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <Link
@@ -319,7 +325,7 @@ export default async function AdminPaiements({
                         {f.numero} ·{" "}
                         {fmtDate(f.date, { day: "numeric", month: "short" })}
                       </span>
-                      <StatusPill status={f.statut} />
+                      <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f) ? <Pill tone="bad">En retard</Pill> : null}</span>
                     </div>
                   </Card>
                 </Link>

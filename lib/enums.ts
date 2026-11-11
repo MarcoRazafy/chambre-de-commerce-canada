@@ -13,8 +13,8 @@ import type {
 } from "@/lib/types";
 
 export const NIVEAU_EQUIPE_LABEL: Record<NiveauEquipe, string> = {
-  administrateur: "Administrateur",
-  manager: "Manager",
+  administrateur: "Super admin",
+  manager: "Admin",
 };
 
 export const EVENT_FORMAT_LABEL: Record<DbEventFormat, EventFormat> = {

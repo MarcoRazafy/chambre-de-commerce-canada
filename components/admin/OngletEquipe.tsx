@@ -13,14 +13,14 @@ export async function OngletEquipe() {
   return (
     <div className="flex flex-col gap-4">
       {gere ? null : (
-        <Panneau titre="Votre rôle : manager" teinte="bleu">
+        <Panneau titre="Votre rôle : admin" teinte="bleu">
           <div className="flex gap-3 items-start pb-2">
             <Lock size={18} className="text-faint shrink-0 mt-0.5" />
             <p className="m-0 text-[13.4px] text-muted">
               Vous avez accès à tout le back-office (membres, paiements,
               événements, contenus, messagerie), sauf à la gestion de
               l’équipe : ajouter quelqu’un, changer son rôle ou retirer son
-              accès revient à un administrateur.
+              accès revient à un super admin.
             </p>
           </div>
         </Panneau>
@@ -34,7 +34,7 @@ export async function OngletEquipe() {
       >
         <ListeEquipe comptes={admins} moiId={moi.id} gere={gere} />
         <p className="m-0 mt-4 mb-3 text-[12px] text-faint">
-          Un administrateur ne peut ni retirer son propre accès ni changer son
+          Un super admin ne peut ni retirer son propre accès ni changer son
           propre rôle : la plateforme en garde toujours au moins un.
         </p>
       </Panneau>

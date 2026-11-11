@@ -40,7 +40,7 @@ export async function supprimerMonCompte(formData: FormData) {
     });
     if (restants <= 1) {
       erreur(
-        "Vous êtes le dernier administrateur : nommez-en un autre depuis « Équipe & accès » avant de supprimer votre compte.",
+        "Vous êtes le dernier super admin : nommez-en un autre depuis « Équipe & accès » avant de supprimer votre compte.",
       );
     }
   }

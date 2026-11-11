@@ -20,7 +20,7 @@ export async function exigerAdministrateur(retour: string): Promise<User> {
   if (!estAdministrateur(user)) {
     redirectWithErreur(
       retour,
-      "Réservé aux administrateurs : un manager ne gère pas les accès de l’équipe.",
+      "Réservé aux super admins : un admin ne gère pas les accès de l’équipe.",
     );
   }
   return user;

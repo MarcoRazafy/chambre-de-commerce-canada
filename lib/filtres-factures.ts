@@ -2,8 +2,20 @@ import type { Devise } from "@/lib/membership";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { plat } from "@/lib/texte";
 
+// Une facture à régler est en retard quand elle a été émise il y a plus de DELAI_REGLEMENT_JOURS
+export const DELAI_REGLEMENT_JOURS = 30;
+export function enRetard(f: Pick<Invoice, "statut" | "date">, aujourdhui = new Date()): boolean {
+  if (f.statut !== "envoyee") return false;
+  const limite = new Date(aujourdhui.getTime() - DELAI_REGLEMENT_JOURS * 86_400_000).toISOString().slice(0, 10);
+  return f.date.slice(0, 10) < limite;
+}
+
+// « retard » : les factures à régler dont le délai est dépassé
+const retient = (x: Invoice, statut: FiltresFactures["statut"]) =>
+  statut === "toutes" || (statut === "retard" ? enRetard(x) : x.statut === statut);
+
 export interface FiltresFactures {
-  statut: InvoiceStatus | "toutes";
+  statut: InvoiceStatus | "toutes" | "retard";
   devise: Devise | null;
   annee: number | null;
   recherche: string;
@@ -18,7 +30,7 @@ export function lireFiltresFactures(params: {
   const annee = Number(params.annee);
   return {
     statut:
-      params.statut === "payee" || params.statut === "envoyee"
+      params.statut === "payee" || params.statut === "envoyee" || params.statut === "retard"
         ? params.statut
         : "toutes",
     devise:
@@ -45,9 +57,7 @@ export function filtrerFactures(
   factures: Invoice[],
   f: FiltresFactures,
 ): Invoice[] {
-  return filtrerFacturesHorsStatut(factures, f).filter(
-    (x) => f.statut === "toutes" || x.statut === f.statut,
-  );
+  return filtrerFacturesHorsStatut(factures, f).filter((x) => retient(x, f.statut));
 }
 
 export function parametresFactures(
