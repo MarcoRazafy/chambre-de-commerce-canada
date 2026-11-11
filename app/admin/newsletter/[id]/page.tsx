@@ -4,7 +4,7 @@ import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
 import { EditeurLettre } from "@/components/newsletter/EditeurLettre";
 import { Pill, Saillant } from "@/components/ui";
 import { annulerProgrammation, dupliquerLettre } from "@/lib/actions/newsletter";
-import { getTagsEntreprises } from "@/lib/contacts-admin";
+import { getTousLesTags } from "@/lib/contacts-admin";
 import { ApercuLettre } from "@/components/newsletter/EditeurBlocs";
 import { lireDoc } from "@/lib/lettre-blocs";
 import { prisma } from "@/lib/db";
@@ -31,7 +31,7 @@ export default async function Lettre({ params }: { params: Promise<{ id: string 
 
   if (etat === "brouillon") {
     const [etiquettes, evenement] = await Promise.all([
-      getTagsEntreprises(),
+      getTousLesTags(),
       audience.evenement ? prisma.event.findUnique({ where: { id: audience.evenement }, select: { id: true, titre: true } }) : null,
     ]);
     return (

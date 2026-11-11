@@ -2,7 +2,7 @@ import { EnTeteAdmin } from "@/components/admin/ui";
 import { EditeurLettre } from "@/components/newsletter/EditeurLettre";
 import { Saillant } from "@/components/ui";
 import { quandEvenement } from "@/lib/billets";
-import { getTagsEntreprises } from "@/lib/contacts-admin";
+import { getTousLesTags } from "@/lib/contacts-admin";
 import { urlPublique } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { AUDIENCE_DEFAUT, destinataires } from "@/lib/newsletter";
@@ -12,7 +12,7 @@ export default async function NouvelleLettre({ searchParams }: { searchParams: P
   const p = await searchParams;
   const idEvenement = p.evenement || p.annonce;
   const [etiquettes, e] = await Promise.all([
-    getTagsEntreprises(),
+    getTousLesTags(),
     idEvenement
       ? prisma.event.findUnique({
           where: { id: idEvenement },

@@ -15,7 +15,6 @@ import {
 import { TableauEntreprises } from "@/components/admin/TableauEntreprises";
 import {
   getEntreprisesContacts,
-  getTagsEntreprises,
   getTousLesTags,
   lireFiltresContacts,
   parametresContacts,
@@ -37,11 +36,9 @@ export default async function AdminContacts({
   const filtre = params.size > 0;
   const retour = `/admin/contacts${filtre ? `?${params}` : ""}`;
   // Toutes les entreprises (pour « Ajouter un contact »), et celles que les filtres retiennent
-  const [toutes, tags, tousTags] = await Promise.all([
-    getEntreprisesContacts(),
-    getTagsEntreprises(),
-    getTousLesTags(),
-  ]);
+  // Tous les tags, même ceux qu'aucune entreprise ne porte encore
+  const [toutes, tousTags] = await Promise.all([getEntreprisesContacts(), getTousLesTags()]);
+  const tags = tousTags;
   const entreprises = filtre ? await getEntreprisesContacts(f) : toutes;
   // Les contacts sans entreprise (ajoutés par l'équipe ou inscrits à la newsletter depuis la page publique)
   const nbSeuls = await prisma.abonne.count({ where: { desabonneLe: null } });
