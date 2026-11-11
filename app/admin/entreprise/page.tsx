@@ -32,7 +32,7 @@ export default async function MonEntreprise() {
         </div>
         <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
           {/* Le cadre prend la forme du logo : hauteur fixe, largeur selon ses proportions (bornée) */}
-          <span className="relative -mt-12 self-start h-[92px] min-w-[92px] max-w-[260px] shrink-0 inline-flex items-center justify-center p-2.5 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]">
+          <span className="relative -mt-12 self-start h-[92px] min-w-[92px] max-w-[260px] shrink-0 inline-flex items-center justify-center p-1 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]">
             <Image src={p.logo} alt={p.nom} width={600} height={600} sizes="260px" className="h-full w-auto max-w-full object-contain" />
             <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} className="absolute -bottom-4 left-1/2 -translate-x-1/2" />
           </span>
