@@ -167,10 +167,6 @@ export function FormulaireEvenement({
                 />
               </Field>
             </div>
-            <div>
-              <span className="block text-[12.3px] font-semibold text-muted mb-1.5">Tags</span>
-              <ChoixTags name="etiquettes" options={tousTags} initiaux={tags} creation />
-            </div>
           </Rubrique>
 
           <Rubrique
@@ -373,6 +369,10 @@ export function FormulaireEvenement({
         </div>
 
         <div className="flex flex-col gap-4 lg:sticky lg:top-[88px]">
+          <Rubrique titre="Tags">
+            <ChoixTags name="etiquettes" options={tousTags} initiaux={tags} creation />
+          </Rubrique>
+
           <Rubrique titre="Diffusion">
             <ChoixDiffusion publique={publique} onChange={setPublique} />
           </Rubrique>
