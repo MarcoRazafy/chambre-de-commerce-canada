@@ -58,7 +58,8 @@ export default async function FactureAbonnement({
               <Image src="/marque/logo-couleur.png" alt="IMPACT 261" width={1600} height={647} className="w-[150px] h-auto mb-2" />
               <div className="font-semibold">Chambre de Commerce et de Coopération Canada–Madagascar</div>
               <div className="text-[#5b6b7a]">{COORDONNEES.adresse}</div>
-              <div className="text-[#5b6b7a]">{COORDONNEES.email} · {COORDONNEES.telephone}</div>
+              <div className="text-[#5b6b7a]">{COORDONNEES.email}</div>
+              <div className="text-[#5b6b7a]">{COORDONNEES.telephone}</div>
             </div>
             <div className="sm:text-right">
               <div className="text-[11.5px] uppercase tracking-[0.12em] font-semibold text-[#5b6b7a] mb-1">Période</div>

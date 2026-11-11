@@ -41,7 +41,9 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
             <div className="text-[13px] text-[#5b6b7a] mt-1 leading-relaxed">
               <span className="whitespace-pre-line">{e.adresseFacturation}</span>
               <br />
-              {e.email} · {e.telephone}
+              {e.email}
+              <br />
+              {e.telephone}
               {e.site ? (
                 <>
                   <br />
