@@ -16,7 +16,17 @@ export interface ContactSeul {
 }
 
 // Un contact sans entreprise (page Contacts) : un clic ouvre sa fiche
-export function LigneContactSeul({ contact: a, retour }: { contact: ContactSeul; retour: string }) {
+export function LigneContactSeul({
+  contact: a,
+  retour,
+  choisi = false,
+  onChoisir,
+}: {
+  contact: ContactSeul;
+  retour: string;
+  choisi?: boolean;
+  onChoisir?: (oui: boolean) => void;
+}) {
   const [ouvert, setOuvert] = useState(false);
   const nom = a.prenom || a.email;
 
@@ -33,10 +43,21 @@ export function LigneContactSeul({ contact: a, retour }: { contact: ContactSeul;
     <li
       className="flex items-center gap-3.5 px-6 py-3 border-t border-line cursor-pointer hover:bg-surface-2 transition-colors duration-150"
       onClick={(e) => {
-        if ((e.target as HTMLElement).closest("a,button,dialog,form")) return;
+        if ((e.target as HTMLElement).closest("a,button,dialog,form,label")) return;
         setOuvert(true);
       }}
     >
+      {onChoisir ? (
+        <label className="grid place-items-center w-9 h-9 -ml-2 shrink-0 cursor-pointer rounded-full hover:bg-surface-3">
+          <input
+            type="checkbox"
+            checked={choisi}
+            onChange={(ev) => onChoisir(ev.target.checked)}
+            aria-label={`Sélectionner ${nom}`}
+            className="w-[18px] h-[18px] accent-[var(--accent)] cursor-pointer"
+          />
+        </label>
+      ) : null}
       <span className="w-9 h-9 shrink-0 rounded-full bg-surface-2 border border-line text-muted grid place-items-center"><User size={16} aria-hidden /></span>
       <div className="min-w-0 flex-1">
         <button type="button" onClick={() => setOuvert(true)} className="block p-0 border-0 bg-transparent font-semibold text-ink text-left truncate cursor-pointer hover:text-accent">{nom}</button>

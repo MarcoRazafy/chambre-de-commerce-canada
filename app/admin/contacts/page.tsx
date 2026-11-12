@@ -1,5 +1,5 @@
 import { Contact as IconeContact, Search } from "lucide-react";
-import { LigneContactSeul } from "@/components/admin/LigneContactSeul";
+import { ListeContactsSeuls } from "@/components/admin/ListeContactsSeuls";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { prisma } from "@/lib/db";
@@ -88,24 +88,17 @@ export default async function AdminContacts({
             <span className="text-[13px] text-muted">{seuls.length} contact{seuls.length > 1 ? "s" : ""} · reçoivent la newsletter envoyée à tous</span>
           </FiltresAuto>
           {seuls.length ? (
-            <Card className="p-0 overflow-hidden">
-              <ul className="list-none m-0 p-0 [&>li:first-child]:border-t-0">
-                {seuls.map((a) => (
-                  <LigneContactSeul
-                    key={a.id}
-                    retour={`/admin/contacts?onglet=sans${f.q ? `&q=${encodeURIComponent(f.q)}` : ""}`}
-                    contact={{
-                      id: a.id,
-                      prenom: a.prenom,
-                      email: a.email,
-                      origine: a.source === "vitrine" ? "Inscrit depuis le site" : a.source === "import" ? "Importé" : "Ajouté par l’équipe",
-                      depuis: fmtDate(a.createdAt.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" }),
-                      erreur: !!a.erreurLe,
-                    }}
-                  />
-                ))}
-              </ul>
-            </Card>
+            <ListeContactsSeuls
+              retour={`/admin/contacts?onglet=sans${f.q ? `&q=${encodeURIComponent(f.q)}` : ""}`}
+              contacts={seuls.map((a) => ({
+                  id: a.id,
+                  prenom: a.prenom,
+                  email: a.email,
+                  origine: a.source === "vitrine" ? "Inscrit depuis le site" : a.source === "import" ? "Importé" : "Ajouté par l’équipe",
+                  depuis: fmtDate(a.createdAt.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" }),
+                  erreur: !!a.erreurLe,
+              }))}
+            />
           ) : (
             <Card><Vide icone={<IconeContact size={26} />}>{f.q ? "Aucun contact ne correspond à cette recherche." : "Aucun contact sans entreprise pour l’instant."}</Vide></Card>
           )}

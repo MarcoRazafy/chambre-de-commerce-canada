@@ -215,3 +215,14 @@ export async function retirerContactSeul(formData: FormData) {
   revalidatePath("/admin/contacts");
   redirectWithFlash(retour, `${a.prenom || a.email} a été retiré`);
 }
+
+// Sélection (contacts sans entreprise) : retirer plusieurs contacts d'un coup ; ils ne reçoivent plus la newsletter
+export async function retirerContactsSeuls(formData: FormData) {
+  await exigerEquipe();
+  const retour = retourContacts(formData);
+  const ids = formData.getAll("contacts").map(String).filter(Boolean);
+  if (!ids.length) redirectWithErreur(retour, "Choisissez au moins un contact.");
+  const { count } = await prisma.abonne.updateMany({ where: { id: { in: ids }, desabonneLe: null }, data: { desabonneLe: new Date() } });
+  revalidatePath("/admin/contacts");
+  redirectWithFlash(retour, `${count} contact${count > 1 ? "s" : ""} retiré${count > 1 ? "s" : ""}`);
+}
