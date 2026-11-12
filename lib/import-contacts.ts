@@ -5,8 +5,11 @@ export const LIGNES_IMPORT_MAX = 2000;
 const ADRESSE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const CHAMPS_IMPORT = [
-  { cle: "entreprise", libelle: "Entreprise", requis: true, synonymes: ["entreprise", "societe", "company", "organisation", "organization", "raison sociale", "membre"] },
-  { cle: "nom", libelle: "Nom du contact", requis: true, synonymes: ["nom", "contact", "name", "nom complet", "full name", "prenom nom", "representant"] },
+  // Sans entreprise, le contact va dans « Sans entreprise » (il reçoit la newsletter envoyée à tous)
+  { cle: "entreprise", libelle: "Entreprise", requis: false, synonymes: ["entreprise", "societe", "company", "organisation", "organization", "raison sociale", "membre"] },
+  // Le prénom avant le nom : « prénom » contient « nom », il doit être reconnu en premier
+  { cle: "prenom", libelle: "Prénom", requis: false, synonymes: ["prenom", "first name", "firstname", "given name"] },
+  { cle: "nom", libelle: "Nom", requis: false, synonymes: ["nom", "contact", "name", "nom complet", "full name", "prenom nom", "representant", "last name", "lastname"] },
   { cle: "email", libelle: "Courriel", requis: true, synonymes: ["email", "e-mail", "courriel", "mail", "adresse"] },
   { cle: "fonction", libelle: "Fonction", requis: false, synonymes: ["fonction", "poste", "titre", "title", "role", "job"] },
   { cle: "tel", libelle: "Téléphone", requis: false, synonymes: ["telephone", "tel", "phone", "mobile", "portable", "gsm"] },
@@ -21,6 +24,7 @@ export type Correspondance = Record<CleImport, number>;
 
 export type LigneImport = {
   entreprise: string;
+  prenom: string;
   nom: string;
   email: string;
   fonction: string;
@@ -97,9 +101,10 @@ export function normaliserEmail(brut: string): string {
   return brut.trim().replace(/^mailto:/i, "").replace(/^<(.*)>$/, "$1").replace(/\s+/g, "").toLowerCase();
 }
 
-const CHAMPS_TEXTE = ["entreprise", "nom", "fonction", "tel", "secteur", "ville"] as const;
+const CHAMPS_TEXTE = ["entreprise", "prenom", "nom", "fonction", "tel", "secteur", "ville"] as const;
 const LIBELLES: Record<(typeof CHAMPS_TEXTE)[number], string> = {
   entreprise: "entreprise",
+  prenom: "prénom",
   nom: "nom",
   fonction: "fonction",
   tel: "téléphone",
@@ -114,6 +119,7 @@ export function preparerLignes(lignes: string[][], c: Correspondance): LignePrep
     const val = (cle: CleImport) => (c[cle] >= 0 ? (cellules[c[cle]] ?? "").trim().replace(/\s+/g, " ") : "");
     const ligne: LigneImport = {
       entreprise: val("entreprise").slice(0, 120),
+      prenom: val("prenom").slice(0, 80),
       nom: val("nom").slice(0, 120),
       email: normaliserEmail(val("email")).slice(0, 200),
       fonction: val("fonction").slice(0, 120),
@@ -155,7 +161,7 @@ export function preparerLignes(lignes: string[][], c: Correspondance): LignePrep
     const fusion = autres.length ? { numeros: g.map((x) => x.numero), ecarts } : null;
     const numero = premiere.numero;
 
-    const manque = [!ligne.entreprise && "entreprise", !ligne.nom && "nom du contact", !ligne.email && "courriel"].filter(Boolean);
+    const manque = [!ligne.email && "courriel"].filter(Boolean);
     if (manque.length) return { numero, ligne: null, erreur: `Manque : ${manque.join(", ")}`, fusion };
     if (!ADRESSE.test(ligne.email)) return { numero, ligne: null, erreur: `« ${ligne.email} » n’est pas un courriel valide`, fusion };
     return { numero, ligne, erreur: null, fusion };
@@ -170,6 +176,7 @@ export function ligneValide(l: unknown): LigneImport | null {
   const email = normaliserEmail(t("email", 200));
   const ligne: LigneImport = {
     entreprise: t("entreprise", 120),
+    prenom: t("prenom", 80),
     nom: t("nom", 120),
     email,
     fonction: t("fonction", 120),
@@ -180,5 +187,9 @@ export function ligneValide(l: unknown): LigneImport | null {
       ? [...new Set(o.tags.filter((x): x is string => typeof x === "string").map((x) => x.trim().slice(0, 60)).filter(Boolean))].slice(0, 20)
       : [],
   };
-  return ligne.entreprise && ligne.nom && ADRESSE.test(email) ? ligne : null;
+  return ADRESSE.test(email) ? ligne : null;
 }
+
+// Le nom affiché : prénom et nom, sinon le début du courriel
+export const nomComplet = (l: Pick<LigneImport, "prenom" | "nom" | "email">) =>
+  [l.prenom, l.nom].filter(Boolean).join(" ").trim() || l.email.split("@")[0];

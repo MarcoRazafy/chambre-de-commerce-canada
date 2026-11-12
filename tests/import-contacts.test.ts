@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { devinerCorrespondance, ligneValide, lireCsv, normaliserEmail, preparerLignes } from "@/lib/import-contacts";
+import { devinerCorrespondance, ligneValide, lireCsv, normaliserEmail, preparerLignes, nomComplet } from "@/lib/import-contacts";
 
 describe("import de contacts (CSV)", () => {
   it("lit un CSV au point-virgule, avec guillemets et BOM", () => {
@@ -28,8 +28,19 @@ describe("import de contacts (CSV)", () => {
       c,
     );
     expect(r[0]).toMatchObject({ numero: 2, erreur: null, fusion: null, ligne: { email: "noro@bio.mg", tags: ["VIP", "Export"] } });
-    expect(r[1].erreur).toBe("Manque : entreprise");
+    // Sans entreprise : la ligne est valable, le contact ira dans « Sans entreprise »
+    expect(r[1]).toMatchObject({ erreur: null, ligne: { entreprise: "", nom: "Tahiry", email: "t@bio.mg" } });
     expect(r[2].erreur).toContain("n’est pas un courriel valide");
+  });
+
+  it("reconnaît Prénom et Nom séparés, et compose le nom affiché", () => {
+    const c = devinerCorrespondance(["Email", "Nom", "Prénom"]);
+    expect(c).toMatchObject({ email: 0, nom: 1, prenom: 2, entreprise: -1 });
+    const [l] = preparerLignes([["marina@x.mg", "Sama", "Marina"]], c);
+    expect(l.erreur).toBeNull();
+    expect(nomComplet(l.ligne!)).toBe("Marina Sama");
+    expect(nomComplet({ prenom: "", nom: "", email: "solo@x.mg" })).toBe("solo");
+    expect(preparerLignes([["", "Sama", "Marina"]], c)[0].erreur).toBe("Manque : courriel");
   });
 
   it("réunit les lignes au même courriel en un seul contact", () => {

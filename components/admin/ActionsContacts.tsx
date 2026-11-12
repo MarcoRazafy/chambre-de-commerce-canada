@@ -13,8 +13,7 @@ import {
   devinerCorrespondance,
   lireCsv,
   preparerLignes,
-  type Correspondance,
-} from "@/lib/import-contacts";
+  type Correspondance, nomComplet } from "@/lib/import-contacts";
 
 const NOUVELLE = "__nouvelle__";
 
@@ -302,8 +301,8 @@ function Import({ fermer }: { fermer: () => void }) {
                           <td className="px-3 py-1.5 text-faint tabular-nums w-[44px]">{p.numero}</td>
                           {p.ligne ? (
                             <>
-                              <td className="px-3 py-1.5 text-ink font-semibold">{p.ligne.entreprise}</td>
-                              <td className="px-3 py-1.5 text-ink">{p.ligne.nom}</td>
+                              <td className={`px-3 py-1.5 ${p.ligne.entreprise ? "text-ink font-semibold" : "text-faint"}`}>{p.ligne.entreprise || "Sans entreprise"}</td>
+                              <td className="px-3 py-1.5 text-ink">{nomComplet(p.ligne)}</td>
                               <td className="px-3 py-1.5 text-muted">
                                 {p.ligne.email}
                                 {p.fusion ? (
@@ -324,7 +323,7 @@ function Import({ fermer }: { fermer: () => void }) {
               </div>
             )}
             <p className="m-0 text-[12px] text-faint">
-              Les lignes au même courriel sont réunies : les cases vides se complètent, les tags s’additionnent, la première valeur l’emporte. Une entreprise inconnue est créée (en attente de paiement, fiche à compléter). Un courriel déjà connu met à jour son contact. Le premier contact d’une entreprise en devient le contact principal.
+              Les lignes au même courriel sont réunies : les cases vides se complètent, les tags s’additionnent, la première valeur l’emporte. Sans entreprise, le contact va dans « Sans entreprise ». Une entreprise inconnue est créée (en attente de paiement, fiche à compléter). Un courriel déjà connu met à jour son contact. Le premier contact d’une entreprise en devient le contact principal.
             </p>
           </>
         ) : null}

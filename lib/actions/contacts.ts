@@ -6,7 +6,7 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { jourBase } from "@/lib/format";
-import { LIGNES_IMPORT_MAX, ligneValide } from "@/lib/import-contacts";
+import { LIGNES_IMPORT_MAX, ligneValide, nomComplet } from "@/lib/import-contacts";
 import { secteurOuProvisoire } from "@/lib/secteurs";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 
@@ -135,6 +135,25 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
     }
 
     const existant = await prisma.user.findUnique({ where: { email: l.email }, select: { id: true, role: true, memberId: true } });
+    const nom = nomComplet(l);
+
+    // Sans entreprise : un contact de l'onglet « Sans entreprise » (créé, ou remis s'il avait été retiré)
+    if (!l.entreprise) {
+      if (existant) {
+        bilan.ignores.push({ email: l.email, raison: existant.role === "admin" ? "compte de l’équipe" : "déjà contact d’une entreprise" });
+        continue;
+      }
+      const deja = await prisma.abonne.findUnique({ where: { email: l.email }, select: { id: true } });
+      await prisma.abonne.upsert({
+        where: { email: l.email },
+        create: { email: l.email, prenom: nom, source: "import" },
+        update: { prenom: nom, desabonneLe: null },
+      });
+      if (deja) bilan.contactsMisAJour++;
+      else bilan.contactsCrees++;
+      continue;
+    }
+
     let memberId = parNom.get(l.entreprise.toLowerCase());
     if (existant && (existant.role !== "membre" || (memberId && existant.memberId !== memberId))) {
       bilan.ignores.push({ email: l.email, raison: existant.role === "membre" ? "déjà contact d’une autre entreprise" : "compte de l’équipe" });
@@ -153,13 +172,13 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
     if (existant) {
       await prisma.user.update({
         where: { id: existant.id },
-        data: { nom: l.nom, ...(l.fonction ? { fonction: l.fonction } : {}), ...(l.tel ? { tel: l.tel } : {}) },
+        data: { nom, ...(l.fonction ? { fonction: l.fonction } : {}), ...(l.tel ? { tel: l.tel } : {}) },
       });
       bilan.contactsMisAJour++;
     } else {
       const principal = (await prisma.user.count({ where: { memberId, role: "membre", contactPrincipal: true } })) === 0;
       await prisma.user.create({
-        data: { role: "membre", memberId, nom: l.nom, fonction: l.fonction || "Contact", email: l.email, tel: l.tel || null, contactPrincipal: principal },
+        data: { role: "membre", memberId, nom, fonction: l.fonction || "Contact", email: l.email, tel: l.tel || null, contactPrincipal: principal },
       });
       bilan.contactsCrees++;
     }
