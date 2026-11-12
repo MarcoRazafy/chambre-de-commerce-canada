@@ -157,7 +157,10 @@ export const PIED_DEFAUT = {
 
 const PIED = "La Chambre de Commerce et de Coopération Canada–Madagascar rassemble les entreprises des deux pays et facilite leurs échanges.";
 
-export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, string>> = {}): Section {
+// Pied de page réglé dans les Paramètres (mentions légales, coordonnées de l'entreprise)
+export type PiedRegle = Partial<typeof PIED_DEFAUT>;
+
+export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): Section {
   const id = nouvelId();
   switch (type) {
     case "logo":
@@ -179,7 +182,7 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
     case "reseaux":
       return { id, type, fond: "brume", align: "center", couleurIcone: "rouge", liens: { facebook: "", youtube: "", linkedin: "", instagram: "", tiktok: "", ...reseaux } };
     case "pied":
-      return { id, type, fond: "brume", align: "center", texte: PIED, ...PIED_DEFAUT, couleur: "ardoise", taille: 12 };
+      return { id, type, fond: "brume", align: "center", texte: PIED, ...PIED_DEFAUT, ...pied, couleur: "ardoise", taille: 12 };
     case "separateur":
       return { id, type, fond: "", align: "center", couleur: "ciel" };
     case "espace":
@@ -187,14 +190,14 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
   }
 }
 
-export function docVide(reseaux: Partial<Record<Reseau, string>> = {}): DocLettre {
+export function docVide(reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): DocLettre {
   const intro = sectionVide("texte") as Extract<Section, { type: "texte" }>;
   intro.html = "Bonjour {prenom},<br><br>Voici les nouvelles du mois : événements, rencontres et opportunités d’affaires entre le Canada et Madagascar.";
   return {
     v: 3,
     apercu: "",
     fond: "brume",
-    sections: [sectionVide("logo"), sectionVide("bandeau"), intro, sectionVide("titre"), sectionVide("texte"), sectionVide("appel"), sectionVide("reseaux", reseaux), sectionVide("pied")],
+    sections: [sectionVide("logo"), sectionVide("bandeau"), intro, sectionVide("titre"), sectionVide("texte"), sectionVide("appel"), sectionVide("reseaux", reseaux), sectionVide("pied", {}, pied)],
   };
 }
 
@@ -204,11 +207,11 @@ export function docBlanc(): DocLettre {
 }
 
 // Une lettre écrite en texte simple devient une lettre de ce modèle
-export function docDepuisTexte(sujet: string, contenu: string, reseaux: Partial<Record<Reseau, string>> = {}): DocLettre {
+export function docDepuisTexte(sujet: string, contenu: string, reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): DocLettre {
   const bandeau = { ...(sectionVide("bandeau") as Extract<Section, { type: "bandeau" }>), titre: sujet || "La lettre de la Chambre" };
   const textes = contenu.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
     .map((p) => ({ ...(sectionVide("texte") as Extract<Section, { type: "texte" }>), html: enHtml(p) }));
-  return { v: 3, apercu: "", fond: "brume", sections: [sectionVide("logo"), bandeau, ...textes, sectionVide("reseaux", reseaux), sectionVide("pied")] };
+  return { v: 3, apercu: "", fond: "brume", sections: [sectionVide("logo"), bandeau, ...textes, sectionVide("reseaux", reseaux), sectionVide("pied", {}, pied)] };
 }
 
 // Texte d'une section : mis en forme (nettoyé), ou texte simple (échappé, retours à la ligne gardés)

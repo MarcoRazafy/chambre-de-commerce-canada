@@ -5,6 +5,7 @@ import { exigerAdministrateur } from "@/lib/autorisations";
 import { declarerDomaine, oublierDomaine, verifierDomaine } from "@/lib/brevo-domaines";
 import { courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
+import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 
 // Paramètres (super admins) : l'expéditeur des courriels, la validation de son domaine chez Brevo, un envoi de test
@@ -78,4 +79,39 @@ export async function envoyerTestExpediteur(formData: FormData) {
   const ok = await envoyerCourriel({ a: moi.email, sujet: "Test de l’expéditeur des courriels", html, texte: brut });
   if (!ok) redirectWithErreur(PAGE, "Le test n’a pas pu partir. Réessayez dans un instant.");
   redirectWithFlash(PAGE, `Test envoyé à ${moi.email}`);
+}
+
+// Enregistre quelques champs de la fiche (Paramètres), réservé aux super admins
+async function enregistrerChamps(onglet: string, data: Record<string, string>, message: string): Promise<never> {
+  await exigerAdministrateur(`${PAGE}?onglet=${onglet}`);
+  await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", ...data }, update: data });
+  revalidatePath("/", "layout");
+  redirectWithFlash(`${PAGE}?onglet=${onglet}`, message);
+}
+
+// Onglet Courriels : l'adresse qui reçoit les alertes de l'équipe
+export async function enregistrerAlertes(formData: FormData) {
+  const courrielEquipe = texte(formData, "courrielEquipe").toLowerCase();
+  if (courrielEquipe && !adresseValide(courrielEquipe)) redirectWithErreur(PAGE, `« ${courrielEquipe} » n’est pas une adresse e-mail valide.`);
+  await enregistrerChamps("courriels", { courrielEquipe }, "Adresse des alertes enregistrée");
+}
+
+// Onglet Réseaux sociaux : une adresse par réseau (vide : pas d'icône)
+export async function enregistrerReseaux(formData: FormData) {
+  const data: Record<string, string> = {};
+  for (const r of RESEAUX) {
+    const saisie = texte(formData, r, 500);
+    const url = saisie ? urlSure(saisie) : "";
+    if (saisie && !url) redirectWithErreur(`${PAGE}?onglet=reseaux`, `L’adresse ${r} n’est pas une adresse web valide.`);
+    data[r] = url;
+  }
+  await enregistrerChamps("reseaux", data, "Réseaux sociaux enregistrés");
+}
+
+// Onglet Mentions légales : politique de confidentialité et copyright du bas des courriels
+export async function enregistrerMentions(formData: FormData) {
+  const saisie = texte(formData, "confidentialite", 500);
+  const confidentialite = saisie ? urlSure(saisie) : "";
+  if (saisie && !confidentialite) redirectWithErreur(`${PAGE}?onglet=mentions`, "Le lien de la politique de confidentialité n’est pas une adresse web valide.");
+  await enregistrerChamps("mentions", { confidentialite, copyright: texte(formData, "copyright", 300) }, "Mentions légales enregistrées");
 }

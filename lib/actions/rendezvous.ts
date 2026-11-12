@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { espaceDe, estHeure, estJourISO, plageHoraire } from "@/lib/agenda";
 import { exigerEquipe } from "@/lib/autorisations";
-import { COURRIEL_EQUIPE, envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { courrielEquipe } from "@/lib/parametres";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -204,7 +205,7 @@ export async function reserverRendezvous(formData: FormData) {
 
   const details = await annonce(rendezvous);
   const invitation = ics(rendezvous);
-  const destinatairesEquipe = [...new Set([COURRIEL_EQUIPE, rendezvous.hote?.email].filter((x): x is string => !!x))];
+  const destinatairesEquipe = [...new Set([await courrielEquipe(), rendezvous.hote?.email].filter((x): x is string => !!x))];
   after(async () => {
     await notifierEquipe({
       titre: details.aConfirmer ? "Rendez-vous à confirmer" : "Rendez-vous pris",
@@ -310,7 +311,7 @@ export async function annulerRendezvous(formData: FormData) {
   // Annulé par le membre : l'équipe et la personne qui reçoit sont prévenues ; par l'équipe : le membre,
   // avec l'invitation d'agenda marquée annulée pour retirer le rendez-vous de son calendrier
   const destinataires = parLeMembre
-    ? [...new Set([COURRIEL_EQUIPE, rendezvous.hote?.email].filter((x): x is string => !!x))]
+    ? [...new Set([await courrielEquipe(), rendezvous.hote?.email].filter((x): x is string => !!x))]
     : [rendezvous.user.email];
   after(async () => {
     for (const a of destinataires) {

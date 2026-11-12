@@ -7,7 +7,7 @@ import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
 import { SauvegardeAuto } from "@/components/newsletter/SauvegardeAuto";
 import { SelecteurTags } from "@/components/newsletter/SelecteurTags";
 import { docBlanc, docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
-import { COORDONNEES } from "@/lib/coordonnees";
+import { getParametres } from "@/lib/parametres";
 import { getProfilChambre } from "@/lib/profil-chambre";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
@@ -32,8 +32,8 @@ export async function EditeurLettre({
   retour?: string;
 }) {
   const contenu = lettre?.contenu ?? "";
-  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
-  const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux) : docBlanc());
+  const { reseaux, mentions } = await getParametres();
+  const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux, mentions) : docBlanc());
   return (
     <form action={enregistrerLettre} className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_340px]">
       {retour ? <input type="hidden" name="retour" value={retour} /> : null}
@@ -43,7 +43,7 @@ export async function EditeurLettre({
             <span className="block text-[12.5px] font-semibold text-muted mb-1">Objet du courriel</span>
             <input name="sujet" required maxLength={200} defaultValue={lettre?.sujet ?? ""} placeholder="Ex. Les rendez-vous de la Chambre en décembre" className={CHAMP} />
           </label>
-          <EditeurBlocs initial={initial} reseaux={reseaux} logo={(await getProfilChambre()).logo} />
+          <EditeurBlocs initial={initial} reseaux={reseaux} pied={mentions} logo={(await getProfilChambre()).logo} />
         </div>
       </Panneau>
 

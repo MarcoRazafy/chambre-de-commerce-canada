@@ -4,10 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
-import { ChevronRight, Menu, Search } from "lucide-react";
+import { ChevronRight, Menu, MessageSquare, Search, Settings } from "lucide-react";
 import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
 import { BoutonInstaller } from "@/components/Application";
 import { MenuNotifications } from "@/components/MenuNotifications";
+import { MenuProfil } from "@/components/admin/MenuProfil";
 import { EnCoursLien, TirerPourRafraichir } from "@/components/Mouvement";
 import { FilAriane } from "@/components/FilAriane";
 import { NAV_ICONS } from "@/components/nav-icons";
@@ -124,6 +125,19 @@ export function CoquilleAdmin({
         </nav>
 
         <Link
+          href="/admin/parametres"
+          onClick={() => setMenuOuvert(false)}
+          className={`entree-menu mx-3.5 mt-2 flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-[14px] no-underline transition-colors ${
+            pathname.startsWith("/admin/parametres")
+              ? "entree-menu-actif bg-accent text-white font-semibold"
+              : "text-white/70 hover:bg-white/[0.08] hover:text-white"
+          }`}
+        >
+          <Settings size={18} className="shrink-0 opacity-90" />
+          <span className="flex-1">Paramètres</span>
+        </Link>
+
+        <Link
           href="/admin/profil"
           onClick={() => setMenuOuvert(false)}
           title="Mon profil"
@@ -168,14 +182,29 @@ export function CoquilleAdmin({
 
           <div className="flex items-center gap-2 shrink-0">
             <BoutonInstaller />
-            <MenuNotifications notifications={notifications} />
             <Link
-              href="/admin/profil"
-              aria-label="Mon profil"
-              className="no-underline block"
+              href="/admin/messagerie"
+              aria-label={`Messagerie${badges["/admin/messagerie"] ? ` (${badges["/admin/messagerie"]} non lu${badges["/admin/messagerie"] > 1 ? "s" : ""})` : ""}`}
+              title="Messagerie"
+              className={`${ICONE_HAUT} ${pathname.startsWith("/admin/messagerie") ? "bg-white/15 text-white" : ""}`}
             >
-              <Portrait user={user} taille={36} />
+              <MessageSquare size={17} />
+              {badges["/admin/messagerie"] ? (
+                <span className="pastille absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 rounded-full bg-accent text-white text-[10px] font-bold flex items-center justify-center border-2 border-[#0f1d2c]">
+                  {badges["/admin/messagerie"]}
+                </span>
+              ) : null}
             </Link>
+            <Link
+              href="/admin/parametres"
+              aria-label="Paramètres"
+              title="Paramètres"
+              className={`${ICONE_HAUT} ${pathname.startsWith("/admin/parametres") ? "bg-white/15 text-white" : ""}`}
+            >
+              <Settings size={17} />
+            </Link>
+            <MenuNotifications notifications={notifications} />
+            <MenuProfil nom={user.nom} fonction={user.fonction} avatar={<Portrait user={user} taille={36} />} />
           </div>
         </header>
 
@@ -187,6 +216,9 @@ export function CoquilleAdmin({
     </div>
   );
 }
+
+const ICONE_HAUT =
+  "relative w-9 h-9 rounded-lg flex items-center justify-center no-underline text-white/75 hover:text-white hover:bg-white/10";
 
 function Portrait({ user, taille }: { user: User; taille: number }) {
   if (user.photo) {

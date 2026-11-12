@@ -65,6 +65,7 @@ import {
   type Reseau,
   type Section,
   type TypeSection,
+  type PiedRegle,
 } from "@/lib/lettre-blocs";
 
 const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
@@ -407,6 +408,7 @@ export function EditeurBlocs({
   variables = VARIABLES,
   mention = "Vous recevez ce message en tant que membre de la Chambre.",
   logo = "/marque/logo-couleur.png",
+  pied = {},
 }: {
   initial: DocLettre;
   reseaux: Partial<Record<Reseau, string>>;
@@ -414,6 +416,8 @@ export function EditeurBlocs({
   variables?: readonly { cle: string; libelle: string }[];
   mention?: string;
   logo?: string;
+  /** Mentions et coordonnées des Paramètres, pour un nouveau pied de page */
+  pied?: PiedRegle;
 }) {
   // Une lettre sans section commence par un emplacement vide
   const [doc, setDoc] = useState<Omit<DocLettre, "sections"> & { sections: Bloc[] }>(() =>
@@ -502,7 +506,7 @@ export function EditeurBlocs({
     setChoisie(e.id);
   };
   const remplir = (id: string, t: TypeSection) => {
-    const s = sectionVide(t, reseaux);
+    const s = sectionVide(t, reseaux, pied);
     setDoc((d) => ({ ...d, sections: d.sections.map((b) => (b.id === id ? s : b)) }));
     setChoisie(s.id);
   };

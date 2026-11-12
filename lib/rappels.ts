@@ -1,4 +1,4 @@
-import { docVide, sectionVide, type DocLettre, type Reseau, type Section } from "@/lib/lettre-blocs";
+import { docVide, sectionVide, type DocLettre, type Reseau, type Section, type PiedRegle } from "@/lib/lettre-blocs";
 // Rappels automatiques aux inscrits d'un événement : quand chacun part, le texte du courriel.
 // Sans dépendance au serveur.
 
@@ -59,8 +59,8 @@ export const VARIABLES_RAPPEL = [
 ];
 
 // Le rappel par défaut, en lettre : bandeau avec l'événement, message, réseaux sociaux et pied de page
-export function rappelParDefaut(reseaux: Partial<Record<Reseau, string>> = {}): DocLettre {
-  const d = docVide(reseaux);
+export function rappelParDefaut(reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): DocLettre {
+  const d = docVide(reseaux, pied);
   const garder = d.sections.filter((x) => x.type === "logo" || x.type === "reseaux" || x.type === "pied");
   const bandeau = { ...(sectionVide("bandeau") as Extract<Section, { type: "bandeau" }>), titre: "{événement}", sousTitre: "{date} · {lieu}", taille: 30 };
   const message = {

@@ -2,10 +2,10 @@ import "server-only";
 
 import { quandEvenement, type EvenementCourriel } from "@/lib/billets";
 import { courrielsActifs, envoyerCourriel, urlPublique, type Courriel } from "@/lib/courriel";
-import { COORDONNEES } from "@/lib/coordonnees";
 import { docDepuisTexte, lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 import { prisma } from "@/lib/db";
 import { logoPourCourriel } from "@/lib/profil-chambre";
+import { parametresPourCourriel } from "@/lib/parametres";
 import { toISODate } from "@/lib/enums";
 import { pngQr } from "@/lib/qr";
 import {
@@ -42,10 +42,10 @@ export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: 
     avecCode.map(async (p) => ({ nom: `billet-${p.code}.png`, contenu: await pngQr(p.code!), type: "image/png", cid: `qr-${p.code}` })),
   );
   // Le message : la lettre composée dans l'éditeur, un ancien texte simple, ou le rappel par défaut
-  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
+  const { reseaux, mentions } = await parametresPourCourriel();
   const doc =
     (rappel.message && lireDoc(rappel.message, reseaux)) ||
-    (rappel.message ? docDepuisTexte(e.titre, rappel.message, reseaux) : rappelParDefaut(reseaux));
+    (rappel.message ? docDepuisTexte(e.titre, rappel.message, reseaux, mentions) : rappelParDefaut(reseaux, mentions));
   const echapper = (t: string) => t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   const codes = avecCode.length
     ? `<tr><td style="padding:8px 32px 20px;font-size:15px;line-height:1.6;color:#5b6b7a">${avecCode.length > 1 ? "Les QR codes d’entrée, un par participant :" : "Votre QR code d’entrée, à présenter à l’accueil :"}${avecCode
@@ -57,7 +57,7 @@ export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: 
     vars: valeurs,
     mention: "Vous recevez ce rappel car vous êtes inscrit(e) à cet événement. Pour toute question, répondez à ce message.",
     desabonnement: null,
-    coordonnees: { adresse: COORDONNEES.adresse, email: COORDONNEES.email, telephone: COORDONNEES.telephone, confidentialite: COORDONNEES.legal.confidentialite },
+    coordonnees: { adresse: mentions.adresse, email: mentions.email, telephone: mentions.telephone, confidentialite: mentions.confidentialite },
     apres: codes,
     logo: await logoPourCourriel(),
   };

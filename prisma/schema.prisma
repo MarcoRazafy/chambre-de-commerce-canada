@@ -1104,6 +1104,16 @@ model ProfilChambre {
   expediteurNom   String @default("")
   expediteurEmail String @default("")
 
+  // Paramètres : adresse qui reçoit les alertes de l'équipe, réseaux sociaux, mentions des courriels (vide : défaut)
+  courrielEquipe  String @default("")
+  facebook        String @default("")
+  linkedin        String @default("")
+  instagram       String @default("")
+  youtube         String @default("")
+  tiktok          String @default("")
+  confidentialite String @default("")
+  copyright       String @default("")
+
   updatedAt DateTime @updatedAt
 
   @@map("profil_chambre")

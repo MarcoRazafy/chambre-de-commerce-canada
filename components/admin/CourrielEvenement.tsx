@@ -5,7 +5,7 @@ import { EditeurBlocs } from "@/components/newsletter/EditeurBlocs";
 import { getProfilChambre } from "@/lib/profil-chambre";
 import { Card, Pill } from "@/components/ui";
 import { enregistrerRappel, supprimerRappel } from "@/lib/actions/rappels";
-import { COORDONNEES } from "@/lib/coordonnees";
+import { getParametres } from "@/lib/parametres";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
@@ -101,7 +101,7 @@ export async function CourrielEvenement({
   );
 }
 
-function FormulaireRappel({
+async function FormulaireRappel({
   eventId,
   titre,
   rappel,
@@ -116,10 +116,10 @@ function FormulaireRappel({
   retour: string;
   debut: number;
 }) {
-  const reseaux = { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
+  const { reseaux, mentions } = await getParametres();
   const doc =
     (rappel?.message && lireDoc(rappel.message, reseaux)) ||
-    (rappel?.message ? docDepuisTexte(titre, rappel.message, reseaux) : rappelParDefaut(reseaux));
+    (rappel?.message ? docDepuisTexte(titre, rappel.message, reseaux, mentions) : rappelParDefaut(reseaux, mentions));
   // Par défaut : la veille, à l'heure du début de l'événement
   const dates = rappel ? momentsEnvoi(rappel, debut).map(versSaisie) : [];
 
@@ -146,7 +146,7 @@ function FormulaireRappel({
 
         <div>
           <span className="block text-[12.5px] font-semibold text-muted mb-2">Message</span>
-          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} logo={logo}
+          <EditeurBlocs key={rappel?.id ?? "nouveau"} initial={doc} reseaux={reseaux} name="message" variables={VARIABLES_RAPPEL} logo={logo} pied={mentions}
             mention="Vous recevez ce rappel car vous êtes inscrit(e) à cet événement." />
           <p className="m-0 mt-2 text-[12px] text-faint">Les QR codes d’entrée s’ajoutent à la fin, pour les inscrits confirmés.</p>
         </div>

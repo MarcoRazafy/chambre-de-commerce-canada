@@ -12,7 +12,8 @@ import {
   numeroComplet,
   telephoneValide,
 } from "@/lib/accueil";
-import { COURRIEL_EQUIPE, envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { courrielEquipe } from "@/lib/parametres";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { jourBase } from "@/lib/format";
 import { minutes, origineAppelante, tentative } from "@/lib/limite";
@@ -136,6 +137,7 @@ export async function deposerCandidature(formData: FormData) {
   });
 
   const fiche = await urlPublique(`/admin/membres/${membre.id}`);
+  const equipe = await courrielEquipe();
   after(() =>
     Promise.all([
       notifierEquipe({
@@ -146,7 +148,7 @@ export async function deposerCandidature(formData: FormData) {
       envoyerCourriel(courrielDemandeRecue(email, rep)),
       envoyerCourriel(
         courrielNouvelleInscription(
-          COURRIEL_EQUIPE,
+          equipe,
           email,
           [
             `${rep} · ${independant ? "indépendant(e)" : entreprise}`,

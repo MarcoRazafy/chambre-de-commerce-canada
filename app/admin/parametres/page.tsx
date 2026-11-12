@@ -1,55 +1,144 @@
 import { Lock, Save, Send } from "lucide-react";
 import { StatutExpediteur } from "@/components/admin/StatutExpediteur";
-import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
+import { EnTeteAdmin, Onglets, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Saillant } from "@/components/ui";
-import { enregistrerExpediteur, envoyerTestExpediteur } from "@/lib/actions/parametres";
+import {
+  enregistrerAlertes,
+  enregistrerExpediteur,
+  enregistrerMentions,
+  enregistrerReseaux,
+  envoyerTestExpediteur,
+} from "@/lib/actions/parametres";
 import { estAdministrateur } from "@/lib/autorisations";
 import { etatDomaine } from "@/lib/brevo-domaines";
 import { adresseServeur } from "@/lib/courriel";
+import type { Reseau } from "@/lib/lettre-blocs";
+import { getParametres } from "@/lib/parametres";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 import { getCurrentUser } from "@/lib/session";
 
-// Paramètres de la plateforme. Courriels : l'expéditeur (nom, adresse), la validation de son domaine chez Brevo,
-// un envoi de test. Les super admins modifient ; les admins consultent.
-export default async function Parametres() {
-  const [moi, brut] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut()]);
+const ONGLETS = [
+  { cle: "courriels", libelle: "Courriels" },
+  { cle: "reseaux", libelle: "Réseaux sociaux" },
+  { cle: "mentions", libelle: "Mentions légales" },
+] as const;
+
+const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
+  { cle: "facebook", libelle: "Facebook", exemple: "facebook.com/votre-page" },
+  { cle: "linkedin", libelle: "LinkedIn", exemple: "linkedin.com/company/votre-entreprise" },
+  { cle: "instagram", libelle: "Instagram", exemple: "instagram.com/votre-compte" },
+  { cle: "youtube", libelle: "YouTube", exemple: "youtube.com/@votre-chaine" },
+  { cle: "tiktok", libelle: "TikTok", exemple: "tiktok.com/@votre-compte" },
+];
+
+// Paramètres de la plateforme, en onglets : Courriels (expéditeur, alertes de l'équipe), Réseaux sociaux,
+// Mentions légales. Les super admins modifient ; les admins consultent.
+export default async function Parametres({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
+  const sp = await searchParams;
+  const onglet = ONGLETS.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
+  const [moi, brut, reglages] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut(), getParametres()]);
   const gere = estAdministrateur(moi);
-  const nom = brut?.expediteurNom ?? "";
-  const email = brut?.expediteurEmail ?? "";
+  const nomEntreprise = completerProfil(brut).nom;
+
+  const verrou = !gere ? (
+    <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux super admins.</p>
+  ) : null;
+  const enregistrer = gere ? (
+    <div className="flex justify-end pt-1">
+      <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
+    </div>
+  ) : null;
 
   return (
     <>
-      <EnTeteAdmin surtitre="Administration" titre={<><Saillant>Paramètres</Saillant></>} />
+      <EnTeteAdmin surtitre="Administration" titre={<Saillant>Paramètres</Saillant>} />
 
-      <form action={enregistrerExpediteur}>
-        <Panneau titre="Courriels" sousTitre="Qui envoie les courriels de la plateforme : newsletter, rappels, factures, inscriptions" teinte="rouge">
-          <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
-            {!gere ? (
-              <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux super admins.</p>
-            ) : null}
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nom de l’expéditeur">
-                <input name="expediteurNom" maxLength={100} defaultValue={nom} placeholder={completerProfil(brut).nom} className={INPUT} />
-              </Field>
-              <Field label="Adresse d’expédition">
-                <input name="expediteurEmail" type="email" maxLength={200} defaultValue={email} placeholder="contact@entreprise.com" className={INPUT} />
-              </Field>
-            </div>
-            <StatutExpediteur etat={await etatDomaine(email)} email={email} nom={nom || completerProfil(brut).nom} serveur={adresseServeur()} gere={gere} />
-            {gere ? (
-              <div className="flex items-center justify-end gap-2.5 flex-wrap pt-1">
-                <button type="submit" formAction={envoyerTestExpediteur} className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">
-                  <Send size={14} /> M’envoyer un test
-                </button>
-                <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
+      <Onglets actif={onglet} onglets={ONGLETS.map((o) => ({ cle: o.cle, libelle: o.libelle, href: `/admin/parametres?onglet=${o.cle}` }))} />
+
+      {onglet === "courriels" ? (
+        <div className="flex flex-col gap-4">
+          <form action={enregistrerExpediteur}>
+            <Panneau titre="Expéditeur" sousTitre="Le nom et l’adresse qui envoient les courriels de la plateforme" teinte="rouge">
+              <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
+                {verrou}
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Field label="Nom de l’expéditeur">
+                    <input name="expediteurNom" maxLength={100} defaultValue={brut?.expediteurNom ?? ""} placeholder={nomEntreprise} className={INPUT} />
+                  </Field>
+                  <Field label="Adresse d’expédition">
+                    <input name="expediteurEmail" type="email" maxLength={200} defaultValue={brut?.expediteurEmail ?? ""} placeholder="contact@entreprise.com" className={INPUT} />
+                  </Field>
+                </div>
+                <StatutExpediteur
+                  etat={await etatDomaine(brut?.expediteurEmail ?? "")}
+                  email={brut?.expediteurEmail ?? ""}
+                  nom={brut?.expediteurNom || nomEntreprise}
+                  serveur={adresseServeur()}
+                  gere={gere}
+                />
+                {gere ? (
+                  <div className="flex items-center justify-end gap-2.5 flex-wrap pt-1">
+                    <button type="submit" formAction={envoyerTestExpediteur} className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">
+                      <Send size={14} /> M’envoyer un test
+                    </button>
+                    <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
+                  </div>
+                ) : null}
+              </fieldset>
+            </Panneau>
+          </form>
+
+          <form action={enregistrerAlertes}>
+            <Panneau titre="Alertes de l’équipe" sousTitre="L’adresse qui reçoit les nouvelles adhésions, les rendez-vous et les questions des visiteurs" teinte="bleu">
+              <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
+                {verrou}
+                <Field label="Courriel de l’équipe">
+                  <input name="courrielEquipe" type="email" maxLength={200} defaultValue={brut?.courrielEquipe ?? ""} placeholder={reglages.courrielEquipe} className={`${INPUT} sm:max-w-[420px]`} />
+                </Field>
+                {enregistrer}
+              </fieldset>
+            </Panneau>
+          </form>
+        </div>
+      ) : null}
+
+      {onglet === "reseaux" ? (
+        <form action={enregistrerReseaux}>
+          <Panneau titre="Réseaux sociaux" sousTitre="Les icônes du bas des courriels (newsletter, rappels)" teinte="degrade">
+            <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
+              {verrou}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {RESEAUX_LIBELLES.map((r) => (
+                  <Field key={r.cle} label={r.libelle}>
+                    <input name={r.cle} inputMode="url" maxLength={500} defaultValue={brut?.[r.cle] ?? ""} placeholder={r.exemple} className={INPUT} />
+                  </Field>
+                ))}
               </div>
-            ) : null}
-          </fieldset>
-        </Panneau>
-      </form>
+              {enregistrer}
+            </fieldset>
+          </Panneau>
+        </form>
+      ) : null}
+
+      {onglet === "mentions" ? (
+        <form action={enregistrerMentions}>
+          <Panneau titre="Mentions légales" sousTitre="Le bas de page des courriels (newsletter, rappels)" teinte="vert">
+            <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
+              {verrou}
+              <Field label="Lien de la politique de confidentialité">
+                <input name="confidentialite" inputMode="url" maxLength={500} defaultValue={brut?.confidentialite ?? ""} placeholder="votre-site.com/confidentialite" className={INPUT} />
+              </Field>
+              <Field label="Copyright">
+                <input name="copyright" maxLength={300} defaultValue={brut?.copyright ?? ""} placeholder={reglages.mentions.copyright} className={INPUT} />
+              </Field>
+              {enregistrer}
+            </fieldset>
+          </Panneau>
+        </form>
+      ) : null}
     </>
   );
 }

@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { prisma } from "@/lib/db";
 import { telephoneValide } from "@/lib/accueil";
-import { COURRIEL_EQUIPE, envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { courrielEquipe } from "@/lib/parametres";
 import { minutes, origineAppelante, tentative } from "@/lib/limite";
 import { courrielQuestionVisiteur } from "@/lib/modeles-courriels";
 import {
@@ -98,9 +99,10 @@ export async function envoyerAuSupportPublic(saisie: {
   });
 
   const lien = await urlPublique(`/admin/messagerie?t=${threadId}`);
+  const equipe = await courrielEquipe();
   after(() =>
     envoyerCourriel(
-      courrielQuestionVisiteur(COURRIEL_EQUIPE, {
+      courrielQuestionVisiteur(equipe, {
         ...visiteur,
         question: texte,
         lien,
