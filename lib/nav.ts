@@ -116,6 +116,7 @@ export const NAV_ADMIN: NavGroup[] = [
     label: "Administration",
     items: [
       { href: "/admin/entreprise", label: "Mon entreprise", icon: "building" },
+      { href: "/admin/parametres", label: "Paramètres", icon: "parametres" },
       { href: "/admin/abonnement", label: "Abonnement & utilisateurs", icon: "abonnement" },
       { href: "/admin/journal", label: "Journal d’activité", icon: "history" },
     ],

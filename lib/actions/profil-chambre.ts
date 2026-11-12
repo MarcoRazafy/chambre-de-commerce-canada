@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
-import { declarerDomaine, oublierDomaine, verifierDomaine } from "@/lib/brevo-domaines";
 import { oublierExpediteur } from "@/lib/courriel";
 import { adresseSurUneLigne } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
@@ -19,7 +18,7 @@ async function image(fd: FormData, champ: string, actuelle: string | null | unde
   return nouvelle ?? actuelle ?? null;
 }
 
-// Enregistre toute la fiche « Mon entreprise » (sans rediriger, sauf erreur de saisie) ; renvoie l'expéditeur
+// Enregistre toute la fiche « Mon entreprise » (sans rediriger, sauf erreur de saisie)
 async function sauverProfil(formData: FormData) {
   await exigerEquipe();
   const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" } });
@@ -34,8 +33,6 @@ async function sauverProfil(formData: FormData) {
 
   const email = texte(formData, "email", 200);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirectWithErreur(PAGE, `« ${email} » n’est pas une adresse e-mail valide.`);
-  const expediteurEmail = texte(formData, "expediteurEmail", 200);
-  if (expediteurEmail && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(expediteurEmail)) redirectWithErreur(PAGE, `« ${expediteurEmail} » n’est pas une adresse e-mail valide.`);
 
   const data = {
     nom: texte(formData, "nom", 200),
@@ -59,14 +56,10 @@ async function sauverProfil(formData: FormData) {
     neq: texte(formData, "neq", 40),
     tps: texte(formData, "tps", 40),
     tvq: texte(formData, "tvq", 40),
-    expediteurNom: texte(formData, "expediteurNom", 100).replace(/["<>]/g, ""),
-    expediteurEmail,
   };
   await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", ...data }, update: data });
-  if (expediteurEmail) oublierDomaine(expediteurEmail);
   oublierExpediteur();
   revalidatePath("/", "layout");
-  return { email: expediteurEmail, nom: data.expediteurNom || data.nom };
 }
 
 // « Mon entreprise » : la présentation de la Chambre et ce qui figure sur ses factures
@@ -75,34 +68,6 @@ export async function enregistrerProfilChambre(formData: FormData) {
   redirectWithFlash(PAGE, "Mon entreprise est à jour");
 }
 
-// « Valider ce domaine » : la fiche est enregistrée, puis le domaine de l'adresse d'expédition est déclaré à Brevo
-export async function validerDomaineExpediteur(formData: FormData) {
-  const { email } = await sauverProfil(formData);
-  if (!email) redirectWithErreur(PAGE, "Indiquez d’abord l’adresse d’expédition.");
-  const etat = await declarerDomaine(email);
-  if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Brevo n’a pas pu être joint : ${etat.raison}.`);
-  redirectWithFlash(
-    PAGE,
-    etat.etat === "valide" ? "Ce domaine est déjà validé" : "Domaine déclaré : ajoutez les enregistrements DNS ci-dessous, puis vérifiez",
-  );
-}
-
-// « Vérifier maintenant » : Brevo contrôle les enregistrements DNS ; validé, l'expéditeur est créé
-export async function verifierDomaineExpediteur(formData: FormData) {
-  const { email, nom } = await sauverProfil(formData);
-  if (!email) redirectWithErreur(PAGE, "Indiquez d’abord l’adresse d’expédition.");
-  const etat = await verifierDomaine(email, nom);
-  oublierExpediteur();
-  if (etat.etat === "valide") redirectWithFlash(PAGE, `Domaine validé : les courriels partent de ${email}`);
-  if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Brevo n’a pas pu être joint : ${etat.raison}.`);
-  const manquants = etat.etat === "en_attente" ? etat.enregistrements.filter((x) => !x.ok).length : 0;
-  redirectWithErreur(
-    PAGE,
-    manquants
-      ? `Pas encore validé : ${manquants} enregistrement${manquants > 1 ? "s" : ""} DNS introuvable${manquants > 1 ? "s" : ""}. Ils peuvent mettre jusqu’à 24 h à apparaître.`
-      : "Pas encore validé. Réessayez dans quelques minutes.",
-  );
-}
 
 // Icônes posées sur le logo et la couverture de « Mon entreprise » : change ou retire l'image tout de suite, sans toucher au reste
 export async function changerImageChambre(formData: FormData) {

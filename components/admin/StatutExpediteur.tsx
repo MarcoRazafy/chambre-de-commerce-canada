@@ -1,14 +1,14 @@
-// État de l'adresse d'expédition dans « Mon entreprise » : validée, à valider (avec les enregistrements DNS
+// État de l'adresse d'expédition (Paramètres → Courriels) : validée, à valider (avec les enregistrements DNS
 // à copier chez l'hébergeur du domaine), messagerie gratuite, ou vérification impossible.
 // Les boutons envoient tout le formulaire de la fiche (rien de ce qui a été tapé ne se perd).
 import { CheckCircle2, Info, RefreshCw, ShieldCheck, TriangleAlert, XCircle } from "lucide-react";
 import { BoutonCopier } from "@/components/paiement/Copiable";
-import { validerDomaineExpediteur, verifierDomaineExpediteur } from "@/lib/actions/profil-chambre";
+import { validerDomaineExpediteur, verifierDomaineExpediteur } from "@/lib/actions/parametres";
 import type { EtatDomaine } from "@/lib/brevo-domaines";
 
 const BOUTON = "btn-contour btn-contour-sm text-ink hover:bg-surface-2 self-start";
 
-export function StatutExpediteur({ etat, email, nom, serveur }: { etat: EtatDomaine; email: string; nom: string; serveur: string }) {
+export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { etat: EtatDomaine; email: string; nom: string; serveur: string; /** Super admin : peut valider et vérifier */ gere?: boolean }) {
   if (etat.etat === "vide") return null;
 
   const cadre = (ton: "ok" | "warn" | "muted", icone: React.ReactNode, contenu: React.ReactNode) => (
@@ -39,9 +39,9 @@ export function StatutExpediteur({ etat, email, nom, serveur }: { etat: EtatDoma
         <TriangleAlert size={17} className="text-warn" />,
         <>
           <p className="m-0">Domaine <b>{etat.domaine}</b> non validé. {parServeur}</p>
-          <button type="submit" formAction={validerDomaineExpediteur} className={BOUTON} formNoValidate>
+          {gere ? <button type="submit" formAction={validerDomaineExpediteur} className={BOUTON} formNoValidate>
             <ShieldCheck size={14} /> Valider ce domaine
-          </button>
+          </button> : null}
         </>,
       );
     case "en_attente":
@@ -90,9 +90,9 @@ export function StatutExpediteur({ etat, email, nom, serveur }: { etat: EtatDoma
           <p className="m-0 text-[12px] text-muted">
             « @ » désigne le domaine lui-même. Si un enregistrement « _dmarc » existe déjà, gardez celui-là plutôt que d’en ajouter un second.
           </p>
-          <button type="submit" formAction={verifierDomaineExpediteur} className={BOUTON} formNoValidate>
+          {gere ? <button type="submit" formAction={verifierDomaineExpediteur} className={BOUTON} formNoValidate>
             <RefreshCw size={14} /> Vérifier maintenant
-          </button>
+          </button> : null}
         </>,
       );
   }

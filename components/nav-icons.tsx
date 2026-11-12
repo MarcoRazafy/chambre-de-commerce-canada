@@ -23,6 +23,7 @@ import {
   Lock,
   MessageSquare,
   Newspaper,
+  Settings,
   ShieldCheck,
   Users,
   type LucideIcon,
@@ -31,6 +32,7 @@ import {
 export const NAV_ICONS: Record<string, LucideIcon> = {
   home: Home,
   building: Building2,
+  parametres: Settings,
   award: Award,
   users: Users,
   annuaire: BookUser,

@@ -1,9 +1,6 @@
 import Image from "next/image";
 import { Globe, Mail, MapPin, Phone, Save } from "lucide-react";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
-import { StatutExpediteur } from "@/components/admin/StatutExpediteur";
-import { etatDomaine } from "@/lib/brevo-domaines";
-import { adresseServeur } from "@/lib/courriel";
 import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
@@ -96,15 +93,6 @@ export default async function MonEntreprise() {
                 <input name="tvq" maxLength={40} defaultValue={v("tvq")} placeholder="10 chiffres + TQ0001" className={INPUT} />
               </Field>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field label="Nom de l’expéditeur des courriels">
-                <input name="expediteurNom" maxLength={100} defaultValue={v("expediteurNom")} placeholder="Nom affiché dans la boîte de réception" className={INPUT} />
-              </Field>
-              <Field label="Adresse d’expédition des courriels">
-                <input name="expediteurEmail" type="email" maxLength={200} defaultValue={v("expediteurEmail")} placeholder="contact@entreprise.com" className={INPUT} />
-              </Field>
-            </div>
-            <StatutExpediteur etat={await etatDomaine(v("expediteurEmail"))} email={v("expediteurEmail")} nom={v("expediteurNom") || p.nom} serveur={adresseServeur()} />
             <Field label="Site web">
               <input name="site" maxLength={300} defaultValue={v("site")} placeholder="www.entreprise.com" className={INPUT} />
             </Field>
