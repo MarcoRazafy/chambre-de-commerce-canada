@@ -52,7 +52,7 @@ export async function filVisiteur(): Promise<{
 } | null> {
   const cle = await cleCourante();
   if (!cle) return null;
-  const fil = await prisma.messageThread.findUnique({
+  const fil = await prisma.messageThread.findFirst({
     where: { visiteurCle: cle },
     select: { id: true, visiteur: true },
   });

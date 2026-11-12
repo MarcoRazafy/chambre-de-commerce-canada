@@ -4,7 +4,8 @@ import { achatDe } from "@/lib/achat";
 import { conclureAchat } from "@/lib/achats-en-ligne";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { delivrerBillets, delivrerBilletsPublics } from "@/lib/billets";
-import { prisma } from "@/lib/db";
+import { avecChambre } from "@/lib/chambre-courante";
+import { prisma, prismaSysteme } from "@/lib/db";
 import { jourBase } from "@/lib/format";
 import { nomFacture } from "@/lib/factures";
 import { fmtMontant } from "@/lib/membership";
@@ -25,7 +26,20 @@ export type Issue =
   | "inconnue"
   | "en_cours";
 
+// Appelé par le prestataire de paiement, sans session : la Chambre est celle du paiement
 export async function conclurePaiement(
+  etat: EtatPaiement,
+  charge: unknown,
+): Promise<Issue> {
+  const ref = await prismaSysteme.paiement.findUnique({
+    where: { reference: etat.reference },
+    select: { chambreId: true },
+  });
+  if (!ref) return "inconnue";
+  return avecChambre(ref.chambreId, () => conclureDansLaChambre(etat, charge));
+}
+
+async function conclureDansLaChambre(
   etat: EtatPaiement,
   charge: unknown,
 ): Promise<Issue> {

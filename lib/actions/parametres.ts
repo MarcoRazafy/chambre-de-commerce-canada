@@ -17,6 +17,7 @@ import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExped
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 // Paramètres (super admins) : l'expéditeur des courriels. D'abord le domaine de l'entreprise (validé chez Brevo),
 // ensuite le nom et l'adresse d'expédition sur ce domaine ; un envoi de test.
@@ -29,7 +30,7 @@ const nomSaisi = (fd: FormData) => texte(fd, "expediteurNom", 100).replace(/["<>
 // Enregistre le nom et l'adresse (partie avant le @, sur le domaine enregistré), sans rediriger sauf erreur de saisie
 async function sauverExpediteur(formData: FormData) {
   const moi = await exigerAdministrateur(PAGE);
-  const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" }, select: { nom: true, expediteurDomaine: true } });
+  const actuel = await prisma.profilChambre.findFirst({ select: { nom: true, expediteurDomaine: true } });
   const domaine = actuel?.expediteurDomaine ?? "";
   const expediteurNom = nomSaisi(formData);
   let locale = texte(formData, "expediteurLocale", 254).toLowerCase();
@@ -40,8 +41,8 @@ async function sauverExpediteur(formData: FormData) {
   if (locale && !PARTIE_LOCALE.test(locale)) redirectWithErreur(PAGE, `« ${locale} » n’est pas valide avant le @.`);
   const expediteurEmail = domaine && locale ? `${locale}@${domaine}` : "";
   await prisma.profilChambre.upsert({
-    where: { id: "unique" },
-    create: { id: "unique", expediteurNom, expediteurEmail },
+    where: { chambreId: await chambreCourante() },
+    create: { expediteurNom, expediteurEmail },
     update: { expediteurNom, expediteurEmail },
   });
   oublierExpediteur();
@@ -70,7 +71,7 @@ export async function ajouterDomaineExpediteur(formData: FormData) {
   if (!domaineValide(domaine)) redirectWithErreur(PAGE, `« ${domaine} » n’est pas un nom de domaine valide.`);
   if (estWebmail(domaine)) redirectWithErreur(PAGE, `${domaine} est une messagerie gratuite : indiquez le domaine de votre entreprise.`);
   if (domaine === domaineDe(adresseServeur())) redirectWithErreur(PAGE, `${domaine} est déjà le domaine actif.`);
-  await prisma.profilChambre.update({ where: { id: "unique" }, data: { expediteurDomaine: domaine, expediteurEmail: "" } });
+  await prisma.profilChambre.update({ where: { chambreId: await chambreCourante() }, data: { expediteurDomaine: domaine, expediteurEmail: "" } });
   oublierDomaine(domaine);
   oublierExpediteur();
   revalidatePath(PAGE);
@@ -83,8 +84,8 @@ export async function ajouterDomaineExpediteur(formData: FormData) {
 export async function retirerDomaineExpediteur(formData: FormData) {
   await exigerAdministrateur(PAGE);
   await prisma.profilChambre.upsert({
-    where: { id: "unique" },
-    create: { id: "unique", expediteurNom: nomSaisi(formData) },
+    where: { chambreId: await chambreCourante() },
+    create: { expediteurNom: nomSaisi(formData) },
     update: { expediteurNom: nomSaisi(formData), expediteurDomaine: "", expediteurEmail: "" },
   });
   oublierExpediteur();
@@ -141,7 +142,7 @@ export async function envoyerTestExpediteur(formData: FormData) {
 // Enregistre quelques champs de la fiche (Paramètres), réservé aux super admins
 async function enregistrerChamps(onglet: string, data: Record<string, string>, message: string): Promise<never> {
   await exigerAdministrateur(`${PAGE}?onglet=${onglet}`);
-  await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", ...data }, update: data });
+  await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { ...data }, update: data });
   revalidatePath("/", "layout");
   redirectWithFlash(`${PAGE}?onglet=${onglet}`, message);
 }

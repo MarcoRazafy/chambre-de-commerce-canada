@@ -11,7 +11,7 @@ export async function assurerFactureDuMois(aujourdhui = aujourdhuiISO()): Promis
   const date = dateFactureDuMois(aujourdhui, c.jourFacturation);
   if (!date) return;
   const numero = numeroFacturePlateforme(date);
-  if (await prisma.facturePlateforme.findUnique({ where: { numero }, select: { id: true } })) return;
+  if (await prisma.facturePlateforme.findFirst({ where: { numero }, select: { id: true } })) return;
   const n = (await getAdministrateurs()).length;
   const f = facturePlateforme(n, c);
   await prisma.facturePlateforme.createMany({
@@ -28,5 +28,5 @@ export function getFacturesPlateforme() {
 }
 
 export function getFacturePlateforme(numero: string) {
-  return prisma.facturePlateforme.findUnique({ where: { numero } });
+  return prisma.facturePlateforme.findFirst({ where: { numero } });
 }

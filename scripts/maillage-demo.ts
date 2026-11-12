@@ -1,3 +1,4 @@
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import type { Prisma } from "../lib/generated/prisma/client";
 import type { Reponses } from "../lib/maillage";
@@ -133,4 +134,4 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main();
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main);

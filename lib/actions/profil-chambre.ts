@@ -7,6 +7,7 @@ import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { oublierExpediteur } from "@/lib/courriel";
 import { adresseSurUneLigne } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 const PAGE = "/admin/entreprise";
 const texte = (fd: FormData, k: string, max = 300) => String(fd.get(k) ?? "").trim().slice(0, max);
@@ -21,7 +22,7 @@ async function image(fd: FormData, champ: string, actuelle: string | null | unde
 // Enregistre toute la fiche « Mon entreprise » (sans rediriger, sauf erreur de saisie)
 async function sauverProfil(formData: FormData) {
   await exigerEquipe();
-  const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" } });
+  const actuel = await prisma.profilChambre.findFirst();
   let logo: string | null, couverture: string | null;
   try {
     logo = await image(formData, "logo", actuel?.logo, { largeur: 600, transparence: true });
@@ -57,7 +58,7 @@ async function sauverProfil(formData: FormData) {
     tps: texte(formData, "tps", 40),
     tvq: texte(formData, "tvq", 40),
   };
-  await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", ...data }, update: data });
+  await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { ...data }, update: data });
   oublierExpediteur();
   revalidatePath("/", "layout");
 }
@@ -74,7 +75,7 @@ export async function changerImageChambre(formData: FormData) {
   await exigerEquipe();
   const champ = texte(formData, "champ");
   if (champ !== "logo" && champ !== "couverture") redirectWithErreur(PAGE, "Image inconnue.");
-  const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" }, select: { [champ]: true } });
+  const actuel = await prisma.profilChambre.findFirst({ select: { [champ]: true } });
   let valeur: string | null;
   try {
     valeur = await image(formData, champ, actuel?.[champ] as string | null | undefined, champ === "logo" ? { largeur: 600, transparence: true } : { largeur: 1600 });
@@ -82,7 +83,7 @@ export async function changerImageChambre(formData: FormData) {
     if (e instanceof ImageRefusee) redirectWithErreur(PAGE, e.message);
     throw e;
   }
-  await prisma.profilChambre.upsert({ where: { id: "unique" }, create: { id: "unique", [champ]: valeur }, update: { [champ]: valeur } });
+  await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { [champ]: valeur }, update: { [champ]: valeur } });
   revalidatePath("/", "layout");
   const quoi = champ === "logo" ? "Logo" : "Couverture";
   redirectWithFlash(PAGE, valeur ? `${quoi} mis${champ === "logo" ? "" : "e"} à jour` : `${quoi} retiré${champ === "logo" ? "" : "e"}`);

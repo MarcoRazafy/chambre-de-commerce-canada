@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { prismaSysteme } from "@/lib/db";
 import { fermerSession, ouvrirSession, verifier } from "@/lib/auth";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
 
@@ -48,7 +48,8 @@ export async function connexion(formData: FormData) {
     );
   }
 
-  const u = await prisma.user.findUnique({
+  // Avant la connexion, la Chambre n'est pas connue : le compte est cherché partout (une adresse = un seul espace)
+  const u = await prismaSysteme.user.findUnique({
     where: { email },
     select: {
       id: true,

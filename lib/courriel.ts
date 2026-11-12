@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import nodemailer, { type Transporter } from "nodemailer";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { adresseValidee, domaineDe, estWebmail } from "@/lib/brevo-domaines";
+import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 
 export interface Courriel {
@@ -43,18 +44,21 @@ export const adresseServeur = () => SERVEUR.address;
 const valide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
 
 // Expéditeur réglé dans Paramètres (nom, domaine, adresse), réponse au courriel de l'entreprise.
-// Relu au plus toutes les 30 s ; « secours » : l'adresse du serveur, si le fournisseur refuse celle de l'entreprise
-let memoire: { jusqua: number; valeur: { de: Adresse; secours: Adresse | null; reponse: string } } | null = null;
+// Relu au plus toutes les 30 s, pour chaque Chambre ; « secours » : l'adresse du serveur, si le fournisseur refuse
+// celle de l'entreprise
+type Expediteur = { de: Adresse; secours: Adresse | null; reponse: string };
+const memoire = new Map<string, { jusqua: number; valeur: Expediteur }>();
 // Après un changement dans Paramètres : relire l'expéditeur au prochain envoi
 export function oublierExpediteur() {
-  memoire = null;
+  memoire.clear();
 }
-async function expediteur() {
-  if (memoire && memoire.jusqua > Date.now()) return memoire.valeur;
+async function expediteur(): Promise<Expediteur> {
+  const chambreId = await chambreCourante();
+  const m = memoire.get(chambreId);
+  if (m && m.jusqua > Date.now()) return m.valeur;
   let p: { nom: string; email: string; expediteurNom: string; expediteurDomaine: string; expediteurEmail: string } | null = null;
   try {
-    p = await prisma.profilChambre.findUnique({
-      where: { id: "unique" },
+    p = await prisma.profilChambre.findFirst({
       select: { nom: true, email: true, expediteurNom: true, expediteurDomaine: true, expediteurEmail: true },
     });
   } catch (e) {
@@ -76,7 +80,7 @@ async function expediteur() {
     // Les réponses vont à l'adresse d'expédition saisie (même Gmail), sinon au courriel de l'entreprise
     reponse: valide(adresse) ? adresse : p?.email.trim() && valide(p.email.trim()) ? p.email.trim() : COURRIEL_EQUIPE,
   };
-  memoire = { jusqua: Date.now() + 30_000, valeur };
+  memoire.set(chambreId, { jusqua: Date.now() + 30_000, valeur });
   return valeur;
 }
 

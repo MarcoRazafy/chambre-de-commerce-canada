@@ -7,6 +7,7 @@ import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import type { MemberStatus } from "@/lib/types";
 import { SITUATIONS_REGLE } from "@/lib/tags";
 import { appliquerReglesTags } from "@/lib/tags-auto";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 // Tags automatiques (page Tags) : ajouter une règle, l'activer ou la désactiver, la supprimer.
 // Chaque changement est appliqué aussitôt à toutes les entreprises.
@@ -20,9 +21,10 @@ export async function ajouterRegleTag(formData: FormData) {
   const tag = texte(formData, "tag").replace(/\s+/g, " ").slice(0, 60);
   if (!SITUATIONS_REGLE.some(([s]) => s === statut)) redirectWithErreur(PAGE, "Choisissez une situation.");
   if (!tag) redirectWithErreur(PAGE, "Indiquez le tag à poser.");
-  await prisma.tag.upsert({ where: { nom: tag }, create: { nom: tag }, update: {} });
+  const chambreId = await chambreCourante();
+  await prisma.tag.upsert({ where: { chambreId_nom: { chambreId, nom: tag } }, create: { nom: tag }, update: {} });
   await prisma.regleTag.upsert({
-    where: { statut_tag: { statut: statut as MemberStatus, tag } },
+    where: { chambreId_statut_tag: { chambreId, statut: statut as MemberStatus, tag } },
     create: { statut: statut as MemberStatus, tag },
     update: { actif: true },
   });

@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHmac, timingSafeEqual } from "node:crypto";
+import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPublique } from "@/lib/courriel";
 import { COORDONNEES } from "@/lib/coordonnees";
@@ -104,11 +105,13 @@ export function signatureValide(email: string, s: string) {
   return attendu.length === recu.length && timingSafeEqual(attendu, recu);
 }
 
-// Logo de « Mon entreprise », relu au plus toutes les 30 s (une lettre part vers beaucoup d'adresses)
-let logoMemo: { jusqua: number; url: string | undefined } | null = null;
+// Logo de « Mon entreprise », relu au plus toutes les 30 s pour chaque Chambre (une lettre part vers beaucoup d'adresses)
+const logoMemo = new Map<string, { jusqua: number; url: string | undefined }>();
 async function logoEntreprise() {
-  if (!logoMemo || logoMemo.jusqua < Date.now()) logoMemo = { jusqua: Date.now() + 30_000, url: await logoPourCourriel() };
-  return logoMemo.url;
+  const chambreId = await chambreCourante();
+  let m = logoMemo.get(chambreId);
+  if (!m || m.jusqua < Date.now()) logoMemo.set(chambreId, (m = { jusqua: Date.now() + 30_000, url: await logoPourCourriel() }));
+  return m.url;
 }
 
 async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {

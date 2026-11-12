@@ -1,3 +1,4 @@
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import { ajouterJours } from "../lib/agenda";
 import { aujourdhuiISO, jourBase } from "../lib/format";
@@ -69,4 +70,4 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main();
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main);

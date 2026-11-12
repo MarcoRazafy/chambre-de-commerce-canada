@@ -1,3 +1,4 @@
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import { NEWS } from "../prisma/fixtures/news";
 
@@ -26,4 +27,4 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main();
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main);

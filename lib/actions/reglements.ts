@@ -27,6 +27,7 @@ import {
 } from "@/lib/reglements";
 import { after } from "next/server";
 import { notifierEquipe, notifierMembre } from "@/lib/push";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -61,8 +62,8 @@ export async function enregistrerCoordonneesPaiement(formData: FormData) {
   };
 
   await prisma.coordonneesPaiement.upsert({
-    where: { id: "uniques" },
-    create: { id: "uniques", ...champs },
+    where: { chambreId: await chambreCourante() },
+    create: { ...champs },
     update: champs,
   });
   revalidatePath("/", "layout");

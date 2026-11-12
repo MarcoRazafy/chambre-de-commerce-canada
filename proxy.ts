@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
-import { prisma } from "@/lib/db";
+// Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
+import { prismaSysteme as prisma } from "@/lib/db";
 import { isAccessLocked, PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
 
 const TOUJOURS_OUVERT = PAGES_TOUJOURS_OUVERTES;

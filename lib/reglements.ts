@@ -17,9 +17,7 @@ export * from "@/lib/modes-reglement";
 export { estPortefeuilleConnu } from "@/lib/portefeuilles";
 
 export async function getCoordonneesPaiement(): Promise<Coordonnees> {
-  const c = await prisma.coordonneesPaiement.findUnique({
-    where: { id: "uniques" },
-  });
+  const c = await prisma.coordonneesPaiement.findFirst();
   if (!c) return COORDONNEES_VIDES;
   return {
     titulaire: c.titulaire,

@@ -11,6 +11,7 @@ import { courrielRelanceMaillage } from "@/lib/modeles-courriels";
 import { notifierMembre } from "@/lib/push";
 import { getCurrentUser } from "@/lib/session";
 import type { Prisma } from "@/lib/generated/prisma/client";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -168,7 +169,7 @@ export async function majTagsEntreprise(memberId: string, valeurs: string[]) {
   if (!m) return { ok: false as const, erreur: "Entreprise introuvable." };
   const propres = propresTags(valeurs);
   await prisma.member.update({ where: { id: memberId }, data: { etiquettes: propres } });
-  for (const nom of propres) await prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
+  for (const nom of propres) await garderTag(nom);
   revalidatePath("/admin", "layout");
   return { ok: true as const, valeurs: propres };
 }
@@ -176,7 +177,8 @@ export async function majTagsEntreprise(memberId: string, valeurs: string[]) {
 /* ===== Page Tags (équipe) : renommer, supprimer, poser sur plusieurs entreprises ===== */
 const propreEtiquette = (v: string) => v.trim().replace(/\s+/g, " ").slice(0, 60);
 const pluriel = (n: number) => `${n} entreprise${n > 1 ? "s" : ""}`;
-const garderTag = (nom: string) => prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
+const garderTag = async (nom: string) =>
+  prisma.tag.upsert({ where: { chambreId_nom: { chambreId: await chambreCourante(), nom } }, create: { nom }, update: {} });
 
 // « Créer » dans le choix des tags (événement, contacts) : le tag rejoint tout de suite la liste des tags
 export async function enregistrerTag(nom: string): Promise<{ nom: string } | { erreur: string }> {

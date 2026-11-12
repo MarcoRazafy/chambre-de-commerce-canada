@@ -1,3 +1,4 @@
+import { avecChambre, CHAMBRE_PRINCIPALE, chambreCourante } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 
 // Données de démonstration des tags : des repères posés sur les entreprises membres,
@@ -37,7 +38,7 @@ async function main() {
     const nouveaux = REGLES.filter(([, ok]) => ok(e)).map(([nom]) => nom).filter((nom) => !m.etiquettes.includes(nom));
     if (!nouveaux.length) continue;
     await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...m.etiquettes, ...nouveaux] } });
-    for (const nom of nouveaux) await prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
+    for (const nom of nouveaux) await prisma.tag.upsert({ where: { chambreId_nom: { chambreId: await chambreCourante(), nom } }, create: { nom }, update: {} });
     poses += nouveaux.length;
   }
 
@@ -48,7 +49,7 @@ async function main() {
   for (const [nom, n] of [...compte].sort((a, b) => b[1] - a[1])) console.log(`  ${nom} : ${n}`);
 }
 
-main()
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main)
   .catch((e) => {
     console.error(e);
     process.exitCode = 1;

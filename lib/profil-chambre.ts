@@ -5,7 +5,7 @@ import { completerProfil, type ProfilChambre } from "@/lib/profil-chambre-defaut
 
 // Le profil enregistré, tel quel (pour le formulaire de « Mon entreprise »)
 export function getProfilChambreBrut() {
-  return prisma.profilChambre.findUnique({ where: { id: "unique" } });
+  return prisma.profilChambre.findFirst();
 }
 
 // Logo de l'entreprise pour un courriel : jamais bloquant (logo par défaut si le profil est illisible)

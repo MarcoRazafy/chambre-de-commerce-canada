@@ -2,7 +2,8 @@
 
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { prisma } from "@/lib/db";
+import { avecChambre } from "@/lib/chambre-courante";
+import { prisma, prismaSysteme } from "@/lib/db";
 import { hacher, MOT_DE_PASSE_MIN, ouvrirSession, verifier } from "@/lib/auth";
 import { envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -46,15 +47,18 @@ export async function demanderReinitialisation(formData: FormData) {
 
   const base = await urlPublique(NOUVEAU);
   after(async () => {
-    const u = await prisma.user.findUnique({
+    // Sans session : le compte est cherché dans toutes les Chambres, la suite se fait dans la sienne
+    const u = await prismaSysteme.user.findUnique({
       where: { email },
-      select: { id: true, nom: true, role: true },
+      select: { id: true, nom: true, role: true, chambreId: true },
     });
     if (!u || u.role === "visiteur") return;
-    const jeton = await creerJeton(u.id, "reinitialisation");
-    await envoyerCourriel(
-      courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`),
-    );
+    await avecChambre(u.chambreId, async () => {
+      const jeton = await creerJeton(u.id, "reinitialisation");
+      await envoyerCourriel(
+        courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`),
+      );
+    });
   });
 
   vers(OUBLI, { envoye: email });
@@ -87,7 +91,7 @@ export async function definirMotDePasse(formData: FormData) {
 
   const { user } = jeton;
   const invitation = jeton.usage === "invitation";
-  await prisma.$transaction([
+  await avecChambre(user.chambreId, () => prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
       data: { motDePasse: hacher(motDePasse), motDePasseModifieLe: new Date() },
@@ -110,7 +114,7 @@ export async function definirMotDePasse(formData: FormData) {
           : `${user.email} a réinitialisé son mot de passe.`,
       },
     }),
-  ]);
+  ]));
 
   await ouvrirSession(user.id);
   const message = invitation

@@ -8,6 +8,7 @@ import { codesDeFamille, type FamilleJournal } from "@/lib/journal";
 import type { Devise, FormuleId } from "@/lib/membership";
 import type { MemberStatus, NiveauEquipe, NoteMembre } from "@/lib/types";
 import { exigerEquipe } from "@/lib/autorisations";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 export interface EntreeJournal {
   id: string;
@@ -163,9 +164,10 @@ export async function getFinancesAnnee(annee: number | null): Promise<{
 }
 
 export async function getAnneesFactures(): Promise<number[]> {
+  // SQL brut : la limite de Chambre automatique ne s'applique pas, d'où le filtre
   const rows = await prisma.$queryRaw<{ annee: number }[]>`
     SELECT DISTINCT EXTRACT(YEAR FROM date)::int AS annee
-    FROM invoices ORDER BY annee DESC`;
+    FROM invoices WHERE "chambreId" = ${await chambreCourante()} ORDER BY annee DESC`;
   return rows.map((r) => r.annee);
 }
 

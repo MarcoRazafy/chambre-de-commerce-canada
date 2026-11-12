@@ -4,6 +4,7 @@ import { after } from "next/server";
 import { prisma } from "@/lib/db";
 import { minutes, origineAppelante, tentative } from "@/lib/limite";
 import { inscrireContact } from "@/lib/systeme-io";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 const PAR_HEURE = 10;
 
@@ -50,7 +51,7 @@ export async function inscrireInfolettre(saisie: {
   }
 
   const abonne = await prisma.abonne.upsert({
-    where: { email },
+    where: { chambreId_email: { chambreId: await chambreCourante(), email } },
     update: { prenom, desabonneLe: null },
     create: { prenom, email, source: "vitrine" },
   });

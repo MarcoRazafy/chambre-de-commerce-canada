@@ -3,12 +3,13 @@
 import { revalidatePath } from "next/cache";
 import { PROVISOIRE } from "@/lib/accueil";
 import { exigerEquipe } from "@/lib/autorisations";
-import { prisma } from "@/lib/db";
+import { prisma, prismaSysteme } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { jourBase } from "@/lib/format";
 import { LIGNES_IMPORT_MAX, ligneValide, nomComplet } from "@/lib/import-contacts";
 import { secteurOuProvisoire } from "@/lib/secteurs";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
+import { chambreCourante } from "@/lib/chambre-courante";
 
 // Page Contacts (équipe) : ajouter un contact, importer un CSV, poser ou retirer des tags sur une sélection
 
@@ -20,7 +21,8 @@ const retourContacts = (fd: FormData) => {
   return r.startsWith("/admin/contacts") ? r : "/admin/contacts";
 };
 const garderTags = async (noms: string[]) => {
-  for (const nom of noms) await prisma.tag.upsert({ where: { nom }, create: { nom }, update: {} });
+  const chambreId = await chambreCourante();
+  for (const nom of noms) await prisma.tag.upsert({ where: { chambreId_nom: { chambreId, nom } }, create: { nom }, update: {} });
 };
 const tagsDe = (fd: FormData) =>
   [...new Set(fd.getAll("tags").map((t) => String(t).trim().replace(/\s+/g, " ").slice(0, 60)).filter(Boolean))].slice(0, 20);
@@ -61,14 +63,16 @@ export async function ajouterContact(formData: FormData) {
   // Sans entreprise : un contact seul, qui reçoit la newsletter envoyée à tous
   if (!memberIdChoisi && !nomEntreprise) {
     await prisma.abonne.upsert({
-      where: { email },
+      where: { chambreId_email: { chambreId: await chambreCourante(), email } },
       update: { prenom: nom, desabonneLe: null, erreurLe: null },
       create: { prenom: nom, email, source: "equipe" },
     });
     revalidatePath("/admin/contacts");
     redirectWithFlash(retour, `${nom} a été ajouté (sans entreprise)`);
   }
-  const occupe = await prisma.user.findUnique({ where: { email }, select: { member: { select: { nom: true } } } });
+  // Une adresse = un seul espace : cherchée dans toutes les Chambres (sans rien montrer d'une autre)
+  const occupe = await prismaSysteme.user.findUnique({ where: { email }, select: { chambreId: true, member: { select: { nom: true } } } });
+  if (occupe && occupe.chambreId !== (await chambreCourante())) redirectWithErreur(retour, `${email} est déjà utilisée sur un autre espace.`);
   if (occupe) redirectWithErreur(retour, `${email} a déjà un compte${occupe.member ? ` (${occupe.member.nom})` : ""}.`);
 
   let memberId = memberIdChoisi;
@@ -125,6 +129,7 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
   const membres = await prisma.member.findMany({ select: { id: true, nom: true } });
   const parNom = new Map(membres.map((m) => [m.nom.trim().toLowerCase(), m.id]));
   const tagsPoses = new Set<string>();
+  const ici = await chambreCourante();
 
   for (const brute of lignes.slice(0, LIGNES_IMPORT_MAX)) {
     const l = ligneValide(brute);
@@ -134,7 +139,11 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
       continue;
     }
 
-    const existant = await prisma.user.findUnique({ where: { email: l.email }, select: { id: true, role: true, memberId: true } });
+    const existant = await prismaSysteme.user.findUnique({ where: { email: l.email }, select: { id: true, role: true, memberId: true, chambreId: true } });
+    if (existant && existant.chambreId !== ici) {
+      bilan.ignores.push({ email: l.email, raison: "adresse déjà utilisée sur un autre espace" });
+      continue;
+    }
     const nom = nomComplet(l);
 
     // Sans entreprise : un contact de l'onglet « Sans entreprise » (créé, ou remis s'il avait été retiré)
@@ -143,9 +152,9 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
         bilan.ignores.push({ email: l.email, raison: existant.role === "admin" ? "compte de l’équipe" : "déjà contact d’une entreprise" });
         continue;
       }
-      const deja = await prisma.abonne.findUnique({ where: { email: l.email }, select: { id: true, etiquettes: true } });
+      const deja = await prisma.abonne.findFirst({ where: { email: l.email }, select: { id: true, etiquettes: true } });
       await prisma.abonne.upsert({
-        where: { email: l.email },
+        where: { chambreId_email: { chambreId: await chambreCourante(), email: l.email } },
         create: { email: l.email, prenom: nom, source: "import", etiquettes: l.tags },
         update: { prenom: nom, desabonneLe: null, etiquettes: [...new Set([...(deja?.etiquettes ?? []), ...l.tags])] },
       });

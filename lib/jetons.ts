@@ -1,7 +1,7 @@
 import "server-only";
 
 import { createHash, randomBytes } from "node:crypto";
-import { prisma } from "@/lib/db";
+import { prisma, prismaSysteme } from "@/lib/db";
 
 export type UsageJeton = "reinitialisation" | "invitation";
 
@@ -34,7 +34,8 @@ export async function creerJeton(
 
 export async function jetonValide(brut: string | undefined) {
   if (!brut || brut.length > 100) return null;
-  const jeton = await prisma.jetonCompte.findUnique({
+  // Lien reçu par courriel, ouvert sans session : le jeton est cherché dans toutes les Chambres
+  const jeton = await prismaSysteme.jetonCompte.findUnique({
     where: { empreinte: empreinte(brut) },
     include: {
       user: {
@@ -44,6 +45,7 @@ export async function jetonValide(brut: string | undefined) {
           email: true,
           role: true,
           memberId: true,
+          chambreId: true,
           member: { select: { nom: true, accueilEnCours: true } },
         },
       },

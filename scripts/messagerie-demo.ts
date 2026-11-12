@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import { RACINE_MESSAGERIE, recevoirPiece } from "../lib/stockage-messagerie";
 
@@ -137,4 +138,4 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main();
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main);

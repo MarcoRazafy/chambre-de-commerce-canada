@@ -1,11 +1,13 @@
 import { timingSafeEqual } from "node:crypto";
+import { avecChambre } from "@/lib/chambre-courante";
+import { prismaSysteme } from "@/lib/db";
 import { assurerFactureDuMois } from "@/lib/factures-plateforme";
 import { appliquerReglesTags } from "@/lib/tags-auto";
 import { envoyerLettresDues } from "@/lib/newsletter";
 import { envoyerRappelsDus } from "@/lib/rappels-envoi";
 
-// Tâches régulières : newsletters programmées dont l'heure est venue, rappels d'événements dus,
-// et la facture du mois de l'abonnement à la plateforme.
+// Tâches régulières, pour chaque Chambre tour à tour : newsletters programmées dont l'heure est venue,
+// rappels d'événements dus, facture du mois de l'abonnement à la plateforme, tags automatiques.
 // Appelé toutes les 5 minutes par le serveur lui-même (instrumentation.ts, jeton tiré au démarrage),
 // ou par une tâche planifiée externe avec le secret TACHES_SECRET.
 function autorise(recu: string | null): boolean {
@@ -19,10 +21,24 @@ function autorise(recu: string | null): boolean {
 
 export async function POST(req: Request) {
   if (!autorise(req.headers.get("x-taches-jeton"))) return new Response("non autorisé", { status: 401 });
-  const lettres = await envoyerLettresDues();
-  const rappels = await envoyerRappelsDus();
-  await assurerFactureDuMois();
-  // Tags automatiques : suivent la situation des entreprises (paiements, retards…)
-  await appliquerReglesTags();
+  const chambres = await prismaSysteme.chambre.findMany({ select: { id: true }, orderBy: { createdAt: "asc" } });
+  let lettres = 0;
+  const rappels = { envoyes: 0, echecs: 0 };
+  for (const { id } of chambres) {
+    // Une Chambre en erreur n'empêche pas les suivantes
+    try {
+      await avecChambre(id, async () => {
+        lettres += await envoyerLettresDues();
+        const r = await envoyerRappelsDus();
+        rappels.envoyes += r.envoyes;
+        rappels.echecs += r.echecs;
+        await assurerFactureDuMois();
+        // Tags automatiques : suivent la situation des entreprises (paiements, retards…)
+        await appliquerReglesTags();
+      });
+    } catch (e) {
+      console.error(`[taches] Chambre ${id}`, e);
+    }
+  }
   return Response.json({ lettres, rappels }, { headers: { "Cache-Control": "no-store" } });
 }

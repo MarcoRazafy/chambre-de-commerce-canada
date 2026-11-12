@@ -1,6 +1,7 @@
 import "dotenv/config";
 import { createInterface } from "node:readline";
 import { parseArgs } from "node:util";
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import { hacher, MOT_DE_PASSE_MIN } from "../lib/mots-de-passe";
 
@@ -120,7 +121,7 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main().catch(async (e) => {
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main).catch(async (e) => {
   console.error(e);
   await prisma.$disconnect();
   process.exit(1);

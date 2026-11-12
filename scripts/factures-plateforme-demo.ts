@@ -1,3 +1,4 @@
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import { configPlateforme, facturePlateforme, numeroFacturePlateforme } from "../lib/plateforme";
 
@@ -26,7 +27,7 @@ async function main() {
   console.log(`Factures de l'abonnement : ${creees} créée(s).`);
 }
 
-main()
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main)
   .catch((e) => {
     console.error(e);
     process.exitCode = 1;

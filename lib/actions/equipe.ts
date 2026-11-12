@@ -5,7 +5,8 @@ import { nomDepuisCourriel, telephoneValide } from "@/lib/accueil";
 import { courrielsActifs, envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { exigerAdministrateur } from "@/lib/autorisations";
 import { rattacherEquipe } from "@/lib/fil-equipe";
-import { prisma } from "@/lib/db";
+import { chambreCourante } from "@/lib/chambre-courante";
+import { prisma, prismaSysteme } from "@/lib/db";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { courrielCompteEquipe } from "@/lib/modeles-courriels";
@@ -38,7 +39,8 @@ export async function modifierProfilEquipe(formData: FormData) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     redirectWithErreur(retour, "Indiquez une adresse e-mail valide.");
   }
-  const pris = await prisma.user.findFirst({
+  // Une adresse = un seul espace : cherchée dans toutes les Chambres
+  const pris = await prismaSysteme.user.findFirst({
     where: { email, id: { not: user.id } },
     select: { id: true },
   });
@@ -107,10 +109,14 @@ export async function creerCompteEquipe(formData: FormData) {
     redirectWithErreur(EQUIPE, "Indiquez une adresse e-mail valide.");
   }
   if (!fonction) redirectWithErreur(EQUIPE, "Indiquez sa fonction.");
-  const existant = await prisma.user.findUnique({
+  // Une adresse = un seul espace : cherchée dans toutes les Chambres (sans rien montrer d'une autre)
+  const existant = await prismaSysteme.user.findUnique({
     where: { email },
-    select: { role: true },
+    select: { role: true, chambreId: true },
   });
+  if (existant && existant.chambreId !== (await chambreCourante())) {
+    redirectWithErreur(EQUIPE, `${email} est déjà utilisée sur un autre espace.`);
+  }
   if (existant) {
     redirectWithErreur(
       EQUIPE,

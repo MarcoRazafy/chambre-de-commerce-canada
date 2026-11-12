@@ -1,3 +1,4 @@
+import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 // Même audience que celle proposée par défaut dans l’éditeur (lib/newsletter, réservé au serveur)
 const AUDIENCE_DEFAUT = { statuts: ["a_jour", "en_attente", "en_retard"] as ("a_jour" | "en_attente" | "en_retard")[], etiquettes: [] as string[], contacts: "tous", abonnes: true };
@@ -116,4 +117,4 @@ async function main() {
   await prisma.$disconnect();
 }
 
-main();
+avecChambre(process.env.CHAMBRE || CHAMBRE_PRINCIPALE, main);
