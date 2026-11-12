@@ -208,6 +208,11 @@ model Chambre {
   stripeCompteActif Boolean @default(false)
   stripeComptePays  String?
 
+  // Mode développeur : l'Admin GM peut entrer dans l'espace jusqu'à cette date (vide : non autorisé),
+  // autorisation donnée par un super admin de la Chambre
+  accesDevJusqua DateTime?
+  accesDevPar    String?
+
   membres             Member[]
   utilisateurs        User[]
   evenements          Event[]

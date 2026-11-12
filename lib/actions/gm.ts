@@ -4,7 +4,7 @@
 // Hors de toute Chambre : écritures sans limite de Chambre (prismaSysteme), notées dans l'historique de la Chambre.
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { oublierAdressesChambres } from "@/lib/adresse-chambre";
+import { adresseOuSite, oublierAdressesChambres } from "@/lib/adresse-chambre";
 import { fermerSessionGM, ouvrirSessionGM } from "@/lib/auth-gm";
 import { verifier } from "@/lib/auth";
 import { domaineValide, normaliserDomaine } from "@/lib/brevo-domaines";
@@ -16,6 +16,7 @@ import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { estFonction } from "@/lib/fonctions-plateforme";
 import { exigerGM } from "@/lib/gm";
 import { slugValide } from "@/lib/hote-chambre";
+import { lienEntree } from "@/lib/visite-gm";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
 
 const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").trim().slice(0, max);
@@ -212,4 +213,26 @@ export async function enregistrerReglages(formData: FormData) {
   oublierAdresses();
   revalidatePath("/gm", "layout");
   redirectWithFlash("/gm/parametres", "Paramètres enregistrés");
+}
+
+// --- Mode développeur ---
+
+// « Entrer » : une visite dans l'espace de la Chambre, si elle l'autorise (dans le compte de son super admin
+// le plus ancien) ; l'entrée est notée dans son journal
+export async function entrerDansChambre(formData: FormData) {
+  const gm = await exigerGM();
+  const c = await chambreOuErreur(formData);
+  const chambre = await db.chambre.findUnique({ where: { id: c.id }, select: { accesDevJusqua: true } });
+  if (!chambre?.accesDevJusqua || chambre.accesDevJusqua <= new Date()) {
+    redirectWithErreur(fiche(c.id), "Cette Chambre n’autorise pas l’accès : mode développeur désactivé.");
+  }
+  const compte = await db.user.findFirst({
+    where: { chambreId: c.id, role: "admin", niveauEquipe: "administrateur" },
+    orderBy: { createdAt: "asc" },
+    select: { id: true },
+  });
+  if (!compte) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas de super admin.");
+  const adresse = await adresseOuSite(c.id);
+  if (!adresse) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas encore d’adresse.");
+  redirect(`${adresse}/auth/entree-gm?${new URLSearchParams({ jeton: lienEntree({ c: c.id, u: compte.id, g: gm.id, n: gm.nom }) })}`);
 }

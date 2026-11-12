@@ -62,12 +62,18 @@ brancherRechercheChambre(async (r) => {
     select: {
       id: true,
       statut: true,
+      accesDevJusqua: true,
       // La plus ancienne facture suivie impayée de l'abonnement : elle décide du retard
       facturesPlateforme: { where: { payeeLe: null, suivie: true }, orderBy: { date: "asc" }, take: 1, select: { date: true, payeeLe: true, suivie: true } },
     },
   });
   if (!c) return null;
-  return { id: c.id, suspendue: c.statut === "suspendue", restriction: etatRetard(c.facturesPlateforme, await reglagesRetard()).restriction };
+  return {
+    id: c.id,
+    suspendue: c.statut === "suspendue",
+    restriction: etatRetard(c.facturesPlateforme, await reglagesRetard()).restriction,
+    accesDev: !!c.accesDevJusqua && c.accesDevJusqua > new Date(),
+  };
 });
 
 // L'accès habituel : chaque requête est limitée à la Chambre en cours (lib/chambre-courante.ts, lib/portee-chambre.ts)

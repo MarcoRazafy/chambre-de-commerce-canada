@@ -20,7 +20,7 @@ import { getParametres } from "@/lib/parametres";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 import { getCurrentUser } from "@/lib/session";
-import { connecterStripe } from "@/lib/actions/parametres";
+import { activerModeDeveloppeur, connecterStripe, desactiverModeDeveloppeur } from "@/lib/actions/parametres";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import { lienInscriptionStripe, majCompteStripe } from "@/lib/encaissement-stripe";
@@ -36,6 +36,7 @@ const ONGLETS = [
   { cle: "mentions", libelle: "Mentions légales" },
   { cle: "formules", libelle: "Formules d’adhésion" },
   { cle: "paiements", libelle: "Paiements en ligne" },
+  { cle: "developpeur", libelle: "Mode développeur" },
 ] as const;
 
 const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
@@ -189,6 +190,58 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
           </div>
         </Panneau>
       ) : null}
+
+      {onglet === "developpeur" ? await (async () => {
+        const [chambre, visites] = await Promise.all([
+          prisma.chambre.findFirst({ select: { accesDevJusqua: true, accesDevPar: true } }),
+          prisma.auditLog.findMany({ where: { action: { in: ["visite_gm", "visite_gm_fin"] } }, orderBy: { createdAt: "desc" }, take: 6 }),
+        ]);
+        const actif = !!chambre?.accesDevJusqua && chambre.accesDevJusqua > new Date();
+        const autorise = gere && !moi.visiteGM;
+        const quand = (d: Date) => d.toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
+        return (
+          <Panneau titre="Mode développeur" sousTitre="Autoriser l’Admin GM de la plateforme à entrer dans l’espace pour vous aider" teinte="bleu">
+            <div className="flex flex-col gap-4">
+              {!gere ? verrou : null}
+              {actif && chambre?.accesDevJusqua ? (
+                <div className="flex items-center justify-between gap-3 flex-wrap">
+                  <p className="m-0 flex items-center gap-2.5 text-[14px] flex-wrap">
+                    <Pill tone="ok">Actif</Pill> jusqu’au {quand(chambre.accesDevJusqua)}{chambre.accesDevPar ? <span className="text-muted">· par {chambre.accesDevPar}</span> : null}
+                  </p>
+                  {autorise ? (
+                    <form action={desactiverModeDeveloppeur}>
+                      <button type="submit" className="btn-contour btn-contour-sm text-bad hover:bg-surface-2">Désactiver</button>
+                    </form>
+                  ) : null}
+                </div>
+              ) : autorise ? (
+                <form action={activerModeDeveloppeur} className="flex items-end gap-2.5 flex-wrap">
+                  <Field label="Durée">
+                    <select name="duree" defaultValue="7" className={`${INPUT} sm:w-[180px]`}>
+                      <option value="1">24 heures</option>
+                      <option value="7">7 jours</option>
+                      <option value="30">30 jours</option>
+                    </select>
+                  </Field>
+                  <SubmitButton pendingLabel="Activation…">Activer</SubmitButton>
+                </form>
+              ) : (
+                <p className="m-0 text-[14px] text-muted">Désactivé</p>
+              )}
+              {visites.length ? (
+                <div>
+                  <span className="block text-[12.3px] font-semibold text-muted mb-1.5">Dernières visites</span>
+                  <ul className="m-0 p-0 list-none flex flex-col gap-1.5 text-[13.5px]">
+                    {visites.map((v) => (
+                      <li key={v.id}><span className="text-ink">{v.detail}</span> <span className="text-faint">· {quand(v.createdAt)} · {v.acteur}</span></li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+            </div>
+          </Panneau>
+        );
+      })() : null}
 
       {onglet === "paiements" ? (
         <Panneau titre="Encaissement par carte" sousTitre="Les cotisations payées par carte arrivent sur le compte Stripe de la Chambre" teinte="bleu">

@@ -3,6 +3,7 @@ import "server-only";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 import { fermerSession, sessionCourante, sessionPerimee } from "@/lib/auth";
+import { visiteCourante } from "@/lib/visite-gm";
 import type { Space, User, UserRole } from "@/lib/types";
 
 const ROLE_PAR_ESPACE: Record<Space, UserRole> = {
@@ -61,18 +62,24 @@ export async function getCurrentUser(space: Space): Promise<User> {
   }
   if (u.role !== ROLE_PAR_ESPACE[space]) redirect(ACCUEIL[u.role]);
 
+  // Visite de l'Admin GM dans ce compte (mode développeur) : son nom, pour l'affichage et le journal
+  const visite = await visiteCourante();
+  const visiteGM = visite && visite.u === u.id ? visite.n : null;
+  const nom = visiteGM ? `${visiteGM} (Admin GM)` : u.nom;
+
   return {
     id: u.id,
     role: u.role,
     niveauEquipe: u.role === "admin" ? (u.niveauEquipe ?? "manager") : null,
     space,
     memberId: u.memberId,
-    nom: u.nom,
-    fonction: u.fonction,
+    nom,
+    fonction: visiteGM ? "Visite de l’Admin GM" : u.fonction,
     email: u.email,
     tel: u.tel ?? undefined,
-    initiales: initiales(u.nom),
-    photo: u.photo,
+    initiales: initiales(nom),
+    photo: visiteGM ? null : u.photo,
+    visiteGM,
   };
 }
 

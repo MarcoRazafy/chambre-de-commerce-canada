@@ -20,7 +20,7 @@ import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExped
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
-import { chambreCourante } from "@/lib/chambre-courante";
+import { chambreCourante, oublierAdresses } from "@/lib/chambre-courante";
 
 // Paramètres (super admins) : l'expéditeur des courriels. D'abord le domaine de l'entreprise (validé chez Brevo),
 // ensuite le nom et l'adresse d'expédition sur ce domaine ; un envoi de test.
@@ -183,4 +183,41 @@ export async function connecterStripe() {
   await exigerAdministrateur(onglet);
   if (!stripeConfigure()) redirectWithErreur(onglet, "Le paiement par carte n’est pas encore disponible.");
   redirect(await lienInscriptionStripe(await chambreCourante(), await urlPublique(onglet)));
+}
+
+// Onglet Mode développeur : autoriser l'Admin GM à entrer dans l'espace (24 h, 7 jours ou 30 jours), ou retirer
+// l'autorisation. Seulement par un super admin de la Chambre, jamais pendant une visite de l'Admin GM.
+const DEV = `${PAGE}?onglet=developpeur`;
+
+async function superAdminDeLaChambre() {
+  const moi = await exigerAdministrateur(DEV);
+  if (moi.visiteGM) redirectWithErreur(DEV, "Seule la Chambre donne ou retire cette autorisation.");
+  return moi;
+}
+
+export async function activerModeDeveloppeur(formData: FormData) {
+  const moi = await superAdminDeLaChambre();
+  const jours = Number(texte(formData, "duree", 3));
+  if (![1, 7, 30].includes(jours)) redirectWithErreur(DEV, "Choisissez une durée.");
+  const jusqua = new Date(Date.now() + jours * 86_400_000);
+  const chambreId = await chambreCourante();
+  await prisma.chambre.update({ where: { id: chambreId }, data: { accesDevJusqua: jusqua, accesDevPar: moi.nom } });
+  await prisma.auditLog.create({
+    data: { action: "mode_dev_active", entite: "Chambre", entiteId: chambreId, acteur: moi.nom, detail: `Accès de l’Admin GM autorisé jusqu’au ${jusqua.toLocaleDateString("fr-FR", { timeZone: "UTC" })}.` },
+  });
+  oublierAdresses();
+  revalidatePath(PAGE);
+  redirectWithFlash(DEV, "Mode développeur activé");
+}
+
+export async function desactiverModeDeveloppeur() {
+  const moi = await superAdminDeLaChambre();
+  const chambreId = await chambreCourante();
+  await prisma.chambre.update({ where: { id: chambreId }, data: { accesDevJusqua: null, accesDevPar: null } });
+  await prisma.auditLog.create({
+    data: { action: "mode_dev_desactive", entite: "Chambre", entiteId: chambreId, acteur: moi.nom, detail: "Accès de l’Admin GM retiré." },
+  });
+  oublierAdresses();
+  revalidatePath(PAGE);
+  redirectWithFlash(DEV, "Mode développeur désactivé");
 }

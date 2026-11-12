@@ -30,7 +30,8 @@ export class EspaceIntrouvable extends Error {
 // (branchée par lib/db.ts, pour éviter un import circulaire)
 type Recherche = { slug: string } | { domaine: string } | { id: string };
 // restriction : retard de paiement de l'abonnement au-delà du délai (lecture seule, ou blocage)
-type Trouvee = { id: string; suspendue: boolean; restriction: "lecture" | "blocage" | null } | null;
+// accesDev : la Chambre autorise en ce moment l'Admin GM à entrer (mode développeur)
+type Trouvee = { id: string; suspendue: boolean; restriction: "lecture" | "blocage" | null; accesDev: boolean } | null;
 let chercherChambre: ((r: Recherche) => Promise<Trouvee>) | null = null;
 export function brancherRechercheChambre(f: (r: Recherche) => Promise<Trouvee>) {
   chercherChambre = f;
@@ -39,7 +40,7 @@ export function brancherRechercheChambre(f: (r: Recherche) => Promise<Trouvee>) 
 // Adresse → Chambre, gardé 10 secondes (une page fait des dizaines de lectures). Court : le contrôle d'accès
 // (proxy.ts) a sa propre mémoire, qu'une action ne peut pas vider ; une suspension, un paiement ou une adresse
 // changée y comptent donc au plus 10 secondes après
-type Resolue = { id: string | null; propre: boolean; suspendue: boolean; restriction: "lecture" | "blocage" | null };
+type Resolue = { id: string | null; propre: boolean; suspendue: boolean; restriction: "lecture" | "blocage" | null; accesDev: boolean };
 const parHote = new Map<string, Resolue & { jusqua: number }>();
 export function oublierAdresses() {
   parHote.clear();
@@ -56,8 +57,8 @@ export async function resoudreHote(brut: string | null | undefined): Promise<Res
   if (!chercherChambre) throw new Error("Recherche des Chambres non branchée (lib/db.ts)");
   let r: Resolue;
   // Espace Admin GM, site public de la plateforme : aucune Chambre
-  const etat = (c: Trouvee) => ({ suspendue: c?.suspendue ?? false, restriction: c?.restriction ?? null });
-  if (h.type === "gm" || h.type === "plateforme") r = { id: null, propre: true, suspendue: false, restriction: null };
+  const etat = (c: Trouvee) => ({ suspendue: c?.suspendue ?? false, restriction: c?.restriction ?? null, accesDev: c?.accesDev ?? false });
+  if (h.type === "gm" || h.type === "plateforme") r = { id: null, propre: true, suspendue: false, restriction: null, accesDev: false };
   else if (h.type === "sous-domaine") {
     const c = await chercherChambre({ slug: h.slug });
     r = { id: c?.id ?? null, propre: true, ...etat(c) };

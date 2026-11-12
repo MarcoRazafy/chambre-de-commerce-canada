@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ExternalLink, Pause, Play, Save } from "lucide-react";
+import { ChevronLeft, ExternalLink, LogIn, Pause, Play, Save } from "lucide-react";
 import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
-import { changerOffreChambre, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
+import { changerOffreChambre, entrerDansChambre, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
 import { fmtDateShort } from "@/lib/format";
@@ -157,6 +157,20 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
               </div>
             </Panneau>
           </form>
+
+          <Panneau titre="Mode développeur" teinte="bleu">
+            {c.accesDevJusqua && c.accesDevJusqua > new Date() ? (
+              <form action={entrerDansChambre} className="flex items-center justify-between gap-3 flex-wrap">
+                <input type="hidden" name="chambreId" value={c.id} />
+                <span className="text-[14px] text-muted">
+                  Autorisé jusqu’au {c.accesDevJusqua.toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}{c.accesDevPar ? ` · par ${c.accesDevPar}` : ""}
+                </span>
+                <SubmitButton pendingLabel="Entrée…"><LogIn size={15} /> Entrer</SubmitButton>
+              </form>
+            ) : (
+              <p className="m-0 text-[14px] text-muted">Non autorisé par la Chambre</p>
+            )}
+          </Panneau>
 
           <Panneau titre="Accès à l’espace" teinte="rouge">
             {c.statut === "suspendue" ? (

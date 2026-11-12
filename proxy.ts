@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
 import { lireSessionGM, NOM_COOKIE_GM } from "@/lib/auth-gm";
+import { lireVisite, NOM_COOKIE_VISITE } from "@/lib/visite-gm";
 import { resoudreHote } from "@/lib/chambre-courante";
 import { estHoteGM, estHotePlateforme } from "@/lib/hote-chambre";
 // Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
@@ -60,7 +61,7 @@ const estSitePlateforme = (chemin: string) => chemin === "/plateforme" || chemin
 
 // Espace suspendu par l'Admin GM : la connexion et l'abonnement restent ouverts (pour régulariser)
 const OUVERT_SI_SUSPENDUE = (chemin: string) =>
-  ["/auth", "/auth/entree", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
+  ["/auth", "/auth/entree", "/auth/entree-gm", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
   chemin === "/admin/abonnement" ||
   chemin.startsWith("/admin/abonnement/");
 
@@ -154,6 +155,18 @@ export default async function proxy(request: NextRequest) {
     const reponse = vers(CONNEXION, { suite: `${pathname}${request.nextUrl.search}` });
     reponse.cookies.delete(NOM_COOKIE);
     return reponse;
+  }
+  // Visite de l'Admin GM (mode développeur) : une session de visite ne vaut qu'avec son cookie, et cesse dès que
+  // la Chambre retire l'autorisation ; un cookie de visite avec une session ordinaire ne vaut rien non plus
+  const cookieVisite = request.cookies.get(NOM_COOKIE_VISITE)?.value;
+  if (session.visite || cookieVisite) {
+    const visite = lireVisite(cookieVisite);
+    if (!session.visite || !visite || !ici.accesDev || visite.u !== session.userId) {
+      const reponse = vers(CONNEXION);
+      reponse.cookies.delete(NOM_COOKIE);
+      reponse.cookies.delete(NOM_COOKIE_VISITE);
+      return reponse;
+    }
   }
   if (user.role === "admin" && pathname === "/membre/rendez-vous") {
     return vers("/admin/rendez-vous", {

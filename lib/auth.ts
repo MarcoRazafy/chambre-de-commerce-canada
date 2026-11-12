@@ -23,18 +23,22 @@ function cle(): string {
 export const signer = (charge: string, usage = "") =>
   createHmac("sha256", cle()).update(usage ? `${usage}:${charge}` : charge).digest("base64url");
 
+// Session d'une visite de l'Admin GM (mode développeur) : marquée comme telle, elle dure le temps de la visite
+export const DUREE_SESSION_VISITE_MS = 2 * 3_600_000;
+
 export async function ouvrirSession(
   userId: string,
   souvenir = true,
+  visite = false,
 ): Promise<void> {
-  const expire = Date.now() + DUREE_JOURS * 86_400_000;
-  const charge = `${userId}.${expire}`;
+  const duree = visite ? DUREE_SESSION_VISITE_MS : DUREE_JOURS * 86_400_000;
+  const charge = `${userId}.${Date.now() + duree}${visite ? ".v" : ""}`;
   (await cookies()).set(COOKIE, `${charge}.${signer(charge)}`, {
     httpOnly: true,
     sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
     path: "/",
-    ...(souvenir ? { maxAge: DUREE_JOURS * 86_400 } : {}),
+    ...(visite ? { maxAge: duree / 1000 } : souvenir ? { maxAge: DUREE_JOURS * 86_400 } : {}),
   });
 }
 
@@ -45,6 +49,8 @@ export async function fermerSession(): Promise<void> {
 export interface Session {
   userId: string;
   emiseLe: number;
+  // Session d'une visite de l'Admin GM : valable seulement avec le cookie de la visite (proxy.ts)
+  visite: boolean;
 }
 
 export async function sessionCourante(): Promise<Session | null> {
@@ -76,9 +82,10 @@ export function lireSession(jeton: string | undefined): Session | null {
     return null;
   }
 
-  const [userId, expire] = charge.split(".");
+  const [userId, expire, marque] = charge.split(".");
   if (!userId || !expire || Number(expire) < Date.now()) return null;
-  return { userId, emiseLe: Number(expire) - DUREE_JOURS * 86_400_000 };
+  const visite = marque === "v";
+  return { userId, emiseLe: Number(expire) - (visite ? DUREE_SESSION_VISITE_MS : DUREE_JOURS * 86_400_000), visite };
 }
 
 export const NOM_COOKIE = COOKIE;

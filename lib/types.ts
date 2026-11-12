@@ -24,6 +24,8 @@ export interface User {
   tel?: string;
   initiales: string;
   photo?: string | null;
+  // Visite de l'Admin GM (mode développeur) : son nom ; sinon null
+  visiteGM?: string | null;
 }
 
 export interface Produit {
