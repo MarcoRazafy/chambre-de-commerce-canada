@@ -3,11 +3,14 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma, prismaSysteme } from "@/lib/db";
 
-export type UsageJeton = "reinitialisation" | "invitation";
+// « connexion » : passage du site de la plateforme à l'adresse de la Chambre (la session ne suit pas d'une
+// adresse à l'autre) : à usage unique, valable 10 minutes
+export type UsageJeton = "reinitialisation" | "invitation" | "connexion";
 
 const DUREE: Record<UsageJeton, number> = {
   reinitialisation: 60 * 60 * 1000,
   invitation: 7 * 24 * 60 * 60 * 1000,
+  connexion: 10 * 60 * 1000,
 };
 
 const empreinte = (brut: string) =>

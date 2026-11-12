@@ -5,7 +5,7 @@ import "server-only";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { RESEAUX, type Reseau } from "@/lib/lettre-blocs";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
-import { completerProfil } from "@/lib/profil-chambre-defauts";
+import { completerProfil, sansDefauts } from "@/lib/profil-chambre-defauts";
 
 export type Mentions = { confidentialite: string; copyright: string; adresse: string; email: string; telephone: string };
 
@@ -27,15 +27,17 @@ export async function parametresPourCourriel() {
 
 function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
   const p = completerProfil(brut);
+  // Les valeurs par défaut (réseaux, confidentialité, courriel de l'équipe) sont celles de la Chambre n° 1
+  const neutre = sansDefauts(brut);
 
   // Réseaux : ceux réglés ; aucun réglé, ceux de la configuration
   const regles = Object.fromEntries(RESEAUX.map((r) => [r, brut?.[r]?.trim() ?? ""]).filter(([, v]) => v)) as Partial<Record<Reseau, string>>;
-  const reseaux: Partial<Record<Reseau, string>> = Object.keys(regles).length
+  const reseaux: Partial<Record<Reseau, string>> = Object.keys(regles).length || neutre
     ? regles
     : { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
 
   const mentions: Mentions = {
-    confidentialite: brut?.confidentialite.trim() || COORDONNEES.legal.confidentialite,
+    confidentialite: brut?.confidentialite.trim() || (neutre ? "" : COORDONNEES.legal.confidentialite),
     copyright: brut?.copyright.trim() || `© ${new Date().getFullYear()} ${p.nom}. Tous droits réservés.`,
     adresse: p.adresse,
     email: p.email,
@@ -43,7 +45,12 @@ function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
   };
 
   const equipe = brut?.courrielEquipe.trim() ?? "";
-  const courrielEquipe = valide(equipe) ? equipe : process.env.COURRIEL_EQUIPE || COORDONNEES.email;
+  // Sans adresse réglée : celle du serveur (Chambre n° 1), sinon le courriel de la Chambre
+  const courrielEquipe = valide(equipe)
+    ? equipe
+    : neutre
+      ? p.email
+      : process.env.COURRIEL_EQUIPE || COORDONNEES.email;
 
   return { reseaux, mentions, courrielEquipe };
 }

@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
 import { lireSessionGM, NOM_COOKIE_GM } from "@/lib/auth-gm";
 import { resoudreHote } from "@/lib/chambre-courante";
-import { estHoteGM } from "@/lib/hote-chambre";
+import { estHoteGM, estHotePlateforme } from "@/lib/hote-chambre";
 // Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
 import { prismaSysteme as prisma } from "@/lib/db";
 import { isAccessLocked, PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
@@ -56,10 +56,11 @@ const pageCourte = (titre: string, status: number, lien?: { href: string; libell
 const introuvable = () => pageCourte("Espace introuvable", 404);
 
 const estGM = (chemin: string) => chemin === "/gm" || chemin.startsWith("/gm/");
+const estSitePlateforme = (chemin: string) => chemin === "/plateforme" || chemin.startsWith("/plateforme/");
 
 // Espace suspendu par l'Admin GM : la connexion et l'abonnement restent ouverts (pour régulariser)
 const OUVERT_SI_SUSPENDUE = (chemin: string) =>
-  ["/auth", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
+  ["/auth", "/auth/entree", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
   chemin === "/admin/abonnement" ||
   chemin.startsWith("/admin/abonnement/");
 
@@ -81,11 +82,22 @@ function proxyGM(request: NextRequest): NextResponse {
   return NextResponse.next();
 }
 
+// Site public de la plateforme (DOMAINE_PLATEFORME, www.) : ses pages (app/plateforme), sous des adresses courtes
+// (« / », « /creer-une-chambre »…) ; les fichiers publics (images…) passent tels quels
+function proxyPlateforme(request: NextRequest): NextResponse {
+  const { pathname } = request.nextUrl;
+  if (estSitePlateforme(pathname) || /\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
+  const url = request.nextUrl.clone();
+  url.pathname = pathname === "/" ? "/plateforme" : `/plateforme${pathname}`;
+  return NextResponse.rewrite(url);
+}
+
 export default async function proxy(request: NextRequest) {
   const hote = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   if (estHoteGM(hote)) return proxyGM(request);
-  // Les pages de l'Admin GM n'existent qu'à son adresse
-  if (estGM(request.nextUrl.pathname)) return introuvable();
+  if (estHotePlateforme(hote)) return proxyPlateforme(request);
+  // Les pages de l'Admin GM et du site de la plateforme n'existent qu'à leur adresse
+  if (estGM(request.nextUrl.pathname) || estSitePlateforme(request.nextUrl.pathname)) return introuvable();
 
   // La Chambre de l'adresse du site
   const ici = await resoudreHote(hote);

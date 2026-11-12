@@ -47,12 +47,13 @@ export function oublierAdresses() {
 // Chambre (ou l'espace Admin GM).
 export async function resoudreHote(brut: string | null | undefined): Promise<Resolue> {
   const h = lireHote(brut, process.env.DOMAINE_PLATEFORME ?? null, process.env.NODE_ENV !== "production");
-  const cle = h.type === "gm" ? "gm" : h.type === "sous-domaine" ? `s:${h.slug}` : `d:${h.hote}`;
+  const cle = h.type === "gm" || h.type === "plateforme" ? h.type : h.type === "sous-domaine" ? `s:${h.slug}` : `d:${h.hote}`;
   const m = parHote.get(cle);
   if (m && m.jusqua > Date.now()) return m;
   if (!chercherChambre) throw new Error("Recherche des Chambres non branchée (lib/db.ts)");
   let r: Resolue;
-  if (h.type === "gm") r = { id: null, propre: true, suspendue: false }; // espace Admin GM : aucune Chambre
+  // Espace Admin GM, site public de la plateforme : aucune Chambre
+  if (h.type === "gm" || h.type === "plateforme") r = { id: null, propre: true, suspendue: false };
   else if (h.type === "sous-domaine") {
     const c = await chercherChambre({ slug: h.slug });
     r = { id: c?.id ?? null, propre: true, suspendue: c?.suspendue ?? false };

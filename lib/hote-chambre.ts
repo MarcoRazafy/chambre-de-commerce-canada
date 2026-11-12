@@ -10,13 +10,17 @@ export const SOUS_DOMAINES_RESERVES = new Set([
 
 const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
-export type Hote = { type: "sous-domaine"; slug: string } | { type: "gm" } | { type: "autre"; hote: string };
+export type Hote = { type: "sous-domaine"; slug: string } | { type: "gm" } | { type: "plateforme" } | { type: "autre"; hote: string };
 
 // « Cancham.Lalliee-Virtuelle.com:443 » → { sous-domaine « cancham » } ; « gm.lalliee-virtuelle.com » → { gm } ;
-// « cancham.mg » → { autre « cancham.mg » }
+// « lalliee-virtuelle.com » ou « www.… » → { plateforme } (le site public) ; « cancham.mg » → { autre « cancham.mg » }
 export function lireHote(brut: string | null | undefined, plateforme: string | null, dev: boolean): Hote {
   const hote = (brut ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
-  for (const base of [plateforme?.trim().toLowerCase() || null, dev ? "localhost" : null]) {
+  const domaine = plateforme?.trim().toLowerCase() || null;
+  // Le site public de la plateforme : son domaine, avec ou sans www (www.localhost en développement)
+  if (domaine && (hote === domaine || hote === `www.${domaine}`)) return { type: "plateforme" };
+  if (dev && hote === "www.localhost") return { type: "plateforme" };
+  for (const base of [domaine, dev ? "localhost" : null]) {
     if (!base || !hote.endsWith(`.${base}`)) continue;
     const slug = hote.slice(0, -(base.length + 1));
     // L'espace de l'Admin GM : gm.DOMAINE_PLATEFORME (gm.localhost en développement)
@@ -29,6 +33,9 @@ export function lireHote(brut: string | null | undefined, plateforme: string | n
 // Un sous-domaine possible pour une Chambre (choix de l'adresse à la création)
 export const slugValide = (slug: string) => SLUG.test(slug) && !SOUS_DOMAINES_RESERVES.has(slug);
 
-// L'adresse est-elle celle de l'espace Admin GM ?
-export const estHoteGM = (brut: string | null | undefined) =>
-  lireHote(brut, process.env.DOMAINE_PLATEFORME ?? null, process.env.NODE_ENV !== "production").type === "gm";
+const typeHote = (brut: string | null | undefined) =>
+  lireHote(brut, process.env.DOMAINE_PLATEFORME ?? null, process.env.NODE_ENV !== "production").type;
+
+// L'adresse est-elle celle de l'espace Admin GM ? du site public de la plateforme ?
+export const estHoteGM = (brut: string | null | undefined) => typeHote(brut) === "gm";
+export const estHotePlateforme = (brut: string | null | undefined) => typeHote(brut) === "plateforme";

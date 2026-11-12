@@ -14,6 +14,7 @@ export function ChoixCarte({
   titre,
   detail,
   prix,
+  periode = "an",
   icone,
 }: {
   name: string;
@@ -23,6 +24,8 @@ export function ChoixCarte({
   titre: string;
   detail?: string;
   prix?: string;
+  /** Après le prix : « / an » (cotisations), « / mois » (offres de la plateforme) ; vide : rien */
+  periode?: string;
   icone?: ReactNode;
 }) {
   return (
@@ -50,8 +53,8 @@ export function ChoixCarte({
       </span>
       {prix ? (
         <span className="text-[20px] font-bold text-marque-vert whitespace-nowrap mt-auto">
-          {prix}{" "}
-          <span className="text-[13px] font-semibold text-muted">/ an</span>
+          {prix}
+          {periode ? <>{" "}<span className="text-[13px] font-semibold text-muted">/ {periode}</span></> : null}
         </span>
       ) : null}
     </label>

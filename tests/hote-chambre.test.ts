@@ -18,15 +18,22 @@ describe("lireHote : l'adresse du site → la Chambre", () => {
     expect(lireHote("localhost:3000", null, true)).toEqual({ type: "autre", hote: "localhost" });
   });
 
+  it("le site public de la plateforme : son domaine, avec ou sans www", () => {
+    expect(lireHote("lalliee-virtuelle.com", P, false)).toEqual({ type: "plateforme" });
+    expect(lireHote("WWW.lalliee-virtuelle.com:443", P, false)).toEqual({ type: "plateforme" });
+    expect(lireHote("www.localhost:3000", null, true)).toEqual({ type: "plateforme" });
+    expect(lireHote("www.localhost:3000", null, false).type).toBe("autre");
+    expect(lireHote("lalliee-virtuelle.com", null, false).type).toBe("autre");
+  });
+
   it("le reste : l'adresse telle quelle (domaine propre, domaine principal, IP)", () => {
     expect(lireHote("cancham.mg", P, false)).toEqual({ type: "autre", hote: "cancham.mg" });
-    expect(lireHote("lalliee-virtuelle.com", P, false)).toEqual({ type: "autre", hote: "lalliee-virtuelle.com" });
     expect(lireHote("127.0.0.1:3000", P, false)).toEqual({ type: "autre", hote: "127.0.0.1" });
     expect(lireHote(null, P, false)).toEqual({ type: "autre", hote: "" });
   });
 
   it("sous-domaines réservés et noms invalides : pas une Chambre", () => {
-    for (const h of ["www.lalliee-virtuelle.com", "app.lalliee-virtuelle.com", "a.b.lalliee-virtuelle.com", "-x.lalliee-virtuelle.com"]) {
+    for (const h of ["app.lalliee-virtuelle.com", "api.lalliee-virtuelle.com", "a.b.lalliee-virtuelle.com", "-x.lalliee-virtuelle.com"]) {
       expect(lireHote(h, P, false).type).toBe("autre");
     }
     // L'espace de l'Admin GM

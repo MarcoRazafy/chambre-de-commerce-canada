@@ -35,3 +35,11 @@ export async function adresseDeLaChambre(chambreId: string): Promise<string | nu
   memoire.set(chambreId, { jusqua: Date.now() + 60_000, adresse });
   return adresse;
 }
+
+// L'adresse à donner pour aller dans une Chambre : la sienne, sinon (Chambre n° 1 sans adresse réglée) celle du site
+export async function adresseOuSite(chambreId: string): Promise<string | null> {
+  const propre = await adresseDeLaChambre(chambreId);
+  if (propre) return propre;
+  if (chambreId !== CHAMBRE_PRINCIPALE) return null;
+  return process.env.APP_URL?.trim().replace(/\/+$/, "") || null;
+}

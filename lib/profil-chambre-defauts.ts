@@ -1,4 +1,7 @@
-// Profil de la Chambre (« Mon entreprise ») : chaque champ vide reprend la valeur par défaut de la plateforme
+// Profil de la Chambre (« Mon entreprise ») : chaque champ vide reprend la valeur par défaut.
+// Les coordonnées par défaut (lib/coordonnees.ts) sont celles de la Chambre n° 1 : les autres Chambres
+// n'en reçoivent pas (champ vide), pour ne jamais afficher les coordonnées d'une autre.
+import { CHAMBRE_PRINCIPALE } from "@/lib/chambre-courante";
 import { COORDONNEES } from "@/lib/coordonnees";
 
 export type ProfilChambre = {
@@ -27,15 +30,19 @@ export const adresseSurUneLigne = (p: PartiesAdresse) => lignesAdresse(p).join("
 
 export const NOM_CHAMBRE = "Chambre de Commerce et de Coopération Canada–Madagascar";
 
-type Ligne = Partial<Record<keyof ProfilChambre, string | null>> & PartiesAdresse;
+type Ligne = Partial<Record<keyof ProfilChambre, string | null>> & PartiesAdresse & { chambreId?: string | null };
+
+// Une autre Chambre que la n° 1 : pas de coordonnées par défaut
+export const sansDefauts = (l: { chambreId?: string | null } | null) => !!l?.chambreId && l.chambreId !== CHAMBRE_PRINCIPALE;
 
 export function completerProfil(l: Ligne | null): ProfilChambre {
-  const v = (k: keyof ProfilChambre, defaut: string) => (l?.[k]?.trim() ? l[k]!.trim() : defaut);
+  const neutre = sansDefauts(l);
+  const v = (k: keyof ProfilChambre, defaut: string) => (l?.[k]?.trim() ? l[k]!.trim() : neutre ? "" : defaut);
   const nom = v("nom", NOM_CHAMBRE);
   // L'adresse vient de ses parties si elles sont remplies, sinon de l'ancienne adresse d'un seul tenant
   const lignes = l ? lignesAdresse(l) : [];
   const adresse = lignes.length ? lignes.join(", ") : v("adresse", COORDONNEES.adresse);
-  const logo = v("logo", "/marque/logo-couleur.png");
+  const logo = l?.logo?.trim() || "/marque/logo-couleur.png";
   return {
     nom,
     description: v("description", ""),
@@ -45,7 +52,8 @@ export function completerProfil(l: Ligne | null): ProfilChambre {
     site: v("site", COORDONNEES.site),
     logo,
     couverture: l?.couverture?.trim() || null,
-    raisonSociale: v("raisonSociale", nom),
+    // Par défaut, le nom de la Chambre elle-même (pas une valeur d'une autre Chambre)
+    raisonSociale: l?.raisonSociale?.trim() || nom,
     adresseFacturation: lignes.length ? lignes.join("\n") : adresse,
     neq: v("neq", ""),
     tps: v("tps", ""),
