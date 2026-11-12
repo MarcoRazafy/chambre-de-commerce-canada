@@ -47,6 +47,7 @@ Sur le service de l'application, onglet **Variables** :
 | `SMTP_PORT` / `SMTP_SECURE` | `587` et `false` |
 | `SMTP_USER` / `SMTP_PASS` | L'identifiant SMTP (`…@smtp-brevo.com`) et la clé SMTP de Brevo |
 | `MAIL_FROM` | L'expéditeur, sur une adresse validée chez Brevo : `CanCham Connect <connect@cancham.mg>` (`COURRIEL_EXPEDITEUR`, s'il est défini, passe devant) |
+| `BREVO_API_KEY` | Clé API Brevo (Paramètres → SMTP et API → Clés API ; autorisations : Emails transactionnels « Tous », Compte et Webhooks « Lecture/Écriture »). Elle sert à vérifier et valider le domaine de l'adresse d'expédition saisie dans « Mon entreprise ». Sans elle, les courriels partent toujours de `MAIL_FROM`. |
 | `BREVO_WEBHOOK_SECRET` | Une clé longue et aléatoire, reprise dans l'adresse du webhook Brevo (étape 3). Sans elle, la newsletter part mais ses ouvertures, clics et adresses en erreur restent inconnus. |
 | `COURRIEL_EQUIPE` | L'adresse qui reçoit les alertes d'inscription et les réponses aux e-mails |
 | `WEB_PUSH_CLE_PUBLIQUE` | Clé VAPID publique des notifications sur l'appareil, générée avec `npx web-push generate-vapid-keys` |

@@ -4,6 +4,7 @@ import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import nodemailer, { type Transporter } from "nodemailer";
 import { COORDONNEES } from "@/lib/coordonnees";
+import { adresseValidee, domaineDe, estWebmail } from "@/lib/brevo-domaines";
 import { prisma } from "@/lib/db";
 
 export interface Courriel {
@@ -37,6 +38,8 @@ function lireAdresse(v: string): Adresse {
   return m ? { name: m[1].trim(), address: m[2].trim() } : { name: "", address: v.trim() };
 }
 const SERVEUR = lireAdresse(EXPEDITEUR);
+// L'adresse du serveur (utilisée quand celle de l'entreprise n'est pas validée)
+export const adresseServeur = () => SERVEUR.address;
 const valide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
 
 // Expéditeur réglé dans « Mon entreprise » (nom, adresse), réponse au courriel de l'entreprise.
@@ -56,11 +59,18 @@ async function expediteur() {
   }
   const nom = p?.expediteurNom.trim() || p?.nom.trim() || SERVEUR.name;
   const adresse = p?.expediteurEmail.trim() ?? "";
-  const de = { name: nom, address: valide(adresse) ? adresse : SERVEUR.address };
+  // L'adresse de l'entreprise ne sert d'expéditeur que si son domaine est validé chez Brevo ;
+  // sinon (Gmail, domaine non validé, Brevo injoignable) : l'adresse du serveur, avec le nom de l'entreprise
+  const autorisee =
+    valide(adresse) &&
+    !estWebmail(domaineDe(adresse)) &&
+    (fournisseurCourriel() === "smtp" ? await adresseValidee(adresse) : true);
+  const de = { name: nom, address: autorisee ? adresse : SERVEUR.address };
   const valeur = {
     de,
     secours: de.address !== SERVEUR.address ? { name: nom, address: SERVEUR.address } : null,
-    reponse: p?.email.trim() && valide(p.email.trim()) ? p.email.trim() : COURRIEL_EQUIPE,
+    // Les réponses vont à l'adresse d'expédition saisie (même Gmail), sinon au courriel de l'entreprise
+    reponse: valide(adresse) ? adresse : p?.email.trim() && valide(p.email.trim()) ? p.email.trim() : COURRIEL_EQUIPE,
   };
   memoire = { jusqua: Date.now() + 30_000, valeur };
   return valeur;
