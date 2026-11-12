@@ -64,7 +64,7 @@ export async function connexionGM(formData: FormData) {
 
   oublier(`gm:${origine}:${email}`);
   await ouvrirSessionGM(compte.id);
-  redirect(suite.startsWith("/gm/") && !suite.startsWith("/gm/connexion") ? suite : "/gm/chambres");
+  redirect(suite.startsWith("/gm/") && !suite.startsWith("/gm/connexion") ? suite : "/gm");
 }
 
 export async function deconnexionGM() {

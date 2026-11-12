@@ -7,6 +7,8 @@ import { getNotifications } from "@/lib/notifications";
 import { getCurrentUser } from "@/lib/session";
 import { isAccessLocked, joursDeRetard, retardBloque } from "@/lib/membership";
 import { NAV_MEMBRE } from "@/lib/nav";
+import { filtrerNav } from "@/lib/fonctions-plateforme";
+import { offreDeLaChambre } from "@/lib/offre-chambre";
 import { BandeauCotisation } from "@/components/paiement/Cotisation";
 import { cotisationDue } from "@/lib/cotisation";
 import { modesProposes } from "@/lib/reglements";
@@ -21,14 +23,17 @@ export default async function MembreLayout({
   const membre = user.memberId ? await getMember(user.memberId) : null;
   if (!membre) notFound();
 
-  const [unread, stats, notifications, cotisation, modes, paiement] = await Promise.all([
+  const [unread, stats, notifications, cotisation, modes, paiement, offre] = await Promise.all([
     getUnreadTotal(user.id),
     getStatsPubliques(),
     getNotifications("membre", membre.id, user.id),
     cotisationDue(membre),
     modesProposes(),
     etatPaiementChambre(),
+    offreDeLaChambre(),
   ]);
+  // Le menu sans les fonctions que l'offre de la Chambre n'inclut pas
+  const nav = filtrerNav(NAV_MEMBRE, offre?.fonctions);
 
   const verrouille = isAccessLocked(membre);
 
@@ -38,7 +43,7 @@ export default async function MembreLayout({
     <Coquille
       user={user}
       membre={membre}
-      nav={NAV_MEMBRE}
+      nav={nav}
       badges={{
         "/membre/evenements": stats.evenementsAVenir,
         "/membre/messagerie": unread,
@@ -62,7 +67,7 @@ export default async function MembreLayout({
       }
       lockedHrefs={
         verrouille
-          ? NAV_MEMBRE.flatMap((g) => g.items)
+          ? nav.flatMap((g) => g.items)
               .map((i) => i.href)
               .filter((h) => !toujoursOuvert.includes(h))
           : []

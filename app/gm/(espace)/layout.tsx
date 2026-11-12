@@ -14,7 +14,7 @@ export default async function EspaceGM({ children }: { children: React.ReactNode
     <div className="min-h-screen bg-bg">
       <header className="bg-marque-nuit text-white">
         <div className="max-w-[1180px] mx-auto px-4 sm:px-6 h-16 flex items-center gap-4 sm:gap-6">
-          <Link href="/gm/chambres" className="no-underline text-white font-bold text-[15px] whitespace-nowrap">
+          <Link href="/gm" className="no-underline text-white font-bold text-[15px] whitespace-nowrap">
             L’Alliée Virtuelle <span className="text-white/55 font-semibold max-sm:hidden">· Admin GM</span>
           </Link>
           <NavGM />

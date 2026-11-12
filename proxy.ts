@@ -3,6 +3,7 @@ import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
 import { lireSessionGM, NOM_COOKIE_GM } from "@/lib/auth-gm";
 import { lireVisite, NOM_COOKIE_VISITE } from "@/lib/visite-gm";
 import { resoudreHote } from "@/lib/chambre-courante";
+import { fonctionDuChemin } from "@/lib/fonctions-plateforme";
 import { estHoteGM, estHotePlateforme } from "@/lib/hote-chambre";
 // Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
 import { prismaSysteme as prisma } from "@/lib/db";
@@ -127,6 +128,15 @@ export default async function proxy(request: NextRequest) {
       ? "membre"
       : null;
   if (!espace) return NextResponse.next();
+
+  // Fonction que l'offre de la Chambre n'inclut pas (réglée par l'Admin GM)
+  const fonction = fonctionDuChemin(pathname);
+  if (fonction && ici.fonctions && !ici.fonctions.includes(fonction)) {
+    const accueil = request.nextUrl.clone();
+    accueil.pathname = `/${espace}`;
+    accueil.search = new URLSearchParams({ msg: "Cette fonction n’est pas incluse dans l’offre de la Chambre.", ton: "erreur" }).toString();
+    return NextResponse.redirect(accueil);
+  }
 
   const vers = (chemin: string, params?: Record<string, string>) => {
     const url = request.nextUrl.clone();

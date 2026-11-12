@@ -11,7 +11,7 @@ export const metadata: Metadata = { title: "Connexion · Admin GM" };
 
 export default async function ConnexionGM({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string; suite?: string }> }) {
   const { erreur, email, suite } = await searchParams;
-  if (await compteGM()) redirect("/gm/chambres");
+  if (await compteGM()) redirect("/gm");
 
   return (
     <div className="min-h-screen bg-bg grid place-items-center px-4 py-10">

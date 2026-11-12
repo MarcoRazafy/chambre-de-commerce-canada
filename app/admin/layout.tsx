@@ -8,6 +8,8 @@ import { getMemberStats, getUnreadTotal } from "@/lib/queries";
 import { getNotifications } from "@/lib/notifications";
 import { getCurrentUser } from "@/lib/session";
 import { NAV_ADMIN } from "@/lib/nav";
+import { filtrerNav } from "@/lib/fonctions-plateforme";
+import { offreDeLaChambre } from "@/lib/offre-chambre";
 
 export default async function AdminLayout({
   children,
@@ -15,11 +17,12 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser("admin");
-  const [stats, unread, notifications, paiement] = await Promise.all([
+  const [stats, unread, notifications, paiement, offre] = await Promise.all([
     getMemberStats(),
     getUnreadTotal(user.id),
     getNotifications("admin", null, user.id),
     etatPaiementChambre(),
+    offreDeLaChambre(),
   ]);
 
   const aTraiter = stats.total - stats.aJour;
@@ -27,7 +30,7 @@ export default async function AdminLayout({
   return (
     <CoquilleAdmin
       user={user}
-      nav={NAV_ADMIN}
+      nav={filtrerNav(NAV_ADMIN, offre?.fonctions)}
       badges={{ "/admin/membres": aTraiter, "/admin/messagerie": unread }}
       notifications={notifications}
     >

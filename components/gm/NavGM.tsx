@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Layers, Settings } from "lucide-react";
+import { Building2, LayoutDashboard, Layers, Settings } from "lucide-react";
 
 const LIENS = [
+  { href: "/gm", libelle: "Tableau de bord", icone: LayoutDashboard },
   { href: "/gm/chambres", libelle: "Chambres", icone: Building2 },
   { href: "/gm/offres", libelle: "Offres", icone: Layers },
   { href: "/gm/parametres", libelle: "Paramètres", icone: Settings },
@@ -15,7 +16,8 @@ export function NavGM() {
   return (
     <nav className="flex items-center gap-1">
       {LIENS.map(({ href, libelle, icone: Icone }) => {
-        const actif = chemin === href || chemin.startsWith(`${href}/`);
+        // Le tableau de bord (/gm) ne s'allume que pour lui-même
+        const actif = chemin === href || (href !== "/gm" && chemin.startsWith(`${href}/`));
         return (
           <Link
             key={href}

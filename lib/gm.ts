@@ -89,3 +89,37 @@ export function offresPlateforme() {
 export function reglagesPlateforme() {
   return db.reglagesPlateforme.upsert({ where: { id: "plateforme" }, create: { id: "plateforme" }, update: {} });
 }
+
+const MOIS = new Intl.DateTimeFormat("fr-FR", { month: "short", timeZone: "UTC" });
+
+// Tableau de bord de l'Admin GM : Chambres (actives, en retard, nouvelles), revenus de l'abonnement
+export async function tableauDeBordGM(maintenant = new Date()) {
+  const debutMois = (decalage: number) => new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth() - decalage, 1));
+  const il_y_a_30_jours = new Date(maintenant.getTime() - 30 * 86_400_000);
+  const [chambres, payees, derniersPaiements] = await Promise.all([
+    listeChambres(),
+    db.facturePlateforme.findMany({ where: { payeeLe: { gte: debutMois(5) } }, select: { total: true, payeeLe: true } }),
+    db.facturePlateforme.findMany({
+      where: { payeeLe: { not: null } },
+      orderBy: { payeeLe: "desc" },
+      take: 6,
+      select: { id: true, numero: true, total: true, payeeLe: true, chambre: { select: { id: true, nom: true } } },
+    }),
+  ]);
+  // Revenus encaissés par mois, des 6 derniers mois (le plus ancien d'abord)
+  const revenus = Array.from({ length: 6 }, (_, i) => {
+    const debut = debutMois(5 - i);
+    const fin = debutMois(4 - i);
+    const total = payees.filter((f) => f.payeeLe && f.payeeLe >= debut && f.payeeLe < fin).reduce((s, f) => s + f.total, 0);
+    return { mois: MOIS.format(debut), total: Math.round(total * 100) / 100 };
+  });
+  return {
+    total: chambres.length,
+    actives: chambres.filter((c) => c.statut !== "suspendue").length,
+    enRetard: chambres.filter((c) => c.statut === "en_retard"),
+    nouvelles: chambres.filter((c) => c.creeLe >= il_y_a_30_jours).sort((a, b) => b.creeLe.getTime() - a.creeLe.getTime()),
+    revenus,
+    revenusDuMois: revenus[5].total,
+    derniersPaiements,
+  };
+}

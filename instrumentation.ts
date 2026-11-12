@@ -84,9 +84,8 @@ const PERIODE_TACHES = 5 * 60 * 1000;
 
 async function lancerTaches() {
   if (process.env.TACHES_DESACTIVEES === "1") return;
-  const { randomUUID } = await import("node:crypto");
   // TACHES_SECRET, s'il est défini, sert aussi ici (utile si une tâche externe appelle la même route)
-  const jeton = process.env.TACHES_SECRET || randomUUID();
+  const jeton = process.env.TACHES_SECRET || crypto.randomUUID();
   process.env.TACHES_JETON = jeton;
   const adresse = `http://127.0.0.1:${process.env.PORT || 3000}/api/taches`;
   const tourner = async () => {
