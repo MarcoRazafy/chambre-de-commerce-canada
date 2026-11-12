@@ -10,6 +10,8 @@ import type { MemberType } from "@/lib/types";
 export interface ResumeTag {
   nom: string;
   entreprises: { id: string; nom: string; type: MemberType; photo: string | null; logo: string | null }[];
+  // Contacts sans entreprise qui portent le tag
+  contacts: number;
 }
 
 const LOGOS = 4;
@@ -85,7 +87,7 @@ export function ListeTags({
           <table className="w-full border-collapse text-[13.4px]">
             <thead>
               <tr className="bg-surface-2">
-                {["Tag", "Entreprises", "", ""].map((t, i) => (
+                {["Tag", "Entreprises et contacts", "", ""].map((t, i) => (
                   <th key={i} className={`surtitre text-faint font-semibold px-5 py-3 border-b border-line text-left ${i === 2 ? "hidden md:table-cell" : ""}`}>{t}</th>
                 ))}
               </tr>
@@ -106,6 +108,7 @@ export function ListeTags({
 
 function LigneTag({ tag }: { tag: ResumeTag }) {
   const n = tag.entreprises.length;
+  const c = tag.contacts;
   const autres = n - LOGOS;
   const lien = `/admin/etiquettes?e=${encodeURIComponent(tag.nom)}`;
   return (
@@ -115,7 +118,10 @@ function LigneTag({ tag }: { tag: ResumeTag }) {
           <Tag size={15} className="shrink-0 text-accent" aria-hidden /> {tag.nom}
         </Link>
       </td>
-      <td className="px-5 py-3 tabular-nums text-ink whitespace-nowrap">{pluriel(n)}</td>
+      <td className="px-5 py-3 tabular-nums text-ink whitespace-nowrap">
+        {pluriel(n)}
+        {c ? <span className="block text-[12.5px] text-muted">{c} contact{c > 1 ? "s" : ""} sans entreprise</span> : null}
+      </td>
       <td className="px-5 py-3 hidden md:table-cell">
         {n ? (
           <div className="flex flex-wrap items-center gap-1.5" aria-label={tag.entreprises.map((e) => e.nom).join(", ")}>
@@ -124,13 +130,15 @@ function LigneTag({ tag }: { tag: ResumeTag }) {
             ))}
             {autres > 0 ? <span className="h-6 min-w-6 px-1.5 rounded-[var(--radius-s)] bg-surface-3 text-muted text-[11.5px] font-bold grid place-items-center tabular-nums">+{autres}</span> : null}
           </div>
+        ) : c ? (
+          <span className="text-[12.5px] text-muted">Seulement des contacts sans entreprise</span>
         ) : (
           <span className="text-[12.5px] text-faint">Aucune entreprise</span>
         )}
       </td>
       <td className="px-5 py-3 text-right">
         <Link href={lien} className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap">
-          {n ? "Voir" : "Ajouter"} <ArrowRight size={14} aria-hidden />
+          {n || c ? "Voir" : "Ajouter"} <ArrowRight size={14} aria-hidden />
         </Link>
       </td>
     </tr>

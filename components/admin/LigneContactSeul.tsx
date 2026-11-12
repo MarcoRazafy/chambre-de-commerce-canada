@@ -4,7 +4,9 @@ import { useState } from "react";
 import { CalendarDays, Mail, Tag, Trash2, User } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { Pill } from "@/components/ui";
-import { retirerContactSeul } from "@/lib/actions/contacts";
+import { ChoixTags } from "@/components/admin/ChoixTags";
+import { SubmitButton } from "@/components/form-bits";
+import { majTagsContactSeul, retirerContactSeul } from "@/lib/actions/contacts";
 
 export interface ContactSeul {
   id: string;
@@ -22,9 +24,11 @@ export function LigneContactSeul({
   retour,
   choisi = false,
   onChoisir,
+  tousTags = [],
 }: {
   contact: ContactSeul;
   retour: string;
+  tousTags?: string[];
   choisi?: boolean;
   onChoisir?: (oui: boolean) => void;
 }) {
@@ -108,6 +112,14 @@ export function LigneContactSeul({
                 </div>
               </dl>
             </section>
+
+            <form action={majTagsContactSeul} className="rounded-[var(--radius-m)] border border-line p-4 flex flex-col gap-3">
+              <input type="hidden" name="id" value={a.id} />
+              <input type="hidden" name="retour" value={retour} />
+              <h4 className="m-0 text-[11px] uppercase tracking-[0.07em] font-semibold text-faint">Tags</h4>
+              <ChoixTags options={tousTags} initiaux={a.etiquettes} creation />
+              <SubmitButton pendingLabel="Enregistrement…" className="self-end">Enregistrer les tags</SubmitButton>
+            </form>
 
             <div className="flex items-center justify-between gap-3 flex-wrap">
               <p className="m-0 text-[12.5px] text-muted">Pour le rattacher à une entreprise, ajoutez-le avec « Ajouter un contact ».</p>

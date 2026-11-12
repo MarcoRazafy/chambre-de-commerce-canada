@@ -4,6 +4,7 @@ import { AjouterEntreprisesTag, NouveauTag, type EntrepriseTag } from "@/compone
 import { EnTeteAdmin } from "@/components/admin/ui";
 import { Card, Saillant } from "@/components/ui";
 import { renommerEtiquette, supprimerEtiquette } from "@/lib/actions/maillage";
+import { retirerTagContactSeul } from "@/lib/actions/contacts";
 import { getEntreprisesContacts, getTousLesTags, type EntrepriseContact } from "@/lib/contacts-admin";
 import { LigneEntrepriseTag } from "@/components/admin/LigneEntreprise";
 import { prisma } from "@/lib/db";
@@ -36,12 +37,26 @@ export default async function AdminEtiquettes({
   const choisi = sp.e ?? null;
   // Tags automatiques d'abord : la page montre la situation du moment
   await appliquerReglesTags();
-  const [entreprises, crees, tousTags, regles] = await Promise.all([getEntreprisesContacts(), prisma.tag.findMany({ select: { nom: true } }), getTousLesTags(), getReglesTags()]);
+  const [entreprises, crees, tousTags, regles, seuls] = await Promise.all([
+    getEntreprisesContacts(),
+    prisma.tag.findMany({ select: { nom: true } }),
+    getTousLesTags(),
+    getReglesTags(),
+    // Les contacts sans entreprise qui portent des tags
+    prisma.abonne.findMany({ where: { desabonneLe: null, NOT: { etiquettes: { isEmpty: true } } }, orderBy: { prenom: "asc" }, select: { id: true, prenom: true, email: true, etiquettes: true } }),
+  ]);
 
   // Les tags créés (même sans entreprise) et ceux posés sur des entreprises
   const parTag = new Map<string, EntrepriseContact[]>();
   for (const t of crees) parTag.set(t.nom, []);
   for (const e of entreprises) for (const t of e.etiquettes) parTag.set(t, [...(parTag.get(t) ?? []), e]);
+  const seulsParTag = new Map<string, typeof seuls>();
+  for (const c of seuls) {
+    for (const t of c.etiquettes) {
+      if (!parTag.has(t)) parTag.set(t, []);
+      seulsParTag.set(t, [...(seulsParTag.get(t) ?? []), c]);
+    }
+  }
 
   if (choisi) {
     const avec = parTag.get(choisi) ?? [];
@@ -86,6 +101,36 @@ export default async function AdminEtiquettes({
             <p className="m-0 px-5 pb-5 text-[13px] text-muted">Aucune entreprise n’a ce tag.</p>
           )}
         </Card>
+
+        {(seulsParTag.get(choisi) ?? []).length ? (
+          <Card className="p-0 overflow-x-auto mt-4">
+            <div className="px-5 pt-4 pb-3 font-semibold text-ink">
+              {(seulsParTag.get(choisi) ?? []).length} contact{(seulsParTag.get(choisi) ?? []).length > 1 ? "s" : ""} sans entreprise
+            </div>
+            <table className="w-full border-collapse text-[13.4px]">
+              <thead>
+                <tr className="bg-surface-2">
+                  {["Contact", "Courriel", ""].map((t, i) => <th key={i} className={TH}>{t}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {(seulsParTag.get(choisi) ?? []).map((c) => (
+                  <tr key={c.id} className="border-b border-line last:border-b-0">
+                    <td className="px-5 py-3 font-semibold text-ink">{c.prenom || c.email}</td>
+                    <td className="px-5 py-3"><a href={`mailto:${c.email}`} className="text-accent no-underline hover:underline break-all">{c.email}</a></td>
+                    <td className="px-5 py-3 text-right">
+                      <form action={retirerTagContactSeul}>
+                        <input type="hidden" name="id" value={c.id} />
+                        <input type="hidden" name="tag" value={choisi} />
+                        <button type="submit" className="btn-contour btn-contour-sm text-muted hover:text-bad">Retirer le tag</button>
+                      </form>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        ) : null}
       </>
     );
   }
@@ -93,10 +138,10 @@ export default async function AdminEtiquettes({
   const recherche = (sp.q ?? "").trim();
   const tri = sp.tri === "nom" ? "nom" : "nombre";
   const resumes: ResumeTag[] = [...parTag.entries()]
-    .map(([nom, es]) => ({ nom, entreprises: es.map(({ id, nom, type, photo, logo }) => ({ id, nom, type, photo, logo })) }))
+    .map(([nom, es]) => ({ nom, entreprises: es.map(({ id, nom, type, photo, logo }) => ({ id, nom, type, photo, logo })), contacts: (seulsParTag.get(nom) ?? []).length }))
     .filter((t) => !recherche || plat(t.nom).includes(plat(recherche)))
     .sort((a, b) =>
-      tri === "nom" ? a.nom.localeCompare(b.nom, "fr") : b.entreprises.length - a.entreprises.length || a.nom.localeCompare(b.nom, "fr"),
+      tri === "nom" ? a.nom.localeCompare(b.nom, "fr") : b.entreprises.length + b.contacts - (a.entreprises.length + a.contacts) || a.nom.localeCompare(b.nom, "fr"),
     );
 
   return (

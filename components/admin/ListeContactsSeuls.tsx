@@ -153,7 +153,7 @@ export function ListeContactsSeuls({ contacts, retour, tousTags }: { contacts: C
       <Card className="p-0 overflow-hidden">
         <ul className="list-none m-0 p-0 [&>li:first-child]:border-t-0">
           {contacts.map((c) => (
-            <LigneContactSeul key={c.id} contact={c} retour={retour} choisi={choisis.has(c.id)} onChoisir={(oui) => choisir(c.id, oui)} />
+            <LigneContactSeul key={c.id} contact={c} retour={retour} tousTags={tousTags} choisi={choisis.has(c.id)} onChoisir={(oui) => choisir(c.id, oui)} />
           ))}
         </ul>
       </Card>

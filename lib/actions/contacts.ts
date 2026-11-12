@@ -276,3 +276,26 @@ export async function retirerTagsContactsSeuls(formData: FormData) {
   revalidatePath("/admin", "layout");
   redirectWithFlash(retour, `${pluriel(tags.length, "tag")} retiré${tags.length > 1 ? "s" : ""} de ${cs.length} contact${cs.length > 1 ? "s" : ""}`);
 }
+
+// Fiche d'un contact sans entreprise : ses tags
+export async function majTagsContactSeul(formData: FormData) {
+  await exigerEquipe();
+  const retour = retourContacts(formData);
+  const tags = tagsDe(formData);
+  const c = await prisma.abonne.update({ where: { id: texte(formData, "id") }, data: { etiquettes: tags }, select: { prenom: true, email: true } });
+  await garderTags(tags);
+  revalidatePath("/admin", "layout");
+  redirectWithFlash(retour, `Tags de ${c.prenom || c.email} enregistrés`);
+}
+
+// Page d'un tag : retirer ce tag d'un contact sans entreprise
+export async function retirerTagContactSeul(formData: FormData) {
+  await exigerEquipe();
+  const tag = texte(formData, "tag");
+  const c = await prisma.abonne.findUnique({ where: { id: texte(formData, "id") }, select: { id: true, prenom: true, email: true, etiquettes: true } });
+  const page = `/admin/etiquettes?e=${encodeURIComponent(tag)}`;
+  if (!c) redirectWithErreur(page, "Contact introuvable.");
+  await prisma.abonne.update({ where: { id: c.id }, data: { etiquettes: c.etiquettes.filter((t) => t !== tag) } });
+  revalidatePath("/admin", "layout");
+  redirectWithFlash(page, `« ${tag} » retiré de ${c.prenom || c.email}`);
+}
