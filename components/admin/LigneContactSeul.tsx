@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CalendarDays, Mail, Trash2, User } from "lucide-react";
+import { CalendarDays, Mail, Tag, Trash2, User } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { Pill } from "@/components/ui";
 import { retirerContactSeul } from "@/lib/actions/contacts";
@@ -13,6 +13,7 @@ export interface ContactSeul {
   origine: string;
   depuis: string;
   erreur: boolean;
+  etiquettes: string[];
 }
 
 // Un contact sans entreprise (page Contacts) : un clic ouvre sa fiche
@@ -63,6 +64,16 @@ export function LigneContactSeul({
         <button type="button" onClick={() => setOuvert(true)} className="block p-0 border-0 bg-transparent font-semibold text-ink text-left truncate cursor-pointer hover:text-accent">{nom}</button>
         <a href={`mailto:${a.email}`} className="text-[12.5px] text-accent no-underline hover:underline break-all">{a.email}</a>
       </div>
+      {a.etiquettes.length ? (
+        <span className="hidden md:flex flex-wrap gap-1 justify-end max-w-[320px]">
+          {a.etiquettes.slice(0, 3).map((t) => (
+            <span key={t} className="inline-flex items-center gap-1 rounded-full bg-accent-soft text-accent-strong px-2.5 py-0.5 text-[12px] font-semibold">
+              <Tag size={11} aria-hidden /> {t}
+            </span>
+          ))}
+          {a.etiquettes.length > 3 ? <span className="rounded-full border border-line px-2 py-0.5 text-[12px] text-muted">+{a.etiquettes.length - 3}</span> : null}
+        </span>
+      ) : null}
       <span className="hidden sm:block text-[12px] text-muted whitespace-nowrap">{a.origine} · {a.depuis}</span>
       {a.erreur ? <Pill tone="warn">Adresse en erreur</Pill> : null}
       {retirer}

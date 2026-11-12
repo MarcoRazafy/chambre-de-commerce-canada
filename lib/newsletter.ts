@@ -79,8 +79,17 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
     });
     for (const c of contacts) parAdresse.set(c.email.toLowerCase(), { email: c.email, nom: c.nom, abonne: false, entreprise: c.member?.nom });
   }
-  if (a.abonnes) {
-    const abonnes = await prisma.abonne.findMany({ where: { desabonneLe: null, erreurLe: null }, select: { email: true, prenom: true } });
+  // Contacts sans entreprise : tous s'il n'y a pas de tag choisi, sinon ceux qui portent un des tags ; jamais les exclus
+  if (a.abonnes || a.etiquettes.length) {
+    const abonnes = await prisma.abonne.findMany({
+      where: {
+        desabonneLe: null,
+        erreurLe: null,
+        ...(a.etiquettes.length ? { etiquettes: { hasSome: a.etiquettes } } : {}),
+        ...(a.exclus.length ? { NOT: { etiquettes: { hasSome: a.exclus } } } : {}),
+      },
+      select: { email: true, prenom: true },
+    });
     for (const x of abonnes) if (!parAdresse.has(x.email.toLowerCase())) parAdresse.set(x.email.toLowerCase(), { email: x.email, nom: x.prenom, abonne: true });
   }
   return [...parAdresse.values()];

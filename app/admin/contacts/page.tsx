@@ -45,7 +45,7 @@ export default async function AdminContacts({
   const seuls = await prisma.abonne.findMany({
     where: { desabonneLe: null, ...(f.q ? { OR: [{ prenom: { contains: f.q, mode: "insensitive" } }, { email: { contains: f.q, mode: "insensitive" } }] } : {}) },
     orderBy: { createdAt: "desc" },
-    select: { id: true, prenom: true, email: true, source: true, createdAt: true, erreurLe: true },
+    select: { id: true, prenom: true, email: true, source: true, createdAt: true, erreurLe: true, etiquettes: true },
   });
 
   return (
@@ -89,6 +89,7 @@ export default async function AdminContacts({
           </FiltresAuto>
           {seuls.length ? (
             <ListeContactsSeuls
+              tousTags={tousTags}
               retour={`/admin/contacts?onglet=sans${f.q ? `&q=${encodeURIComponent(f.q)}` : ""}`}
               contacts={seuls.map((a) => ({
                   id: a.id,
@@ -97,6 +98,7 @@ export default async function AdminContacts({
                   origine: a.source === "vitrine" ? "Inscrit depuis le site" : a.source === "import" ? "Importé" : "Ajouté par l’équipe",
                   depuis: fmtDate(a.createdAt.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" }),
                   erreur: !!a.erreurLe,
+                  etiquettes: a.etiquettes,
               }))}
             />
           ) : (

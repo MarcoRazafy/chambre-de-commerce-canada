@@ -864,6 +864,9 @@ model Abonne {
   // Dernière invitation à adhérer envoyée par l'équipe
   inviteLe DateTime?
 
+  // Tags de l'équipe, comme sur les entreprises (cibler une newsletter)
+  etiquettes String[] @default([])
+
   createdAt DateTime @default(now())
 
   @@map("abonnes")

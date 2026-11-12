@@ -143,12 +143,13 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
         bilan.ignores.push({ email: l.email, raison: existant.role === "admin" ? "compte de l’équipe" : "déjà contact d’une entreprise" });
         continue;
       }
-      const deja = await prisma.abonne.findUnique({ where: { email: l.email }, select: { id: true } });
+      const deja = await prisma.abonne.findUnique({ where: { email: l.email }, select: { id: true, etiquettes: true } });
       await prisma.abonne.upsert({
         where: { email: l.email },
-        create: { email: l.email, prenom: nom, source: "import" },
-        update: { prenom: nom, desabonneLe: null },
+        create: { email: l.email, prenom: nom, source: "import", etiquettes: l.tags },
+        update: { prenom: nom, desabonneLe: null, etiquettes: [...new Set([...(deja?.etiquettes ?? []), ...l.tags])] },
       });
+      l.tags.forEach((t) => tagsPoses.add(t));
       if (deja) bilan.contactsMisAJour++;
       else bilan.contactsCrees++;
       continue;
@@ -244,4 +245,34 @@ export async function retirerContactsSeuls(formData: FormData) {
   const { count } = await prisma.abonne.updateMany({ where: { id: { in: ids }, desabonneLe: null }, data: { desabonneLe: new Date() } });
   revalidatePath("/admin/contacts");
   redirectWithFlash(retour, `${count} contact${count > 1 ? "s" : ""} retiré${count > 1 ? "s" : ""}`);
+}
+
+// Sélection (contacts sans entreprise) : ajouter des tags à plusieurs contacts
+export async function ajouterTagsContactsSeuls(formData: FormData) {
+  await exigerEquipe();
+  const retour = retourContacts(formData);
+  const ids = formData.getAll("contacts").map(String).filter(Boolean);
+  const tags = tagsDe(formData);
+  if (!ids.length || !tags.length) redirectWithErreur(retour, "Choisissez au moins un contact et un tag.");
+  const cs = await prisma.abonne.findMany({ where: { id: { in: ids } }, select: { id: true, etiquettes: true } });
+  for (const c of cs) {
+    const nouveaux = tags.filter((t) => !c.etiquettes.includes(t));
+    if (nouveaux.length) await prisma.abonne.update({ where: { id: c.id }, data: { etiquettes: [...c.etiquettes, ...nouveaux] } });
+  }
+  await garderTags(tags);
+  revalidatePath("/admin", "layout");
+  redirectWithFlash(retour, `${pluriel(tags.length, "tag")} ajouté${tags.length > 1 ? "s" : ""} à ${cs.length} contact${cs.length > 1 ? "s" : ""}`);
+}
+
+// Sélection (contacts sans entreprise) : retirer des tags de plusieurs contacts
+export async function retirerTagsContactsSeuls(formData: FormData) {
+  await exigerEquipe();
+  const retour = retourContacts(formData);
+  const ids = formData.getAll("contacts").map(String).filter(Boolean);
+  const tags = tagsDe(formData);
+  if (!ids.length || !tags.length) redirectWithErreur(retour, "Choisissez au moins un contact et un tag.");
+  const cs = await prisma.abonne.findMany({ where: { id: { in: ids }, etiquettes: { hasSome: tags } }, select: { id: true, etiquettes: true } });
+  for (const c of cs) await prisma.abonne.update({ where: { id: c.id }, data: { etiquettes: c.etiquettes.filter((t) => !tags.includes(t)) } });
+  revalidatePath("/admin", "layout");
+  redirectWithFlash(retour, `${pluriel(tags.length, "tag")} retiré${tags.length > 1 ? "s" : ""} de ${cs.length} contact${cs.length > 1 ? "s" : ""}`);
 }

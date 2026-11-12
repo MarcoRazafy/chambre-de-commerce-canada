@@ -2,16 +2,17 @@
 
 // Contacts sans entreprise (page Contacts) : on coche des contacts (ou tous), puis on les exporte ou on les retire
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Download, Trash2, X } from "lucide-react";
+import { Download, Plus, Tags, Trash2, X } from "lucide-react";
+import { ChoixTags } from "@/components/admin/ChoixTags";
 import { LigneContactSeul, type ContactSeul } from "@/components/admin/LigneContactSeul";
 import { Modal } from "@/components/Modal";
 import { CancelButton, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
 import { Card } from "@/components/ui";
-import { retirerContactsSeuls } from "@/lib/actions/contacts";
+import { ajouterTagsContactsSeuls, retirerContactsSeuls, retirerTagsContactsSeuls } from "@/lib/actions/contacts";
 
 const pluriel = (n: number) => `${n} contact${n > 1 ? "s" : ""}`;
 
-export function ListeContactsSeuls({ contacts, retour }: { contacts: ContactSeul[]; retour: string }) {
+export function ListeContactsSeuls({ contacts, retour, tousTags }: { contacts: ContactSeul[]; retour: string; tousTags: string[] }) {
   const [choisis, setChoisis] = useState<Set<string>>(new Set());
   const tout = useRef<HTMLInputElement>(null);
 
@@ -34,6 +35,7 @@ export function ListeContactsSeuls({ contacts, retour }: { contacts: ContactSeul
     });
   const choisirTout = (oui: boolean) => setChoisis(oui ? new Set(contacts.map((c) => c.id)) : new Set());
   const champs = selection.map((id) => <input key={id} type="hidden" name="contacts" value={id} />);
+  const tagsSelection = [...new Set(contacts.filter((c) => choisis.has(c.id)).flatMap((c) => c.etiquettes))].sort((a, b) => a.localeCompare(b, "fr"));
 
   return (
     <>
@@ -52,6 +54,50 @@ export function ListeContactsSeuls({ contacts, retour }: { contacts: ContactSeul
               </button>
             ) : null}
             <span className="flex-1" />
+            <Modal
+              title={`Ajouter des tags à ${pluriel(n)}`}
+              trigger={(ouvrir) => (
+                <button type="button" onClick={ouvrir} className="btn-action btn-action-sm">
+                  <Plus size={14} /> Ajouter des tags
+                </button>
+              )}
+            >
+              {(fermer) => (
+                <form action={ajouterTagsContactsSeuls}>
+                  <input type="hidden" name="retour" value={retour} />
+                  {champs}
+                  <ModalBody>
+                    <ChoixTags options={tousTags} creation />
+                  </ModalBody>
+                  <ModalFooter>
+                    <CancelButton onClick={fermer} />
+                    <SubmitButton pendingLabel="Ajout…"><Plus size={14} /> Ajouter</SubmitButton>
+                  </ModalFooter>
+                </form>
+              )}
+            </Modal>
+            <Modal
+              title={`Retirer des tags de ${pluriel(n)}`}
+              trigger={(ouvrir) => (
+                <button type="button" onClick={ouvrir} disabled={!tagsSelection.length} className="btn-contour btn-contour-sm bg-white text-ink border-white hover:bg-surface-2 disabled:opacity-50">
+                  <Tags size={14} /> Retirer des tags
+                </button>
+              )}
+            >
+              {(fermer) => (
+                <form action={retirerTagsContactsSeuls}>
+                  <input type="hidden" name="retour" value={retour} />
+                  {champs}
+                  <ModalBody>
+                    <ChoixTags options={tagsSelection} creation={false} />
+                  </ModalBody>
+                  <ModalFooter>
+                    <CancelButton onClick={fermer} />
+                    <SubmitButton pendingLabel="Retrait…" variant="danger"><X size={14} /> Retirer</SubmitButton>
+                  </ModalFooter>
+                </form>
+              )}
+            </Modal>
             <form action="/admin/contacts/export-seuls" method="post">
               {champs}
               <button type="submit" className="btn-contour btn-contour-sm bg-white text-ink border-white hover:bg-surface-2">
@@ -99,7 +145,7 @@ export function ListeContactsSeuls({ contacts, retour }: { contacts: ContactSeul
               aria-label="Sélectionner tous les contacts"
               className="w-[18px] h-[18px] accent-[var(--accent)] cursor-pointer"
             />
-            {pluriel(contacts.length)} · cochez des contacts pour les exporter ou les retirer
+            {pluriel(contacts.length)} · cochez des contacts pour leur ajouter ou retirer des tags, les exporter ou les retirer
           </label>
         )}
       </div>

@@ -12,8 +12,8 @@ export async function POST(requete: Request) {
   return reponseCsv(
     "contacts-sans-entreprise",
     versCsv(
-      ["Prénom", "Courriel", "Origine", "Depuis", "Adresse en erreur"],
-      contacts.map((a) => [a.prenom, a.email, ORIGINE[a.source] ?? "Ajouté par l’équipe", a.createdAt.toISOString().slice(0, 10), a.erreurLe ? "Oui" : ""]),
+      ["Nom", "Courriel", "Tags", "Origine", "Depuis", "Adresse en erreur"],
+      contacts.map((a) => [a.prenom, a.email, a.etiquettes.join(", "), ORIGINE[a.source] ?? "Ajouté par l’équipe", a.createdAt.toISOString().slice(0, 10), a.erreurLe ? "Oui" : ""]),
     ),
   );
 }
