@@ -19,8 +19,9 @@ function cle(): string {
   return "cancham-developpement-uniquement";
 }
 
-const signer = (charge: string) =>
-  createHmac("sha256", cle()).update(charge).digest("base64url");
+// Signature d'une session ; « usage » sépare les sessions (ex. « gm » : Admin GM) d'une même clé
+export const signer = (charge: string, usage = "") =>
+  createHmac("sha256", cle()).update(usage ? `${usage}:${charge}` : charge).digest("base64url");
 
 export async function ouvrirSession(
   userId: string,

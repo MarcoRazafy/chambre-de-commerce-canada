@@ -17,6 +17,7 @@
     "db:reset": "prisma migrate reset --force",
     "db:studio": "prisma studio",
     "admin:creer": "tsx scripts/creer-admin.ts",
+    "gm:creer": "tsx scripts/creer-gm.ts",
     "ressources:demo": "tsx --env-file=.env scripts/ressources-demo.ts",
     "messagerie:demo": "tsx --env-file=.env scripts/messagerie-demo.ts",
     "journal:demo": "tsx --env-file=.env scripts/journal-demo.ts",

@@ -1,6 +1,8 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
+import { lireSessionGM, NOM_COOKIE_GM } from "@/lib/auth-gm";
 import { resoudreHote } from "@/lib/chambre-courante";
+import { estHoteGM } from "@/lib/hote-chambre";
 // Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
 import { prismaSysteme as prisma } from "@/lib/db";
 import { isAccessLocked, PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
@@ -45,23 +47,59 @@ const ACCUEIL: Record<string, string> = {
   visiteur: CONNEXION,
 };
 
-// Sous-domaine de la plateforme sans Chambre
-const INTROUVABLE = `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Espace introuvable</title></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f5f7fa;color:#13243a"><h1 style="font-size:22px;font-weight:700">Espace introuvable</h1></body></html>`;
+// Page courte, sans la coquille de l'application (sous-domaine sans Chambre, espace suspendu)
+const pageCourte = (titre: string, status: number, lien?: { href: string; libelle: string }) =>
+  new NextResponse(
+    `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${titre}</title></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f5f7fa;color:#13243a"><div style="text-align:center"><h1 style="font-size:22px;font-weight:700;margin:0 0 14px">${titre}</h1>${lien ? `<a href="${lien.href}" style="color:#c8102e;font-weight:600">${lien.libelle}</a>` : ""}</div></body></html>`,
+    { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } },
+  );
+const introuvable = () => pageCourte("Espace introuvable", 404);
+
+const estGM = (chemin: string) => chemin === "/gm" || chemin.startsWith("/gm/");
+
+// Espace suspendu par l'Admin GM : la connexion et l'abonnement restent ouverts (pour régulariser)
+const OUVERT_SI_SUSPENDUE = (chemin: string) =>
+  ["/auth", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
+  chemin === "/admin/abonnement" ||
+  chemin.startsWith("/admin/abonnement/");
+
+// Espace Admin GM (gm.DOMAINE_PLATEFORME) : seulement ses pages, avec sa propre session
+function proxyGM(request: NextRequest): NextResponse {
+  const { pathname, search } = request.nextUrl;
+  const url = (chemin: string, params?: Record<string, string>) => {
+    const u = request.nextUrl.clone();
+    u.pathname = chemin;
+    u.search = new URLSearchParams(params).toString();
+    return u;
+  };
+  if (pathname === "/") return NextResponse.redirect(url("/gm"));
+  if (!estGM(pathname)) return introuvable();
+  if (pathname === "/gm/connexion") return NextResponse.next();
+  if (!lireSessionGM(request.cookies.get(NOM_COOKIE_GM)?.value)) {
+    return NextResponse.redirect(url("/gm/connexion", { suite: `${pathname}${search}` }));
+  }
+  return NextResponse.next();
+}
 
 export default async function proxy(request: NextRequest) {
+  const hote = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (estHoteGM(hote)) return proxyGM(request);
+  // Les pages de l'Admin GM n'existent qu'à son adresse
+  if (estGM(request.nextUrl.pathname)) return introuvable();
+
   // La Chambre de l'adresse du site
-  const ici = await resoudreHote(
-    request.headers.get("x-forwarded-host") ?? request.headers.get("host"),
-  );
-  if (!ici.id) {
-    return new NextResponse(INTROUVABLE, {
-      status: 404,
-      headers: { "content-type": "text/html; charset=utf-8" },
-    });
-  }
+  const ici = await resoudreHote(hote);
+  if (!ici.id) return introuvable();
   if (!ici.propre) {
     const canonique = versDomainePrincipal(request);
     if (canonique) return canonique;
+  }
+  if (ici.suspendue && !OUVERT_SI_SUSPENDUE(request.nextUrl.pathname)) {
+    return pageCourte(
+      "Espace suspendu",
+      403,
+      request.nextUrl.pathname.startsWith("/admin") ? { href: "/admin/abonnement?onglet=factures", libelle: "Abonnement" } : undefined,
+    );
   }
 
   const { pathname } = request.nextUrl;

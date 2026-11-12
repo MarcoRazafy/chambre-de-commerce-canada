@@ -5,6 +5,8 @@
 //   y compris dans les créations imbriquées (une entreprise créée avec ses comptes, par exemple).
 // - Tables enfants (sans chambreId) : filtre par leur parent (une inscription → son événement → sa Chambre).
 // - Chambre : seulement la Chambre en cours ; on n'en crée pas ici (Admin GM : prismaSysteme).
+// - Tables communes (offres de la plateforme) : lues telles quelles, modifiées seulement par l'Admin GM.
+// - Comptes de l'Admin GM : jamais par ici (prismaSysteme).
 
 // Tables qui portent chambreId
 export const DIRECTES = new Set([
@@ -12,6 +14,11 @@ export const DIRECTES = new Set([
   "Paiement", "CoordonneesPaiement", "MessageThread", "AuditLog", "Abonne", "TypeRendezvous", "Rendezvous",
   "MiseEnRelation", "Lettre", "Tag", "FacturePlateforme", "RegleTag", "ProfilChambre",
 ]);
+
+// Tables communes à toute la plateforme : lecture sans filtre, écriture refusée (Admin GM : prismaSysteme)
+export const COMMUNES = new Set(["Offre"]);
+// Tables de l'Admin GM : refusées ici
+export const SYSTEME_SEULEMENT = new Set(["CompteGM"]);
 
 const dans = (c: string) => ({ is: { chambreId: c } });
 const commentaire = (c: string) => ({ OR: [{ news: dans(c) }, { resource: dans(c) }] });
@@ -107,6 +114,7 @@ const FILTREES = new Set([
   "update", "updateMany", "updateManyAndReturn", "delete", "deleteMany", "upsert",
 ]);
 const CREATIONS = new Set(["create", "createMany", "createManyAndReturn", "upsert"]);
+const LECTURES = new Set(["findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany", "count", "aggregate", "groupBy"]);
 
 type Objet = Record<string, unknown>;
 const estObjet = (v: unknown): v is Objet => typeof v === "object" && v !== null && !Array.isArray(v) && !(v instanceof Date);
@@ -115,8 +123,9 @@ const surChaque = (v: unknown, f: (o: Objet) => Objet): unknown => (Array.isArra
 
 export class ChambreHorsPortee extends Error {}
 
-// Le filtre de la Chambre pour un modèle
-export function filtreChambre(modele: string, chambreId: string): object {
+// Le filtre de la Chambre pour un modèle (null : table commune, sans filtre)
+export function filtreChambre(modele: string, chambreId: string): object | null {
+  if (COMMUNES.has(modele)) return null;
   if (modele === "Chambre") return { id: chambreId };
   if (DIRECTES.has(modele)) return { chambreId };
   const parent = PAR_PARENT[modele];
@@ -181,8 +190,12 @@ export function restreindre(modele: string, operation: string, args: unknown, ch
   if (modele === "Chambre" && CREATIONS.has(operation)) {
     throw new ChambreHorsPortee("Créer une Chambre se fait hors d'une Chambre (prismaSysteme)");
   }
-  if (FILTREES.has(operation)) a.where = limiter(a.where, filtreChambre(modele, chambreId));
-  else filtreChambre(modele, chambreId); // modèle inconnu : erreur
+  if (COMMUNES.has(modele)) {
+    if (!LECTURES.has(operation)) throw new ChambreHorsPortee(`« ${modele} » ne se modifie que dans l'espace Admin GM`);
+    return a;
+  }
+  const filtre = filtreChambre(modele, chambreId); // modèle inconnu : erreur
+  if (FILTREES.has(operation) && filtre) a.where = limiter(a.where, filtre);
 
   switch (operation) {
     case "create":

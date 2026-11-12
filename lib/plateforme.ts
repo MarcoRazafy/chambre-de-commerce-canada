@@ -1,6 +1,7 @@
 // Abonnement de la Chambre à la plateforme : un forfait mensuel, plus chaque compte actif de l'équipe
-// (le super admin, le plus ancien administrateur, est offert).
-// Les montants (en $ CAD) et les taxes se règlent dans l'environnement ; les membres ne sont jamais facturés.
+// au-delà des comptes offerts (le super admin). Les montants (en $ CAD) sont ceux de l'offre de la Chambre,
+// réglée par l'Admin GM (lib/offre-chambre.ts) ; les taxes et le jour de facturation, dans l'environnement.
+// Les membres ne sont jamais facturés.
 
 export type ConfigPlateforme = {
   nom: string;
@@ -29,14 +30,18 @@ export function configPlateforme(env: Record<string, string | undefined> = proce
 
 const cents = (n: number) => Math.round(n * 100) / 100;
 
-// Comptes offerts : le super admin
+// Comptes offerts par défaut : le super admin
 export const UTILISATEURS_OFFERTS = 1;
 
-// Comptes payants parmi les comptes de l'équipe
-export const utilisateursPayants = (utilisateurs: number) => Math.max(0, utilisateurs - UTILISATEURS_OFFERTS);
+// Prix d'une offre ; sans forfait ni prix par compte, elle est gratuite (aucune facture)
+export type PrixOffre = { forfait: number; parUtilisateur: number; utilisateursOfferts: number };
+export const offreGratuite = (o: Pick<PrixOffre, "forfait" | "parUtilisateur">) => o.forfait <= 0 && o.parUtilisateur <= 0;
 
-export function facturePlateforme(utilisateurs: number, c: ConfigPlateforme) {
-  const payants = utilisateursPayants(utilisateurs);
+// Comptes payants parmi les comptes de l'équipe
+export const utilisateursPayants = (utilisateurs: number, offerts = UTILISATEURS_OFFERTS) => Math.max(0, utilisateurs - offerts);
+
+export function facturePlateforme(utilisateurs: number, c: ConfigPlateforme, offerts = UTILISATEURS_OFFERTS) {
+  const payants = utilisateursPayants(utilisateurs, offerts);
   const equipe = cents(payants * c.parUtilisateur);
   const sousTotal = cents(c.forfait + equipe);
   const tps = cents((sousTotal * c.tps) / 100);

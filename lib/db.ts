@@ -43,8 +43,8 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 brancherRechercheChambre(async (r) => {
-  const c = await prismaSysteme.chambre.findUnique({ where: r, select: { id: true } });
-  return c?.id ?? null;
+  const c = await prismaSysteme.chambre.findUnique({ where: r, select: { id: true, statut: true } });
+  return c ? { id: c.id, suspendue: c.statut === "suspendue" } : null;
 });
 
 // L'accès habituel : chaque requête est limitée à la Chambre en cours (lib/chambre-courante.ts, lib/portee-chambre.ts)

@@ -129,6 +129,43 @@ enum ModeReglement {
   plateforme
 }
 
+enum StatutChambre {
+  active
+  suspendue
+}
+
+// Offre d'abonnement à la plateforme (« gratuite », « payante »), réglée par l'Admin GM.
+// Montants en $ CAD par mois ; limites vides : sans limite. Les taxes et le jour de facturation restent
+// des réglages du serveur (PLATEFORME_TPS, PLATEFORME_TVQ, PLATEFORME_JOUR_FACTURATION).
+model Offre {
+  id                  String   @id
+  nom                 String
+  forfait             Float    @default(0)
+  parUtilisateur      Float    @default(0) // par compte de l'équipe, au-delà des comptes offerts
+  utilisateursOfferts Int      @default(1)
+  maxMembres          Int?
+  maxUtilisateurs     Int?
+  fonctions           String[] @default([])
+  ordre               Int      @default(0)
+  updatedAt           DateTime @updatedAt
+
+  chambres Chambre[]
+
+  @@map("offres_plateforme")
+}
+
+// Compte de l'Admin GM (propriétaire de la plateforme) : à part des comptes des Chambres
+model CompteGM {
+  id                  String    @id @default(cuid())
+  nom                 String
+  email               String    @unique
+  motDePasse          String
+  motDePasseModifieLe DateTime?
+  createdAt           DateTime  @default(now())
+
+  @@map("comptes_gm")
+}
+
 // Une Chambre cliente de la plateforme : son espace, ses comptes, ses données et ses réglages.
 // « principale » : la première Chambre, celle qui existait avant la plateforme multi-chambres.
 model Chambre {
@@ -138,6 +175,12 @@ model Chambre {
   nom       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Abonnement à la plateforme (offre réglée par l'Admin GM) et accès à l'espace
+  offreId     String        @default("gratuite")
+  offre       Offre         @relation(fields: [offreId], references: [id])
+  statut      StatutChambre @default(active)
+  suspendueLe DateTime?
 
   membres             Member[]
   utilisateurs        User[]

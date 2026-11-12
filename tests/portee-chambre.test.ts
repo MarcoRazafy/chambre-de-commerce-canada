@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { avecChambre, chambreCourante } from "@/lib/chambre-courante";
-import { ChambreHorsPortee, DIRECTES, PAR_PARENT, POSSEDEES, RELATIONS, restreindre } from "@/lib/portee-chambre";
+import { ChambreHorsPortee, COMMUNES, DIRECTES, PAR_PARENT, POSSEDEES, RELATIONS, restreindre, SYSTEME_SEULEMENT } from "@/lib/portee-chambre";
 
 // Le schéma, lu tel quel : chaque table doit avoir sa règle de Chambre
 const schema = readFileSync("prisma/schema.prisma", "utf8");
@@ -13,9 +13,9 @@ const champs = (corps: string) =>
     .filter((t) => t.length >= 2 && /^\w/.test(t[0]) && !t[0].startsWith("//"));
 
 describe("règles de Chambre et schéma", () => {
-  it("chaque table est principale (chambreId), enfant (par son parent) ou la table des Chambres", () => {
+  it("chaque table est principale (chambreId), enfant (par son parent), commune, de l'Admin GM, ou la table des Chambres", () => {
     for (const [nom, corps] of modeles) {
-      if (nom === "Chambre") continue;
+      if (nom === "Chambre" || COMMUNES.has(nom) || SYSTEME_SEULEMENT.has(nom)) continue;
       const aChambre = champs(corps).some(([c]) => c === "chambreId");
       expect(DIRECTES.has(nom), `${nom} : chambreId`).toBe(aChambre);
       if (!aChambre) expect(PAR_PARENT[nom], `${nom} : règle par le parent`).toBeTypeOf("function");
@@ -30,7 +30,7 @@ describe("règles de Chambre et schéma", () => {
       if (nom === "Chambre") continue;
       for (const [champ, type, ...reste] of champs(corps)) {
         const cible = type.replace(/[[\]?]/g, "");
-        if (!modeles.has(cible) || cible === "Chambre") continue;
+        if (!modeles.has(cible) || cible === "Chambre" || COMMUNES.has(cible)) continue;
         (attendues[nom] ??= {})[champ] = cible;
         if (DIRECTES.has(nom) && reste.join(" ").includes("fields:")) (possedees[nom] ??= []).push(champ);
       }
@@ -117,8 +117,14 @@ describe("restreindre : chaque requête limitée à la Chambre", () => {
     expect(() => restreindre("Chambre", "create", { data: {} }, C)).toThrow(ChambreHorsPortee);
   });
 
-  it("refus : table sans règle, Chambre vide", () => {
+  it("offres : communes à toute la plateforme, lues sans filtre, jamais modifiées depuis une Chambre", () => {
+    expect(restreindre("Offre", "findMany", { where: { id: "payante" } }, C)).toEqual({ where: { id: "payante" } });
+    expect(() => restreindre("Offre", "update", { where: { id: "payante" }, data: { forfait: 0 } }, C)).toThrow(ChambreHorsPortee);
+  });
+
+  it("refus : table sans règle, comptes de l'Admin GM, Chambre vide", () => {
     expect(() => restreindre("Inconnue", "findMany", {}, C)).toThrow(ChambreHorsPortee);
+    expect(() => restreindre("CompteGM", "findMany", {}, C)).toThrow(ChambreHorsPortee);
     expect(() => restreindre("Member", "findMany", {}, "")).toThrow(ChambreHorsPortee);
   });
 

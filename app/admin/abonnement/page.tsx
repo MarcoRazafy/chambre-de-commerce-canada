@@ -7,7 +7,8 @@ import { estAdministrateur } from "@/lib/autorisations";
 import { assurerFactureDuMois, getFacturesPlateforme } from "@/lib/factures-plateforme";
 import { Card, Pill, Saillant } from "@/components/ui";
 import { aujourdhuiISO, fmtDate } from "@/lib/format";
-import { configPlateforme, facturePlateforme, fmtDollars, fmtPourcent, payantsFacture, prochaineFacturation } from "@/lib/plateforme";
+import { configDeLaChambre } from "@/lib/offre-chambre";
+import { facturePlateforme, fmtDollars, fmtPourcent, offreGratuite, payantsFacture, prochaineFacturation } from "@/lib/plateforme";
 import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 
@@ -17,9 +18,15 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
   const onglet = sp.onglet === "factures" ? "factures" : "equipe";
   await assurerFactureDuMois();
   const [moi, equipe, factures] = await Promise.all([getCurrentUser("admin"), getAdministrateurs(), getFacturesPlateforme()]);
-  const c = configPlateforme();
+  // L'offre de la Chambre (réglée par l'Admin GM) : ses prix, ses limites
+  const { config: c, offre, offerts } = await configDeLaChambre();
+  const gratuite = !!offre && offreGratuite(offre);
   const n = equipe.length;
-  const f = facturePlateforme(n, c);
+  const f = facturePlateforme(n, c, offerts);
+  const limites = [
+    offre?.maxMembres != null ? `${offre.maxMembres} membres` : null,
+    offre?.maxUtilisateurs != null ? `${offre.maxUtilisateurs} compte${offre.maxUtilisateurs > 1 ? "s" : ""} d’équipe` : null,
+  ].filter(Boolean);
   const echeance = prochaineFacturation(aujourdhuiISO(), c.jourFacturation);
   const bloc = "rounded-[var(--radius-m)] border border-line bg-surface-2 px-4 py-2.5 flex flex-col";
   const ligne = "flex justify-between gap-3 items-baseline tabular-nums";
@@ -32,28 +39,30 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         actions={estAdministrateur(moi) ? <AjouterUtilisateur /> : undefined}
       />
 
-      <div className="grid gap-4 mb-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]">
+      <div className={`grid gap-4 mb-4 items-start grid-cols-[minmax(0,1fr)] ${gratuite ? "" : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}`}>
         <Card className="p-6 flex flex-col gap-4">
           <div className="flex justify-between items-start gap-3 flex-wrap">
             <div>
               <span className="surtitre text-faint">Forfait actuel</span>
-              <h2 className="text-[18px] m-0 mt-1">{c.nom}</h2>
+              <h2 className="text-[18px] m-0 mt-1">{offre ? `Offre ${offre.nom}` : c.nom}</h2>
             </div>
-            <Pill tone="ok">Actif · prochaine facture le {fmtDate(echeance)}</Pill>
+            <Pill tone="ok">{gratuite ? "Actif" : `Actif · prochaine facture le ${fmtDate(echeance)}`}</Pill>
           </div>
-          <div className="flex flex-wrap items-center gap-2.5 text-[16px]">
+          {gratuite ? null : <div className="flex flex-wrap items-center gap-2.5 text-[16px]">
             <div className={bloc}><small className="text-[12px] text-muted">Forfait Chambre</small><b className="tabular-nums">{fmtDollars(f.forfait)}</b></div>
             <span className="text-muted font-bold">+</span>
             <div className={bloc}><small className="text-[12px] text-muted">{f.payants} utilisateur{f.payants > 1 ? "s" : ""} × {fmtDollars(c.parUtilisateur)}{f.offerts ? " · super admin offert" : ""}</small><b className="tabular-nums">{fmtDollars(f.equipe)}</b></div>
             <span className="text-muted font-bold">=</span>
             <div className={`${bloc} border-accent`}><small className="text-[12px] text-muted">par mois, avant taxes</small><b className="tabular-nums">{fmtDollars(f.sousTotal)}</b></div>
-          </div>
+          </div>}
           <p className="m-0 text-[13px] text-muted">
-            Tout est inclus : membres et annuaire avec suggestions de mises en relation, événements, agenda, rendez-vous, ressources, messagerie, newsletter, factures et règlements. Membres et abonnés illimités.
+            {limites.length
+              ? `Jusqu’à ${limites.join(" et ")}.`
+              : "Tout est inclus : membres et annuaire avec suggestions de mises en relation, événements, agenda, rendez-vous, ressources, messagerie, newsletter, factures et règlements. Membres et abonnés illimités."}
           </p>
         </Card>
 
-        <Panneau titre="Prochaine facture" teinte="rouge">
+        {gratuite ? null : <Panneau titre="Prochaine facture" teinte="rouge">
           <div className="flex flex-col gap-1.5 text-[14px]">
             <div className={ligne}><span>Forfait</span><span>{fmtDollars(f.forfait)}</span></div>
             {f.offerts ? <div className={ligne}><span>Super admin</span><span>Offert</span></div> : null}
@@ -63,7 +72,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
             <div className={`${ligne} border-t-2 border-ink pt-2 mt-1 font-bold text-[16px]`}><span>Total le {fmtDate(echeance)}</span><span>{fmtDollars(f.total)}</span></div>
             <p className="m-0 mt-2 text-[12px] text-faint">Estimation à partir des comptes actifs aujourd’hui : elle suit les ajouts et retraits de l’équipe.</p>
           </div>
-        </Panneau>
+        </Panneau>}
       </div>
 
       <section id="onglets" className="scroll-mt-6 mt-10">
