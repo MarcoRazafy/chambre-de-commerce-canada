@@ -2,59 +2,115 @@
 
 import { revalidatePath } from "next/cache";
 import { exigerAdministrateur } from "@/lib/autorisations";
-import { declarerDomaine, oublierDomaine, verifierDomaine } from "@/lib/brevo-domaines";
-import { courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur } from "@/lib/courriel";
+import {
+  adresseValidee,
+  assurerExpediteur,
+  declarerDomaine,
+  domaineDe,
+  domaineValide,
+  estWebmail,
+  normaliserDomaine,
+  oublierDomaine,
+  verifierDomaine,
+} from "@/lib/brevo-domaines";
+import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 
-// Paramètres (super admins) : l'expéditeur des courriels, la validation de son domaine chez Brevo, un envoi de test
+// Paramètres (super admins) : l'expéditeur des courriels. D'abord le domaine de l'entreprise (validé chez Brevo),
+// ensuite le nom et l'adresse d'expédition sur ce domaine ; un envoi de test.
 const PAGE = "/admin/parametres";
 const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").trim().slice(0, max);
 const adresseValide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
+const PARTIE_LOCALE = /^[a-z0-9](?:[a-z0-9._+-]{0,62}[a-z0-9])?$/;
+const nomSaisi = (fd: FormData) => texte(fd, "expediteurNom", 100).replace(/["<>]/g, "");
 
-// Enregistre le nom et l'adresse d'expédition (sans rediriger, sauf erreur de saisie)
+// Enregistre le nom et l'adresse (partie avant le @, sur le domaine enregistré), sans rediriger sauf erreur de saisie
 async function sauverExpediteur(formData: FormData) {
   const moi = await exigerAdministrateur(PAGE);
-  const expediteurNom = texte(formData, "expediteurNom", 100).replace(/["<>]/g, "");
-  const expediteurEmail = texte(formData, "expediteurEmail").toLowerCase();
-  if (expediteurEmail && !adresseValide(expediteurEmail)) redirectWithErreur(PAGE, `« ${expediteurEmail} » n’est pas une adresse e-mail valide.`);
-  const p = await prisma.profilChambre.upsert({
+  const actuel = await prisma.profilChambre.findUnique({ where: { id: "unique" }, select: { nom: true, expediteurDomaine: true } });
+  const domaine = actuel?.expediteurDomaine ?? "";
+  const expediteurNom = nomSaisi(formData);
+  let locale = texte(formData, "expediteurLocale", 254).toLowerCase();
+  if (locale.includes("@")) {
+    if (normaliserDomaine(locale) !== domaine) redirectWithErreur(PAGE, `L’adresse doit finir par @${domaine}.`);
+    locale = locale.slice(0, locale.indexOf("@"));
+  }
+  if (locale && !PARTIE_LOCALE.test(locale)) redirectWithErreur(PAGE, `« ${locale} » n’est pas valide avant le @.`);
+  const expediteurEmail = domaine && locale ? `${locale}@${domaine}` : "";
+  await prisma.profilChambre.upsert({
     where: { id: "unique" },
     create: { id: "unique", expediteurNom, expediteurEmail },
     update: { expediteurNom, expediteurEmail },
-    select: { nom: true },
   });
-  if (expediteurEmail) oublierDomaine(expediteurEmail);
   oublierExpediteur();
   revalidatePath(PAGE);
-  return { moi, email: expediteurEmail, nom: expediteurNom || p.nom };
+  return { moi, domaine, email: expediteurEmail, nom: expediteurNom || actuel?.nom || "" };
+}
+
+// L'adresse, sur un domaine validé, existe comme expéditeur chez Brevo
+async function preparerExpediteur(email: string, nom: string) {
+  if (email && (await adresseValidee(email))) await assurerExpediteur(email, nom);
 }
 
 export async function enregistrerExpediteur(formData: FormData) {
-  await sauverExpediteur(formData);
+  // Entrée dans le champ du domaine : c'est « Ajouter »
+  if (texte(formData, "expediteurDomaine")) return ajouterDomaineExpediteur(formData);
+  const { email, nom } = await sauverExpediteur(formData);
+  await preparerExpediteur(email, nom);
   redirectWithFlash(PAGE, "Expéditeur enregistré");
 }
 
-// « Valider ce domaine » : le domaine de l'adresse d'expédition est déclaré à Brevo
-export async function validerDomaineExpediteur(formData: FormData) {
-  const { email } = await sauverExpediteur(formData);
-  if (!email) redirectWithErreur(PAGE, "Indiquez d’abord l’adresse d’expédition.");
-  const etat = await declarerDomaine(email);
-  if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Brevo n’a pas pu être joint : ${etat.raison}.`);
-  redirectWithFlash(
-    PAGE,
-    etat.etat === "valide" ? "Ce domaine est déjà validé" : "Domaine déclaré : ajoutez les enregistrements DNS ci-dessous, puis vérifiez",
-  );
+// « Ajouter » : le domaine de l'entreprise est enregistré et déclaré à Brevo (enregistrements DNS à copier)
+export async function ajouterDomaineExpediteur(formData: FormData) {
+  await sauverExpediteur(formData);
+  const domaine = normaliserDomaine(texte(formData, "expediteurDomaine", 300));
+  if (!domaine) redirectWithErreur(PAGE, "Indiquez votre nom de domaine.");
+  if (!domaineValide(domaine)) redirectWithErreur(PAGE, `« ${domaine} » n’est pas un nom de domaine valide.`);
+  if (estWebmail(domaine)) redirectWithErreur(PAGE, `${domaine} est une messagerie gratuite : indiquez le domaine de votre entreprise.`);
+  if (domaine === domaineDe(adresseServeur())) redirectWithErreur(PAGE, `${domaine} est déjà le domaine actif.`);
+  await prisma.profilChambre.update({ where: { id: "unique" }, data: { expediteurDomaine: domaine, expediteurEmail: "" } });
+  oublierDomaine(domaine);
+  oublierExpediteur();
+  revalidatePath(PAGE);
+  const etat = await declarerDomaine(domaine);
+  if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Domaine ajouté, mais Brevo n’a pas pu être joint : ${etat.raison}.`);
+  redirectWithFlash(PAGE, etat.etat === "valide" ? "Domaine ajouté et déjà validé" : "Domaine ajouté");
 }
 
-// « Vérifier maintenant » : Brevo contrôle les enregistrements DNS ; validé, l'expéditeur est créé
-export async function verifierDomaineExpediteur(formData: FormData) {
-  const { email, nom } = await sauverExpediteur(formData);
-  if (!email) redirectWithErreur(PAGE, "Indiquez d’abord l’adresse d’expédition.");
-  const etat = await verifierDomaine(email, nom);
+// « Retirer » : on revient au domaine de la plateforme
+export async function retirerDomaineExpediteur(formData: FormData) {
+  await exigerAdministrateur(PAGE);
+  await prisma.profilChambre.upsert({
+    where: { id: "unique" },
+    create: { id: "unique", expediteurNom: nomSaisi(formData) },
+    update: { expediteurNom: nomSaisi(formData), expediteurDomaine: "", expediteurEmail: "" },
+  });
   oublierExpediteur();
-  if (etat.etat === "valide") redirectWithFlash(PAGE, `Domaine validé : les courriels partent de ${email}`);
+  revalidatePath(PAGE);
+  redirectWithFlash(PAGE, "Domaine retiré");
+}
+
+// « Valider ce domaine » (domaine inconnu de Brevo) : il est déclaré de nouveau
+export async function validerDomaineExpediteur(formData: FormData) {
+  const { domaine } = await sauverExpediteur(formData);
+  if (!domaine) redirectWithErreur(PAGE, "Ajoutez d’abord votre nom de domaine.");
+  const etat = await declarerDomaine(domaine);
+  if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Brevo n’a pas pu être joint : ${etat.raison}.`);
+  redirectWithFlash(PAGE, etat.etat === "valide" ? "Ce domaine est déjà validé" : "Domaine déclaré");
+}
+
+// « Vérifier maintenant » : Brevo contrôle les enregistrements DNS ; validé, l'adresse devient un expéditeur
+export async function verifierDomaineExpediteur(formData: FormData) {
+  const { domaine, email, nom } = await sauverExpediteur(formData);
+  if (!domaine) redirectWithErreur(PAGE, "Ajoutez d’abord votre nom de domaine.");
+  const etat = await verifierDomaine(domaine);
+  oublierExpediteur();
+  if (etat.etat === "valide") {
+    if (email) await assurerExpediteur(email, nom);
+    redirectWithFlash(PAGE, email ? `Domaine validé : les courriels partent de ${email}` : "Domaine validé : indiquez l’adresse d’expédition");
+  }
   if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Brevo n’a pas pu être joint : ${etat.raison}.`);
   const manquants = etat.etat === "en_attente" ? etat.enregistrements.filter((x) => !x.ok).length : 0;
   redirectWithErreur(
@@ -67,8 +123,9 @@ export async function verifierDomaineExpediteur(formData: FormData) {
 
 // « M'envoyer un test » : un courriel à la personne connectée, avec l'expéditeur enregistré
 export async function envoyerTestExpediteur(formData: FormData) {
-  const { moi } = await sauverExpediteur(formData);
+  const { moi, email, nom } = await sauverExpediteur(formData);
   if (!courrielsActifs()) redirectWithErreur(PAGE, "L’envoi de courriels n’est pas configuré sur le serveur.");
+  await preparerExpediteur(email, nom);
   const { html, texte: brut } = gabarit({
     titre: "Courriel de test",
     paragraphes: [

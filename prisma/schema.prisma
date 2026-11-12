@@ -1103,9 +1103,11 @@ model ProfilChambre {
   logoFacture        String?
   mentionFacture     String  @default("")
 
-  // Expéditeur des courriels (vide : celui de la configuration du serveur)
-  expediteurNom   String @default("")
-  expediteurEmail String @default("")
+  // Expéditeur des courriels : le domaine de l'entreprise (validé chez Brevo), puis une adresse sur ce domaine.
+  // Vide : l'adresse de la configuration du serveur
+  expediteurNom     String @default("")
+  expediteurDomaine String @default("")
+  expediteurEmail   String @default("")
 
   // Paramètres : adresse qui reçoit les alertes de l'équipe, réseaux sociaux, mentions des courriels (vide : défaut)
   courrielEquipe  String @default("")

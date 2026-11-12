@@ -1,57 +1,97 @@
-// État de l'adresse d'expédition (Paramètres → Courriels) : validée, à valider (avec les enregistrements DNS
-// à copier chez l'hébergeur du domaine), messagerie gratuite, ou vérification impossible.
-// Les boutons envoient tout le formulaire de la fiche (rien de ce qui a été tapé ne se perd).
-import { CheckCircle2, Info, RefreshCw, ShieldCheck, TriangleAlert, XCircle } from "lucide-react";
+// Domaine d'expédition (Paramètres → Courriels) : il s'ajoute d'abord ; ensuite son état chez Brevo et, tant qu'il
+// n'est pas validé, les enregistrements DNS à copier chez l'hébergeur du domaine.
+// Les boutons envoient tout le formulaire de l'expéditeur (rien de ce qui a été tapé ne se perd).
+import { CheckCircle2, Plus, RefreshCw, ShieldCheck, X, XCircle } from "lucide-react";
+import { INPUT } from "@/components/champ-style";
 import { BoutonCopier } from "@/components/paiement/Copiable";
-import { validerDomaineExpediteur, verifierDomaineExpediteur } from "@/lib/actions/parametres";
+import {
+  ajouterDomaineExpediteur,
+  retirerDomaineExpediteur,
+  validerDomaineExpediteur,
+  verifierDomaineExpediteur,
+} from "@/lib/actions/parametres";
 import type { EtatDomaine } from "@/lib/brevo-domaines";
 
 const BOUTON = "btn-contour btn-contour-sm text-ink hover:bg-surface-2 self-start";
+const LIBELLE = "block text-[12.3px] font-semibold text-muted mb-1.5";
 // « @ » → « domaine.com. » ; « brevo1._domainkey » → « brevo1._domainkey.domaine.com. » (le point final : nom absolu)
 const nomComplet = (nom: string, domaine: string) => `${nom === "@" ? domaine : `${nom}.${domaine}`}.`;
 
-export function StatutExpediteur({ etat, serveur, gere = true }: { etat: EtatDomaine; email: string; nom: string; serveur: string; /** Super admin : peut valider et vérifier */ gere?: boolean }) {
-  if (etat.etat === "vide") return null;
+const PASTILLE: Partial<Record<EtatDomaine["etat"], { libelle: string; ton: string }>> = {
+  valide: { libelle: "Validé", ton: "bg-success-soft text-success" },
+  en_attente: { libelle: "En attente", ton: "bg-warn-soft text-warn" },
+  absent: { libelle: "À valider", ton: "bg-warn-soft text-warn" },
+};
 
-  const cadre = (ton: "ok" | "warn" | "muted", icone: React.ReactNode, contenu: React.ReactNode) => (
-    <div
-      id="expediteur"
-      className={`flex gap-3 items-start rounded-[var(--radius-m)] border px-4 py-3 text-[13.2px] ${
-        ton === "ok" ? "border-success/30 bg-success-soft text-ink" : ton === "warn" ? "border-warn/40 bg-warn-soft text-ink" : "border-line bg-surface-2 text-muted"
-      }`}
-    >
-      <span className="shrink-0 mt-0.5">{icone}</span>
-      <div className="min-w-0 flex-1 flex flex-col gap-2.5">{contenu}</div>
-    </div>
+// Le domaine qui envoie les courriels en ce moment (celui de la plateforme tant que l'entreprise n'a pas le sien)
+export function DomaineActif({ domaine }: { domaine: string }) {
+  return (
+    <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-muted">
+      Domaine actif
+      <span className="inline-flex items-center gap-1.5 rounded-full border border-line bg-surface-2 px-2.5 py-1 text-[12.8px] text-ink">
+        <span className="size-1.5 rounded-full bg-success" aria-hidden="true" />
+        {domaine}
+      </span>
+    </span>
   );
-  const parServeur = <>Envoi depuis <b>{serveur}</b>.</>;
+}
 
-  switch (etat.etat) {
-    case "valide":
-      return cadre("ok", <CheckCircle2 size={17} className="text-success" />, <p className="m-0">Domaine <b>{etat.domaine}</b> validé.</p>);
-    case "webmail":
-      return cadre("muted", <Info size={17} />, <p className="m-0">Adresse <b>{etat.domaine}</b> non validable. {parServeur}</p>);
-    case "indisponible":
-      return cadre("muted", <Info size={17} />, <p className="m-0">Vérification impossible. {parServeur}</p>);
-    case "absent":
-      return cadre(
-        "warn",
-        <TriangleAlert size={17} className="text-warn" />,
+export function DomaineExpediteur({ domaine, etat, gere }: { domaine: string; etat: EtatDomaine | null; /** Super admin */ gere: boolean }) {
+  if (!domaine || !etat) {
+    return (
+      <div>
+        <label htmlFor="expediteurDomaine" className={LIBELLE}>Votre domaine</label>
+        <div className="flex gap-2.5 sm:max-w-[520px]">
+          <input
+            id="expediteurDomaine"
+            name="expediteurDomaine"
+            inputMode="url"
+            autoCapitalize="none"
+            autoComplete="off"
+            spellCheck={false}
+            maxLength={300}
+            placeholder="entreprise.com"
+            className={`${INPUT} min-w-0 flex-1`}
+          />
+          {gere ? (
+            <button type="submit" formAction={ajouterDomaineExpediteur} formNoValidate className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 shrink-0">
+              <Plus size={14} /> Ajouter
+            </button>
+          ) : null}
+        </div>
+      </div>
+    );
+  }
+
+  const pastille = PASTILLE[etat.etat] ?? { libelle: "Vérification impossible", ton: "bg-surface-3 text-muted" };
+
+  return (
+    <div className="flex flex-col gap-3">
+      <div>
+        <span className={LIBELLE}>Votre domaine</span>
+        <div className="flex items-center gap-2.5 flex-wrap">
+          <div className="inline-flex items-center gap-2.5 min-h-[40px] max-w-full border border-line-champ bg-surface-2 rounded-[var(--radius-s)] px-3 text-[13.6px]">
+            <b className="text-ink truncate">{domaine}</b>
+            <span className={`shrink-0 text-[11.5px] font-bold px-2 py-0.5 rounded-full ${pastille.ton}`}>{pastille.libelle}</span>
+          </div>
+          {gere ? (
+            <button type="submit" formAction={retirerDomaineExpediteur} formNoValidate className="btn-contour btn-contour-sm text-muted hover:bg-surface-2">
+              <X size={14} /> Retirer
+            </button>
+          ) : null}
+        </div>
+      </div>
+
+      {etat.etat === "absent" && gere ? (
+        <button type="submit" formAction={validerDomaineExpediteur} className={BOUTON} formNoValidate>
+          <ShieldCheck size={14} /> Valider ce domaine
+        </button>
+      ) : null}
+
+      {etat.etat === "en_attente" ? (
         <>
-          <p className="m-0">Domaine <b>{etat.domaine}</b> non validé. {parServeur}</p>
-          {gere ? <button type="submit" formAction={validerDomaineExpediteur} className={BOUTON} formNoValidate>
-            <ShieldCheck size={14} /> Valider ce domaine
-          </button> : null}
-        </>,
-      );
-    case "en_attente":
-      return cadre(
-        "warn",
-        <TriangleAlert size={17} className="text-warn" />,
-        <>
-          <p className="m-0">Domaine <b>{etat.domaine}</b> en attente. {parServeur}</p>
           <div className="overflow-x-auto rounded-[var(--radius-s)] border border-line bg-surface">
-            <table className="w-full border-collapse text-[12.8px]">
+            <table className="w-full min-w-[640px] border-collapse text-[12.8px]">
               <thead>
                 <tr className="bg-surface-2 text-left text-faint">
                   <th className="px-3 py-2 font-semibold">Type</th>
@@ -89,10 +129,13 @@ export function StatutExpediteur({ etat, serveur, gere = true }: { etat: EtatDom
               </tbody>
             </table>
           </div>
-          {gere ? <button type="submit" formAction={verifierDomaineExpediteur} className={BOUTON} formNoValidate>
-            <RefreshCw size={14} /> Vérifier maintenant
-          </button> : null}
-        </>,
-      );
-  }
+          {gere ? (
+            <button type="submit" formAction={verifierDomaineExpediteur} className={BOUTON} formNoValidate>
+              <RefreshCw size={14} /> Vérifier maintenant
+            </button>
+          ) : null}
+        </>
+      ) : null}
+    </div>
+  );
 }

@@ -24,6 +24,13 @@ export type EtatDomaine =
   | { etat: "indisponible"; domaine: string; raison: string };
 
 export const domaineDe = (email: string) => email.trim().toLowerCase().split("@")[1] ?? "";
+// « https://www.Entreprise.mg/contact », « contact@entreprise.mg » ou « entreprise.mg. » → « entreprise.mg »
+export function normaliserDomaine(saisie: string): string {
+  let v = saisie.trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, "");
+  if (v.includes("@")) v = v.slice(v.lastIndexOf("@") + 1);
+  return v.split(/[/?#:\s]/)[0].replace(/^www\./, "").replace(/\.$/, "");
+}
+export const domaineValide = (d: string) => /^(?=.{4,253}$)([a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z][a-z0-9-]{1,62}$/.test(d);
 export const estWebmail = (domaine: string) => WEBMAILS.has(domaine);
 export const brevoConfigure = () => Boolean(process.env.BREVO_API_KEY?.trim());
 
@@ -56,9 +63,9 @@ function enregistrements(r: ReponseDomaine): EnregistrementDns[] {
     .map((x) => ({ type: x.type ?? "TXT", nom: x.host_name ?? "@", valeur: x.value!, ok: Boolean(x.status) }));
 }
 
-// État d'une adresse d'expédition, lu chez Brevo (sans cache : pour la page « Mon entreprise »)
-export async function etatDomaine(email: string): Promise<EtatDomaine> {
-  const domaine = domaineDe(email);
+// État d'un domaine (ou du domaine d'une adresse), lu chez Brevo (sans cache : pour la page Paramètres)
+export async function etatDomaine(saisie: string): Promise<EtatDomaine> {
+  const domaine = normaliserDomaine(saisie);
   if (!domaine) return { etat: "vide" };
   if (estWebmail(domaine)) return { etat: "webmail", domaine };
   if (!brevoConfigure()) return { etat: "indisponible", domaine, raison: "clé API Brevo absente (BREVO_API_KEY)" };
@@ -77,7 +84,7 @@ export async function etatDomaine(email: string): Promise<EtatDomaine> {
 // Pour l'envoi : l'adresse peut-elle être l'expéditeur ? Réponse gardée 10 min par domaine
 const memoire = new Map<string, { jusqua: number; ok: boolean }>();
 export async function adresseValidee(email: string): Promise<boolean> {
-  const domaine = domaineDe(email);
+  const domaine = normaliserDomaine(email);
   const m = memoire.get(domaine);
   if (m && m.jusqua > Date.now()) return m.ok;
   const e = await etatDomaine(email);
@@ -86,31 +93,37 @@ export async function adresseValidee(email: string): Promise<boolean> {
   memoire.set(domaine, { jusqua: Date.now() + (e.etat === "indisponible" ? 60_000 : 600_000), ok });
   return ok;
 }
-export function oublierDomaine(email: string) {
-  memoire.delete(domaineDe(email));
+export function oublierDomaine(saisie: string) {
+  memoire.delete(normaliserDomaine(saisie));
 }
 
 // Déclare le domaine chez Brevo (sans effet s'il l'est déjà) ; renvoie son état, avec les enregistrements DNS
-export async function declarerDomaine(email: string): Promise<EtatDomaine> {
-  const domaine = domaineDe(email);
-  if (!domaine || estWebmail(domaine) || !brevoConfigure()) return etatDomaine(email);
-  const r = await appel("/senders/domains", { method: "POST", body: JSON.stringify({ name: domaine }) });
-  if (!r.ok && r.status !== 400) {
-    console.error(`[brevo] déclaration du domaine ${domaine} refusée (${r.status}) : ${await r.text()}`);
+export async function declarerDomaine(saisie: string): Promise<EtatDomaine> {
+  const domaine = normaliserDomaine(saisie);
+  if (!domaine || estWebmail(domaine) || !brevoConfigure()) return etatDomaine(domaine);
+  try {
+    const r = await appel("/senders/domains", { method: "POST", body: JSON.stringify({ name: domaine }) });
+    if (!r.ok && r.status !== 400) {
+      console.error(`[brevo] déclaration du domaine ${domaine} refusée (${r.status}) : ${await r.text()}`);
+    }
+  } catch (e) {
+    console.error(`[brevo] déclaration du domaine ${domaine} impossible`, e);
   }
-  return etatDomaine(email);
+  return etatDomaine(domaine);
 }
 
-// Demande à Brevo de contrôler les enregistrements DNS ; une fois validé, crée l'expéditeur s'il n'existe pas
-export async function verifierDomaine(email: string, nom: string): Promise<EtatDomaine> {
-  const domaine = domaineDe(email);
-  if (!domaine || estWebmail(domaine) || !brevoConfigure()) return etatDomaine(email);
-  const r = await appel(`/senders/domains/${encodeURIComponent(domaine)}/authenticate`, { method: "PUT" });
-  if (!r.ok) console.warn(`[brevo] vérification du domaine ${domaine} : ${r.status} ${await r.text()}`);
-  oublierDomaine(email);
-  const etat = await etatDomaine(email);
-  if (etat.etat === "valide") await assurerExpediteur(email, nom);
-  return etat;
+// Demande à Brevo de contrôler les enregistrements DNS du domaine
+export async function verifierDomaine(saisie: string): Promise<EtatDomaine> {
+  const domaine = normaliserDomaine(saisie);
+  if (!domaine || estWebmail(domaine) || !brevoConfigure()) return etatDomaine(domaine);
+  try {
+    const r = await appel(`/senders/domains/${encodeURIComponent(domaine)}/authenticate`, { method: "PUT" });
+    if (!r.ok) console.warn(`[brevo] vérification du domaine ${domaine} : ${r.status} ${await r.text()}`);
+  } catch (e) {
+    console.error(`[brevo] vérification du domaine ${domaine} impossible`, e);
+  }
+  oublierDomaine(domaine);
+  return etatDomaine(domaine);
 }
 
 // L'adresse existe comme expéditeur chez Brevo (créée au besoin)

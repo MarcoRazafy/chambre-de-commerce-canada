@@ -42,27 +42,31 @@ const SERVEUR = lireAdresse(EXPEDITEUR);
 export const adresseServeur = () => SERVEUR.address;
 const valide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
 
-// Expéditeur réglé dans « Mon entreprise » (nom, adresse), réponse au courriel de l'entreprise.
+// Expéditeur réglé dans Paramètres (nom, domaine, adresse), réponse au courriel de l'entreprise.
 // Relu au plus toutes les 30 s ; « secours » : l'adresse du serveur, si le fournisseur refuse celle de l'entreprise
 let memoire: { jusqua: number; valeur: { de: Adresse; secours: Adresse | null; reponse: string } } | null = null;
-// Après un changement dans « Mon entreprise » : relire l'expéditeur au prochain envoi
+// Après un changement dans Paramètres : relire l'expéditeur au prochain envoi
 export function oublierExpediteur() {
   memoire = null;
 }
 async function expediteur() {
   if (memoire && memoire.jusqua > Date.now()) return memoire.valeur;
-  let p: { nom: string; email: string; expediteurNom: string; expediteurEmail: string } | null = null;
+  let p: { nom: string; email: string; expediteurNom: string; expediteurDomaine: string; expediteurEmail: string } | null = null;
   try {
-    p = await prisma.profilChambre.findUnique({ where: { id: "unique" }, select: { nom: true, email: true, expediteurNom: true, expediteurEmail: true } });
+    p = await prisma.profilChambre.findUnique({
+      where: { id: "unique" },
+      select: { nom: true, email: true, expediteurNom: true, expediteurDomaine: true, expediteurEmail: true },
+    });
   } catch (e) {
     console.error("[courriel] profil de l'entreprise illisible, expéditeur du serveur utilisé", e);
   }
   const nom = p?.expediteurNom.trim() || p?.nom.trim() || SERVEUR.name;
   const adresse = p?.expediteurEmail.trim() ?? "";
-  // L'adresse de l'entreprise ne sert d'expéditeur que si son domaine est validé chez Brevo ;
-  // sinon (Gmail, domaine non validé, Brevo injoignable) : l'adresse du serveur, avec le nom de l'entreprise
+  // L'adresse de l'entreprise ne sert d'expéditeur que si elle est sur son domaine et que ce domaine est validé
+  // chez Brevo ; sinon (domaine non validé, Brevo injoignable) : l'adresse du serveur, avec le nom de l'entreprise
   const autorisee =
     valide(adresse) &&
+    domaineDe(adresse) === p?.expediteurDomaine.trim() &&
     !estWebmail(domaineDe(adresse)) &&
     (fournisseurCourriel() === "smtp" ? await adresseValidee(adresse) : true);
   const de = { name: nom, address: autorisee ? adresse : SERVEUR.address };
