@@ -141,7 +141,7 @@ async function main() {
         secteur: m.secteur,
         ville: m.ville,
         statut: m.statut,
-        formule: m.formule,
+        formuleId: m.formule,
         adhesion: d(m.adhesion),
         retardDepuis: m.retardDepuis ? d(m.retardDepuis) : null,
         activite: m.activite,

@@ -12,7 +12,7 @@
 export const DIRECTES = new Set([
   "Member", "User", "Event", "News", "Resource", "DossierRessource", "Offer", "CanchamService", "Invoice",
   "Paiement", "CoordonneesPaiement", "MessageThread", "AuditLog", "Abonne", "TypeRendezvous", "Rendezvous",
-  "MiseEnRelation", "Lettre", "Tag", "FacturePlateforme", "RegleTag", "ProfilChambre",
+  "MiseEnRelation", "Lettre", "Tag", "FacturePlateforme", "RegleTag", "ProfilChambre", "FormuleAdhesion",
 ]);
 
 // Tables communes à toute la plateforme : lecture sans filtre, écriture refusée (Admin GM : prismaSysteme)
@@ -68,9 +68,10 @@ export const RELATIONS: Record<string, Record<string, string>> = {
   Invoice: { member: "Member", event: "Event", paiements: "Paiement" },
   JetonCompte: { user: "User" },
   LectureRessource: { user: "User", resource: "Resource" },
+  FormuleAdhesion: { membres: "Member" },
   Lettre: { envois: "EnvoiLettre" },
   Maillage: { member: "Member" },
-  Member: { maillage: "Maillage", relationsA: "MiseEnRelation", relationsB: "MiseEnRelation", users: "User", produits: "Produit", offres: "Offer", actualites: "News", factures: "Invoice", inscriptions: "Registration", rendezvous: "Rendezvous", notes: "NoteMembre", acces: "AccesRessource", accesDossiers: "AccesDossier", reglements: "Paiement" },
+  Member: { formule: "FormuleAdhesion", maillage: "Maillage", relationsA: "MiseEnRelation", relationsB: "MiseEnRelation", users: "User", produits: "Produit", offres: "Offer", actualites: "News", factures: "Invoice", inscriptions: "Registration", rendezvous: "Rendezvous", notes: "NoteMembre", acces: "AccesRessource", accesDossiers: "AccesDossier", reglements: "Paiement" },
   Message: { thread: "MessageThread", piecesJointes: "PieceJointe" },
   MessageThread: { messages: "Message", participants: "ParticipantFil" },
   MiseEnRelation: { memberA: "Member", memberB: "Member" },
@@ -96,6 +97,7 @@ export const RELATIONS: Record<string, Record<string, string>> = {
 // sous forme reliée (member: { connect }), la Chambre doit l'être aussi (Prisma refuse le mélange).
 // Tenu à jour avec prisma/schema.prisma : un test compare les deux.
 export const POSSEDEES: Record<string, string[]> = {
+  Member: ["formule"],
   User: ["member"],
   News: ["member"],
   Resource: ["dossier"],

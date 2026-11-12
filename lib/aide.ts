@@ -1,10 +1,10 @@
 import { COORDONNEES } from "@/lib/coordonnees";
 import {
-  ORDRE_FORMULES,
   PHOTOS_PAR_PRODUIT,
   RETARD_BLOCAGE_JOURS,
   fmtCotisation,
   libelleFormule,
+  type Formule,
 } from "@/lib/membership";
 
 export interface Lien {
@@ -25,9 +25,15 @@ export interface Theme {
   questions: Question[];
 }
 
-const grille = ORDRE_FORMULES.map(
-  (f) => `· ${libelleFormule(f)} : ${fmtCotisation(f)} par an`,
-).join("\n");
+// La grille des formules de la Chambre, mise à la place de GRILLE dans les réponses (themesDeLaChambre)
+const GRILLE = "{{grille-des-formules}}";
+
+export function themesDeLaChambre(formules: Formule[]): Theme[] {
+  const grille = formules.length
+    ? formules.map((f) => `· ${libelleFormule(f)} : ${fmtCotisation(f)} par an`).join("\n")
+    : "· la Chambre vous indique sa formule";
+  return THEMES.map((t) => ({ ...t, questions: t.questions.map((q) => ({ ...q, reponse: q.reponse.replace(GRILLE, grille) })) }));
+}
 
 export const THEMES: Theme[] = [
   {
@@ -37,7 +43,7 @@ export const THEMES: Theme[] = [
       {
         id: "formules",
         question: "Quelles sont les formules d’adhésion et leurs tarifs ?",
-        reponse: `La cotisation dépend de votre formule, choisie à l’inscription :\n\n${grille}\n\nVotre formule et son tarif sont indiqués dans « Cotisations & factures ».`,
+        reponse: `La cotisation dépend de votre formule, choisie à l’inscription :\n\n${GRILLE}\n\nVotre formule et son tarif sont indiqués dans « Cotisations & factures ».`,
         liens: [{ href: "/membre/cotisations", libelle: "Voir ma formule" }],
       },
       {

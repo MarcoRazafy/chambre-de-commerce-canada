@@ -24,7 +24,7 @@ import {
   courrielNouvelleInscription,
 } from "@/lib/modeles-courriels";
 import { creerProduit } from "@/lib/produits";
-import { FORMULES } from "@/lib/membership";
+import { formuleProposee } from "@/lib/formules";
 import { getCurrentUser } from "@/lib/session";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { notifierEquipe } from "@/lib/push";
@@ -97,6 +97,8 @@ export async function deposerCandidature(formData: FormData) {
   if (await limiteAtteinte("membres")) erreur("Les adhésions sont fermées pour le moment.");
 
   const entreprise = independant ? rep : nomSaisi;
+  // Une formule proposée par la Chambre
+  const formule = await formuleProposee(formuleSaisie);
   const membre = await prisma.member.create({
     data: {
       type: independant ? "physique" : "morale",
@@ -108,9 +110,7 @@ export async function deposerCandidature(formData: FormData) {
       ville,
       pays,
       statut: "candidature",
-      ...(formuleSaisie in FORMULES
-        ? { formule: formuleSaisie as keyof typeof FORMULES }
-        : {}),
+      ...(formule ? { formuleId: formule.id } : {}),
       adhesion: jourBase(),
       activite: PROVISOIRE.activite,
       desc: PROVISOIRE.desc,
@@ -248,13 +248,11 @@ export async function enregistrerEtape(formData: FormData) {
     }
 
     case "formule": {
-      const formule = texte(formData, "formule");
+      const formule = await formuleProposee(texte(formData, "formule"));
       await prisma.member.update({
         where: { id: memberId },
         data: {
-          ...(formule in FORMULES
-            ? { formule: formule as keyof typeof FORMULES }
-            : {}),
+          ...(formule ? { formuleId: formule.id } : {}),
           motivation: texte(formData, "motivation").slice(0, 1000) || null,
         },
       });

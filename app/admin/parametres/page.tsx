@@ -28,11 +28,13 @@ import { redirectWithFlash } from "@/lib/flash";
 import { urlPublique } from "@/lib/courriel";
 import { stripeConfigure } from "@/lib/stripe";
 import { Pill } from "@/components/ui";
+import { ListeFormules } from "@/components/admin/ListeFormules";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
   { cle: "reseaux", libelle: "Réseaux sociaux" },
   { cle: "mentions", libelle: "Mentions légales" },
+  { cle: "formules", libelle: "Formules d’adhésion" },
   { cle: "paiements", libelle: "Paiements en ligne" },
 ] as const;
 
@@ -169,6 +171,23 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
             </fieldset>
           </Panneau>
         </form>
+      ) : null}
+
+      {onglet === "formules" ? (
+        <Panneau titre="Formules d’adhésion" sousTitre="Proposées à l’inscription ; elles fixent le montant des cotisations" teinte="vert">
+          <div className="flex flex-col gap-4">
+            {verrou}
+            <ListeFormules
+              gere={gere}
+              formules={(
+                await prisma.formuleAdhesion.findMany({
+                  orderBy: [{ ordre: "asc" }, { createdAt: "asc" }],
+                  select: { id: true, pays: true, profil: true, montant: true, devise: true, active: true, _count: { select: { membres: true } } },
+                })
+              ).map(({ _count, ...f }) => ({ ...f, membres: _count.membres }))}
+            />
+          </div>
+        </Panneau>
       ) : null}
 
       {onglet === "paiements" ? (

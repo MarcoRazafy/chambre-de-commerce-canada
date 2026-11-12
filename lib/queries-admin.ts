@@ -5,7 +5,7 @@ import { prisma } from "@/lib/db";
 import { RESOURCE_CAT_LABEL } from "@/lib/enums";
 import { jourBase } from "@/lib/format";
 import { codesDeFamille, type FamilleJournal } from "@/lib/journal";
-import type { Devise, FormuleId } from "@/lib/membership";
+import type { Devise, Formule } from "@/lib/membership";
 import type { MemberStatus, NiveauEquipe, NoteMembre } from "@/lib/types";
 import { exigerEquipe } from "@/lib/autorisations";
 import { chambreCourante } from "@/lib/chambre-courante";
@@ -172,15 +172,22 @@ export async function getAnneesFactures(): Promise<number[]> {
 }
 
 export async function getRepartitionFormules(): Promise<
-  { formule: FormuleId; n: number }[]
+  { formule: Formule; n: number }[]
 > {
-  const rows = await prisma.member.groupBy({
-    by: ["formule"],
-    where: { statut: { not: "candidature" }, formule: { not: null } },
-    _count: { _all: true },
-  });
+  const [rows, formules] = await Promise.all([
+    prisma.member.groupBy({
+      by: ["formuleId"],
+      where: { statut: { not: "candidature" }, formuleId: { not: null } },
+      _count: { _all: true },
+    }),
+    prisma.formuleAdhesion.findMany({ select: { id: true, pays: true, profil: true, montant: true, devise: true } }),
+  ]);
+  const parId = new Map(formules.map((f) => [f.id, f]));
   return rows
-    .map((r) => ({ formule: r.formule as FormuleId, n: r._count._all }))
+    .flatMap((r) => {
+      const formule = r.formuleId ? parId.get(r.formuleId) : undefined;
+      return formule ? [{ formule, n: r._count._all }] : [];
+    })
     .sort((a, b) => b.n - a.n);
 }
 

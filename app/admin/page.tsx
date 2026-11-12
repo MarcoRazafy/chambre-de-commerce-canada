@@ -24,7 +24,7 @@ import { AddMemberButton } from "@/components/forms/MemberForms";
 import { Pastille } from "@/components/messagerie/outils";
 import { Saillant, StatusPill } from "@/components/ui";
 import { fmtDate, isPast, parseISO, today } from "@/lib/format";
-import { FORMULES, fmtMontant, libelleFormule } from "@/lib/membership";
+import { fmtMontant, libelleFormule } from "@/lib/membership";
 import {
   getEvents,
   getInvoices,
@@ -39,6 +39,7 @@ import {
 } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 import { derniersMessagesMembres } from "@/lib/support";
+import { getFormules } from "@/lib/formules";
 
 export default async function TableauDeBord() {
   const user = await getCurrentUser("admin");
@@ -54,6 +55,7 @@ export default async function TableauDeBord() {
     journal,
     nonLus,
     achats,
+    formulesChambre,
   ] = await Promise.all([
     getMemberStats(),
     derniersMessagesMembres(user.id),
@@ -64,6 +66,7 @@ export default async function TableauDeBord() {
     getJournal({ limite: 6 }),
     getUnreadTotal(user.id),
     getDemandesAchat(3),
+    getFormules(),
   ]);
 
   const aVenir = events.filter((e) => !isPast(e.date)).slice(0, 4);
@@ -86,7 +89,7 @@ export default async function TableauDeBord() {
             Bonjour <Saillant>{user.nom.split(" ")[0]}</Saillant>,
           </>
         }
-        actions={<AddMemberButton />}
+        actions={<AddMemberButton formules={formulesChambre} />}
       />
 
       <div className="cascade grid gap-4 mb-5 sm:grid-cols-2 xl:grid-cols-4">
@@ -218,7 +221,7 @@ export default async function TableauDeBord() {
         >
           <div className="flex flex-col gap-3.5">
             {formules.map((f) => (
-              <div key={f.formule}>
+              <div key={f.formule.id}>
                 <div className="flex items-baseline justify-between gap-3 text-[13px] mb-1.5">
                   <span className="text-ink">{libelleFormule(f.formule)}</span>
                   <span className="text-muted tabular-nums shrink-0">
@@ -229,15 +232,12 @@ export default async function TableauDeBord() {
                   valeur={f.n}
                   max={adherents}
                   teinte={
-                    FORMULES[f.formule].devise === "CAD" ? "bleu" : "vert"
+                    f.formule.devise === "CAD" ? "bleu" : "vert"
                   }
                 />
               </div>
             ))}
           </div>
-          <p className="text-[12px] text-faint m-0 mt-4">
-            Toutes les cotisations sont en dollars canadiens.
-          </p>
         </Panneau>
       </div>
 

@@ -1,4 +1,4 @@
-import { ORDRE_FORMULES, type FormuleId } from "@/lib/membership";
+import type { FormuleId } from "@/lib/membership";
 import type { Member, MemberStatus } from "@/lib/types";
 import { plat } from "@/lib/texte";
 
@@ -42,16 +42,15 @@ export function lireFiltres(params: {
       ? demande
       : "tous") as FiltresMembres["statut"],
     recherche: params.q?.trim() ?? "",
-    formule: (ORDRE_FORMULES as string[]).includes(params.formule ?? "")
-      ? (params.formule as FormuleId)
-      : null,
+    // Identifiant d'une formule de la Chambre (une valeur inconnue ne retient simplement aucun membre)
+    formule: params.formule?.trim().slice(0, 64) || null,
   };
 }
 
 export function filtrerHorsStatut(membres: Member[], f: FiltresMembres) {
   return membres.filter(
     (m) =>
-      (!f.formule || m.formule === f.formule) &&
+      (!f.formule || m.formule?.id === f.formule) &&
       (!f.recherche ||
         plat(`${m.nom} ${m.secteur} ${m.ville} ${m.pays ?? ""}`).includes(
           plat(f.recherche),

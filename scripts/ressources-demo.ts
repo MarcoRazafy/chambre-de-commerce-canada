@@ -4,12 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
-import {
-  FORMULES,
-  ORDRE_FORMULES,
-  fmtCotisation,
-  libelleFormule,
-} from "../lib/membership";
+import { fmtCotisation, libelleFormule } from "../lib/membership";
 import { dossierRessource, preparerDocument } from "../lib/stockage-ressources";
 
 const executer = promisify(execFile);
@@ -112,7 +107,7 @@ ${saut}
 <p>Tout ce qu'il faut savoir pour rejoindre la Chambre de Commerce et de Coopération Canada–Madagascar.</p>
 <h2>Grille tarifaire ${new Date().getFullYear()}</h2>
 <table><tr><th>Formule</th><th>Cotisation annuelle</th></tr>
-${ORDRE_FORMULES.map((f) => `<tr><td>${libelleFormule(f)}</td><td>${fmtCotisation(f)}</td></tr>`).join("")}
+{{grille}}
 </table>
 <p>Les formules en dollars canadiens concernent les adhérents établis au Canada, et les partenaires et commanditaires de la chambre.</p>
 <h2>Ce que comprend l'adhésion</h2>
@@ -124,7 +119,7 @@ ${saut}
 <tr><td>2. Validation</td><td>L'équipe examine la demande et revient vers vous.</td></tr>
 <tr><td>3. Cotisation</td><td>Règlement selon la formule choisie.</td></tr>
 <tr><td>4. Accès</td><td>L'espace membre est activé.</td></tr></table>
-<p class="note">Nombre de formules : ${Object.keys(FORMULES).length}. Les montants de ce document sont tirés de la grille de la plateforme.</p>`,
+<p class="note">Nombre de formules : {{nombre}}. Les montants de ce document sont tirés de la grille de la plateforme.</p>`,
   },
   r7: {
     surtitre: "Check-list",
@@ -185,6 +180,9 @@ async function convertir(
 }
 
 async function main() {
+  // La grille du kit d'adhésion : les formules de la Chambre
+  const formules = await prisma.formuleAdhesion.findMany({ where: { active: true }, orderBy: { ordre: "asc" } });
+  const grille = formules.map((f) => `<tr><td>${libelleFormule(f)}</td><td>${fmtCotisation(f)}</td></tr>`).join("");
   const ressources = await prisma.resource.findMany({ orderBy: { id: "asc" } });
 
   const tmp = path.join(process.cwd(), "stockage", ".video-demo.mp4");
@@ -213,7 +211,7 @@ async function main() {
     }
     const format = r.fmt === "docx" ? "docx" : "pdf";
     const fichier = await convertir(
-      gabarit(r.titre, contenu.surtitre, contenu.corps),
+      gabarit(r.titre, contenu.surtitre, contenu.corps.replace("{{grille}}", grille).replace("{{nombre}}", String(formules.length))),
       dossier,
       format,
       "document",

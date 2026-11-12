@@ -42,11 +42,10 @@ import {
 } from "@/lib/actions/members";
 import {
   BESOINS_PAR_FICHE,
-  FORMULES,
   fmtMontant,
   libelleFormule,
   PHOTOS_PAR_PRODUIT,
-  type FormuleId,
+  type Formule,
 } from "@/lib/membership";
 import type { Contact, Produit } from "@/lib/types";
 import { EntreeFichier } from "@/components/EnvoisSuivis";
@@ -57,7 +56,7 @@ const BTN_LINE =
 const BTN_DANGER =
   "w-full justify-center inline-flex items-center gap-[7px] rounded-[var(--radius-s)] font-semibold cursor-pointer border border-bad-soft bg-transparent text-bad hover:bg-surface-2 text-[12.4px] px-[11px] py-1.5";
 
-export function AddMemberButton() {
+export function AddMemberButton({ formules }: { formules: Formule[] }) {
   return (
     <Modal
       title="Ajouter un membre"
@@ -160,7 +159,7 @@ export function AddMemberButton() {
               hint="Elle fixe le montant attendu et la devise de ses factures. Laissée à définir, aucune cotisation n’est réclamée."
             >
               <select name="formule" className={INPUT} defaultValue="">
-                <OptionsFormules vide="À définir — le membre choisira" />
+                <OptionsFormules formules={formules} vide="À définir — le membre choisira" />
               </select>
             </Field>
             <Field label="Statut à la création">
@@ -191,7 +190,7 @@ export function RegisterPaymentButton({
   memberId: string;
   premier: boolean;
   nom: string;
-  formule: FormuleId | null;
+  formule: Formule | null;
 }) {
   const aujourdhui = new Date().toISOString().slice(0, 10);
 
@@ -230,7 +229,7 @@ export function RegisterPaymentButton({
     );
   }
 
-  const { montant, devise } = FORMULES[formule];
+  const { montant, devise } = formule;
   return (
     <Modal
       title="Enregistrer le paiement"
@@ -1535,10 +1534,12 @@ export function ModifierFormuleButton({
   memberId,
   nom,
   formule,
+  formules,
 }: {
   memberId: string;
   nom: string;
-  formule: FormuleId | null;
+  formule: string | null;
+  formules: Formule[];
 }) {
   return (
     <Modal
@@ -1569,7 +1570,7 @@ export function ModifierFormuleButton({
                 defaultValue={formule ?? ""}
                 className={INPUT}
               >
-                <OptionsFormules vide="Aucune formule choisie" />
+                <OptionsFormules formules={formules} vide="Aucune formule choisie" />
               </select>
             </Field>
           </ModalBody>

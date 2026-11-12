@@ -19,13 +19,12 @@ import {
 import { jourBase, jourSaisi } from "@/lib/format";
 import { creerJeton } from "@/lib/jetons";
 import {
-  FORMULES,
   fmtCotisation,
   fmtMontant,
   libelleFormule,
   type Devise,
-  type FormuleId,
 } from "@/lib/membership";
+import { formuleProposee, SELECT_FORMULE } from "@/lib/formules";
 import {
   courrielDemandeApprouvee,
   courrielInvitation,
@@ -148,7 +147,7 @@ export async function donnerAcces(formData: FormData) {
 
   const m = await prisma.member.findUnique({
     where: { id },
-    select: { nom: true, type: true, statut: true, formule: true },
+    select: { nom: true, type: true, statut: true, formule: SELECT_FORMULE },
   });
   if (!m) redirectWithErreur("/admin/membres", "Membre introuvable.");
   const contact = await prisma.user.findFirst({
@@ -398,22 +397,22 @@ export async function modifierFormule(formData: FormData) {
   await exigerEquipe();
   const id = texte(formData, "memberId");
   const retour = `/admin/membres/${id}`;
-  const choix = texte(formData, "formule");
-  if (!(choix in FORMULES)) {
+  // Une formule proposée par la Chambre (Paramètres > Formules d'adhésion)
+  const formule = await formuleProposee(texte(formData, "formule"));
+  if (!formule) {
     redirectWithErreur(retour, "Choisissez une formule de la grille.");
   }
-  const formule = choix as FormuleId;
 
   const avant = await prisma.member.findUnique({
     where: { id },
-    select: { nom: true, formule: true },
+    select: { nom: true, formule: SELECT_FORMULE },
   });
   if (!avant) redirectWithErreur("/admin/membres", "Membre introuvable.");
-  if (avant.formule === formule) {
+  if (avant.formule?.id === formule.id) {
     redirectWithFlash(retour, "Formule inchangée");
   }
 
-  await prisma.member.update({ where: { id }, data: { formule } });
+  await prisma.member.update({ where: { id }, data: { formuleId: formule.id } });
   await journal(
     "formule_modifiee",
     "Member",
@@ -438,7 +437,7 @@ export async function registerPayment(formData: FormData) {
 
   const avant = await prisma.member.findUnique({
     where: { id },
-    select: { nom: true, paiementNote: true, formule: true },
+    select: { nom: true, paiementNote: true, formule: SELECT_FORMULE },
   });
   if (!avant) redirectWithErreur("/admin/membres", "Membre introuvable.");
 
@@ -449,7 +448,7 @@ export async function registerPayment(formData: FormData) {
     );
   }
 
-  const tarif = FORMULES[avant.formule];
+  const tarif = avant.formule;
   const montant = Number(formData.get("montant")) || tarif.montant;
   const devise: Devise = tarif.devise;
 
@@ -518,7 +517,7 @@ export async function sendReminder(formData: FormData) {
   const fiche = `/admin/membres/${id}`;
   const m = await prisma.member.findUnique({
     where: { id },
-    select: { nom: true, formule: true, retardDepuis: true },
+    select: { nom: true, formule: SELECT_FORMULE, retardDepuis: true },
   });
   if (!m) redirectWithErreur("/admin/membres", "Membre introuvable.");
   const contact = await contactDe(id);
@@ -615,15 +614,13 @@ export async function createMember(formData: FormData) {
     );
   }
 
-  const formuleSaisie = texte(formData, "formule");
-  const formule =
-    formuleSaisie in FORMULES ? (formuleSaisie as FormuleId) : undefined;
+  const formule = await formuleProposee(texte(formData, "formule"));
 
   const m = await prisma.member.create({
     data: {
       type,
       nom,
-      ...(formule ? { formule } : {}),
+      ...(formule ? { formuleId: formule.id } : {}),
       secteur: secteurOuProvisoire(
         texte(formData, "secteur"),
         PROVISOIRE.secteur,

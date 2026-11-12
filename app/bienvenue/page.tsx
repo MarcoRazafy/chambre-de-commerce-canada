@@ -29,6 +29,8 @@ import { getMember } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/session";
 import type { Member, User as Utilisateur } from "@/lib/types";
 import { EntreeFichier } from "@/components/EnvoisSuivis";
+import { getFormules } from "@/lib/formules";
+import type { Formule } from "@/lib/membership";
 
 const TEXTES: Record<EtapeAccueil, { titre: string; intro: string }> = {
   vous: {
@@ -120,7 +122,7 @@ export default async function BienvenuePage({
             {etape === "entreprise" ? (
               <EtapeEntreprise membre={membre} />
             ) : null}
-            {etape === "formule" ? <EtapeFormule membre={membre} /> : null}
+            {etape === "formule" ? <EtapeFormule membre={membre} formules={await getFormules()} /> : null}
             {etape === "activite" ? <EtapeActivite membre={membre} /> : null}
             {etape === "visuels" ? <EtapeVisuels membre={membre} /> : null}
             {etape === "produits" ? <EtapeProduits membre={membre} /> : null}
@@ -340,14 +342,14 @@ function EtapeEntreprise({ membre }: { membre: Member }) {
   );
 }
 
-function EtapeFormule({ membre }: { membre: Member }) {
+function EtapeFormule({ membre, formules }: { membre: Member; formules: Formule[] }) {
   return (
     <>
       <fieldset className="m-0 p-0 border-0">
         <legend className="block text-[13px] font-semibold text-ink mb-2">
           Formule d’adhésion
         </legend>
-        <ChoixFormules actuelle={membre.formule} />
+        <ChoixFormules formules={formules} actuelle={membre.formule?.id ?? null} />
       </fieldset>
       <ChampAuth
         label="Motivation à rejoindre CanCham"

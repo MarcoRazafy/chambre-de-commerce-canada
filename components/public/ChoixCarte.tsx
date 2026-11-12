@@ -1,10 +1,5 @@
 import type { ReactNode } from "react";
-import {
-  fmtCotisation,
-  FORMULES,
-  ORDRE_FORMULES,
-  type FormuleId,
-} from "@/lib/membership";
+import { fmtCotisation, type Formule } from "@/lib/membership";
 
 export function ChoixCarte({
   name,
@@ -61,19 +56,20 @@ export function ChoixCarte({
   );
 }
 
-export function ChoixFormules({ actuelle }: { actuelle?: FormuleId | null }) {
+// Les formules d'adhésion de la Chambre, en cartes à choisir
+export function ChoixFormules({ formules, actuelle }: { formules: Formule[]; actuelle?: string | null }) {
   return (
     <div className="@container">
       <div className="grid gap-3 @md:grid-cols-2">
-        {ORDRE_FORMULES.map((f) => (
+        {formules.map((f) => (
           <ChoixCarte
-            key={f}
+            key={f.id}
             name="formule"
-            value={f}
+            value={f.id}
             requis
-            defaultChecked={actuelle === f}
-            titre={FORMULES[f].pays}
-            detail={FORMULES[f].profil}
+            defaultChecked={actuelle === f.id}
+            titre={f.pays}
+            detail={f.profil}
             prix={fmtCotisation(f)}
           />
         ))}

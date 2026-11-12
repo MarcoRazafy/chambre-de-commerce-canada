@@ -20,7 +20,7 @@ import {
   parametresFactures,
 } from "@/lib/filtres-factures";
 import { fmtDate } from "@/lib/format";
-import { FORMULES, fmtMontant } from "@/lib/membership";
+import { fmtMontant } from "@/lib/membership";
 import { getInvoices, getMemberStats, getMembers } from "@/lib/queries";
 import { getAnneesFactures, getFinancesAnnee } from "@/lib/queries-admin";
 
@@ -85,7 +85,7 @@ export default async function AdminPaiements({
                 .map((m) => ({
                   id: m.id,
                   nom: m.nom,
-                  devise: m.formule ? FORMULES[m.formule].devise : "CAD",
+                  devise: m.formule?.devise ?? "CAD",
                 }))}
             />
           </>

@@ -1,5 +1,5 @@
 import type { Cadrage } from "@/lib/cadrage";
-import type { Devise, FormuleId } from "@/lib/membership";
+import type { Devise, Formule } from "@/lib/membership";
 
 export type MemberStatus =
   "candidature" | "refusee" | "en_attente" | "a_jour" | "en_retard";
@@ -42,7 +42,8 @@ export interface Member {
   secteur: string;
   ville: string;
   statut: MemberStatus;
-  formule: FormuleId | null;
+  // La formule d'adhésion de la Chambre choisie par le membre (titre, profil, montant, devise)
+  formule: Formule | null;
   adhesion: string;
   retardDepuis: string | null;
   activite: string;

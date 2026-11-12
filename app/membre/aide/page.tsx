@@ -13,7 +13,8 @@ import {
 } from "lucide-react";
 import { CentreAide } from "@/components/CentreAide";
 import { Card, Saillant, ViewHead } from "@/components/ui";
-import { THEMES } from "@/lib/aide";
+import { themesDeLaChambre } from "@/lib/aide";
+import { getFormules } from "@/lib/formules";
 import { chiffres } from "@/lib/coordonnees";
 import { getProfilChambre } from "@/lib/profil-chambre";
 
@@ -65,7 +66,7 @@ export default async function AidePage() {
               </>
             }
           />
-          <CentreAide themes={THEMES} />
+          <CentreAide themes={themesDeLaChambre(await getFormules())} />
         </div>
 
         <aside className="flex flex-col gap-4 xl:sticky xl:top-4">

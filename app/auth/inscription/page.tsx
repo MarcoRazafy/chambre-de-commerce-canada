@@ -14,10 +14,12 @@ import { Saillant } from "@/components/ui";
 import { INDICATIFS, PAYS } from "@/lib/accueil";
 import { deposerCandidature } from "@/lib/actions/accueil";
 import { utilisateurConnecte } from "@/lib/session";
+import { getFormules } from "@/lib/formules";
 
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();
   if (connecte) redirect(connecte.role === "admin" ? "/admin" : "/membre");
+  const formules = await getFormules();
 
   return (
     <CadreAuth
@@ -160,7 +162,7 @@ export default async function InscriptionPage() {
           </select>
         </ChampAuth>
 
-        <fieldset className="m-0 p-0 border-0">
+        {formules.length ? <fieldset className="m-0 p-0 border-0">
           <legend className="block text-[13px] font-semibold text-ink mb-1.5">
             Formule d’adhésion
           </legend>
@@ -168,8 +170,8 @@ export default async function InscriptionPage() {
             Choisissez celle qui correspond à votre profil. La cotisation se
             règle après validation de votre demande, jamais avant.
           </p>
-          <ChoixFormules />
-        </fieldset>
+          <ChoixFormules formules={formules} />
+        </fieldset> : null}
 
         <ChampAuth label="Vos motivations à nous rejoindre">
           <textarea

@@ -9,77 +9,36 @@ export const RETARD_BLOCAGE_JOURS = 30;
 
 export const DELAI_REGLEMENT_JOURS = 30;
 
-export type FormuleId =
-  | "mg_consultant"
-  | "mg_entreprise"
-  | "ca_diaspora"
-  | "ca_entreprise"
-  | "sur_mesure";
-
 export type Devise = "MGA" | "CAD";
 
+// Formule d'adhésion d'une Chambre (réglée dans ses Paramètres, lib/formules.ts) : « pays » est son titre
+export type FormuleId = string;
 export interface Formule {
+  id: FormuleId;
   pays: string;
   profil: string;
   montant: number;
   devise: Devise;
 }
 
-export const FORMULES: Record<FormuleId, Formule> = {
-  mg_consultant: {
-    pays: "Madagascar",
-    profil: "Consultant, groupement et ONG",
-    montant: 75,
-    devise: "CAD",
-  },
-  mg_entreprise: {
-    pays: "Madagascar",
-    profil: "Entreprise",
-    montant: 150,
-    devise: "CAD",
-  },
-  ca_diaspora: {
-    pays: "Canada",
-    profil: "Diaspora & travailleur autonome",
-    montant: 150,
-    devise: "CAD",
-  },
-  ca_entreprise: {
-    pays: "Canada",
-    profil: "Entreprise canadienne",
-    montant: 300,
-    devise: "CAD",
-  },
-  sur_mesure: {
-    pays: "Sur mesure",
-    profil: "Partenaire & sponsor",
-    montant: 1_000,
-    devise: "CAD",
-  },
-};
-
-export const ORDRE_FORMULES = Object.keys(FORMULES) as FormuleId[];
-
-export function libelleFormule(id: FormuleId | null): string {
-  if (!id) return "Formule à choisir";
-  const f = FORMULES[id];
+export function libelleFormule(f: Formule | null | undefined): string {
+  if (!f) return "Formule à choisir";
   return `${f.pays} — ${f.profil}`;
 }
 
-// Tarifs en dollars canadiens ; « Ar » ne sert plus qu'aux anciennes factures en Ariary
+// Tarifs en dollars canadiens ; « Ar » pour les montants en ariary
 export function fmtMontant(montant: number, devise: Devise): string {
   const nombre = montant.toLocaleString("fr-FR");
   return devise === "CAD" ? `${nombre} $` : `${nombre} Ar`;
 }
 
-export function fmtCotisation(id: FormuleId | null): string {
-  if (!id) return "à définir";
-  const f = FORMULES[id];
+export function fmtCotisation(f: Formule | null | undefined): string {
+  if (!f) return "à définir";
   return fmtMontant(f.montant, f.devise);
 }
 
-export function cotisationAnnuelle(id: FormuleId | null): string {
-  return id ? `${fmtCotisation(id)} / an` : "Cotisation à définir";
+export function cotisationAnnuelle(f: Formule | null | undefined): string {
+  return f ? `${fmtCotisation(f)} / an` : "Cotisation à définir";
 }
 
 export const PAGES_TOUJOURS_OUVERTES = [

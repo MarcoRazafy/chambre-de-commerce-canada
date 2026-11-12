@@ -14,7 +14,6 @@ import { fmtJour, renouvellementCotisation } from "@/lib/agenda";
 import { fmtDate, fmtDateShort } from "@/lib/format";
 import {
   ADHESION_PENDING,
-  FORMULES,
   fmtCotisation,
   fmtMontant,
   isOverdueWarning,
@@ -57,7 +56,7 @@ export default async function CotisationsPage({
   const enRetard = isOverdueWarning(m);
   const jours = joursDeRetard(m);
 
-  const devise: Devise = m.formule ? FORMULES[m.formule].devise : "CAD";
+  const devise: Devise = m.formule?.devise ?? "CAD";
   const totalPaye = factures
     .filter((f) => f.statut === "payee" && f.devise === devise)
     .reduce((somme, f) => somme + f.montant, 0);

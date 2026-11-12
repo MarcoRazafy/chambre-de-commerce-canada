@@ -7,7 +7,7 @@ import {
   DELAI_REGLEMENT_JOURS,
   fmtMontant,
   RETARD_BLOCAGE_JOURS,
-  type FormuleId,
+  type Formule,
   HORS_ANNUAIRE,
 } from "@/lib/membership";
 import {
@@ -62,8 +62,9 @@ import type {
   Resource,
   Space,
 } from "@/lib/types";
+import { SELECT_FORMULE } from "@/lib/formules";
 
-const membreInclude = { produits: { orderBy: { ordre: "asc" } } } as const;
+const membreInclude = { produits: { orderBy: { ordre: "asc" } }, formule: SELECT_FORMULE } as const;
 
 type MembreRow = {
   id: string;
@@ -72,7 +73,7 @@ type MembreRow = {
   secteur: string;
   ville: string;
   statut: MemberStatus;
-  formule: FormuleId | null;
+  formule: Formule | null;
   adhesion: Date;
   retardDepuis: Date | null;
   activite: string;

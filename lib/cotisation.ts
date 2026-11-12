@@ -3,12 +3,12 @@ import "server-only";
 import { prisma } from "@/lib/db";
 import { numeroFacture } from "@/lib/factures";
 import { jourBase } from "@/lib/format";
+import { SELECT_FORMULE } from "@/lib/formules";
 import {
-  FORMULES,
   fmtMontant,
   libelleFormule,
   type Devise,
-  type FormuleId,
+  type Formule,
 } from "@/lib/membership";
 import { MONTANT_MINIMUM_EN_LIGNE, vanillaPayActif } from "@/lib/vanillapay";
 
@@ -35,10 +35,9 @@ export function payableEnLigne(montant: number, devise: Devise): boolean {
   );
 }
 
-export function cotisationEnLigne(formule: FormuleId | null): boolean {
+export function cotisationEnLigne(formule: Formule | null): boolean {
   if (!formule) return false;
-  const tarif = FORMULES[formule];
-  return payableEnLigne(tarif.montant, tarif.devise);
+  return payableEnLigne(formule.montant, formule.devise);
 }
 
 export function factureCotisationOuverte(memberId: string) {
@@ -52,12 +51,12 @@ export function factureCotisationOuverte(memberId: string) {
 export async function cotisationDue(m: {
   id: string;
   statut: string;
-  formule: FormuleId | null;
+  formule: Formule | null;
 }): Promise<CotisationDue | null> {
   if (!STATUTS_DUS.includes(m.statut)) return null;
 
   const ouverte = await factureCotisationOuverte(m.id);
-  const tarif = m.formule ? FORMULES[m.formule] : null;
+  const tarif = m.formule;
   const montant = ouverte?.montant ?? tarif?.montant ?? null;
   const devise: Devise = ouverte?.devise ?? tarif?.devise ?? "CAD";
 
@@ -73,7 +72,7 @@ export async function cotisationDue(m: {
 export async function ouvrirFactureCotisation(memberId: string) {
   const m = await prisma.member.findUnique({
     where: { id: memberId },
-    select: { nom: true, statut: true, formule: true },
+    select: { nom: true, statut: true, formule: SELECT_FORMULE },
   });
   if (!m || !STATUTS_DUS.includes(m.statut)) return null;
 
@@ -81,7 +80,7 @@ export async function ouvrirFactureCotisation(memberId: string) {
   if (ouverte) return ouverte;
   if (!m.formule) return null;
 
-  const tarif = FORMULES[m.formule];
+  const tarif = m.formule;
   const date = jourBase();
   const dejaCotise = await prisma.invoice.count({
     where: { memberId, statut: "payee", ...COTISATION },

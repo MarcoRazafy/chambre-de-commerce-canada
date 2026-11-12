@@ -97,14 +97,6 @@ enum ThreadType {
   groupe
 }
 
-enum Formule {
-  mg_consultant @map("madagascar_consultant")
-  mg_entreprise @map("madagascar_entreprise")
-  ca_diaspora   @map("canada_diaspora")
-  ca_entreprise @map("canada_entreprise")
-  sur_mesure    @map("sur_mesure")
-}
-
 enum Devise {
   MGA
   CAD
@@ -238,23 +230,47 @@ model Chambre {
   facturesPlateforme  FacturePlateforme[]
   reglesTags          RegleTag[]
   profil              ProfilChambre?
+  formulesAdhesion    FormuleAdhesion[]
 
   @@map("chambres")
+}
+
+// Formule d'adhésion d'une Chambre (ex. « Madagascar — Entreprise, 150 $ par an ») : réglée dans ses Paramètres.
+// Une formule déjà choisie par des membres s'archive (active = false) au lieu de disparaître.
+model FormuleAdhesion {
+  id        String  @id @default(cuid())
+  chambreId String  @default("principale")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
+  pays      String // le titre (ex. Madagascar, Sur mesure)
+  profil    String // à qui elle s'adresse
+  montant   Int // par an
+  devise    Devise  @default(CAD)
+  ordre     Int     @default(0)
+  active    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  membres Member[]
+
+  @@index([chambreId])
+  @@map("formules_adhesion")
 }
 
 model Member {
   id String @id @default(cuid())
 
-  chambreId    String       @default("principale")
-  chambre      Chambre      @relation(fields: [chambreId], references: [id])
-  type         MemberType   @default(morale)
+  chambreId    String           @default("principale")
+  chambre      Chambre          @relation(fields: [chambreId], references: [id])
+  type         MemberType       @default(morale)
   nom          String
   secteur      String
   ville        String
-  statut       MemberStatus @default(candidature)
-  formule      Formule?
-  adhesion     DateTime     @db.Date
-  retardDepuis DateTime?    @db.Date
+  statut       MemberStatus     @default(candidature)
+  formuleId    String?
+  formule      FormuleAdhesion? @relation(fields: [formuleId], references: [id], onDelete: SetNull)
+  adhesion     DateTime         @db.Date
+  retardDepuis DateTime?        @db.Date
 
   activite String
   desc     String

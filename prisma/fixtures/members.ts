@@ -1,4 +1,8 @@
+import type { FormuleId } from "../../lib/membership";
 import type { Member, Produit } from "../../lib/types";
+
+// Membres de démonstration : leur formule est l'identifiant d'une formule de la Chambre n° 1
+export type MembreDemo = Omit<Member, "formule"> & { formule: FormuleId | null };
 
 const DETAILS: Record<
   string,
@@ -204,7 +208,7 @@ const p = (label: string, ...photos: string[]): Produit => ({
   ...DETAILS[label],
 });
 
-export const MEMBERS: Member[] = [
+export const MEMBERS: MembreDemo[] = [
   {
     id: "m1",
     type: "morale",
@@ -658,6 +662,6 @@ export const MEMBERS: Member[] = [
   },
 ];
 
-export function findMember(id: string): Member | undefined {
+export function findMember(id: string): MembreDemo | undefined {
   return MEMBERS.find((m) => m.id === id);
 }

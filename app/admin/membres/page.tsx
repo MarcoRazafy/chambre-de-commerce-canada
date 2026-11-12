@@ -14,12 +14,12 @@ import {
   parametresFiltres,
 } from "@/lib/filtres-membres";
 import {
-  ORDRE_FORMULES,
   cotisationAnnuelle,
   libelleFormule,
 } from "@/lib/membership";
 import { getAccesMembres } from "@/lib/acces-membres";
 import { getMembers } from "@/lib/queries";
+import { getFormules } from "@/lib/formules";
 import { situation } from "@/lib/situation";
 
 export default async function AdminMembres({
@@ -35,7 +35,7 @@ export default async function AdminMembres({
   const filtres = lireFiltres(await searchParams);
   const { statut, recherche, formule } = filtres;
 
-  const membres = await getMembers();
+  const [membres, formules] = await Promise.all([getMembers(), getFormules()]);
   const retenus = filtrerHorsStatut(membres, filtres);
   const liste = retenus.filter((m) => dansOnglet(m.statut, statut));
   const acces = await getAccesMembres(liste.map((m) => m.id));
@@ -62,7 +62,7 @@ export default async function AdminMembres({
             >
               <Download size={14} /> Exporter
             </a>
-            <AddMemberButton />
+            <AddMemberButton formules={formules} />
           </>
         }
       />
@@ -105,8 +105,8 @@ export default async function AdminMembres({
           className="rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent"
         >
           <option value="">Toutes les formules</option>
-          {ORDRE_FORMULES.map((f) => (
-            <option key={f} value={f}>
+          {formules.map((f) => (
+            <option key={f.id} value={f.id}>
               {libelleFormule(f)}
             </option>
           ))}

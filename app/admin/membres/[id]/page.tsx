@@ -71,6 +71,7 @@ import { getAccesMembre } from "@/lib/acces-membres";
 import { getContacts, getInvoices, getMember } from "@/lib/queries";
 import { getHistoriqueMembre, getNotesMembre } from "@/lib/queries-admin";
 import { situation } from "@/lib/situation";
+import { getFormules } from "@/lib/formules";
 
 const ONGLETS = ["profil", "factures", "activite", "maillage"] as const;
 type Onglet = (typeof ONGLETS)[number];
@@ -88,7 +89,7 @@ export default async function AdminMembreDetail({
   const m = await getMember(id);
   if (!m) notFound();
 
-  const [contacts, factures, historique, acces, commentaires, maillage, sugg, rels, etiquettes] =
+  const [contacts, factures, historique, acces, commentaires, maillage, sugg, rels, etiquettes, formules] =
     await Promise.all([
       getContacts(m.id),
       getInvoices(m.id),
@@ -99,6 +100,7 @@ export default async function AdminMembreDetail({
       suggestions(m.id),
       relations(m.id),
       prisma.member.findUnique({ where: { id: m.id }, select: { etiquettes: true, offresTags: true, besoinsTags: true, interetsTags: true } }),
+      getFormules(),
     ]);
   const candidature = m.statut === "candidature";
   const dernierReglement = dernierReglementCotisation(factures);
@@ -480,7 +482,8 @@ export default async function AdminMembreDetail({
                 <ModifierFormuleButton
                   memberId={m.id}
                   nom={m.nom}
-                  formule={m.formule}
+                  formule={m.formule?.id ?? null}
+                  formules={formules}
                 />
               </dd>
               <dt className="text-muted">Cotisation</dt>
