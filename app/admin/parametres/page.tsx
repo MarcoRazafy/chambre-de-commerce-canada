@@ -1,4 +1,5 @@
-import { Lock, Save, Send } from "lucide-react";
+import { redirect } from "next/navigation";
+import { CreditCard, ExternalLink, Lock, Save, Send } from "lucide-react";
 import { DomaineActif, DomaineExpediteur } from "@/components/admin/StatutExpediteur";
 import { EnTeteAdmin, Onglets, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
@@ -19,11 +20,20 @@ import { getParametres } from "@/lib/parametres";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 import { getCurrentUser } from "@/lib/session";
+import { connecterStripe } from "@/lib/actions/parametres";
+import { chambreCourante } from "@/lib/chambre-courante";
+import { prisma } from "@/lib/db";
+import { lienInscriptionStripe, majCompteStripe } from "@/lib/encaissement-stripe";
+import { redirectWithFlash } from "@/lib/flash";
+import { urlPublique } from "@/lib/courriel";
+import { stripeConfigure } from "@/lib/stripe";
+import { Pill } from "@/components/ui";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
   { cle: "reseaux", libelle: "Réseaux sociaux" },
   { cle: "mentions", libelle: "Mentions légales" },
+  { cle: "paiements", libelle: "Paiements en ligne" },
 ] as const;
 
 const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
@@ -36,11 +46,26 @@ const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
 
 // Paramètres de la plateforme, en onglets : Courriels (expéditeur, alertes de l'équipe), Réseaux sociaux,
 // Mentions légales. Les super admins modifient ; les admins consultent.
-export default async function Parametres({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
+export default async function Parametres({ searchParams }: { searchParams: Promise<{ onglet?: string; stripe?: string }> }) {
   const sp = await searchParams;
-  const onglet = ONGLETS.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
+  // Paiements en ligne : seulement quand la plateforme a son compte Stripe
+  const onglets = ONGLETS.filter((o) => o.cle !== "paiements" || stripeConfigure());
+  const onglet = onglets.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
   const [moi, brut, reglages] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut(), getParametres()]);
   const gere = estAdministrateur(moi);
+
+  // Retour des formulaires de Stripe : l'état du compte se met à jour ; lien périmé : un nouveau
+  const compte = onglet === "paiements"
+    ? await prisma.chambre.findFirst({ select: { stripeCompteId: true, stripeCompteActif: true, stripeComptePays: true } })
+    : null;
+  if (onglet === "paiements" && sp.stripe) {
+    const ici = "/admin/parametres?onglet=paiements";
+    if (sp.stripe === "reprendre" && gere) redirect(await lienInscriptionStripe(await chambreCourante(), await urlPublique(ici)));
+    if (compte?.stripeCompteId) {
+      const actif = await majCompteStripe(compte.stripeCompteId);
+      redirectWithFlash(ici, actif ? "Compte Stripe connecté" : "Inscription chez Stripe à terminer");
+    }
+  }
   const nomEntreprise = completerProfil(brut).nom;
 
   // Expéditeur : le domaine de l'entreprise, puis l'adresse sur ce domaine. Le domaine actif reste celui de la
@@ -64,7 +89,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
     <>
       <EnTeteAdmin surtitre="Administration" titre={<Saillant>Paramètres</Saillant>} />
 
-      <Onglets actif={onglet} onglets={ONGLETS.map((o) => ({ cle: o.cle, libelle: o.libelle, href: `/admin/parametres?onglet=${o.cle}` }))} />
+      <Onglets actif={onglet} onglets={onglets.map((o) => ({ cle: o.cle, libelle: o.libelle, href: `/admin/parametres?onglet=${o.cle}` }))} />
 
       {onglet === "courriels" ? (
         <div className="flex flex-col gap-4">
@@ -144,6 +169,37 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
             </fieldset>
           </Panneau>
         </form>
+      ) : null}
+
+      {onglet === "paiements" ? (
+        <Panneau titre="Encaissement par carte" sousTitre="Les cotisations payées par carte arrivent sur le compte Stripe de la Chambre" teinte="bleu">
+          <div className="flex flex-col gap-4">
+            {verrou}
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <p className="m-0 flex items-center gap-2.5 text-[14px]">
+                <CreditCard size={18} className="text-muted" aria-hidden />
+                {compte?.stripeCompteActif ? (
+                  <span className="inline-flex items-center gap-2"><Pill tone="ok">Actif</Pill> Compte Stripe{compte.stripeComptePays ? ` · ${compte.stripeComptePays}` : ""}</span>
+                ) : compte?.stripeCompteId ? (
+                  <Pill tone="warn">Inscription à terminer</Pill>
+                ) : (
+                  <span className="text-muted">Aucun compte connecté</span>
+                )}
+              </p>
+              <div className="flex items-center gap-2.5 flex-wrap">
+                {compte?.stripeCompteActif ? (
+                  <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">
+                    <ExternalLink size={14} aria-hidden /> Tableau de bord Stripe
+                  </a>
+                ) : gere ? (
+                  <form action={connecterStripe}>
+                    <button type="submit" className="btn-action btn-action-sm">{compte?.stripeCompteId ? "Terminer l’inscription" : "Connecter Stripe"}</button>
+                  </form>
+                ) : null}
+              </div>
+            </div>
+          </div>
+        </Panneau>
       ) : null}
 
       {onglet === "mentions" ? (

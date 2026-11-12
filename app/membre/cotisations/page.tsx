@@ -41,10 +41,11 @@ export default async function CotisationsPage({
   const m = await getMember(user.memberId!);
   if (!m) notFound();
 
-  const [factures, modes, cotisation] = await Promise.all([
+  const [factures, modes, cotisation, bientot] = await Promise.all([
     getInvoices(m.id),
     modesProposes(),
     cotisationDue(m),
+    modesBientot(),
   ]);
   const enAttente = ADHESION_PENDING.includes(m.statut);
   const renouvellement = renouvellementCotisation({
@@ -193,7 +194,7 @@ export default async function CotisationsPage({
                           montant: fmtMontant(f.montant, f.devise),
                         }}
                         modes={modes}
-                        bientot={modesBientot()}
+                        bientot={bientot}
                         ouverteAuDepart={regler === f.id}
                         declencheur={
                           <>

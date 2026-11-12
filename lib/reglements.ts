@@ -1,6 +1,8 @@
 import "server-only";
 import { randomBytes } from "node:crypto";
+import { CHAMBRE_PRINCIPALE, chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
+import { compteStripeActif } from "@/lib/encaissement-stripe";
 import {
   mobileMoneyEnLigne,
   MONTANT_MINIMUM_EN_LIGNE,
@@ -35,19 +37,25 @@ export async function getCoordonneesPaiement(): Promise<Coordonnees> {
   };
 }
 
+// Moyens en ligne proposés aux membres : la carte par le compte Stripe de la Chambre s'il est connecté ;
+// VanillaPay (carte, mobile money), dont le compte marchand est celui du serveur, pour la Chambre n° 1 seulement
 export async function modesProposes(): Promise<ModeReglement[]> {
+  const [stripe, chambreId] = await Promise.all([compteStripeActif(), chambreCourante()]);
+  const vanillaPay = chambreId === CHAMBRE_PRINCIPALE;
   return MODES_EN_LIGNE.filter((m) =>
-    m === "carte" ? vanillaPayActif() : mobileMoneyEnLigne(),
+    m === "carte" ? Boolean(stripe) || (vanillaPay && vanillaPayActif()) : vanillaPay && mobileMoneyEnLigne(),
   );
 }
 
+// Le minimum en ligne est celui de VanillaPay : la carte par Stripe reste proposée en dessous
 export async function modesPublics(montant: number): Promise<ModeReglement[]> {
-  if (montant < MONTANT_MINIMUM_EN_LIGNE) return [];
-  return modesProposes();
+  const modes = await modesProposes();
+  if (montant >= MONTANT_MINIMUM_EN_LIGNE) return modes;
+  return (await compteStripeActif()) ? modes.filter((m) => m === "carte") : [];
 }
 
-export function modesBientot(): ModeReglement[] {
-  return vanillaPayActif() ? [] : ["carte"];
+export async function modesBientot(): Promise<ModeReglement[]> {
+  return (await modesProposes()).includes("carte") ? [] : ["carte"];
 }
 
 export function referenceReglement(annee = new Date().getFullYear()): string {

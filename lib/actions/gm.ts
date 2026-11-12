@@ -197,13 +197,16 @@ export async function enregistrerReglages(formData: FormData) {
   const delai = Number(texte(formData, "delaiRetard", 4));
   const relances = lireRelances(texte(formData, "relances", 60));
   const action = texte(formData, "actionRetard", 20);
+  const commission = Number(texte(formData, "commissionCotisations", 10).replace(",", ".") || "0");
   if (!Number.isInteger(delai) || delai < 0 || delai > 365) redirectWithErreur("/gm/parametres", "Le délai est un nombre de jours, de 0 à 365.");
   if (!relances) redirectWithErreur("/gm/parametres", "Les relances sont des jours après la facture, de 1 à 365 (ex. 1, 7, 14).");
   if (action !== "lecture" && action !== "blocage") redirectWithErreur("/gm/parametres", "Choisissez ce qui se passe après le délai.");
+  if (!Number.isFinite(commission) || commission < 0 || commission > 30) redirectWithErreur("/gm/parametres", "La part de la plateforme va de 0 à 30 %.");
+  const commissionCotisations = Math.round(commission * 100) / 100;
   await db.reglagesPlateforme.upsert({
     where: { id: "plateforme" },
-    create: { id: "plateforme", delaiRetard: delai, relances, actionRetard: action },
-    update: { delaiRetard: delai, relances, actionRetard: action },
+    create: { id: "plateforme", delaiRetard: delai, relances, actionRetard: action, commissionCotisations },
+    update: { delaiRetard: delai, relances, actionRetard: action, commissionCotisations },
   });
   oublierReglages();
   oublierAdresses();

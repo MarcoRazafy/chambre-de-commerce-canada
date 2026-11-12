@@ -69,6 +69,10 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                   <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
                 </div>
                 <p className="m-0 text-[14px] text-muted">
+                  Encaissement des cotisations par carte :{" "}
+                  {c.stripeCompteActif ? <b className="text-ink">Stripe actif{c.stripeComptePays ? ` (${c.stripeComptePays})` : ""}</b> : c.stripeCompteId ? "inscription chez Stripe à terminer" : "non connecté"}
+                </p>
+                <p className="m-0 text-[14px] text-muted">
                   Carte : {c.stripeCarteId ? <b className="text-ink">{c.carteMarque} •••• {c.carteFin} · {c.carteExpire}</b> : "aucune"}
                 </p>
                 <p className="m-0 text-[14px] text-muted">

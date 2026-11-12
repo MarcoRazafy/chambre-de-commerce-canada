@@ -5,6 +5,7 @@ import { conclureAchat } from "@/lib/achats-en-ligne";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { delivrerBillets, delivrerBilletsPublics } from "@/lib/billets";
 import { avecChambre } from "@/lib/chambre-courante";
+import { estSessionStripe, etatSessionStripe } from "@/lib/encaissement-stripe";
 import { prisma, prismaSysteme } from "@/lib/db";
 import { jourBase } from "@/lib/format";
 import { nomFacture } from "@/lib/factures";
@@ -245,7 +246,7 @@ export async function suivrePaiementPublic(
     return null;
   }
   if (p.statut === "en_cours" && p.transaction) {
-    const etat = await interrogerStatut(p.transaction, canal);
+    const etat = estSessionStripe(p.transaction) ? await etatSessionStripe(p.transaction) : await interrogerStatut(p.transaction, canal);
     if (etat) {
       await conclurePaiement(etat, etat);
       const apres = await prisma.paiement.findUnique({

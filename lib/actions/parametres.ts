@@ -1,7 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { exigerAdministrateur } from "@/lib/autorisations";
+import { lienInscriptionStripe } from "@/lib/encaissement-stripe";
+import { stripeConfigure } from "@/lib/stripe";
 import {
   adresseValidee,
   assurerExpediteur,
@@ -13,7 +16,7 @@ import {
   oublierDomaine,
   verifierDomaine,
 } from "@/lib/brevo-domaines";
-import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur } from "@/lib/courriel";
+import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur, urlPublique } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -172,4 +175,12 @@ export async function enregistrerMentions(formData: FormData) {
   const confidentialite = saisie ? urlSure(saisie) : "";
   if (saisie && !confidentialite) redirectWithErreur(`${PAGE}?onglet=mentions`, "Le lien de la politique de confidentialité n’est pas une adresse web valide.");
   await enregistrerChamps("mentions", { confidentialite, copyright: texte(formData, "copyright", 300) }, "Mentions légales enregistrées");
+}
+
+// Onglet Paiements en ligne : connecter le compte Stripe de la Chambre (ou reprendre son inscription chez Stripe)
+export async function connecterStripe() {
+  const onglet = `${PAGE}?onglet=paiements`;
+  await exigerAdministrateur(onglet);
+  if (!stripeConfigure()) redirectWithErreur(onglet, "Le paiement par carte n’est pas encore disponible.");
+  redirect(await lienInscriptionStripe(await chambreCourante(), await urlPublique(onglet)));
 }

@@ -4,7 +4,8 @@ import { networkInterfaces } from "node:os";
 import { headers } from "next/headers";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
-import { chambreCourante } from "@/lib/chambre-courante";
+import { CHAMBRE_PRINCIPALE, chambreCourante } from "@/lib/chambre-courante";
+import { compteStripeActif, ouvrirChezStripe } from "@/lib/encaissement-stripe";
 import { prisma } from "@/lib/db";
 import { referenceReglement } from "@/lib/reglements";
 import { marqueLocale, versRelais } from "@/lib/retour-paiement";
@@ -75,6 +76,14 @@ export async function ouvrirChezLePrestataire(
   cheminRetour: (reference: string) => string = (reference) =>
     `/membre/cotisations/retour?ref=${encodeURIComponent(reference)}`,
 ): Promise<{ url: string } | { raison: string }> {
+  // Carte : sur le compte Stripe de la Chambre, s'il est connecté (l'argent va à la Chambre)
+  const compte = mode === "international" ? await compteStripeActif() : null;
+  // VanillaPay : son compte marchand (réglé sur le serveur) est celui de la Chambre n° 1, seule à s'en servir
+  const chambreId = await chambreCourante();
+  if (!compte && chambreId !== CHAMBRE_PRINCIPALE) {
+    return { raison: "Le paiement en ligne n’est pas encore disponible : choisissez un autre moyen." };
+  }
+
   const reference = referenceReglement();
   await prisma.paiement.update({
     where: { id: p.id },
@@ -84,6 +93,18 @@ export async function ouvrirChezLePrestataire(
       ...(detail === undefined ? {} : { detail }),
     },
   });
+
+  if (compte) {
+    const { devise } = await prisma.paiement.findUniqueOrThrow({ where: { id: p.id }, select: { devise: true } });
+    const ouvert = await ouvrirChezStripe(
+      { reference, montant: p.montant, devise, libelle: p.numeroFacture ? `Facture ${p.numeroFacture}` : "Règlement", chambreId },
+      compte,
+      await baseRetour(),
+      cheminRetour(reference),
+    );
+    await prisma.paiement.update({ where: { id: p.id }, data: { transaction: ouvert.session } });
+    return { url: ouvert.url };
+  }
 
   const ouverture = await ouvrirPaiement({
     montant: p.montant,

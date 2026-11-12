@@ -94,7 +94,7 @@ export default async function EvenementDetailPage({
             montant: fmtMontant(aRegler.montant, aRegler.devise),
           }}
           modes={modesPaiement}
-          bientot={modesBientot()}
+          bientot={await modesBientot()}
           ouverteAuDepart
         />
       ) : null}

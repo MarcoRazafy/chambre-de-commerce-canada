@@ -15,6 +15,7 @@ import { fmtMontant } from "@/lib/membership";
 import { conclurePaiement, estCotisation } from "@/lib/paiements";
 import { getCurrentUser } from "@/lib/session";
 import { canalVanillaPay, interrogerStatut } from "@/lib/vanillapay";
+import { estSessionStripe, etatSessionStripe } from "@/lib/encaissement-stripe";
 
 export default async function RetourPaiementPage({
   searchParams,
@@ -45,10 +46,13 @@ export default async function RetourPaiementPage({
   let p = trouve;
   if (p.statut === "en_cours") {
     const canal = canalVanillaPay(p.mode);
-    const etat =
-      canal && p.transaction
-        ? await interrogerStatut(p.transaction, canal)
-        : null;
+    const etat = !p.transaction
+      ? null
+      : estSessionStripe(p.transaction)
+        ? await etatSessionStripe(p.transaction)
+        : canal
+          ? await interrogerStatut(p.transaction, canal)
+          : null;
     if (etat) {
       await conclurePaiement(etat, etat);
       p = (await charger()) ?? p;

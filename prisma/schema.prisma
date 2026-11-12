@@ -163,11 +163,13 @@ enum ActionRetard {
 // Une facture impayée relance la Chambre les jours indiqués après sa date ; passé le délai, l'espace passe
 // en lecture seule ou est bloqué (sauf l'abonnement), jusqu'au paiement.
 model ReglagesPlateforme {
-  id           String       @id @default("plateforme")
-  delaiRetard  Int          @default(15)
-  relances     Int[]        @default([1, 7, 14])
-  actionRetard ActionRetard @default(lecture)
-  updatedAt    DateTime     @updatedAt
+  id                    String       @id @default("plateforme")
+  delaiRetard           Int          @default(15)
+  relances              Int[]        @default([1, 7, 14])
+  actionRetard          ActionRetard @default(lecture)
+  // Part prélevée par la plateforme sur les cotisations payées par carte aux Chambres (en %, 0 : aucune)
+  commissionCotisations Float        @default(0)
+  updatedAt             DateTime     @updatedAt
 
   @@map("reglages_plateforme")
 }
@@ -207,6 +209,12 @@ model Chambre {
   carteMarque    String?
   carteFin       String?
   carteExpire    String?
+
+  // Encaissement des cotisations des membres par carte : le compte Stripe de la Chambre (Stripe Connect),
+  // actif quand Stripe l'autorise à encaisser
+  stripeCompteId    String? @unique
+  stripeCompteActif Boolean @default(false)
+  stripeComptePays  String?
 
   membres             Member[]
   utilisateurs        User[]
