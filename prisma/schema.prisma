@@ -129,8 +129,46 @@ enum ModeReglement {
   plateforme
 }
 
+// Une Chambre cliente de la plateforme : son espace, ses comptes, ses données et ses réglages.
+// « principale » : la première Chambre, celle qui existait avant la plateforme multi-chambres.
+model Chambre {
+  id        String   @id @default(cuid())
+  slug      String   @unique // son adresse : « slug ».lalliee-virtuelle.com
+  nom       String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  membres             Member[]
+  utilisateurs        User[]
+  evenements          Event[]
+  actualites          News[]
+  ressources          Resource[]
+  dossiers            DossierRessource[]
+  offres              Offer[]
+  services            CanchamService[]
+  factures            Invoice[]
+  paiements           Paiement[]
+  coordonneesPaiement CoordonneesPaiement?
+  fils                MessageThread[]
+  journal             AuditLog[]
+  abonnes             Abonne[]
+  typesRendezvous     TypeRendezvous[]
+  rendezvous          Rendezvous[]
+  misesEnRelation     MiseEnRelation[]
+  lettres             Lettre[]
+  tags                Tag[]
+  facturesPlateforme  FacturePlateforme[]
+  reglesTags          RegleTag[]
+  profil              ProfilChambre?
+
+  @@map("chambres")
+}
+
 model Member {
-  id           String       @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId    String       @default("principale")
+  chambre      Chambre      @relation(fields: [chambreId], references: [id])
   type         MemberType   @default(morale)
   nom          String
   secteur      String
@@ -188,11 +226,15 @@ model Member {
   reglements    Paiement[]
 
   @@index([statut])
+  @@index([chambreId])
   @@map("members")
 }
 
 model User {
-  id           String        @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId    String        @default("principale")
+  chambre      Chambre       @relation(fields: [chambreId], references: [id])
   role         UserRole      @default(membre)
   niveauEquipe NiveauEquipe?
   nom          String
@@ -232,6 +274,7 @@ model User {
   lectures   LectureRessource[]
 
   @@index([memberId])
+  @@index([chambreId])
   @@map("users")
 }
 
@@ -274,7 +317,10 @@ model Produit {
 }
 
 model Event {
-  id         String      @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId  String      @default("principale")
+  chambre    Chambre     @relation(fields: [chambreId], references: [id])
   titre      String
   date       DateTime    @db.Date
   lieu       String
@@ -304,15 +350,16 @@ model Event {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  inscriptions Registration[]
-  rappels      RappelEnvoye[]
+  inscriptions      Registration[]
+  rappels           RappelEnvoye[]
   rappelsProgrammes RappelEvenement[]
-  participants Attendee[]
-  programme    EventAgenda[]
-  intervenants EventIntervenant[]
-  factures     Invoice[]
+  participants      Attendee[]
+  programme         EventAgenda[]
+  intervenants      EventIntervenant[]
+  factures          Invoice[]
 
   @@index([date])
+  @@index([chambreId])
   @@map("events")
 }
 
@@ -413,13 +460,16 @@ model Rappel {
 }
 
 model News {
-  id      String       @id @default(cuid())
-  titre   String
-  date    DateTime     @db.Date
-  cat     NewsCategory
-  extrait String
-  corps   String
-  public  Boolean      @default(false)
+  id String @id @default(cuid())
+
+  chambreId String       @default("principale")
+  chambre   Chambre      @relation(fields: [chambreId], references: [id])
+  titre     String
+  date      DateTime     @db.Date
+  cat       NewsCategory
+  extrait   String
+  corps     String
+  public    Boolean      @default(false)
 
   mediaType     MediaType
   mediaTheme    MediaTheme
@@ -439,6 +489,7 @@ model News {
 
   @@index([date])
   @@index([memberId])
+  @@index([chambreId])
   @@map("news")
 }
 
@@ -458,12 +509,15 @@ model NewsLike {
 }
 
 model Resource {
-  id     String           @id @default(cuid())
-  titre  String
-  cat    ResourceCategory
-  fmt    ResourceFormat
-  taille String
-  date   DateTime         @db.Date
+  id String @id @default(cuid())
+
+  chambreId String           @default("principale")
+  chambre   Chambre          @relation(fields: [chambreId], references: [id])
+  titre     String
+  cat       ResourceCategory
+  fmt       ResourceFormat
+  taille    String
+  date      DateTime         @db.Date
 
   fichier     String?
   pages       Int?
@@ -488,6 +542,7 @@ model Resource {
 
   @@index([type])
   @@index([dossierId])
+  @@index([chambreId])
   @@map("resources")
 }
 
@@ -524,7 +579,10 @@ model LectureRessource {
 }
 
 model DossierRessource {
-  id          String  @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId   String  @default("principale")
+  chambre     Chambre @relation(fields: [chambreId], references: [id])
   nom         String
   cover       String?
   auteurNom   String?
@@ -544,6 +602,7 @@ model DossierRessource {
   updatedAt DateTime @updatedAt
 
   @@index([parentId])
+  @@index([chambreId])
   @@map("dossiers_ressources")
 }
 
@@ -622,7 +681,10 @@ model NoteMembre {
 }
 
 model Offer {
-  id          String           @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId   String           @default("principale")
+  chambre     Chambre          @relation(fields: [chambreId], references: [id])
   titre       String
   desc        String
   image       String?
@@ -637,35 +699,43 @@ model Offer {
   updatedAt DateTime @updatedAt
 
   @@index([memberId])
+  @@index([chambreId])
   @@map("offers")
 }
 
 model CanchamService {
-  id    String      @id @default(cuid())
-  titre String
-  desc  String
-  type  PricingType @default(gratuit)
-  prix  Int         @default(0)
-  icon  String      @default("award")
-  image String?
-  lien  String?
-  ordre Int         @default(0)
+  id String @id @default(cuid())
+
+  chambreId String      @default("principale")
+  chambre   Chambre     @relation(fields: [chambreId], references: [id])
+  titre     String
+  desc      String
+  type      PricingType @default(gratuit)
+  prix      Int         @default(0)
+  icon      String      @default("award")
+  image     String?
+  lien      String?
+  ordre     Int         @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  @@index([chambreId])
   @@map("cancham_services")
 }
 
 model Invoice {
-  id      String        @id @default(cuid())
-  numero  String        @unique
-  date    DateTime      @db.Date
-  objet   String
-  montant Int
-  devise  Devise        @default(CAD)
-  statut  InvoiceStatus @default(envoyee)
-  payeeLe DateTime?     @db.Date
+  id String @id @default(cuid())
+
+  chambreId String        @default("principale")
+  chambre   Chambre       @relation(fields: [chambreId], references: [id])
+  numero    String        @unique
+  date      DateTime      @db.Date
+  objet     String
+  montant   Int
+  devise    Devise        @default(CAD)
+  statut    InvoiceStatus @default(envoyee)
+  payeeLe   DateTime?     @db.Date
 
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -683,11 +753,15 @@ model Invoice {
 
   @@index([memberId])
   @@index([eventId])
+  @@index([chambreId])
   @@map("invoices")
 }
 
 model Paiement {
   id String @id @default(cuid())
+
+  chambreId String  @default("principale")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
 
   reference String         @unique
   statut    PaiementStatut @default(en_cours)
@@ -718,11 +792,15 @@ model Paiement {
   @@index([invoiceId])
   @@index([memberId])
   @@index([statut])
+  @@index([chambreId])
   @@map("paiements")
 }
 
 model CoordonneesPaiement {
   id String @id @default("uniques")
+
+  chambreId String  @unique @default("principale")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
 
   titulaire String @default("")
   banque    String @default("")
@@ -746,11 +824,14 @@ model CoordonneesPaiement {
 }
 
 model MessageThread {
-  id     String     @id @default(cuid())
-  type   ThreadType
-  nom    String?
-  avatar String?
-  equipe Boolean    @default(false)
+  id String @id @default(cuid())
+
+  chambreId String     @default("principale")
+  chambre   Chambre    @relation(fields: [chambreId], references: [id])
+  type      ThreadType
+  nom       String?
+  avatar    String?
+  equipe    Boolean    @default(false)
 
   visiteur    Json?
   visiteurCle String? @unique
@@ -760,6 +841,7 @@ model MessageThread {
   messages     Message[]
   participants ParticipantFil[]
 
+  @@index([chambreId])
   @@map("message_threads")
 }
 
@@ -821,7 +903,10 @@ model PieceJointe {
 }
 
 model AuditLog {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId String   @default("principale")
+  chambre   Chambre  @relation(fields: [chambreId], references: [id])
   action    String
   entite    String
   entiteId  String
@@ -830,6 +915,7 @@ model AuditLog {
   createdAt DateTime @default(now())
 
   @@index([entite, entiteId])
+  @@index([chambreId])
   @@map("audit_logs")
 }
 
@@ -850,10 +936,13 @@ model JetonCompte {
 }
 
 model Abonne {
-  id     String @id @default(cuid())
-  prenom String
-  email  String @unique
-  source String @default("vitrine")
+  id String @id @default(cuid())
+
+  chambreId String  @default("principale")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
+  prenom    String
+  email     String  @unique
+  source    String  @default("vitrine")
 
   desabonneLe DateTime?
 
@@ -869,16 +958,20 @@ model Abonne {
 
   createdAt DateTime @default(now())
 
+  @@index([chambreId])
   @@map("abonnes")
 }
 
 model TypeRendezvous {
-  id     String  @id @default(cuid())
-  titre  String
-  detail String?
-  duree  Int     @default(30)
-  actif  Boolean @default(true)
-  ordre  Int     @default(0)
+  id String @id @default(cuid())
+
+  chambreId String  @default("principale")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
+  titre     String
+  detail    String?
+  duree     Int     @default(30)
+  actif     Boolean @default(true)
+  ordre     Int     @default(0)
 
   // La personne de l'équipe qui reçoit (vide : l'équipe CanCham), où (visio, bureau, téléphone),
   // la couleur de repère, le prix affiché, et si chaque réservation attend la confirmation de l'équipe
@@ -895,6 +988,7 @@ model TypeRendezvous {
   rendezvous Rendezvous[]
   plages     Disponibilite[]
 
+  @@index([chambreId])
   @@map("types_rendezvous")
 }
 
@@ -915,6 +1009,9 @@ model Disponibilite {
 
 model Rendezvous {
   id String @id @default(cuid())
+
+  chambreId String  @default("principale")
+  chambre   Chambre @relation(fields: [chambreId], references: [id])
 
   typeId String
   type   TypeRendezvous @relation(fields: [typeId], references: [id])
@@ -946,6 +1043,7 @@ model Rendezvous {
 
   @@index([jour])
   @@index([userId])
+  @@index([chambreId])
   @@map("rendezvous")
 }
 
@@ -965,7 +1063,10 @@ model Maillage {
 
 // Mise en relation faite par la Chambre entre deux membres (ou suggestion écartée)
 model MiseEnRelation {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId String   @default("principale")
+  chambre   Chambre  @relation(fields: [chambreId], references: [id])
   memberAId String
   memberA   Member   @relation("relationA", fields: [memberAId], references: [id], onDelete: Cascade)
   memberBId String
@@ -975,13 +1076,17 @@ model MiseEnRelation {
   createdAt DateTime @default(now())
 
   @@unique([memberAId, memberBId])
+  @@index([chambreId])
   @@map("mises_en_relation")
 }
 
 // Newsletter : une lettre écrite par l'équipe, envoyée par courriel à une audience choisie
 // (contacts des membres selon leur statut et les tags de l'entreprise, abonnés à la lettre)
 model Lettre {
-  id            String        @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId     String        @default("principale")
+  chambre       Chambre       @relation(fields: [chambreId], references: [id])
   sujet         String
   contenu       String
   audience      Json          @default("{}")
@@ -996,6 +1101,7 @@ model Lettre {
   updatedAt     DateTime      @updatedAt
   envois        EnvoiLettre[]
 
+  @@index([chambreId])
   @@map("lettres")
 }
 
@@ -1019,25 +1125,29 @@ model EnvoiLettre {
 
 // Un tag de l'équipe, qui existe même sans entreprise ; les entreprises le portent dans « etiquettes »
 model Tag {
-  id        String   @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId String   @default("principale")
+  chambre   Chambre  @relation(fields: [chambreId], references: [id])
   nom       String   @unique
   createdAt DateTime @default(now())
 
+  @@index([chambreId])
   @@map("tags")
 }
 
 // Un rappel automatique aux inscrits d'un événement : combien de temps avant le début, son objet et sa lettre.
 // Un événement en a autant que l'équipe en ajoute ; les envois sont notés dans RappelEnvoye (type = id du rappel).
 model RappelEvenement {
-  id        String   @id @default(cuid())
+  id        String     @id @default(cuid())
   eventId   String
-  event     Event    @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
   titre     String? // nom du rappel dans la liste
   dates     DateTime[] @default([]) // moments d'envoi choisis par l'équipe (un ou plusieurs)
   avant     Int        @default(0) // ancien réglage : minutes avant le début (si aucune date)
   sujet     String?
   message   String? // lettre de l'éditeur (JSON) ; vide : le rappel par défaut
-  createdAt DateTime @default(now())
+  createdAt DateTime   @default(now())
 
   @@index([eventId])
   @@map("rappels_evenement")
@@ -1045,7 +1155,10 @@ model RappelEvenement {
 
 // Facture mensuelle de l'abonnement de la Chambre à la plateforme : forfait + comptes de l'équipe ce jour-là
 model FacturePlateforme {
-  id             String    @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId      String    @default("principale")
+  chambre        Chambre   @relation(fields: [chambreId], references: [id])
   numero         String    @unique // PLT-AAAA-MM
   date           DateTime  @db.Date
   forfait        Float
@@ -1060,18 +1173,23 @@ model FacturePlateforme {
   payeeLe        DateTime?
   createdAt      DateTime  @default(now())
 
+  @@index([chambreId])
   @@map("factures_plateforme")
 }
 
 // Tag automatique : toute entreprise dans cette situation reçoit le tag, et le perd quand elle n'y est plus
 model RegleTag {
-  id        String       @id @default(cuid())
+  id String @id @default(cuid())
+
+  chambreId String       @default("principale")
+  chambre   Chambre      @relation(fields: [chambreId], references: [id])
   statut    MemberStatus
   tag       String
   actif     Boolean      @default(true)
   createdAt DateTime     @default(now())
 
   @@unique([statut, tag])
+  @@index([chambreId])
   @@map("regles_tags")
 }
 
@@ -1079,7 +1197,10 @@ model RegleTag {
 // et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ, NIF, STAT, logo, mention).
 // Un champ vide reprend la valeur par défaut de la plateforme.
 model ProfilChambre {
-  id          String  @id @default("unique")
+  id String @id @default("unique")
+
+  chambreId   String  @unique @default("principale")
+  chambre     Chambre @relation(fields: [chambreId], references: [id])
   nom         String  @default("")
   description String  @default("")
   adresse     String  @default("") // recomposée à partir des champs ci-dessous
