@@ -7,6 +7,8 @@ import { validerDomaineExpediteur, verifierDomaineExpediteur } from "@/lib/actio
 import type { EtatDomaine } from "@/lib/brevo-domaines";
 
 const BOUTON = "btn-contour btn-contour-sm text-ink hover:bg-surface-2 self-start";
+// « @ » → « domaine.com. » ; « brevo1._domainkey » → « brevo1._domainkey.domaine.com. » (le point final : nom absolu)
+const nomComplet = (nom: string, domaine: string) => `${nom === "@" ? domaine : `${nom}.${domaine}`}.`;
 
 export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { etat: EtatDomaine; email: string; nom: string; serveur: string; /** Super admin : peut valider et vérifier */ gere?: boolean }) {
   if (etat.etat === "vide") return null;
@@ -72,6 +74,11 @@ export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { e
                         <code className="font-[family-name:var(--font-mono)] text-ink break-all">{x.nom}</code>
                         <BoutonCopier valeur={x.nom} libelle={`le nom ${x.nom}`} className="!min-h-8 !px-2 !text-[12px] border-line bg-surface text-ink" />
                       </div>
+                      {/* Nom complet, pour les hébergeurs qui refusent « @ » ou les noms courts (cPanel) */}
+                      <div className="mt-1 flex items-center gap-2 text-[11.5px] text-muted">
+                        ou <code className="font-[family-name:var(--font-mono)] break-all">{nomComplet(x.nom, etat.domaine)}</code>
+                        <BoutonCopier valeur={nomComplet(x.nom, etat.domaine)} libelle={`le nom complet ${nomComplet(x.nom, etat.domaine)}`} className="!min-h-7 !px-2 !text-[11px] border-line bg-surface text-ink" />
+                      </div>
                     </td>
                     <td className="px-3 py-2">
                       <div className="flex items-center gap-2">
@@ -88,7 +95,7 @@ export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { e
             </table>
           </div>
           <p className="m-0 text-[12px] text-muted">
-            « @ » désigne le domaine lui-même. Si un enregistrement « _dmarc » existe déjà, gardez celui-là plutôt que d’en ajouter un second.
+            « @ » désigne le domaine lui-même. Si votre hébergeur le refuse (cPanel par exemple), utilisez le nom complet. Si un enregistrement « _dmarc » existe déjà, gardez celui-là plutôt que d’en ajouter un second.
           </p>
           {gere ? <button type="submit" formAction={verifierDomaineExpediteur} className={BOUTON} formNoValidate>
             <RefreshCw size={14} /> Vérifier maintenant
