@@ -3,6 +3,8 @@ import "server-only";
 import { networkInterfaces } from "node:os";
 import { headers } from "next/headers";
 import type { Prisma } from "@/lib/generated/prisma/client";
+import { adresseDeLaChambre } from "@/lib/adresse-chambre";
+import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import { referenceReglement } from "@/lib/reglements";
 import { marqueLocale, versRelais } from "@/lib/retour-paiement";
@@ -19,8 +21,11 @@ function basePrestataire(): string {
   return domaine ? `https://${domaine}` : baseSite();
 }
 
+// Où revient le navigateur après le paiement : l'adresse de la Chambre (la session y est valable)
 async function baseRetour(): Promise<string> {
-  if (process.env.NODE_ENV === "production") return basePrestataire();
+  if (process.env.NODE_ENV === "production") {
+    return (await adresseDeLaChambre(await chambreCourante())) ?? basePrestataire();
+  }
   const h = await headers();
   const hote = h.get("x-forwarded-host") ?? h.get("host");
   if (!hote) return basePrestataire();

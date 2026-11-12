@@ -133,7 +133,8 @@ enum ModeReglement {
 // « principale » : la première Chambre, celle qui existait avant la plateforme multi-chambres.
 model Chambre {
   id        String   @id @default(cuid())
-  slug      String   @unique // son adresse : « slug ».lalliee-virtuelle.com
+  slug      String   @unique // son adresse : « slug ».DOMAINE_PLATEFORME (ex. cancham.lalliee-virtuelle.com)
+  domaine   String?  @unique // son domaine propre, s'il y en a un (ex. cancham.mg)
   nom       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import nodemailer, { type Transporter } from "nodemailer";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { adresseValidee, domaineDe, estWebmail } from "@/lib/brevo-domaines";
+import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 
@@ -257,7 +258,11 @@ function baseLiens(): string | null {
   return base && !estAdresseLocale(base) ? base : ADRESSE_PLATEFORME;
 }
 
+// Lien vers le site : l'adresse de la Chambre en cours (sous-domaine, domaine propre) ; pour la Chambre n° 1
+// sans adresse réglée, celle du site (APP_URL, sinon l'adresse de la requête)
 export async function urlPublique(chemin: string): Promise<string> {
+  const propre = await adresseDeLaChambre(await chambreCourante());
+  if (propre) return `${propre}${chemin}`;
   const base = baseLiens();
   if (base) return `${base}${chemin}`;
   const h = await headers();

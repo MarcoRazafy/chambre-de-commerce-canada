@@ -89,6 +89,8 @@ const nextConfig: NextConfig = {
     "100.*.*.*",
     "172.16.*.*",
     "*.trycloudflare.com",
+    // Espaces des Chambres en local : « slug ».localhost
+    "*.localhost",
   ],
 
   experimental: {

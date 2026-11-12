@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { brancherChambreDuCompte, chambreCourante } from "@/lib/chambre-courante";
+import { brancherRechercheChambre, chambreCourante } from "@/lib/chambre-courante";
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { restreindre } from "@/lib/portee-chambre";
 
@@ -42,9 +42,9 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prismaClasse = PrismaClient;
 }
 
-brancherChambreDuCompte(async (userId) => {
-  const u = await prismaSysteme.user.findUnique({ where: { id: userId }, select: { chambreId: true } });
-  return u?.chambreId ?? null;
+brancherRechercheChambre(async (r) => {
+  const c = await prismaSysteme.chambre.findUnique({ where: r, select: { id: true } });
+  return c?.id ?? null;
 });
 
 // L'accès habituel : chaque requête est limitée à la Chambre en cours (lib/chambre-courante.ts, lib/portee-chambre.ts)

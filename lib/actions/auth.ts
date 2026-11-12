@@ -1,6 +1,8 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { adresseDeLaChambre } from "@/lib/adresse-chambre";
+import { chambreCourante } from "@/lib/chambre-courante";
 import { prismaSysteme } from "@/lib/db";
 import { fermerSession, ouvrirSession, verifier } from "@/lib/auth";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
@@ -56,6 +58,7 @@ export async function connexion(formData: FormData) {
       role: true,
       motDePasse: true,
       member: { select: { accueilEnCours: true, statut: true } },
+      chambreId: true,
     },
   });
 
@@ -71,6 +74,13 @@ export async function connexion(formData: FormData) {
 
   if (!u || !verifier(motDePasse, u.motDePasse)) {
     echec("Adresse ou mot de passe incorrect.", email, suite);
+  }
+
+  // Le compte d'une autre Chambre (mot de passe juste) : il se connecte à l'adresse de sa Chambre
+  if (u.chambreId !== (await chambreCourante())) {
+    const adresse = await adresseDeLaChambre(u.chambreId);
+    if (adresse) redirect(`${adresse}/auth?${new URLSearchParams({ email })}`);
+    echec("Ce compte appartient à un autre espace.", email, suite);
   }
 
   if (u.role === "membre" && u.member?.statut === "refusee") {

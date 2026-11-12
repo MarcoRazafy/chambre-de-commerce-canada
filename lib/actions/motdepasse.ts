@@ -45,7 +45,6 @@ export async function demanderReinitialisation(formData: FormData) {
     });
   }
 
-  const base = await urlPublique(NOUVEAU);
   after(async () => {
     // Sans session : le compte est cherché dans toutes les Chambres, la suite se fait dans la sienne
     const u = await prismaSysteme.user.findUnique({
@@ -54,6 +53,7 @@ export async function demanderReinitialisation(formData: FormData) {
     });
     if (!u || u.role === "visiteur") return;
     await avecChambre(u.chambreId, async () => {
+      const base = await urlPublique(NOUVEAU);
       const jeton = await creerJeton(u.id, "reinitialisation");
       await envoyerCourriel(
         courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`),

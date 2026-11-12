@@ -3,10 +3,20 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ host: "localhost:3000" }),
 }));
+// La Chambre en cours et son adresse : la Chambre n° 1 n'en a pas (adresse habituelle du site)
+let chambre = "principale";
+vi.mock("@/lib/chambre-courante", async (original) => ({
+  ...(await original<typeof import("@/lib/chambre-courante")>()),
+  chambreCourante: async () => chambre,
+}));
+vi.mock("@/lib/adresse-chambre", () => ({
+  adresseDeLaChambre: async (id: string) => (id === "autre" ? "https://autre.lalliee-virtuelle.com" : null),
+}));
 const { estAdresseLocale, urlPublique } = await import("@/lib/courriel");
 
 afterEach(() => {
   vi.unstubAllEnvs();
+  chambre = "principale";
 });
 
 const LIEN = "/auth/nouveau-mot-de-passe?jeton=abc";
@@ -40,6 +50,13 @@ describe("liens des e-mails", () => {
     vi.stubEnv("NODE_ENV", "development");
     vi.stubEnv("APP_URL", "http://localhost:3000");
     expect(await urlPublique(LIEN)).toBe(`http://localhost:3000${LIEN}`);
+  });
+
+  it("mènent à l'adresse de la Chambre (sous-domaine, domaine propre) quand elle en a une", async () => {
+    vi.stubEnv("NODE_ENV", "production");
+    vi.stubEnv("APP_URL", "https://app.cancham.mg");
+    chambre = "autre";
+    expect(await urlPublique(LIEN)).toBe(`https://autre.lalliee-virtuelle.com${LIEN}`);
   });
 
   it("reconnaissent une adresse locale, et elle seule", () => {
