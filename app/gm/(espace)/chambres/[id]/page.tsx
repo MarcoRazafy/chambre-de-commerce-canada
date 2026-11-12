@@ -6,7 +6,7 @@ import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
-import { changerOffreChambre, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
+import { changerOffreChambre, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
 import { fmtDateShort } from "@/lib/format";
@@ -69,6 +69,9 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                   <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
                 </div>
                 <p className="m-0 text-[14px] text-muted">
+                  Carte : {c.stripeCarteId ? <b className="text-ink">{c.carteMarque} •••• {c.carteFin} · {c.carteExpire}</b> : "aucune"}
+                </p>
+                <p className="m-0 text-[14px] text-muted">
                   {estimation
                     ? <>Aujourd’hui : <b className="text-ink tabular-nums">{fmtDollars(estimation.sousTotal)}</b> par mois avant taxes ({fmtDollars(estimation.forfait)} + {estimation.payants} compte{estimation.payants > 1 ? "s" : ""} d’équipe).</>
                     : "Rien à payer."}
@@ -87,7 +90,19 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                       <Td className="font-semibold">{x.numero}</Td>
                       <Td className="whitespace-nowrap">{jour(x.date)}</Td>
                       <Td className="text-right tabular-nums">{fmtDollars(x.total)}</Td>
-                      <Td>{x.payeeLe ? <Pill tone="ok">Payée le {jour(x.payeeLe)}</Pill> : <Pill tone="warn">À payer</Pill>}</Td>
+                      <Td>
+                        {x.payeeLe ? <Pill tone="ok">Payée le {jour(x.payeeLe)}</Pill> : (
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <Pill tone="warn">À payer</Pill>
+                            <form action={marquerFacturePayee}>
+                              <input type="hidden" name="chambreId" value={c.id} />
+                              <input type="hidden" name="factureId" value={x.id} />
+                              <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">Marquer payée</button>
+                            </form>
+                          </div>
+                        )}
+                        {!x.payeeLe && x.dernierEchec ? <div className="text-[12px] text-bad mt-1">{x.dernierEchec}</div> : null}
+                      </Td>
                     </tr>
                   ))}
                 </tbody>

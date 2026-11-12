@@ -154,6 +154,24 @@ model Offre {
   @@map("offres_plateforme")
 }
 
+enum ActionRetard {
+  lecture
+  blocage
+}
+
+// Réglages de la plateforme (Admin GM), une seule ligne : retards de paiement de l'abonnement.
+// Une facture impayée relance la Chambre les jours indiqués après sa date ; passé le délai, l'espace passe
+// en lecture seule ou est bloqué (sauf l'abonnement), jusqu'au paiement.
+model ReglagesPlateforme {
+  id           String       @id @default("plateforme")
+  delaiRetard  Int          @default(15)
+  relances     Int[]        @default([1, 7, 14])
+  actionRetard ActionRetard @default(lecture)
+  updatedAt    DateTime     @updatedAt
+
+  @@map("reglages_plateforme")
+}
+
 // Compte de l'Admin GM (propriétaire de la plateforme) : à part des comptes des Chambres
 model CompteGM {
   id                  String    @id @default(cuid())
@@ -181,6 +199,14 @@ model Chambre {
   offre       Offre         @relation(fields: [offreId], references: [id])
   statut      StatutChambre @default(active)
   suspendueLe DateTime?
+
+  // Paiement de l'abonnement par carte (Stripe) : le client Stripe de la Chambre et sa carte enregistrée
+  // (jamais le numéro : la marque, les 4 derniers chiffres et l'échéance, pour l'affichage)
+  stripeClientId String? @unique
+  stripeCarteId  String?
+  carteMarque    String?
+  carteFin       String?
+  carteExpire    String?
 
   membres             Member[]
   utilisateurs        User[]
@@ -1205,21 +1231,29 @@ model RappelEvenement {
 model FacturePlateforme {
   id String @id @default(cuid())
 
-  chambreId      String    @default("principale")
-  chambre        Chambre   @relation(fields: [chambreId], references: [id])
-  numero         String // PLT-AAAA-MM
-  date           DateTime  @db.Date
-  forfait        Float
-  utilisateurs   Int
-  parUtilisateur Float
-  tauxTps        Float
-  tauxTvq        Float
-  sousTotal      Float
-  tps            Float
-  tvq            Float
-  total          Float
-  payeeLe        DateTime?
-  createdAt      DateTime  @default(now())
+  chambreId        String    @default("principale")
+  chambre          Chambre   @relation(fields: [chambreId], references: [id])
+  numero           String // PLT-AAAA-MM
+  date             DateTime  @db.Date
+  forfait          Float
+  utilisateurs     Int
+  parUtilisateur   Float
+  tauxTps          Float
+  tauxTvq          Float
+  sousTotal        Float
+  tps              Float
+  tvq              Float
+  total            Float
+  payeeLe          DateTime?
+  // Paiement par carte (Stripe) : le prélèvement, les échecs, les relances déjà envoyées (jours après la date)
+  stripePaiementId String?
+  tentatives       Int       @default(0)
+  dernierEchec     String?
+  dernierEchecLe   DateTime?
+  relances         Int[]     @default([])
+  // Suivie pour les relances et les retards (les factures d'avant le paiement par carte ne le sont pas)
+  suivie           Boolean   @default(true)
+  createdAt        DateTime  @default(now())
 
   @@unique([chambreId, numero])
   @@index([chambreId])

@@ -55,22 +55,23 @@ describe("resoudreHote : recherche en base", () => {
 
   it("sous-domaine connu, inconnu ; domaine propre ; autre adresse → Chambre n° 1", async () => {
     vi.stubEnv("DOMAINE_PLATEFORME", P);
-    const cancham = { id: "c-cancham", suspendue: false };
+    const cancham = { id: "c-cancham", suspendue: false, restriction: null };
     const chercher = vi.fn(async (r: { slug: string } | { domaine: string } | { id: string }) =>
       "slug" in r
-        ? r.slug === "cancham" ? cancham : r.slug === "fermee" ? { id: "c-fermee", suspendue: true } : null
+        ? r.slug === "cancham" ? cancham : r.slug === "fermee" ? { id: "c-fermee", suspendue: true, restriction: null } : r.slug === "retard" ? { id: "c-retard", suspendue: false, restriction: "lecture" as const } : null
         : "domaine" in r ? (r.domaine === "cancham.mg" ? cancham : null)
-        : { id: r.id, suspendue: false },
+        : { id: r.id, suspendue: false, restriction: null },
     );
     brancherRechercheChambre(chercher);
-    expect(await resoudreHote("cancham.lalliee-virtuelle.com")).toEqual({ id: "c-cancham", propre: true, suspendue: false });
-    expect(await resoudreHote("inconnue.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false });
-    expect(await resoudreHote("fermee.lalliee-virtuelle.com")).toEqual({ id: "c-fermee", propre: true, suspendue: true });
-    expect(await resoudreHote("cancham.mg")).toEqual({ id: "c-cancham", propre: true, suspendue: false });
-    expect(await resoudreHote("app.exemple.org")).toEqual({ id: CHAMBRE_PRINCIPALE, propre: false, suspendue: false });
-    expect(await resoudreHote("gm.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false });
+    expect(await resoudreHote("cancham.lalliee-virtuelle.com")).toEqual({ id: "c-cancham", propre: true, suspendue: false, restriction: null });
+    expect(await resoudreHote("inconnue.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false, restriction: null });
+    expect(await resoudreHote("fermee.lalliee-virtuelle.com")).toEqual({ id: "c-fermee", propre: true, suspendue: true, restriction: null });
+    expect(await resoudreHote("retard.lalliee-virtuelle.com")).toEqual({ id: "c-retard", propre: true, suspendue: false, restriction: "lecture" });
+    expect(await resoudreHote("cancham.mg")).toEqual({ id: "c-cancham", propre: true, suspendue: false, restriction: null });
+    expect(await resoudreHote("app.exemple.org")).toEqual({ id: CHAMBRE_PRINCIPALE, propre: false, suspendue: false, restriction: null });
+    expect(await resoudreHote("gm.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false, restriction: null });
     // Gardé en mémoire : pas de seconde recherche
     await resoudreHote("cancham.lalliee-virtuelle.com");
-    expect(chercher).toHaveBeenCalledTimes(6);
+    expect(chercher).toHaveBeenCalledTimes(7);
   });
 });

@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { sessionGMCourante } from "@/lib/auth-gm";
 import { prismaSysteme as db } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
-import { DELAI_REGLEMENT_JOURS } from "@/lib/membership";
 
 export async function compteGM() {
   const s = await sessionGMCourante();
@@ -32,10 +31,14 @@ export const STATUTS: Record<StatutAffiche, { libelle: string; ton: "ok" | "warn
 
 // Membres comptés : ceux de l'annuaire (pas les candidatures ni les refus)
 const MEMBRES: Prisma.MemberWhereInput = { statut: { notIn: ["candidature", "refusee"] } };
-const limiteRetard = () => new Date(Date.now() - DELAI_REGLEMENT_JOURS * 86_400_000);
+// En retard : une facture de l'abonnement impayée, datée d'avant aujourd'hui
+const limiteRetard = () => {
+  const d = new Date();
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+};
 
-// Toutes les Chambres : offre, statut (suspendue, en retard si une facture de l'abonnement attend depuis plus
-// de DELAI_REGLEMENT_JOURS jours), membres, comptes de l'équipe, dernier paiement
+// Toutes les Chambres : offre, statut (suspendue, en retard si une facture de l'abonnement attend son paiement),
+// membres, comptes de l'équipe, dernier paiement
 export async function listeChambres() {
   const [chambres, payees, retards] = await Promise.all([
     db.chambre.findMany({
@@ -81,4 +84,8 @@ export async function ficheChambre(id: string) {
 
 export function offresPlateforme() {
   return db.offre.findMany({ orderBy: { ordre: "asc" }, include: { _count: { select: { chambres: true } } } });
+}
+
+export function reglagesPlateforme() {
+  return db.reglagesPlateforme.upsert({ where: { id: "plateforme" }, create: { id: "plateforme" }, update: {} });
 }

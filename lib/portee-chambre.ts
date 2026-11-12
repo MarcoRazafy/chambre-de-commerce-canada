@@ -16,7 +16,7 @@ export const DIRECTES = new Set([
 ]);
 
 // Tables communes à toute la plateforme : lecture sans filtre, écriture refusée (Admin GM : prismaSysteme)
-export const COMMUNES = new Set(["Offre"]);
+export const COMMUNES = new Set(["Offre", "ReglagesPlateforme"]);
 // Tables de l'Admin GM : refusées ici
 export const SYSTEME_SEULEMENT = new Set(["CompteGM"]);
 

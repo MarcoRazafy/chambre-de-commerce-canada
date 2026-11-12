@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Eye, FileText } from "lucide-react";
+import { CreditCard, Download, Eye, FileText, Sparkles } from "lucide-react";
 import { OngletEquipe } from "@/components/admin/OngletEquipe";
 import { EnTeteAdmin, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { AjouterUtilisateur } from "@/components/forms/EquipeForms";
@@ -11,13 +11,40 @@ import { configDeLaChambre } from "@/lib/offre-chambre";
 import { facturePlateforme, fmtDollars, fmtPourcent, offreGratuite, payantsFacture, prochaineFacturation } from "@/lib/plateforme";
 import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
+import { appliquerSession } from "@/lib/abonnement-stripe";
+import { enregistrerCarteAbonnement, passerAOffrePayante, payerFactureAbonnement } from "@/lib/actions/abonnement";
+import { chambreCourante } from "@/lib/chambre-courante";
+import { prisma } from "@/lib/db";
+import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
+import { stripeConfigure } from "@/lib/stripe";
+
+const MARQUES: Record<string, string> = { visa: "Visa", mastercard: "Mastercard", amex: "American Express", discover: "Discover", unionpay: "UnionPay", jcb: "JCB" };
 
 // Abonnement de la Chambre à la plateforme (forfait + comptes actifs de l'équipe), l'équipe et ses accès, les factures
-export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
+export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string; stripe?: string }> }) {
   const sp = await searchParams;
   const onglet = sp.onglet === "factures" ? "factures" : "equipe";
+  // Retour de la page de paiement de Stripe : la carte ou le paiement s'applique tout de suite
+  if (sp.stripe && stripeConfigure()) {
+    const retour = `/admin/abonnement?onglet=${onglet}`;
+    const resultat = await appliquerSession(sp.stripe, await chambreCourante()).catch((e) => {
+      console.error("[stripe] retour non appliqué", e);
+      return "erreur" as const;
+    });
+    if (resultat === "payee") redirectWithFlash(retour, "Facture payée");
+    if (resultat === "carte") redirectWithFlash(retour, "Carte enregistrée");
+    redirectWithErreur(retour, "Le paiement n’a pas abouti.");
+  }
   await assurerFactureDuMois();
-  const [moi, equipe, factures] = await Promise.all([getCurrentUser("admin"), getAdministrateurs(), getFacturesPlateforme()]);
+  const [moi, equipe, factures, carte, payante] = await Promise.all([
+    getCurrentUser("admin"),
+    getAdministrateurs(),
+    getFacturesPlateforme(),
+    prisma.chambre.findFirst({ select: { stripeCarteId: true, carteMarque: true, carteFin: true, carteExpire: true } }),
+    prisma.offre.findUnique({ where: { id: "payante" }, select: { nom: true } }),
+  ]);
+  const gere = estAdministrateur(moi);
+  const parCarte = stripeConfigure();
   // L'offre de la Chambre (réglée par l'Admin GM) : ses prix, ses limites
   const { config: c, offre, offerts } = await configDeLaChambre();
   const gratuite = !!offre && offreGratuite(offre);
@@ -36,7 +63,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
       <EnTeteAdmin
         surtitre="Plateforme"
         titre={<>Abonnement &amp; <Saillant>utilisateurs</Saillant></>}
-        actions={estAdministrateur(moi) ? <AjouterUtilisateur /> : undefined}
+        actions={gere ? <AjouterUtilisateur /> : undefined}
       />
 
       <div className={`grid gap-4 mb-4 items-start grid-cols-[minmax(0,1fr)] ${gratuite ? "" : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}`}>
@@ -46,7 +73,14 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
               <span className="surtitre text-faint">Forfait actuel</span>
               <h2 className="text-[18px] m-0 mt-1">{offre ? `Offre ${offre.nom}` : c.nom}</h2>
             </div>
-            <Pill tone="ok">{gratuite ? "Actif" : `Actif · prochaine facture le ${fmtDate(echeance)}`}</Pill>
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <Pill tone="ok">{gratuite ? "Actif" : `Actif · prochaine facture le ${fmtDate(echeance)}`}</Pill>
+              {gratuite && gere && payante ? (
+                <form action={passerAOffrePayante}>
+                  <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2"><Sparkles size={14} aria-hidden /> Passer à l’offre {payante.nom}</button>
+                </form>
+              ) : null}
+            </div>
           </div>
           {gratuite ? null : <div className="flex flex-wrap items-center gap-2.5 text-[16px]">
             <div className={bloc}><small className="text-[12px] text-muted">Forfait Chambre</small><b className="tabular-nums">{fmtDollars(f.forfait)}</b></div>
@@ -74,6 +108,24 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
           </div>
         </Panneau>}
       </div>
+
+      {parCarte ? (
+        <Panneau titre="Carte bancaire" teinte="bleu">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <p className="m-0 flex items-center gap-2.5 text-[14px]">
+              <CreditCard size={18} className="text-muted" aria-hidden />
+              {carte?.stripeCarteId
+                ? <span><b className="text-ink">{MARQUES[carte.carteMarque ?? ""] ?? carte.carteMarque ?? "Carte"}</b> •••• {carte.carteFin} · expire {carte.carteExpire}</span>
+                : <span className="text-muted">Aucune carte enregistrée</span>}
+            </p>
+            {gere ? (
+              <form action={enregistrerCarteAbonnement}>
+                <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">{carte?.stripeCarteId ? "Changer de carte" : "Ajouter une carte"}</button>
+              </form>
+            ) : null}
+          </div>
+        </Panneau>
+      ) : null}
 
       <section id="onglets" className="scroll-mt-6 mt-10">
         <Onglets
@@ -105,9 +157,18 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
                         <td className="px-5 py-3.5 tabular-nums">{fmtDate(x.date.toISOString().slice(0, 10), { day: "numeric", month: "short", year: "numeric" })}</td>
                         <td className="px-5 py-3.5 text-muted">{fmtDollars(x.forfait)} + {payantsFacture(x)} utilisateur{payantsFacture(x) > 1 ? "s" : ""}</td>
                         <td className="px-5 py-3.5 text-right font-bold text-ink tabular-nums">{fmtDollars(x.total)}</td>
-                        <td className="px-5 py-3.5">{x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</td>
+                        <td className="px-5 py-3.5">
+                          {x.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}
+                          {!x.payeeLe && x.dernierEchec ? <div className="text-[12px] text-bad mt-1">{x.dernierEchec}</div> : null}
+                        </td>
                         <td className="px-5 py-3.5">
                           <div className="flex justify-end gap-2">
+                            {!x.payeeLe && parCarte && gere ? (
+                              <form action={payerFactureAbonnement}>
+                                <input type="hidden" name="factureId" value={x.id} />
+                                <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2"><CreditCard size={14} aria-hidden /> Payer</button>
+                              </form>
+                            ) : null}
                             <Link href={`/admin/abonnement/factures/${x.numero}`} className="btn-contour btn-contour-sm text-ink no-underline"><Eye size={14} /> Afficher</Link>
                             <Link href={`/admin/abonnement/factures/${x.numero}?pdf=1`} className="btn-contour btn-contour-sm text-ink no-underline"><Download size={14} /> PDF</Link>
                           </div>

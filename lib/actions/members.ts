@@ -53,6 +53,7 @@ import { getCurrentUser } from "@/lib/session";
 import type { MemberStatus, MemberType } from "@/lib/types";
 import { after } from "next/server";
 import { notifierMembre } from "@/lib/push";
+import { limiteAtteinte } from "@/lib/limites-offre";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -577,6 +578,8 @@ export async function createMember(formData: FormData) {
   if (!nom) {
     redirectWithErreur("/admin/membres", "Le nom de l’entreprise est requis.");
   }
+  const limite = await limiteAtteinte("membres");
+  if (limite) redirectWithErreur("/admin/membres", limite);
 
   const email = texte(formData, "email").toLowerCase();
   if (!email) {

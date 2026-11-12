@@ -10,6 +10,7 @@ import { LIGNES_IMPORT_MAX, ligneValide, nomComplet } from "@/lib/import-contact
 import { secteurOuProvisoire } from "@/lib/secteurs";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { chambreCourante } from "@/lib/chambre-courante";
+import { limiteAtteinte } from "@/lib/limites-offre";
 
 // Page Contacts (équipe) : ajouter un contact, importer un CSV, poser ou retirer des tags sur une sélection
 
@@ -32,6 +33,7 @@ async function journal(action: string, entiteId: string, acteur: string, detail:
 }
 
 // Nouvelle entreprise, comme « Ajouter un membre » : en attente de paiement, fiche à compléter
+// (la limite de membres de l'offre est vérifiée avant)
 function nouvelleEntreprise(nom: string, secteur: string, ville: string, logo: string | null = null) {
   return prisma.member.create({
     data: {
@@ -88,6 +90,8 @@ export async function ajouterContact(formData: FormData) {
       if (e instanceof ImageRefusee) redirectWithErreur(retour, e.message);
       throw e;
     }
+    const limite = await limiteAtteinte("membres");
+    if (limite) redirectWithErreur(retour, limite);
     memberId = (await nouvelleEntreprise(nomEntreprise, texte(formData, "secteur"), texte(formData, "ville"), logo)).id;
     creee = true;
   }
@@ -172,6 +176,10 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
     if (!memberId) {
       if (existant?.memberId) memberId = existant.memberId;
       else {
+        if (await limiteAtteinte("membres")) {
+          bilan.ignores.push({ email: l.email, raison: "limite de membres de l’offre atteinte" });
+          continue;
+        }
         memberId = (await nouvelleEntreprise(l.entreprise, l.secteur, l.ville)).id;
         parNom.set(l.entreprise.toLowerCase(), memberId);
         bilan.entreprisesCreees++;

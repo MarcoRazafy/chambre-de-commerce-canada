@@ -29,14 +29,17 @@ export class EspaceIntrouvable extends Error {
 // Recherche d'une Chambre par son sous-domaine ou son domaine propre, sans limite de Chambre
 // (branchée par lib/db.ts, pour éviter un import circulaire)
 type Recherche = { slug: string } | { domaine: string } | { id: string };
-type Trouvee = { id: string; suspendue: boolean } | null;
+// restriction : retard de paiement de l'abonnement au-delà du délai (lecture seule, ou blocage)
+type Trouvee = { id: string; suspendue: boolean; restriction: "lecture" | "blocage" | null } | null;
 let chercherChambre: ((r: Recherche) => Promise<Trouvee>) | null = null;
 export function brancherRechercheChambre(f: (r: Recherche) => Promise<Trouvee>) {
   chercherChambre = f;
 }
 
-// Adresse → Chambre, gardé une minute (une page fait des dizaines de lectures)
-type Resolue = { id: string | null; propre: boolean; suspendue: boolean };
+// Adresse → Chambre, gardé 10 secondes (une page fait des dizaines de lectures). Court : le contrôle d'accès
+// (proxy.ts) a sa propre mémoire, qu'une action ne peut pas vider ; une suspension, un paiement ou une adresse
+// changée y comptent donc au plus 10 secondes après
+type Resolue = { id: string | null; propre: boolean; suspendue: boolean; restriction: "lecture" | "blocage" | null };
 const parHote = new Map<string, Resolue & { jusqua: number }>();
 export function oublierAdresses() {
   parHote.clear();
@@ -53,20 +56,18 @@ export async function resoudreHote(brut: string | null | undefined): Promise<Res
   if (!chercherChambre) throw new Error("Recherche des Chambres non branchée (lib/db.ts)");
   let r: Resolue;
   // Espace Admin GM, site public de la plateforme : aucune Chambre
-  if (h.type === "gm" || h.type === "plateforme") r = { id: null, propre: true, suspendue: false };
+  const etat = (c: Trouvee) => ({ suspendue: c?.suspendue ?? false, restriction: c?.restriction ?? null });
+  if (h.type === "gm" || h.type === "plateforme") r = { id: null, propre: true, suspendue: false, restriction: null };
   else if (h.type === "sous-domaine") {
     const c = await chercherChambre({ slug: h.slug });
-    r = { id: c?.id ?? null, propre: true, suspendue: c?.suspendue ?? false };
+    r = { id: c?.id ?? null, propre: true, ...etat(c) };
   } else {
     const c = h.hote ? await chercherChambre({ domaine: h.hote }) : null;
-    if (c) r = { id: c.id, propre: true, suspendue: c.suspendue };
-    else {
-      const principale = await chercherChambre({ id: CHAMBRE_PRINCIPALE });
-      r = { id: CHAMBRE_PRINCIPALE, propre: false, suspendue: principale?.suspendue ?? false };
-    }
+    if (c) r = { id: c.id, propre: true, ...etat(c) };
+    else r = { id: CHAMBRE_PRINCIPALE, propre: false, ...etat(await chercherChambre({ id: CHAMBRE_PRINCIPALE })) };
   }
   if (parHote.size > 1_000) parHote.clear();
-  parHote.set(cle, { ...r, jusqua: Date.now() + 60_000 });
+  parHote.set(cle, { ...r, jusqua: Date.now() + 10_000 });
   return r;
 }
 

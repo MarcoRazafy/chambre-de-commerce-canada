@@ -8,8 +8,10 @@ import { oublierAdressesChambres } from "@/lib/adresse-chambre";
 import { fermerSessionGM, ouvrirSessionGM } from "@/lib/auth-gm";
 import { verifier } from "@/lib/auth";
 import { domaineValide, normaliserDomaine } from "@/lib/brevo-domaines";
+import { marquerPayee } from "@/lib/abonnement-stripe";
 import { oublierAdresses } from "@/lib/chambre-courante";
-import { prismaSysteme as db } from "@/lib/db";
+import { oublierReglages, prismaSysteme as db } from "@/lib/db";
+import { lireRelances } from "@/lib/retards";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { estFonction } from "@/lib/fonctions-plateforme";
 import { exigerGM } from "@/lib/gm";
@@ -171,4 +173,40 @@ export async function enregistrerOffre(formData: FormData) {
   });
   revalidatePath("/", "layout");
   redirectWithFlash("/gm/offres", `Offre ${nom} enregistrée`);
+}
+
+// --- Paiements ---
+
+// Une facture de l'abonnement réglée autrement (virement…) : notée payée par l'Admin GM
+export async function marquerFacturePayee(formData: FormData) {
+  const gm = await exigerGM();
+  const c = await chambreOuErreur(formData);
+  const id = texte(formData, "factureId", 100);
+  const f = await db.facturePlateforme.findFirst({ where: { id, chambreId: c.id }, select: { numero: true, payeeLe: true } });
+  if (!f) redirectWithErreur(fiche(c.id), "Facture introuvable.");
+  if (f.payeeLe) redirectWithFlash(fiche(c.id), "Facture déjà payée");
+  await marquerPayee(id, null, `${gm.nom} (Admin GM)`);
+  revalidatePath("/gm", "layout");
+  redirectWithFlash(fiche(c.id), `Facture ${f.numero} payée`);
+}
+
+// --- Paramètres : retards de paiement de l'abonnement ---
+
+export async function enregistrerReglages(formData: FormData) {
+  await exigerGM();
+  const delai = Number(texte(formData, "delaiRetard", 4));
+  const relances = lireRelances(texte(formData, "relances", 60));
+  const action = texte(formData, "actionRetard", 20);
+  if (!Number.isInteger(delai) || delai < 0 || delai > 365) redirectWithErreur("/gm/parametres", "Le délai est un nombre de jours, de 0 à 365.");
+  if (!relances) redirectWithErreur("/gm/parametres", "Les relances sont des jours après la facture, de 1 à 365 (ex. 1, 7, 14).");
+  if (action !== "lecture" && action !== "blocage") redirectWithErreur("/gm/parametres", "Choisissez ce qui se passe après le délai.");
+  await db.reglagesPlateforme.upsert({
+    where: { id: "plateforme" },
+    create: { id: "plateforme", delaiRetard: delai, relances, actionRetard: action },
+    update: { delaiRetard: delai, relances, actionRetard: action },
+  });
+  oublierReglages();
+  oublierAdresses();
+  revalidatePath("/gm", "layout");
+  redirectWithFlash("/gm/parametres", "Paramètres enregistrés");
 }

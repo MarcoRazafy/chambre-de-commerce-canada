@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, Layers } from "lucide-react";
+import { Building2, Layers, Settings } from "lucide-react";
 
 const LIENS = [
   { href: "/gm/chambres", libelle: "Chambres", icone: Building2 },
   { href: "/gm/offres", libelle: "Offres", icone: Layers },
+  { href: "/gm/parametres", libelle: "Paramètres", icone: Settings },
 ];
 
 export function NavGM() {

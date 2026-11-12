@@ -1,4 +1,5 @@
 import { timingSafeEqual } from "node:crypto";
+import { prelevementsDus, relancesDues } from "@/lib/abonnement-stripe";
 import { avecChambre } from "@/lib/chambre-courante";
 import { prismaSysteme } from "@/lib/db";
 import { assurerFactureDuMois } from "@/lib/factures-plateforme";
@@ -7,7 +8,8 @@ import { envoyerLettresDues } from "@/lib/newsletter";
 import { envoyerRappelsDus } from "@/lib/rappels-envoi";
 
 // Tâches régulières, pour chaque Chambre tour à tour : newsletters programmées dont l'heure est venue,
-// rappels d'événements dus, facture du mois de l'abonnement à la plateforme, tags automatiques.
+// rappels d'événements dus, facture du mois de l'abonnement à la plateforme (prélevée sur la carte enregistrée),
+// relances des factures en retard, tags automatiques.
 // Appelé toutes les 5 minutes par le serveur lui-même (instrumentation.ts, jeton tiré au démarrage),
 // ou par une tâche planifiée externe avec le secret TACHES_SECRET.
 function autorise(recu: string | null): boolean {
@@ -33,6 +35,8 @@ export async function POST(req: Request) {
         rappels.envoyes += r.envoyes;
         rappels.echecs += r.echecs;
         await assurerFactureDuMois();
+        await prelevementsDus(id);
+        await relancesDues(id);
         // Tags automatiques : suivent la situation des entreprises (paiements, retards…)
         await appliquerReglesTags();
       });

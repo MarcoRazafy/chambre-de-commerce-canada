@@ -28,6 +28,7 @@ import { FORMULES } from "@/lib/membership";
 import { getCurrentUser } from "@/lib/session";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { notifierEquipe } from "@/lib/push";
+import { limiteAtteinte } from "@/lib/limites-offre";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -91,6 +92,9 @@ export async function deposerCandidature(formData: FormData) {
   ) {
     erreur("Cette adresse a déjà un compte : connectez-vous.");
   }
+
+  // Offre de la Chambre au complet : pas de nouvelle adhésion (l'équipe le voit dans son espace)
+  if (await limiteAtteinte("membres")) erreur("Les adhésions sont fermées pour le moment.");
 
   const entreprise = independant ? rep : nomSaisi;
   const membre = await prisma.member.create({

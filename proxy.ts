@@ -106,12 +106,17 @@ export default async function proxy(request: NextRequest) {
     const canonique = versDomainePrincipal(request);
     if (canonique) return canonique;
   }
-  if (ici.suspendue && !OUVERT_SI_SUSPENDUE(request.nextUrl.pathname)) {
-    return pageCourte(
-      "Espace suspendu",
-      403,
-      request.nextUrl.pathname.startsWith("/admin") ? { href: "/admin/abonnement?onglet=factures", libelle: "Abonnement" } : undefined,
-    );
+  const chemin = request.nextUrl.pathname;
+  const versAbonnement = chemin.startsWith("/admin") ? { href: "/admin/abonnement?onglet=factures", libelle: "Abonnement" } : undefined;
+  if (ici.suspendue && !OUVERT_SI_SUSPENDUE(chemin)) return pageCourte("Espace suspendu", 403, versAbonnement);
+  // Retard de paiement de l'abonnement au-delà du délai (réglages de l'Admin GM)
+  if (ici.restriction === "blocage" && !OUVERT_SI_SUSPENDUE(chemin)) return pageCourte("Paiement en retard", 403, versAbonnement);
+  // Lecture seule : les pages s'affichent, les envois de formulaire (actions serveur) sont refusés
+  if (ici.restriction === "lecture" && request.method === "POST" && request.headers.has("next-action") && !OUVERT_SI_SUSPENDUE(chemin)) {
+    return new NextResponse("Espace en lecture seule : une facture de l’abonnement attend son paiement.", {
+      status: 403,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
   }
 
   const { pathname } = request.nextUrl;

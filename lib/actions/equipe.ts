@@ -15,6 +15,7 @@ import { getCurrentUser } from "@/lib/session";
 import type { NiveauEquipe } from "@/lib/types";
 import { ImageRefusee, enregistrerImage } from "@/lib/uploads";
 import { supprimerVideo } from "@/lib/videos";
+import { limiteAtteinte } from "@/lib/limites-offre";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -109,6 +110,8 @@ export async function creerCompteEquipe(formData: FormData) {
     redirectWithErreur(EQUIPE, "Indiquez une adresse e-mail valide.");
   }
   if (!fonction) redirectWithErreur(EQUIPE, "Indiquez sa fonction.");
+  const limite = await limiteAtteinte("equipe");
+  if (limite) redirectWithErreur(EQUIPE, limite);
   // Une adresse = un seul espace : cherchée dans toutes les Chambres (sans rien montrer d'une autre)
   const existant = await prismaSysteme.user.findUnique({
     where: { email },
