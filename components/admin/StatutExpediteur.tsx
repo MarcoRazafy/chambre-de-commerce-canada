@@ -10,7 +10,7 @@ const BOUTON = "btn-contour btn-contour-sm text-ink hover:bg-surface-2 self-star
 // « @ » → « domaine.com. » ; « brevo1._domainkey » → « brevo1._domainkey.domaine.com. » (le point final : nom absolu)
 const nomComplet = (nom: string, domaine: string) => `${nom === "@" ? domaine : `${nom}.${domaine}`}.`;
 
-export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { etat: EtatDomaine; email: string; nom: string; serveur: string; /** Super admin : peut valider et vérifier */ gere?: boolean }) {
+export function StatutExpediteur({ etat, serveur, gere = true }: { etat: EtatDomaine; email: string; nom: string; serveur: string; /** Super admin : peut valider et vérifier */ gere?: boolean }) {
   if (etat.etat === "vide") return null;
 
   const cadre = (ton: "ok" | "warn" | "muted", icone: React.ReactNode, contenu: React.ReactNode) => (
@@ -24,17 +24,15 @@ export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { e
       <div className="min-w-0 flex-1 flex flex-col gap-2.5">{contenu}</div>
     </div>
   );
-  const parServeur = (
-    <>Les courriels partent de <b>{serveur}</b> au nom de <b>{nom}</b>, et les réponses arrivent sur <b>{email}</b>.</>
-  );
+  const parServeur = <>Envoi depuis <b>{serveur}</b>.</>;
 
   switch (etat.etat) {
     case "valide":
-      return cadre("ok", <CheckCircle2 size={17} className="text-success" />, <p className="m-0">Domaine <b>{etat.domaine}</b> validé : les courriels partent de <b>{email}</b>.</p>);
+      return cadre("ok", <CheckCircle2 size={17} className="text-success" />, <p className="m-0">Domaine <b>{etat.domaine}</b> validé.</p>);
     case "webmail":
-      return cadre("muted", <Info size={17} />, <p className="m-0">Une adresse <b>{etat.domaine}</b> ne peut pas être validée. {parServeur}</p>);
+      return cadre("muted", <Info size={17} />, <p className="m-0">Adresse <b>{etat.domaine}</b> non validable. {parServeur}</p>);
     case "indisponible":
-      return cadre("muted", <Info size={17} />, <p className="m-0">Vérification impossible ({etat.raison}). {parServeur}</p>);
+      return cadre("muted", <Info size={17} />, <p className="m-0">Vérification impossible. {parServeur}</p>);
     case "absent":
       return cadre(
         "warn",
@@ -51,10 +49,7 @@ export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { e
         "warn",
         <TriangleAlert size={17} className="text-warn" />,
         <>
-          <p className="m-0">
-            Domaine <b>{etat.domaine}</b> en attente. Ajoutez ces enregistrements dans la zone DNS du domaine, chez son hébergeur
-            (GoDaddy, OVH, Cloudflare…), puis vérifiez. {parServeur}
-          </p>
+          <p className="m-0">Domaine <b>{etat.domaine}</b> en attente. {parServeur}</p>
           <div className="overflow-x-auto rounded-[var(--radius-s)] border border-line bg-surface">
             <table className="w-full border-collapse text-[12.8px]">
               <thead>
@@ -94,9 +89,6 @@ export function StatutExpediteur({ etat, email, nom, serveur, gere = true }: { e
               </tbody>
             </table>
           </div>
-          <p className="m-0 text-[12px] text-muted">
-            « @ » désigne le domaine lui-même. Si votre hébergeur le refuse (cPanel par exemple), utilisez le nom complet. Si un enregistrement « _dmarc » existe déjà, gardez celui-là plutôt que d’en ajouter un second.
-          </p>
           {gere ? <button type="submit" formAction={verifierDomaineExpediteur} className={BOUTON} formNoValidate>
             <RefreshCw size={14} /> Vérifier maintenant
           </button> : null}
