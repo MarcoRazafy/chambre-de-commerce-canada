@@ -20,7 +20,7 @@ export default async function CreerUneChambre({ searchParams }: { searchParams: 
   const offreChoisie = offres.find((o) => o.id === sp.offre)?.id;
 
   return (
-    <CadrePlateforme>
+    <CadrePlateforme illustration="chambre">
       <CartePlateforme>
         <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mb-6">Créer une Chambre</h1>
         {sp.erreur ? <Alerte>{sp.erreur}</Alerte> : null}

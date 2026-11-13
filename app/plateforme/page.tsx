@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AppelFinal, EnTeteSection, FOCUS, FormulaireEmail, PageSite, Questions, Rassurances } from "@/components/plateforme/site/blocs";
 import { Saillant } from "@/components/ui";
+import { Illustration } from "@/components/plateforme/site/Illustration";
 import { CartesTarifs } from "@/components/plateforme/site/Tarifs";
 import { VisiteEspace } from "@/components/plateforme/site/VisiteEspace";
 import { offresPubliques } from "@/lib/plateforme-site";
@@ -118,7 +119,8 @@ export default async function AccueilPlateforme() {
       {/* Accroche : le texte à gauche, l'aperçu du vrai produit en pleine largeur dessous */}
       <section className="border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-16 lg:pb-24">
-          <div className="max-w-[760px]">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
+          <div className="max-w-[640px]">
             <p className="entree m-0 text-[15px] text-muted">Pour les Chambres de commerce et les associations d’affaires</p>
             <h1 className="entree entree-2 mt-4 mb-0 text-[length:clamp(38px,5.2vw,64px)] leading-[1.04] text-ink">
               Votre Chambre, ses membres et leurs cotisations, <span className="texte-degrade">au même endroit</span>
@@ -139,6 +141,8 @@ export default async function AccueilPlateforme() {
               </Link>
             </p>
           </div>
+          <Illustration nom="poignee-de-main" flotte priorite className="hidden lg:block w-full max-w-[520px] justify-self-end" />
+          </div>
 
           <div className="entree entree-4 mt-14 lg:mt-16">
             <VisiteEspace />
@@ -149,11 +153,14 @@ export default async function AccueilPlateforme() {
       {/* Fonctions : des cartes sur grand écran, une liste serrée sur téléphone */}
       <section id="fonctions" className="bg-surface border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
           <EnTeteSection
             surtitre="Fonctions"
             titre={<>Membres, cotisations, événements, <Saillant ton="vert">réseau</Saillant></>}
             texte="Chaque fonction est reliée aux autres, de la demande d’adhésion au paiement de la cotisation."
           />
+            <Illustration nom="evenements" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
+          </div>
           <ul className="mt-12 m-0 p-0 list-none grid border-t border-line sm:border-0 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FONCTIONS.map(({ icone: Icone, titre, texte }, i) => (
               <li key={titre} className={`tuile-hote carte-filet ${i % 2 ? "filet-vert" : "filet-degrade"} flex gap-4 py-4 border-b border-line sm:block sm:p-6 sm:rounded-2xl sm:border sm:bg-bg`}>
@@ -172,11 +179,14 @@ export default async function AccueilPlateforme() {
 
       {/* Deux espaces */}
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
+        <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
         <EnTeteSection
           surtitre="Deux espaces"
           titre={<>Un espace pour <Saillant>l’équipe</Saillant>, un autre pour <Saillant ton="vert">les membres</Saillant></>}
           texte="L’équipe gère la Chambre. Chaque entreprise membre retrouve ses événements, ses factures et le réseau."
         />
+          <Illustration nom="reseau" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
+        </div>
         <div className="mt-12 grid gap-4 lg:grid-cols-2">
           {ESPACES.map((e) => (
             <article key={e.titre} className={`carte-filet ${e.encre === "bg-marque-rouge" ? "filet-rouge" : "filet-vert"} rounded-2xl border border-line bg-surface p-6 sm:p-8`}>
@@ -238,7 +248,10 @@ export default async function AccueilPlateforme() {
       {/* Confiance */}
       <section className="bg-surface border-y border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-24">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
           <EnTeteSection surtitre="Sécurité" titre={<>Vos données et vos paiements <Saillant ton="vert">restent les vôtres</Saillant></>} />
+            <Illustration nom="paiement" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
+          </div>
           <ul className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {CONFIANCE.map(({ icone: Icone, titre, texte }) => (
               <li key={titre} className="tuile-hote">
@@ -261,6 +274,7 @@ export default async function AccueilPlateforme() {
             <Headset size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" aria-hidden />
             Une autre question ? Le Support IT répond depuis votre espace.
           </p>
+          <Illustration nom="questions" className="hidden lg:block mt-10 w-full max-w-[360px]" />
         </div>
         <Questions questions={QUESTIONS} />
       </section>

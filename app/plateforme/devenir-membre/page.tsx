@@ -14,7 +14,7 @@ export default async function DevenirMembre({ searchParams }: { searchParams: Pr
   const chambres = await chambresPubliques(q);
 
   return (
-    <CadrePlateforme large>
+    <CadrePlateforme large illustration="membres">
       <h1 className="titre text-[clamp(32px,4vw,44px)] m-0 mb-6">Devenir membre</h1>
       <form action="/devenir-membre" className="relative mb-5">
         <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint pointer-events-none" aria-hidden />
