@@ -1244,6 +1244,14 @@ html:has(.fenetre-composeur[open]) {
 .site-plateforme .btn-contour:hover {
   background: var(--surface-2);
 }
+.site-plateforme .sur-sombre .btn-contour {
+  border-color: rgb(255 255 255 / 0.35);
+  background: transparent;
+  color: #fff;
+}
+.site-plateforme .sur-sombre .btn-contour:hover {
+  background: rgb(255 255 255 / 0.1);
+}
 @keyframes site-entree {
   from {
     opacity: 0;

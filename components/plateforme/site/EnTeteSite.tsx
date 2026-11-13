@@ -13,7 +13,7 @@ export const LIENS_SITE = [
   { href: "/#questions", libelle: "Questions" },
 ];
 
-const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit";
+const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 
 export function EnTeteSite() {
   const [ouvert, setOuvert] = useState(false);
@@ -32,20 +32,20 @@ export function EnTeteSite() {
   }, [ouvert]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line bg-bg/90 backdrop-blur-md">
+    <header className="sur-sombre sticky top-0 z-50 border-b border-white/10 bg-marque-nuit text-white">
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8 h-16 flex items-center gap-4">
-        <MarqueSite />
+        <MarqueSite clair />
 
         <nav aria-label="Sections du site" className="hidden lg:flex items-center gap-1 ml-8">
           {LIENS_SITE.map((l) => (
-            <Link key={l.href} href={l.href} className={`inline-flex items-center min-h-[44px] px-3 rounded-lg text-[15px] text-muted no-underline transition-colors hover:text-ink ${FOCUS}`}>
+            <Link key={l.href} href={l.href} className={`inline-flex items-center min-h-[44px] px-3 rounded-lg text-[15px] text-white/75 no-underline transition-colors hover:text-white hover:bg-white/10 ${FOCUS}`}>
               {l.libelle}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/connexion" className={`hidden sm:inline-flex items-center min-h-[44px] px-3 rounded-lg text-[15px] font-medium text-ink no-underline transition-colors hover:bg-surface-2 ${FOCUS}`}>
+          <Link href="/connexion" className={`hidden sm:inline-flex items-center min-h-[44px] px-3 rounded-lg text-[15px] font-medium text-white no-underline transition-colors hover:bg-white/10 ${FOCUS}`}>
             Se connecter
           </Link>
           <span className="hidden sm:inline-flex">
@@ -59,7 +59,7 @@ export function EnTeteSite() {
             aria-expanded={ouvert}
             aria-controls="menu-site"
             aria-label={ouvert ? "Fermer le menu" : "Ouvrir le menu"}
-            className={`lg:hidden w-11 h-11 -mr-2 rounded-lg flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer transition-colors hover:bg-surface-2 ${FOCUS}`}
+            className={`lg:hidden w-11 h-11 -mr-2 rounded-lg flex items-center justify-center bg-transparent border-0 text-white cursor-pointer transition-colors hover:bg-white/10 ${FOCUS}`}
           >
             {ouvert ? <X size={22} strokeWidth={1.5} aria-hidden /> : <Menu size={22} strokeWidth={1.5} aria-hidden />}
           </button>
@@ -67,10 +67,10 @@ export function EnTeteSite() {
       </div>
 
       {ouvert ? (
-        <div id="menu-site" className="lg:hidden border-t border-line bg-surface anim-fondu">
+        <div id="menu-site" className="lg:hidden border-t border-white/10 bg-marque-nuit anim-fondu">
           <nav aria-label="Sections du site" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-2 flex flex-col">
             {LIENS_SITE.map((l) => (
-              <Link key={l.href} href={l.href} onClick={() => setOuvert(false)} className={`py-3 text-[16px] font-medium text-ink no-underline border-b border-line last:border-b-0 ${FOCUS}`}>
+              <Link key={l.href} href={l.href} onClick={() => setOuvert(false)} className={`py-3 text-[16px] font-medium text-white no-underline border-b border-white/10 last:border-b-0 ${FOCUS}`}>
                 {l.libelle}
               </Link>
             ))}
