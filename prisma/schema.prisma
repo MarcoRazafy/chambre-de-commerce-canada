@@ -180,6 +180,7 @@ model ReglagesPlateforme {
   neq                   String       @default("")
   numeroTps             String       @default("")
   numeroTvq             String       @default("")
+  hebergeur             String       @default("")
   updatedAt             DateTime     @updatedAt
 
   @@map("reglages_plateforme")

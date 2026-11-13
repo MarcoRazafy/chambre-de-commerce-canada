@@ -1266,6 +1266,34 @@ html:has(.fenetre-composeur[open]) {
 .site-plateforme .entree-4 {
   animation-delay: 150ms;
 }
+/* Pages de texte (mentions légales, confidentialité, conditions) */
+.site-plateforme .texte-long h2 {
+  margin: 40px 0 12px;
+  font-size: 22px;
+  line-height: 1.2;
+}
+.site-plateforme .texte-long h2:first-child {
+  margin-top: 0;
+}
+.site-plateforme .texte-long p,
+.site-plateforme .texte-long li {
+  margin: 0 0 12px;
+  font-size: 16px;
+  line-height: 26px;
+  color: var(--text);
+}
+.site-plateforme .texte-long ul {
+  margin: 0 0 12px;
+  padding-left: 22px;
+}
+.site-plateforme .texte-long li {
+  margin-bottom: 6px;
+}
+.site-plateforme .texte-long a {
+  color: var(--success-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
 /* Illustrations : fondu et légère montée à l'entrée dans l'écran ; dans l'accroche, un lent va-et-vient */
 .site-plateforme .illustration {
   opacity: 0;

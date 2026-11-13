@@ -120,6 +120,9 @@ export default async function ParametresGM({ searchParams }: { searchParams: Pro
                   <input name="numeroTvq" maxLength={40} defaultValue={r.numeroTvq} className={INPUT} />
                 </Field>
               </div>
+              <Field label="Hébergeur (mentions légales)">
+                <input name="hebergeur" maxLength={300} defaultValue={r.hebergeur} placeholder="Nom et adresse de l’hébergeur" className={INPUT} />
+              </Field>
               <div className="flex justify-end pt-1">
                 <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
               </div>

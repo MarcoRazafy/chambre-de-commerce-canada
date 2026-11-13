@@ -15,12 +15,13 @@ export type IdentitePlateforme = {
   neq: string;
   numeroTps: string;
   numeroTvq: string;
+  hebergeur: string;
 };
 
 export async function identitePlateforme(): Promise<IdentitePlateforme> {
   const l = await db.reglagesPlateforme.findUnique({
     where: { id: "plateforme" },
-    select: { nom: true, raisonSociale: true, adresse: true, courriel: true, telephone: true, neq: true, numeroTps: true, numeroTvq: true },
+    select: { nom: true, raisonSociale: true, adresse: true, courriel: true, telephone: true, neq: true, numeroTps: true, numeroTvq: true, hebergeur: true },
   });
   const v = (k: keyof IdentitePlateforme) => l?.[k]?.trim() ?? "";
   return {
@@ -32,6 +33,7 @@ export async function identitePlateforme(): Promise<IdentitePlateforme> {
     neq: v("neq"),
     numeroTps: v("numeroTps"),
     numeroTvq: v("numeroTvq"),
+    hebergeur: v("hebergeur"),
   };
 }
 

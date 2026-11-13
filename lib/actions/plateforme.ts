@@ -166,3 +166,31 @@ export async function demanderReinitialisationPlateforme(formData: FormData) {
   });
   vers({ envoye: email });
 }
+
+// --- Contact depuis le site (sans compte) : le message arrive à l'Admin GM ---
+
+export async function envoyerContact(formData: FormData) {
+  const nom = texte(formData, "nom", 100);
+  const email = texte(formData, "email").toLowerCase();
+  const message = String(formData.get("message") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 3000);
+  const vers = (params: Record<string, string>): never => redirect(`/contact?${new URLSearchParams(params)}`);
+  const saisies = { nom, email, message: message.slice(0, 1000) };
+  // Champ piège rempli : un robot ; on répond comme si c'était envoyé
+  if (texte(formData, "site", 50)) vers({ envoye: "1" });
+  if (!nom) vers({ erreur: "Indiquez votre nom.", ...saisies });
+  if (!ADRESSE.test(email)) vers({ erreur: "Indiquez une adresse e-mail valide.", ...saisies });
+  if (message.length < 10) vers({ erreur: "Écrivez votre message.", ...saisies });
+
+  const origine = await origineAppelante();
+  const attente = tentative(`contact:${origine}`, 3, HEURE);
+  if (attente) vers({ erreur: `Trop de messages. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`, ...saisies });
+
+  after(() =>
+    alerterGM({
+      sujet: `Contact : ${nom}`,
+      titre: "Message depuis le site",
+      paragraphes: [`${nom} (${email}) écrit :`, ...message.split(/\n+/)],
+    }),
+  );
+  vers({ envoye: "1" });
+}

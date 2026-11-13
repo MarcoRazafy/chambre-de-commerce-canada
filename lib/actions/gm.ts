@@ -248,6 +248,7 @@ export async function enregistrerIdentitePlateforme(formData: FormData) {
     neq: texte(formData, "neq", 40),
     numeroTps: texte(formData, "numeroTps", 40),
     numeroTvq: texte(formData, "numeroTvq", 40),
+    hebergeur: texte(formData, "hebergeur", 300),
   };
   await db.reglagesPlateforme.upsert({ where: { id: "plateforme" }, create: { id: "plateforme", ...data }, update: data });
   revalidatePath("/", "layout");

@@ -117,3 +117,19 @@ export function AppelFinal() {
     </section>
   );
 }
+
+// Une page de texte (mentions légales, confidentialité, conditions) : une colonne, des titres de section
+export function PageTexte({ titre, intro, maj, children }: { titre: string; intro?: string; maj?: string; children: ReactNode }) {
+  return (
+    <PageSite>
+      <article className="max-w-[760px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-20 lg:pb-28">
+        <header className="entree">
+          <h1 className="m-0 text-[clamp(32px,4.2vw,48px)] leading-[1.08] text-ink">{titre}</h1>
+          {intro ? <p className="mt-4 mb-0 text-[17px] leading-[28px] text-muted">{intro}</p> : null}
+          {maj ? <p className="mt-3 mb-0 text-[14px] text-faint">Mise à jour le {maj}</p> : null}
+        </header>
+        <div className="texte-long mt-10">{children}</div>
+      </article>
+    </PageSite>
+  );
+}

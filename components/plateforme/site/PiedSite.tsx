@@ -46,7 +46,15 @@ export function PiedSite() {
         </nav>
       </div>
       <div className="border-t border-line">
-        <p className="max-w-[1200px] mx-auto px-5 sm:px-8 py-6 m-0 text-[13px] text-faint">© {new Date().getFullYear()} L’Alliée Virtuelle</p>
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-4 flex flex-wrap items-center gap-x-6 gap-y-1 text-[13px] text-faint">
+          <span className="inline-flex items-center min-h-[44px] md:min-h-[32px]">© {new Date().getFullYear()} L’Alliée Virtuelle</span>
+          <nav aria-label="Informations légales" className="flex flex-wrap gap-x-5">
+            <Link href="/mentions-legales" className={LIEN}>Mentions légales</Link>
+            <Link href="/confidentialite" className={LIEN}>Confidentialité</Link>
+            <Link href="/conditions" className={LIEN}>Conditions d’utilisation</Link>
+            <Link href="/contact" className={LIEN}>Contact</Link>
+          </nav>
+        </div>
       </div>
     </footer>
   );
