@@ -49,7 +49,7 @@ export default async function CreerUneChambre({
     >
       <h1 className="titre m-0 mb-2">Créer une Chambre</h1>
       <p className="text-[15px] leading-6 text-muted m-0 mb-7">
-        L’espace est prêt tout de suite, sans carte bancaire.
+        Vous choisirez votre offre juste après.
       </p>
       {sp.erreur ? <Alerte>{sp.erreur}</Alerte> : null}
 

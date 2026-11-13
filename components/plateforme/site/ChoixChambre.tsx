@@ -15,7 +15,7 @@ const FILETS = ["filet-vert", "filet-rouge", "filet-degrade"];
 // Comparaison sans accents ni majuscules
 const plat = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
-export function ChoixChambre({ chambres, initiale, avant, apres, illustration }: { chambres: ChambrePublique[]; initiale: string; avant: ReactNode; apres: ReactNode; illustration: ReactNode }) {
+export function ChoixChambre({ chambres, initiale, avant, illustration }: { chambres: ChambrePublique[]; initiale: string; avant: ReactNode; illustration: ReactNode }) {
   const id = useId();
   const [q, setQ] = useState(initiale);
   const [pays, setPays] = useState("");
@@ -71,7 +71,6 @@ export function ChoixChambre({ chambres, initiale, avant, apres, illustration }:
                 ) : null}
               </div>
             </form>
-            <div className="entree entree-3 mt-5">{apres}</div>
           </div>
           {illustration}
         </div>

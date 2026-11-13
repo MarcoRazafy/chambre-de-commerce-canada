@@ -14,7 +14,7 @@ export function PiedSite() {
         <div>
           <MarqueSite avecNom />
           <p className="mt-3 mb-0 max-w-[320px] text-[14px] leading-[22px] text-muted">
-            L’espace de gestion des Chambres de commerce et des associations d’affaires, avec un espace pour leurs membres.
+            La gestion en ligne des Chambres de commerce et des associations d’affaires, et de leurs membres.
           </p>
         </div>
         <nav aria-label="Plateforme">

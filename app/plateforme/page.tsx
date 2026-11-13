@@ -45,7 +45,6 @@ const FONCTIONS = [
 const ESPACES = [
   {
     titre: "L’espace de l’équipe",
-    sous: "Équipe de la Chambre",
     encre: "bg-marque-rouge",
     points: [
       "Tableau de bord : membres, encaissements, événements",
@@ -58,7 +57,6 @@ const ESPACES = [
   },
   {
     titre: "L’espace des membres",
-    sous: "Entreprises membres",
     encre: "bg-marque-vert",
     points: [
       "Annuaire et maillage du réseau",
@@ -72,16 +70,16 @@ const ESPACES = [
 ];
 
 const ETAPES = [
-  { titre: "Créez votre Chambre", texte: "Son nom, l’adresse de son espace et votre offre : l’espace est prêt tout de suite, sans carte bancaire" },
-  { titre: "Réglez-la à votre image", texte: "Logo, coordonnées, formules d’adhésion, paiement par carte et expéditeur des courriels" },
-  { titre: "Accueillez vos membres", texte: "Ils s’inscrivent à l’adresse de votre Chambre, règlent leur cotisation et retrouvent tout dans leur espace" },
+  { titre: "Créez votre Chambre", texte: "Donnez-lui un nom et une adresse, puis choisissez votre offre." },
+  { titre: "Configurez-la", texte: "Ajoutez votre logo, vos coordonnées et vos formules d’adhésion, branchez le paiement par carte et choisissez l’expéditeur des courriels." },
+  { titre: "Accueillez vos membres", texte: "Ils s’inscrivent à l’adresse de votre Chambre et paient leur cotisation en ligne." },
 ];
 
 const CONFIANCE = [
-  { icone: ShieldCheck, titre: "Données séparées", texte: "Chaque Chambre a son espace : ses membres, ses paiements et ses fichiers ne sont visibles que d’elle" },
-  { icone: CreditCard, titre: "Paiements par Stripe", texte: "Les cotisations arrivent sur le compte Stripe de la Chambre, aucun numéro de carte n’est conservé" },
-  { icone: Globe, titre: "Votre adresse", texte: "Un espace à l’adresse de votre Chambre, qui peut aussi répondre à votre propre domaine" },
-  { icone: LockKeyhole, titre: "Vous gardez la main", texte: "Le support n’entre dans votre espace que si vous l’autorisez, pour la durée que vous choisissez" },
+  { icone: ShieldCheck, titre: "Données séparées", texte: "Les membres, les paiements et les fichiers d’une Chambre ne sont visibles que par elle." },
+  { icone: CreditCard, titre: "Paiements par Stripe", texte: "Les cotisations arrivent sur le compte Stripe de la Chambre. La plateforme ne garde aucun numéro de carte." },
+  { icone: Globe, titre: "Votre adresse", texte: "L’espace a sa propre adresse et peut aussi fonctionner sur votre nom de domaine." },
+  { icone: LockKeyhole, titre: "Le support, sur autorisation", texte: "Il n’entre dans votre espace que si vous l’autorisez, et pour la durée que vous choisissez." },
 ];
 
 // Les tuiles de la sécurité : vert, rouge, bleu nuit, puis le dégradé de la marque
@@ -127,16 +125,16 @@ export default async function AccueilPlateforme() {
           <div className="max-w-[640px]">
             <p className="entree m-0 text-[15px] text-white/70">Pour les Chambres de commerce et les associations d’affaires</p>
             <h1 className="entree entree-2 mt-4 mb-0 text-[length:clamp(38px,5.2vw,64px)] leading-[1.04] text-white">
-              Votre Chambre, ses membres et leurs cotisations, <span className="texte-degrade">au même endroit</span>
+              Gérez votre Chambre en ligne, <span className="texte-degrade">avec un espace pour chaque membre</span>
             </h1>
             <p className="entree entree-3 mt-6 mb-0 max-w-[36rem] text-[18px] leading-[28px] text-white/75">
-              L’équipe gère les adhésions, les événements et les paiements depuis un espace à l’adresse de la Chambre. Chaque entreprise membre a le sien.
+              Votre équipe suit les adhésions, les cotisations payées par carte et les événements depuis un espace à l’adresse de la Chambre.
             </p>
             <div className="entree entree-4 mt-8">
               <FormulaireEmail sombre />
             </div>
             <div className="entree entree-4 mt-5">
-              <Rassurances sombre points={["Gratuit pour démarrer", "Sans carte bancaire", "Fonctions au choix"]} />
+              <Rassurances sombre points={["Offre gratuite, sans carte bancaire", "Fonctions au choix"]} />
             </div>
             <p className="entree entree-4 mt-5 mb-0 text-[14px] text-white/70">
               Vous êtes une entreprise ?{" "}
@@ -159,8 +157,8 @@ export default async function AccueilPlateforme() {
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
           <EnTeteSection
             surtitre="Fonctions"
-            titre={<>Membres, cotisations, événements, <Saillant ton="vert">réseau</Saillant></>}
-            texte="Chaque fonction est reliée aux autres, de la demande d’adhésion au paiement de la cotisation."
+            titre={<>Huit fonctions, <Saillant ton="vert">reliées entre elles</Saillant></>}
+            texte="Une demande d’adhésion validée crée la fiche du membre ; sa cotisation devient une facture qu’il paie par carte."
           />
             <Illustration nom="evenements" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
@@ -186,18 +184,16 @@ export default async function AccueilPlateforme() {
         <EnTeteSection
           surtitre="Deux espaces"
           titre={<>Un espace pour <Saillant>l’équipe</Saillant>, un autre pour <Saillant ton="vert">les membres</Saillant></>}
-          texte="L’équipe gère la Chambre. Chaque entreprise membre retrouve ses événements, ses factures et le réseau."
         />
           <Illustration nom="reseau" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
         </div>
         <div data-reveal-groupe="" className="mt-12 grid gap-4 lg:grid-cols-2">
           {ESPACES.map((e) => (
             <article key={e.titre} className={`carte-filet ${e.encre === "bg-marque-rouge" ? "filet-rouge" : "filet-vert"} rounded-2xl border border-line bg-surface p-6 sm:p-8`}>
-              <p className="m-0 flex items-center gap-2.5 text-[13px] font-medium text-muted">
-                <span aria-hidden className={`size-2.5 rounded-[3px] ${e.encre}`} />
-                {e.sous}
-              </p>
-              <h3 className="mt-3 mb-0 text-[20px] font-semibold text-ink">{e.titre}</h3>
+              <h3 className="m-0 flex items-center gap-2.5 text-[20px] font-semibold text-ink">
+                <span aria-hidden className={`size-2.5 rounded-[3px] shrink-0 ${e.encre}`} />
+                {e.titre}
+              </h3>
               <ul className="mt-5 m-0 p-0 list-none grid gap-2">
                 {e.points.map((p) => (
                   <li key={p} className="flex items-start gap-2.5 text-[15px] leading-6 text-ink">
@@ -216,7 +212,7 @@ export default async function AccueilPlateforme() {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
           <div data-reveal="" className="max-w-[680px]">
             <p className="m-0 text-[15px] font-medium text-[#ff8a8a]">Fonctionnement</p>
-            <h2 className="mt-3 mb-0 text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Votre espace en <span className="texte-degrade">trois étapes</span></h2>
+            <h2 className="mt-3 mb-0 text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">De la création aux <span className="texte-degrade">premiers membres</span></h2>
           </div>
           <ol data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-4 md:grid-cols-3">
             {ETAPES.map((e, i) => (
@@ -252,7 +248,7 @@ export default async function AccueilPlateforme() {
       <section className="bg-surface border-y border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-24">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
-          <EnTeteSection surtitre="Sécurité" titre={<>Vos données et vos paiements <Saillant ton="vert">restent les vôtres</Saillant></>} />
+          <EnTeteSection surtitre="Sécurité" titre={<>Qui voit vos données, <Saillant ton="vert">et où va l’argent</Saillant></>} />
             <Illustration nom="paiement" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
           <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
@@ -272,10 +268,15 @@ export default async function AccueilPlateforme() {
       {/* Questions */}
       <section id="questions" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28 grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div>
-          <EnTeteSection surtitre="Questions" titre={<>Questions <Saillant>fréquentes</Saillant></>} />
+          <EnTeteSection titre={<>Questions <Saillant>fréquentes</Saillant></>} />
           <p className="mt-5 mb-0 text-[15px] leading-6 text-muted inline-flex items-start gap-2.5">
             <Headset size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" aria-hidden />
-            Une autre question ? Le Support IT répond depuis votre espace.
+            <span>
+              Une autre question ?{" "}
+              <Link href="/contact" className={`font-medium text-ink underline underline-offset-4 decoration-line-champ hover:decoration-ink rounded-sm ${FOCUS}`}>
+                Écrivez-nous
+              </Link>
+            </span>
           </p>
           <Illustration nom="questions" className="hidden lg:block mt-10 w-full max-w-[360px]" />
         </div>

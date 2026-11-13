@@ -39,12 +39,12 @@ export function PageSite({ enteteTransparent = false, children }: { enteteTransp
 }
 
 // Titre d'une section ; les titres de niveau 2 apparaissent quand la section entre dans l'écran
-export function EnTeteSection({ surtitre, titre, texte, centre = false, niveau = 2 }: { surtitre: string; titre: ReactNode; texte?: string; centre?: boolean; niveau?: 1 | 2 }) {
+export function EnTeteSection({ surtitre, titre, texte, centre = false, niveau = 2 }: { surtitre?: string; titre: ReactNode; texte?: string; centre?: boolean; niveau?: 1 | 2 }) {
   const Titre = niveau === 1 ? "h1" : "h2";
   return (
     <div data-reveal={niveau === 2 ? "" : undefined} className={`max-w-[680px] ${centre ? "mx-auto text-center" : ""}`}>
-      <p className="m-0 text-[15px] font-medium text-accent-strong">{surtitre}</p>
-      <Titre className={`mt-3 mb-0 leading-[1.1] text-ink ${niveau === 1 ? "text-[clamp(36px,4.6vw,56px)]" : "text-[clamp(28px,3.4vw,40px)]"}`}>{titre}</Titre>
+      {surtitre ? <p className="m-0 mb-3 text-[15px] font-medium text-accent-strong">{surtitre}</p> : null}
+      <Titre className={`m-0 leading-[1.1] text-ink ${niveau === 1 ? "text-[clamp(36px,4.6vw,56px)]" : "text-[clamp(28px,3.4vw,40px)]"}`}>{titre}</Titre>
       {texte ? <p className="mt-4 mb-0 text-[17px] leading-[28px] text-muted">{texte}</p> : null}
     </div>
   );
@@ -116,12 +116,11 @@ export function AppelFinal() {
       <div data-reveal="" className="sur-sombre max-w-[1200px] mx-auto rounded-[20px] bg-marque-nuit px-6 py-14 sm:px-14 sm:py-16 text-center">
         <div className="flex flex-col items-center">
           <h2 className="m-0 max-w-[640px] text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Ouvrez l’espace de <span className="texte-degrade">votre Chambre</span></h2>
-          <p className="mt-4 mb-0 max-w-[480px] text-[17px] leading-[28px] text-white/70">Créez-le maintenant, composez votre offre et accueillez vos premiers membres.</p>
           <div className="mt-8 w-full flex justify-center">
             <FormulaireEmail sombre />
           </div>
           <div className="mt-5">
-            <Rassurances sombre centre points={["Gratuit pour démarrer", "Sans carte bancaire"]} />
+            <Rassurances sombre centre points={["Offre gratuite, sans carte bancaire"]} />
           </div>
           <p className="mt-6 mb-0 text-[14px] text-white/70">
             Vous êtes une entreprise ?{" "}

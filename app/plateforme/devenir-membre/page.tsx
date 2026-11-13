@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CreditCard, LockKeyhole, ShieldCheck } from "lucide-react";
-import { EnTeteSection, PageSite, Rassurances } from "@/components/plateforme/site/blocs";
+import { CreditCard, LockKeyhole } from "lucide-react";
+import { EnTeteSection, PageSite } from "@/components/plateforme/site/blocs";
 import { ChoixChambre } from "@/components/plateforme/site/ChoixChambre";
 import { Illustration } from "@/components/plateforme/site/Illustration";
 import { Saillant } from "@/components/ui";
@@ -13,14 +13,13 @@ export const metadata: Metadata = {
 };
 
 const CONFIANCE = [
-  { icone: ShieldCheck, ton: "tuile-verte", titre: "Demande examinée par la Chambre", texte: "Son équipe valide chaque adhésion avant d’ouvrir l’accès" },
-  { icone: CreditCard, ton: "tuile-bleue", titre: "Cotisation payable par carte", texte: "Sur une page sécurisée de Stripe, sans numéro de carte conservé" },
-  { icone: LockKeyhole, ton: "tuile-degrade", titre: "Vos données restent dans votre Chambre", texte: "Votre fiche, vos factures et vos inscriptions ne sont visibles que d’elle" },
+  { icone: CreditCard, ton: "tuile-verte", titre: "Cotisation payable par carte", texte: "Sur une page sécurisée de Stripe. Aucun numéro de carte n’est conservé." },
+  { icone: LockKeyhole, ton: "tuile-degrade", titre: "Vos données restent à votre Chambre", texte: "Votre fiche, vos factures et vos inscriptions ne sont visibles que par elle." },
 ];
 
 const ETAPES = [
   { titre: "Choisissez votre Chambre", texte: "Celle dont vous voulez rejoindre le réseau." },
-  { titre: "Déposez votre demande", texte: "Votre entreprise, vos coordonnées, la formule souhaitée : quelques minutes sur l’espace de la Chambre." },
+  { titre: "Déposez votre demande", texte: "Sur l’espace de la Chambre : votre entreprise, vos coordonnées et la formule souhaitée." },
   { titre: "Recevez votre accès", texte: "L’équipe examine la demande ; une fois validée, un e-mail vous donne le lien pour créer votre mot de passe." },
 ];
 
@@ -44,13 +43,12 @@ export default async function DevenirMembre({ searchParams }: { searchParams: Pr
             texte="Choisissez votre Chambre et déposez votre demande sur son espace. Une fois validée, vous recevez votre accès."
           />
         }
-        apres={<Rassurances points={["Demande en quelques minutes", "Validée par l’équipe de la Chambre"]} />}
         illustration={<Illustration nom="membres" priorite className="hidden lg:block w-full max-w-[480px] justify-self-end" />}
       />
 
       {/* Confiance */}
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 py-14 lg:py-20">
-        <ul data-reveal-groupe="" className="m-0 p-0 list-none grid gap-x-8 gap-y-8 md:grid-cols-3">
+        <ul data-reveal-groupe="" className="m-0 p-0 list-none grid gap-x-8 gap-y-8 md:grid-cols-2 max-w-[880px]">
           {CONFIANCE.map(({ icone: Icone, ton, titre, texte }) => (
             <li key={titre} className="tuile-hote flex gap-4">
               <span className={`tuile tuile-sm ${ton}`}>
@@ -68,7 +66,7 @@ export default async function DevenirMembre({ searchParams }: { searchParams: Pr
       {/* Les trois étapes */}
       <section className="bg-surface border-y border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-14 lg:py-20">
-          <EnTeteSection surtitre="Comment ça marche" titre={<>Trois étapes, <Saillant>une fois</Saillant></>} />
+          <EnTeteSection titre={<>Comment <Saillant>adhérer</Saillant></>} />
           <ol data-reveal-groupe="" className="mt-10 m-0 p-0 list-none grid gap-4 md:grid-cols-3">
             {ETAPES.map((e, i) => (
               <li key={e.titre} className={`carte-filet ${FILETS[i]} rounded-2xl border border-line bg-bg p-6`}>

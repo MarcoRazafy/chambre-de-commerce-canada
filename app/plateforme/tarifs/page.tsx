@@ -89,7 +89,7 @@ export default async function TarifsPlateforme() {
       </section>
 
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-20 lg:pb-28 grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <EnTeteSection surtitre="Questions" titre={<>Questions <Saillant>sur les tarifs</Saillant></>} />
+        <EnTeteSection titre={<>Questions <Saillant>sur les tarifs</Saillant></>} />
         <Questions questions={QUESTIONS} />
       </section>
 

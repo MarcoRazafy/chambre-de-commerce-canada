@@ -31,7 +31,7 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
         ) : (
           <>
             <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mb-2">Nous écrire</h1>
-            <p className="text-[15px] leading-6 text-muted m-0 mb-6">Une question sur la plateforme, une demande de démonstration, un projet de Chambre.</p>
+            <p className="text-[15px] leading-6 text-muted m-0 mb-6">Posez votre question ou demandez une démonstration.</p>
             {sp.erreur ? <Alerte>{sp.erreur}</Alerte> : null}
             <form action={envoyerContact} className="flex flex-col gap-4">
               {/* Piège à robots : laissé vide par une personne */}
