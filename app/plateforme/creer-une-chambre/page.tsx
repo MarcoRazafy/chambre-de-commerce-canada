@@ -5,7 +5,6 @@ import { Alerte } from "@/components/public/CadreAuth";
 import { ChampAuth, ChampMotDePasse, Saisie } from "@/components/public/ChampsAuth";
 import { CadrePlateforme, CartePlateforme } from "@/components/plateforme/CadrePlateforme";
 import { ChampsChambre } from "@/components/plateforme/ChampsChambre";
-import { ChoixOffre } from "@/components/plateforme/ChoixOffre";
 import { creerChambre } from "@/lib/actions/plateforme";
 import { MOT_DE_PASSE_MIN } from "@/lib/mots-de-passe";
 import { offresPubliques } from "@/lib/plateforme-site";
@@ -18,7 +17,7 @@ export default async function CreerUneChambre({ searchParams }: { searchParams: 
   const sp = await searchParams;
   const offres = await offresPubliques();
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
-  const offreChoisie = offres.find((o) => o.id === sp.offre)?.id ?? offres[0]?.id;
+  const offreChoisie = offres.find((o) => o.id === sp.offre)?.id;
 
   return (
     <CadrePlateforme>
@@ -45,7 +44,9 @@ export default async function CreerUneChambre({ searchParams }: { searchParams: 
             autoComplete="new-password"
           />
 
-          <ChoixOffre offres={offres} choisie={offreChoisie} fonctions={(sp.fonctions ?? "").split(",").filter(Boolean)} />
+          {/* L'offre choisie sur le site : présélectionnée au démarrage, après l'inscription */}
+          {offreChoisie ? <input type="hidden" name="offre" value={offreChoisie} /> : null}
+          {offreChoisie && sp.fonctions ? <input type="hidden" name="fonctions" value={sp.fonctions.slice(0, 300)} /> : null}
 
           <div className="pt-2">
             <BoutonEnvoi enCours="Création de l’espace…">Créer mon espace</BoutonEnvoi>

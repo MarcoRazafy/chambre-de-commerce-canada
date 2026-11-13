@@ -23,10 +23,10 @@ function autorise(recu: string | null): boolean {
 
 export async function POST(req: Request) {
   if (!autorise(req.headers.get("x-taches-jeton"))) return new Response("non autorisé", { status: 401 });
-  const chambres = await prismaSysteme.chambre.findMany({ select: { id: true }, orderBy: { createdAt: "asc" } });
+  const chambres = await prismaSysteme.chambre.findMany({ select: { id: true, demarrage: true }, orderBy: { createdAt: "asc" } });
   let lettres = 0;
   const rappels = { envoyes: 0, echecs: 0 };
-  for (const { id } of chambres) {
+  for (const { id, demarrage } of chambres) {
     // Une Chambre en erreur n'empêche pas les suivantes
     try {
       await avecChambre(id, async () => {
@@ -34,9 +34,12 @@ export async function POST(req: Request) {
         const r = await envoyerRappelsDus();
         rappels.envoyes += r.envoyes;
         rappels.echecs += r.echecs;
-        await assurerFactureDuMois();
-        await prelevementsDus(id);
-        await relancesDues(id);
+        // Abonnement : pas tant que le démarrage de la Chambre (offre, premier paiement) n'est pas fini
+        if (!demarrage) {
+          await assurerFactureDuMois();
+          await prelevementsDus(id);
+          await relancesDues(id);
+        }
         // Tags automatiques : suivent la situation des entreprises (paiements, retards…)
         await appliquerReglesTags();
       });

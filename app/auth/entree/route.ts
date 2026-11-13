@@ -8,7 +8,8 @@ import { jetonValide } from "@/lib/jetons";
 const vers = (chemin: string) => new Response(null, { status: 303, headers: { Location: chemin, "Cache-Control": "no-store" } });
 
 export async function GET(req: Request) {
-  const jeton = await jetonValide(new URL(req.url).searchParams.get("jeton") ?? undefined);
+  const sp = new URL(req.url).searchParams;
+  const jeton = await jetonValide(sp.get("jeton") ?? undefined);
   // Lien périmé, déjà servi, ou d'une autre Chambre que celle de cette adresse
   if (!jeton || jeton.usage !== "connexion" || jeton.user.chambreId !== (await chambreCourante())) {
     return vers(`/auth?${new URLSearchParams({ erreur: "Ce lien n’est plus valable : connectez-vous." })}`);
@@ -16,6 +17,16 @@ export async function GET(req: Request) {
   const servi = await prismaSysteme.jetonCompte.updateMany({ where: { id: jeton.id, utiliseLe: null }, data: { utiliseLe: new Date() } });
   if (!servi.count) return vers("/auth");
   await ouvrirSession(jeton.user.id);
-  if (jeton.user.role === "admin") return vers("/admin");
+  if (jeton.user.role === "admin") {
+    // Chambre qui vient d'être créée : son démarrage (offre choisie sur le site présélectionnée)
+    const c = await prismaSysteme.chambre.findUnique({ where: { id: jeton.user.chambreId }, select: { demarrage: true } });
+    if (!c?.demarrage) return vers("/admin");
+    const choix = new URLSearchParams();
+    for (const k of ["offre", "fonctions"]) {
+      const v = sp.get(k)?.slice(0, 300);
+      if (v) choix.set(k, v);
+    }
+    return vers(`/demarrage${choix.size ? `?${choix}` : ""}`);
+  }
   return vers(jeton.user.member?.accueilEnCours ? "/bienvenue" : "/membre");
 }

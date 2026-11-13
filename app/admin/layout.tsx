@@ -10,6 +10,8 @@ import { getCurrentUser } from "@/lib/session";
 import { NAV_ADMIN } from "@/lib/nav";
 import { filtrerNav } from "@/lib/fonctions-plateforme";
 import { offreDeLaChambre } from "@/lib/offre-chambre";
+import { redirect } from "next/navigation";
+import { prisma } from "@/lib/db";
 
 export default async function AdminLayout({
   children,
@@ -17,6 +19,9 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser("admin");
+  // Chambre qui vient d'être créée : d'abord son démarrage (offre, paiement, informations)
+  const chambre = await prisma.chambre.findFirst({ select: { demarrage: true } });
+  if (chambre?.demarrage && !user.visiteGM) redirect("/demarrage");
   const [stats, unread, notifications, paiement, offre] = await Promise.all([
     getMemberStats(),
     getUnreadTotal(user.id),

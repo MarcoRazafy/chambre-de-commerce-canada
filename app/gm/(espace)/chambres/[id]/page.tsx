@@ -119,6 +119,11 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                     </>
                   ) : "Rien à payer"}
                 </Ligne>
+                {c.demarrage ? (
+                  <Ligne libelle="Démarrage">
+                    <span className="font-normal text-muted">{{ offre: "Choix de l’offre", paiement: "Paiement du premier mois", infos: "Informations" }[c.demarrage]} en cours</span>
+                  </Ligne>
+                ) : null}
                 {c.offre.surMesure ? (
                   <Ligne libelle="Fonctions choisies">
                     {ouvertes.length ? FONCTIONS.filter((x) => ouvertes.includes(x.cle)).map((x) => x.libelle).join(", ") : <span className="font-normal text-muted">Aucune</span>}

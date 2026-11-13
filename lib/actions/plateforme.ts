@@ -9,7 +9,7 @@ import { adresseOuSite } from "@/lib/adresse-chambre";
 import { verifier } from "@/lib/auth";
 import { avecChambre, oublierAdresses } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit } from "@/lib/courriel";
-import { estFonction, libellesFonctions } from "@/lib/fonctions-plateforme";
+import { estFonction } from "@/lib/fonctions-plateforme";
 import { prismaSysteme as db } from "@/lib/db";
 import { slugValide } from "@/lib/hote-chambre";
 import { creerJeton } from "@/lib/jetons";
@@ -20,15 +20,19 @@ const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").tr
 const ADRESSE = /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/;
 const HEURE = 60 * 60 * 1000;
 
-// Le lien qui ouvre la session dans la Chambre du compte
-async function entree(chambreId: string, userId: string): Promise<string | null> {
+// Le lien qui ouvre la session dans la Chambre du compte ; « choix » : l'offre (et ses fonctions) choisie sur le
+// site, présélectionnée au démarrage
+async function entree(chambreId: string, userId: string, choix: Record<string, string> = {}): Promise<string | null> {
   const adresse = await adresseOuSite(chambreId);
   if (!adresse) return null;
   const jeton = await avecChambre(chambreId, () => creerJeton(userId, "connexion"));
-  return `${adresse}/auth/entree?${new URLSearchParams({ jeton })}`;
+  const plus = Object.fromEntries(Object.entries(choix).filter(([, v]) => v));
+  return `${adresse}/auth/entree?${new URLSearchParams({ jeton, ...plus })}`;
 }
 
 // --- Créer une Chambre ---
+// L'inscription seule (la Chambre, son super admin) ; l'offre, le paiement et les informations se font ensuite,
+// dans l'espace de la Chambre (/demarrage)
 
 export async function creerChambre(formData: FormData) {
   const nomChambre = texte(formData, "nomChambre", 120);
@@ -36,12 +40,13 @@ export async function creerChambre(formData: FormData) {
   const nom = texte(formData, "nom", 100);
   const email = texte(formData, "email").toLowerCase();
   const motDePasse = String(formData.get("motDePasse") ?? "");
+  // L'offre choisie sur le site, s'il y en a une : présélectionnée au démarrage
   const offreId = texte(formData, "offre", 50);
-  const fonctions = [...new Set(formData.getAll("fonctions").map(String).filter(estFonction))];
+  const fonctions = texte(formData, "fonctions", 300).split(",").filter(estFonction).join(",");
 
   // Erreur : retour au formulaire, saisie gardée (sauf le mot de passe)
   const erreur: (message: string) => never = (message) =>
-    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, slug, nom, email, offre: offreId, fonctions: fonctions.join(",") })}`);
+    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, slug, nom, email, offre: offreId, fonctions })}`);
 
   const origine = await origineAppelante();
   const attente = tentative(`creer-chambre:${origine}`, 5, HEURE);
@@ -52,10 +57,6 @@ export async function creerChambre(formData: FormData) {
   if (!nom) erreur("Indiquez votre nom.");
   if (!ADRESSE.test(email)) erreur("Indiquez une adresse e-mail valide.");
   if (motDePasse.length < MOT_DE_PASSE_MIN) erreur(`Le mot de passe fait au moins ${MOT_DE_PASSE_MIN} caractères.`);
-  const offre = await db.offre.findUnique({ where: { id: offreId }, select: { id: true, nom: true, surMesure: true, fonctions: true } });
-  if (!offre) erreur("Choisissez une offre.");
-  // Offre à la carte : les fonctions cochées, parmi celles de l'offre
-  const choisies = offre.surMesure ? fonctions.filter((f) => offre.fonctions.includes(f)) : [];
   if (await db.chambre.findUnique({ where: { slug }, select: { id: true } })) erreur(`L’adresse « ${slug} » est déjà prise.`);
   // Une adresse e-mail = un seul espace
   if (await db.user.findUnique({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
@@ -63,14 +64,14 @@ export async function creerChambre(formData: FormData) {
   let creee: { chambreId: string; userId: string };
   try {
     creee = await db.$transaction(async (tx) => {
-      const c = await tx.chambre.create({ data: { slug, nom: nomChambre, offreId: offre.id, fonctionsChoisies: choisies }, select: { id: true } });
+      const c = await tx.chambre.create({ data: { slug, nom: nomChambre, demarrage: "offre" }, select: { id: true } });
       await tx.profilChambre.create({ data: { chambreId: c.id, nom: nomChambre, email } });
       const u = await tx.user.create({
         data: { chambreId: c.id, role: "admin", niveauEquipe: "administrateur", nom, fonction: "", email, motDePasse: hacher(motDePasse) },
         select: { id: true },
       });
       await tx.auditLog.create({
-        data: { chambreId: c.id, action: "chambre_creee", entite: "Chambre", entiteId: c.id, acteur: nom, detail: `Espace créé, offre ${offre.nom}.${offre.surMesure ? ` Fonctions : ${libellesFonctions(choisies) || "aucune"}.` : ""}` },
+        data: { chambreId: c.id, action: "chambre_creee", entite: "Chambre", entiteId: c.id, acteur: nom, detail: "Espace créé." },
       });
       return { chambreId: c.id, userId: u.id };
     });
@@ -81,7 +82,7 @@ export async function creerChambre(formData: FormData) {
   }
   oublierAdresses();
 
-  const lien = await entree(creee.chambreId, creee.userId);
+  const lien = await entree(creee.chambreId, creee.userId, { offre: offreId, fonctions });
   const adresse = await adresseOuSite(creee.chambreId);
   // Le courriel de bienvenue : l'adresse de l'espace, à garder
   after(() =>

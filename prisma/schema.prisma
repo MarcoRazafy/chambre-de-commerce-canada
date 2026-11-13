@@ -150,6 +150,12 @@ model Offre {
   @@map("offres_plateforme")
 }
 
+enum EtapeDemarrage {
+  offre
+  paiement
+  infos
+}
+
 enum ActionRetard {
   lecture
   blocage
@@ -197,6 +203,9 @@ model Chambre {
   offre       Offre         @relation(fields: [offreId], references: [id])
   // Offre à la carte : les fonctions choisies par la Chambre
   fonctionsChoisies String[] @default([])
+  // Démarrage d'une Chambre créée depuis le site : l'étape en cours (choix de l'offre, paiement du premier mois,
+  // informations de la Chambre) ; vide : terminé. Tant qu'il dure, l'espace admin mène à /demarrage
+  demarrage         EtapeDemarrage?
   statut      StatutChambre @default(active)
   suspendueLe DateTime?
 

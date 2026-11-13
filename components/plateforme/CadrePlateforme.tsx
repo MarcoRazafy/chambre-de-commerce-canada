@@ -1,11 +1,13 @@
+import type { ReactNode } from "react";
 import { EnTeteSite } from "@/components/plateforme/site/EnTeteSite";
 
 // Cadre des pages du site de la plateforme (créer une Chambre, devenir membre, se connecter) :
 // l'en-tête du site, un fond clair quadrillé aux couleurs de la plateforme (pas d'une Chambre)
-export function CadrePlateforme({ large = false, children }: { large?: boolean; children: React.ReactNode }) {
+// « entete » : à la place de l'en-tête du site (démarrage d'une Chambre, à son adresse)
+export function CadrePlateforme({ large = false, entete, children }: { large?: boolean; entete?: ReactNode; children: React.ReactNode }) {
   return (
     <div className="site-plateforme min-h-dvh flex flex-col bg-[#fbfcfe] text-ink">
-      <EnTeteSite />
+      {entete ?? <EnTeteSite />}
       <div className="relative flex-1 overflow-hidden">
         <div aria-hidden className="absolute inset-0 site-grille" />
         <div aria-hidden className="absolute -top-32 -left-24 w-[460px] h-[460px] rounded-full blur-3xl opacity-70" style={{ background: "radial-gradient(circle, rgb(173 7 7 / 0.14), transparent 70%)" }} />
