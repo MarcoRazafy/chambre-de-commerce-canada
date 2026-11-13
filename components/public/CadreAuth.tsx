@@ -1,10 +1,13 @@
+import { ArrowLeft } from "lucide-react";
 import { LienSite } from "@/components/Application";
 import { Illustration, type NomIllustration } from "@/components/plateforme/site/Illustration";
 import { LogoOfficiel } from "@/components/public/Marque";
+import { adresseSitePlateforme } from "@/lib/adresse-chambre";
 
 // Cadre des pages d'authentification (connexion, adhésion, mot de passe, Admin GM, site de la plateforme) :
 // sur grand écran, l'illustration et ses ornements animés à gauche (avec le logo en haut et la mention en bas, le
-// bord en biais), le formulaire posé à nu à droite ; sur téléphone, le logo, le formulaire, la mention.
+// bord en biais), le formulaire posé à nu à droite ; sur téléphone, le logo, le formulaire, la mention. En haut du
+// formulaire, « Retour au site » mène au site de la plateforme.
 // marque, pied : à la place du logo IMPACT 261 et de la mention de la plateforme ;
 // classe : sur le cadre (« espace-admin », « site-plateforme » : leurs couleurs et leurs titres).
 // photo, alt : gardés pour les pages qui les passent encore ; ils ne s'affichent plus.
@@ -37,6 +40,7 @@ export function CadreAuth({
   );
   // Les pages de connexion servent à toutes les Chambres (espaces partagés dev. et client.) : la mention de la plateforme
   const mention = pied ?? <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;
+  const site = adresseSitePlateforme() ?? "/";
 
   return (
     <div className={`cadre-auth min-h-dvh bg-white text-ink ${classe}`}>
@@ -57,7 +61,15 @@ export function CadreAuth({
         ) : null}
 
         <div className="flex flex-col min-h-dvh px-5 py-8 sm:px-10 lg:px-14 xl:px-24">
-          <div className={`mb-10 ${panneau ? "lg:hidden" : ""}`}>{logo}</div>
+          <div className="mb-10 flex items-center gap-4">
+            <div className={`min-w-0 ${panneau ? "lg:hidden" : ""}`}>{logo}</div>
+            <a
+              href={site}
+              className="ml-auto inline-flex shrink-0 items-center gap-2 min-h-[44px] px-4 rounded-full border border-line bg-white text-[14px] font-medium text-ink no-underline transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit"
+            >
+              <ArrowLeft size={16} strokeWidth={1.75} aria-hidden /> Retour au site
+            </a>
+          </div>
           <main className={`apparition flex-1 flex flex-col justify-center w-full mx-auto ${large ? "max-w-[640px]" : "max-w-[480px]"}`}>{children}</main>
           <p className={`m-0 mt-10 text-[12px] text-faint text-center ${panneau ? "lg:hidden" : ""}`}>{mention}</p>
         </div>
