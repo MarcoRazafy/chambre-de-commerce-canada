@@ -41,6 +41,8 @@ import {
 import { modesProposes } from "@/lib/reglements";
 import { OFFRES_ACCUEIL } from "@/lib/offres";
 import { getCurrentUser } from "@/lib/session";
+import { type Fonction } from "@/lib/fonctions-plateforme";
+import { offreDeLaChambre } from "@/lib/offre-chambre";
 import { initialesDe, teinteDe } from "@/lib/avatars";
 
 export default async function VueDEnsemble() {
@@ -59,6 +61,7 @@ export default async function VueDEnsemble() {
     services,
     contacts,
     modesPaiement,
+    offre,
   ] = await Promise.all([
     getEvents(),
     getMembresAnnuaire(),
@@ -71,6 +74,7 @@ export default async function VueDEnsemble() {
     // getAgenda({ userId: user.id, memberId: me.id }, aujourdhuiISO(), ajouterJours(aujourdhuiISO(), 6)),
     getContacts(me.id),
     modesProposes(),
+    offreDeLaChambre(),
   ]);
 
   const aVenir = events.filter((e) => !isPast(e.date));
@@ -86,6 +90,8 @@ export default async function VueDEnsemble() {
   const enAttente = ADHESION_PENDING.includes(me.statut);
   const bloque = retardBloque(me);
   const enRetard = isOverdueWarning(me);
+  // Les blocs d'une fonction que l'offre de la Chambre n'ouvre pas ne s'affichent pas (comme le menu)
+  const ouverte = (f: Fonction) => !offre || offre.fonctions.includes(f);
 
   return (
     <>
@@ -107,6 +113,7 @@ export default async function VueDEnsemble() {
         jours={joursDeRetard(me)}
       />
 
+      {ouverte("offres") ? (
       <Card className="carte-filet filet-fixe filet-degrade p-6 mb-5">
         <div className="flex items-end justify-between gap-4 flex-wrap mb-4">
           <div>
@@ -136,8 +143,10 @@ export default async function VueDEnsemble() {
           </p>
         )}
       </Card>
+      ) : null}
 
-      <div className="grid gap-4 mb-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] items-start">
+      <div className={`grid gap-4 mb-5 grid-cols-[minmax(0,1fr)] items-start ${ouverte("evenements") ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
+        {ouverte("evenements") ? (
         <Card className="carte-filet filet-fixe filet-degrade p-0">
           <div className="flex items-center justify-between gap-4 px-6 pt-5 pb-4">
             <h2 className="text-[19px] m-0">Votre prochain rendez-vous</h2>
@@ -215,6 +224,7 @@ export default async function VueDEnsemble() {
             <p className="px-6 pb-6 text-muted">Aucun rendez-vous programmé.</p>
           )}
         </Card>
+        ) : null}
 
         <Card className="carte-filet filet-fixe filet-vert p-6">
           <h2 className="text-[19px] m-0">
@@ -277,6 +287,7 @@ export default async function VueDEnsemble() {
       */}
 
       <div className="grid gap-4 md:grid-cols-3">
+        {ouverte("messagerie") ? (
         <Raccourci
           icone={<Mail size={24} />}
           surtitre="Vos échanges"
@@ -286,7 +297,8 @@ export default async function VueDEnsemble() {
           href="/membre/messagerie"
           teinte="bleu"
         />
-        {ressource ? (
+        ) : null}
+        {ressource && ouverte("ressources") ? (
           <Raccourci
             icone={<FileText size={24} />}
             surtitre="Ressource à découvrir"
@@ -299,7 +311,7 @@ export default async function VueDEnsemble() {
             teinte="rouge"
           />
         ) : null}
-        {service ? (
+        {service && ouverte("ressources") ? (
           <Raccourci
             icone={<Briefcase size={24} />}
             surtitre="Services CanCham"

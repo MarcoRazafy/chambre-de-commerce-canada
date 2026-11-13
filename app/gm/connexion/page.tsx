@@ -22,7 +22,7 @@ export default async function ConnexionGM({ searchParams }: { searchParams: Prom
   if (await compteGM()) redirect("/gm");
 
   return (
-    <CadreAuth marque={<Marque />} pied={<>© {new Date().getFullYear()} L’Alliée Virtuelle</>}>
+    <CadreAuth classe="espace-admin" marque={<Marque />} pied={<>© {new Date().getFullYear()} L’Alliée Virtuelle</>}>
       <span className="surtitre text-marque-rouge">Admin GM</span>
       <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mt-2.5 mb-6">Connexion</h1>
 

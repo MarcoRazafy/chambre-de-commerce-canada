@@ -37,6 +37,7 @@ export default async function AdminLayout({
       user={user}
       nav={filtrerNav(NAV_ADMIN, offre?.fonctions)}
       badges={{ "/admin/membres": aTraiter, "/admin/messagerie": unread }}
+      messagerie={!offre || offre.fonctions.includes("messagerie")}
       notifications={notifications}
     >
       {user.visiteGM ? (

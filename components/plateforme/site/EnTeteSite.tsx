@@ -38,14 +38,14 @@ export function EnTeteSite() {
 
         <nav aria-label="Sections du site" className="hidden lg:flex items-center gap-1 ml-8">
           {LIENS_SITE.map((l) => (
-            <Link key={l.href} href={l.href} className={`px-3 py-2 rounded-md text-[14.5px] font-medium text-muted no-underline transition-colors hover:text-ink hover:bg-surface-2 ${FOCUS}`}>
+            <Link key={l.href} href={l.href} className={`inline-flex items-center min-h-[44px] px-3 rounded-md text-[14.5px] font-medium text-muted no-underline transition-colors hover:text-ink hover:bg-surface-2 ${FOCUS}`}>
               {l.libelle}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/connexion" className={`hidden sm:inline-flex px-3 py-2 rounded-md text-[14.5px] font-semibold text-ink no-underline transition-colors hover:bg-surface-2 ${FOCUS}`}>
+          <Link href="/connexion" className={`hidden sm:inline-flex items-center min-h-[44px] px-3 rounded-md text-[14.5px] font-semibold text-ink no-underline transition-colors hover:bg-surface-2 ${FOCUS}`}>
             Se connecter
           </Link>
           <span className="hidden sm:inline-flex">

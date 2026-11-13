@@ -6,7 +6,7 @@ export function MarqueSite({ clair = false }: { clair?: boolean }) {
     <Link
       href="/"
       aria-label="L’Alliée Virtuelle, accueil"
-      className={`inline-flex items-center gap-2.5 no-underline rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 ${
+      className={`inline-flex items-center gap-2.5 min-h-[44px] no-underline rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 ${
         clair ? "text-white focus-visible:outline-white" : "text-ink focus-visible:outline-marque-nuit"
       }`}
     >

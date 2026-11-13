@@ -2,7 +2,7 @@ import Link from "next/link";
 import { MarqueSite } from "@/components/plateforme/site/MarqueSite";
 import { FONCTIONS } from "@/lib/fonctions-plateforme";
 
-const LIEN = "text-[14.5px] text-muted no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit rounded-sm";
+const LIEN = "inline-flex items-center min-h-[44px] md:min-h-[32px] text-[14.5px] text-muted no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit rounded-sm";
 
 // Pied du site de la plateforme
 export function PiedSite() {
@@ -17,7 +17,7 @@ export function PiedSite() {
         </div>
         <nav aria-label="Plateforme">
           <h2 className="m-0 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">Plateforme</h2>
-          <ul className="mt-4 m-0 p-0 list-none grid gap-2.5">
+          <ul className="mt-1.5 md:mt-2.5 m-0 p-0 list-none grid">
             <li><Link href="/#fonctionnement" className={LIEN}>Fonctionnement</Link></li>
             <li><Link href="/tarifs" className={LIEN}>Tarifs</Link></li>
             <li><Link href="/tarifs#sur-mesure" className={LIEN}>Offre à la carte</Link></li>
@@ -27,7 +27,7 @@ export function PiedSite() {
         </nav>
         <nav aria-label="Fonctions">
           <h2 className="m-0 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">Fonctions</h2>
-          <ul className="mt-4 m-0 p-0 list-none grid gap-2.5">
+          <ul className="mt-1.5 md:mt-2.5 m-0 p-0 list-none grid">
             <li><Link href="/#fonctions" className={LIEN}>Membres et cotisations</Link></li>
             {FONCTIONS.map((f) => (
               <li key={f.cle}><Link href="/#fonctions" className={LIEN}>{f.libelle}</Link></li>
@@ -36,7 +36,7 @@ export function PiedSite() {
         </nav>
         <nav aria-label="Accès">
           <h2 className="m-0 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">Accès</h2>
-          <ul className="mt-4 m-0 p-0 list-none grid gap-2.5">
+          <ul className="mt-1.5 md:mt-2.5 m-0 p-0 list-none grid">
             <li><Link href="/creer-une-chambre" className={LIEN}>Créer une Chambre</Link></li>
             <li><Link href="/devenir-membre" className={LIEN}>Devenir membre</Link></li>
             <li><Link href="/connexion" className={LIEN}>Se connecter</Link></li>

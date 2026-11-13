@@ -40,6 +40,8 @@ import {
 import { getCurrentUser } from "@/lib/session";
 import { derniersMessagesMembres } from "@/lib/support";
 import { getFormules } from "@/lib/formules";
+import { type Fonction } from "@/lib/fonctions-plateforme";
+import { offreDeLaChambre } from "@/lib/offre-chambre";
 
 export default async function TableauDeBord() {
   const user = await getCurrentUser("admin");
@@ -56,6 +58,7 @@ export default async function TableauDeBord() {
     nonLus,
     achats,
     formulesChambre,
+    offre,
   ] = await Promise.all([
     getMemberStats(),
     derniersMessagesMembres(user.id),
@@ -67,11 +70,14 @@ export default async function TableauDeBord() {
     getUnreadTotal(user.id),
     getDemandesAchat(3),
     getFormules(),
+    offreDeLaChambre(),
   ]);
 
   const aVenir = events.filter((e) => !isPast(e.date)).slice(0, 4);
   const derniers = factures.slice(0, 5);
   const adherents = formules.reduce((n, f) => n + f.n, 0);
+  // Les blocs d'une fonction que l'offre de la Chambre n'ouvre pas ne s'affichent pas (comme le menu)
+  const ouverte = (f: Fonction) => !offre || offre.fonctions.includes(f);
 
   const aujourdhui = today().toLocaleDateString("fr-FR", {
     weekday: "long",
@@ -135,8 +141,8 @@ export default async function TableauDeBord() {
         />
       </div>
 
-      <div className="grid gap-4 mb-5 grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_360px] items-start">
-        <Panneau
+      <div className={`grid gap-4 mb-5 grid-cols-[minmax(0,1fr)] items-start ${ouverte("messagerie") ? "lg:grid-cols-[minmax(0,1fr)_360px]" : ""}`}>
+        {ouverte("messagerie") ? <Panneau
           titre={
             <>
               Derniers <Saillant>messages</Saillant>
@@ -212,7 +218,7 @@ export default async function TableauDeBord() {
               Aucun message de membre pour l’instant.
             </Vide>
           )}
-        </Panneau>
+        </Panneau> : null}
 
         <Panneau
           titre="Répartition des adhérents"
@@ -241,8 +247,8 @@ export default async function TableauDeBord() {
         </Panneau>
       </div>
 
-      <div className="grid gap-4 mb-5 lg:grid-cols-2 items-start">
-        <Panneau
+      <div className={`grid gap-4 mb-5 items-start ${ouverte("evenements") ? "lg:grid-cols-2" : ""}`}>
+        {ouverte("evenements") ? <Panneau
           titre="Prochains événements"
           sousTitre="Remplissage des inscriptions"
           lien={{ href: "/admin/evenements", libelle: "Gérer le programme" }}
@@ -312,7 +318,7 @@ export default async function TableauDeBord() {
               Aucun événement programmé.
             </Vide>
           )}
-        </Panneau>
+        </Panneau> : null}
 
         <Panneau
           titre="Derniers paiements"
@@ -398,7 +404,7 @@ export default async function TableauDeBord() {
         </Panneau>
 
         <div className="flex flex-col gap-4">
-          <Compteur
+          {ouverte("messagerie") ? <Compteur
             icone={<MessageSquare size={22} />}
             teinte="bleu"
             libelle="Messagerie"
@@ -409,9 +415,9 @@ export default async function TableauDeBord() {
                 : "Tout est lu"
             }
             href="/admin/messagerie"
-          />
+          /> : null}
 
-          <Panneau
+          {ouverte("ressources") ? <Panneau
             titre="Demandes d’achat"
             sousTitre="Ressources payantes demandées par les membres"
             teinte="rouge"
@@ -445,7 +451,7 @@ export default async function TableauDeBord() {
                 Gérer les ressources
               </LienFleche>
             </div>
-          </Panneau>
+          </Panneau> : null}
 
           <Link
             href="/membre"

@@ -59,6 +59,7 @@ export default async function TarifsPlateforme() {
             />
           </div>
           <div className="entree entree-2 mt-14">
+            <h2 className="sr-only">Les offres</h2>
             <CartesTarifs offres={offres} />
           </div>
         </div>

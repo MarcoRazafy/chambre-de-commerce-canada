@@ -312,9 +312,10 @@ export function TableWrap({ children }: { children: ReactNode }) {
   );
 }
 
-export function Th({ children, className = "" }: ComponentProps<"th">) {
+export function Th({ children, className = "", ...rest }: ComponentProps<"th">) {
   return (
     <th
+      {...rest}
       className={`text-left text-[11px] uppercase tracking-[0.07em] text-faint font-semibold px-3.5 py-[11px] border-b border-line whitespace-nowrap ${className}`}
     >
       {children}

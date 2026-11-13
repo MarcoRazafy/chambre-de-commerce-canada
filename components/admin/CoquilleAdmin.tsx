@@ -21,12 +21,15 @@ export function CoquilleAdmin({
   nav,
   badges = {},
   notifications = [],
+  messagerie = true,
   children,
 }: {
   user: User;
   nav: NavGroup[];
   badges?: Record<string, number>;
   notifications?: Notification[];
+  /** Icône Messagerie de la barre du haut : seulement si l'offre de la Chambre ouvre la fonction */
+  messagerie?: boolean;
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -182,6 +185,7 @@ export function CoquilleAdmin({
 
           <div className="flex items-center gap-2 shrink-0">
             <BoutonInstaller />
+            {messagerie ? (
             <Link
               href="/admin/messagerie"
               aria-label={`Messagerie${badges["/admin/messagerie"] ? ` (${badges["/admin/messagerie"]} non lu${badges["/admin/messagerie"] > 1 ? "s" : ""})` : ""}`}
@@ -195,6 +199,7 @@ export function CoquilleAdmin({
                 </span>
               ) : null}
             </Link>
+            ) : null}
             <Link
               href="/admin/parametres"
               aria-label="Paramètres"

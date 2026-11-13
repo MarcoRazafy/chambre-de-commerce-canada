@@ -2,11 +2,13 @@ import { LienSite } from "@/components/Application";
 import { LogoOfficiel } from "@/components/public/Marque";
 
 // photo, alt, accroche, sous : gardés pour les pages qui les passent encore ; la connexion n'affiche plus de photo.
-// marque, pied : à la place du logo et de la mention de la Chambre (connexion de l'Admin GM : la plateforme)
+// marque, pied : à la place du logo et de la mention de la Chambre (connexion de l'Admin GM : la plateforme) ;
+// classe : sur le cadre (« espace-admin » : les couleurs et les titres de l'espace GM)
 export function CadreAuth({
   large = false,
   marque,
   pied,
+  classe = "",
   children,
 }: {
   photo?: string;
@@ -16,10 +18,11 @@ export function CadreAuth({
   large?: boolean;
   marque?: React.ReactNode;
   pied?: React.ReactNode;
+  classe?: string;
   children: React.ReactNode;
 }) {
   return (
-    <div className="h-dvh overflow-hidden">
+    <div className={`h-dvh overflow-hidden ${classe}`}>
       <div className="relative h-full overflow-hidden bg-[#fbfcfe]">
         <div aria-hidden className="grille-fine absolute inset-0" />
         <div
