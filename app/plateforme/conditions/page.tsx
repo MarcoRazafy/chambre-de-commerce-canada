@@ -23,7 +23,7 @@ export default async function Conditions() {
       <ul>
         <li>Une adresse e-mail correspond à un seul compte. La personne qui crée la Chambre en devient le super admin et peut ouvrir des comptes à son équipe.</li>
         <li>Chaque personne garde son mot de passe confidentiel et prévient la plateforme en cas d’usage non autorisé.</li>
-        <li>La Chambre choisit l’adresse de son espace. Une adresse déjà prise ou trompeuse peut être refusée.</li>
+        <li>Un nom de Chambre ou un domaine trompeur peut être refusé.</li>
       </ul>
 
       <h2>3. Offres et prix</h2>

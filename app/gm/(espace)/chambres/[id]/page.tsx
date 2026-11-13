@@ -47,8 +47,9 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
   const [f, offres] = await Promise.all([ficheChambre(decodeURIComponent(id)), offresPlateforme()]);
   if (!f) notFound();
   const { chambre: c, statut, equipe, factures, membres, evenements, journal, journalTotal } = f;
-  const adresse = await adresseDeLaChambre(c.id);
-  const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
+  // L'espace de l'équipe de la Chambre (son domaine propre, sinon le back-office partagé) et son lien d'adhésion
+  const [adresse, espaceMembres] = await Promise.all([adresseDeLaChambre(c.id, "equipe"), adresseDeLaChambre(c.id, "client")]);
+  const lienAdhesion = espaceMembres ? `${espaceMembres}/auth/inscription?${new URLSearchParams({ chambre: c.slug })}` : null;
   // Ce que l'offre coûte aujourd'hui, avec l'équipe actuelle (avant taxes)
   const forfait = forfaitOffre(c.offre, c.fonctionsChoisies);
   const estimation = offreGratuite({ forfait, parUtilisateur: c.offre.parUtilisateur })
@@ -257,16 +258,14 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
             <input type="hidden" name="chambreId" value={c.id} />
             <Panneau titre="Adresse" teinte="degrade">
               <div className="flex flex-col gap-4">
-                <Field label="Sous-domaine">
-                  <div className="flex min-w-0">
-                    <input name="slug" required maxLength={63} defaultValue={c.slug} autoCapitalize="none" spellCheck={false} className={`${INPUT} min-w-0 flex-1 ${plateforme ? "rounded-r-none" : ""}`} />
-                    {plateforme ? (
-                      <span className="flex items-center min-w-0 max-w-[60%] border border-l-0 border-line-champ bg-surface-2 rounded-r-[var(--radius-s)] px-3 text-[13.6px] text-muted">
-                        <span className="truncate">.{plateforme}</span>
-                      </span>
-                    ) : null}
-                  </div>
+                <Field label="Identifiant">
+                  <input name="slug" required maxLength={63} defaultValue={c.slug} autoCapitalize="none" spellCheck={false} className={INPUT} />
                 </Field>
+                {lienAdhesion ? (
+                  <p className="m-0 text-[13px] text-muted break-all">
+                    Lien d’adhésion : <a href={lienAdhesion} target="_blank" rel="noopener noreferrer" className="text-ink">{lienAdhesion.replace(/^https?:\/\//, "")}</a>
+                  </p>
+                ) : null}
                 <Field label="Domaine propre">
                   <input name="domaine" maxLength={300} defaultValue={c.domaine ?? ""} placeholder="entreprise.com" autoCapitalize="none" spellCheck={false} className={INPUT} />
                 </Field>

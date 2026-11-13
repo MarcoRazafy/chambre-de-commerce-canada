@@ -114,7 +114,7 @@ export async function reactiverChambre(formData: FormData) {
   redirectWithFlash(fiche(c.id), "Espace réactivé");
 }
 
-// Adresse : le sous-domaine (« slug ») et, s'il y en a un, le domaine propre
+// Adresse : l'identifiant (« slug », dans le lien de la demande d'adhésion) et, s'il y en a un, le domaine propre
 export async function modifierAdresseChambre(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
@@ -123,20 +123,20 @@ export async function modifierAdresseChambre(formData: FormData) {
   const domaine = saisi ? normaliserDomaine(saisi) : "";
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase() || "";
 
-  if (!slugValide(slug)) redirectWithErreur(fiche(c.id), `« ${slug} » ne peut pas servir d’adresse : lettres minuscules, chiffres et tirets.`);
+  if (!slugValide(slug)) redirectWithErreur(fiche(c.id), `« ${slug} » ne peut pas servir d’identifiant : lettres minuscules, chiffres et tirets.`);
   if (domaine && !domaineValide(domaine)) redirectWithErreur(fiche(c.id), `« ${domaine} » n’est pas un nom de domaine valide.`);
   if (domaine && plateforme && (domaine === plateforme || domaine.endsWith(`.${plateforme}`))) {
-    redirectWithErreur(fiche(c.id), `${domaine} appartient à la plateforme : l’adresse ${slug}.${plateforme} suffit.`);
+    redirectWithErreur(fiche(c.id), `${domaine} appartient à la plateforme : il ne peut pas être le domaine d’une Chambre.`);
   }
   const prise = await db.chambre.findFirst({
     where: { id: { not: c.id }, OR: [{ slug }, ...(domaine ? [{ domaine }] : [])] },
     select: { slug: true },
   });
-  if (prise) redirectWithErreur(fiche(c.id), prise.slug === slug ? `L’adresse « ${slug} » est déjà prise.` : `${domaine} est déjà le domaine d’une autre Chambre.`);
+  if (prise) redirectWithErreur(fiche(c.id), prise.slug === slug ? `L’identifiant « ${slug} » est déjà pris.` : `${domaine} est déjà le domaine d’une autre Chambre.`);
   if (slug === c.slug && (domaine || null) === c.domaine) redirectWithFlash(fiche(c.id), "Adresse inchangée");
 
   await db.chambre.update({ where: { id: c.id }, data: { slug, domaine: domaine || null } });
-  await noter(c.id, gm.nom, "adresse_changee", `Adresse : ${slug}${domaine ? `, domaine ${domaine}` : ""}.`);
+  await noter(c.id, gm.nom, "adresse_changee", `Identifiant : ${slug}${domaine ? `, domaine ${domaine}` : ""}.`);
   oublierAdresses();
   oublierAdressesChambres();
   revalidatePath("/gm", "layout");
@@ -293,7 +293,7 @@ export async function entrerDansChambre(formData: FormData) {
     select: { id: true },
   });
   if (!compte) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas de super admin.");
-  const adresse = await adresseOuSite(c.id);
+  const adresse = await adresseOuSite(c.id, "equipe");
   if (!adresse) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas encore d’adresse.");
   redirect(`${adresse}/auth/entree-gm?${new URLSearchParams({ jeton: lienEntree({ c: c.id, u: compte.id, g: gm.id, n: gm.nom }) })}`);
 }

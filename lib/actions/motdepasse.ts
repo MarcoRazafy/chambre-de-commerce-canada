@@ -2,11 +2,13 @@
 
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { avecChambre } from "@/lib/chambre-courante";
+import { avecChambre, hoteActuel } from "@/lib/chambre-courante";
 import { prisma, prismaSysteme } from "@/lib/db";
 import { hacher, MOT_DE_PASSE_MIN, ouvrirSession, verifier } from "@/lib/auth";
 import { envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
+import { lienEntree } from "@/lib/entree-chambre";
+import { espaceDuRole } from "@/lib/hote-chambre";
 import { creerJeton, jetonValide } from "@/lib/jetons";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
 import { courrielReinitialisation } from "@/lib/modeles-courriels";
@@ -116,6 +118,13 @@ export async function definirMotDePasse(formData: FormData) {
     }),
   ]));
 
+  // Le lien mène parfois à l'autre espace partagé (un membre sur dev., l'équipe sur client.) : la session s'ouvre
+  // alors dans le sien
+  const ici = await hoteActuel();
+  if (ici.partage && ici.partage !== espaceDuRole(user.role)) {
+    const lien = await lienEntree(user.chambreId, user.id);
+    if (lien) redirect(lien);
+  }
   await ouvrirSession(user.id);
   const message = invitation
     ? "Bienvenue ! Votre accès est activé"

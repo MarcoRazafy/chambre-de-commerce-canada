@@ -27,7 +27,7 @@ export default async function NouveauMotDePassePage({
         invitation ? (
           <>
             Bienvenue dans le <Saillant>réseau</Saillant>{" "}
-            <Saillant ton="vert">CanCham</Saillant>.
+            <Saillant ton="vert">de votre Chambre</Saillant>.
           </>
         ) : (
           <>

@@ -2,8 +2,10 @@
 
 import { redirect } from "next/navigation";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
-import { chambreCourante } from "@/lib/chambre-courante";
+import { hoteActuel } from "@/lib/chambre-courante";
 import { prismaSysteme } from "@/lib/db";
+import { lienEntree } from "@/lib/entree-chambre";
+import { espaceDuRole } from "@/lib/hote-chambre";
 import { fermerSession, ouvrirSession, verifier } from "@/lib/auth";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
 
@@ -66,7 +68,7 @@ export async function connexion(formData: FormData) {
     echec(
       u.member?.statut === "candidature"
         ? "Votre demande d’adhésion est en cours d’examen. Dès qu’elle sera validée, vous recevrez un e-mail pour créer votre mot de passe."
-        : "Votre accès n’est pas encore ouvert : l’équipe CanCham vous enverra un e-mail pour créer votre mot de passe.",
+        : "Votre accès n’est pas encore ouvert : l’équipe de votre Chambre vous enverra un e-mail pour créer votre mot de passe.",
       email,
       suite,
     );
@@ -76,9 +78,11 @@ export async function connexion(formData: FormData) {
     echec("Adresse ou mot de passe incorrect.", email, suite);
   }
 
-  // Le compte d'une autre Chambre (mot de passe juste) : il se connecte à l'adresse de sa Chambre
-  if (u.chambreId !== (await chambreCourante())) {
-    const adresse = await adresseDeLaChambre(u.chambreId);
+  // Sur une adresse propre de Chambre, le compte d'une autre Chambre (mot de passe juste) se connecte à la sienne ;
+  // sur les espaces partagés, la Chambre est celle du compte
+  const ici = await hoteActuel();
+  if (!ici.partage && u.chambreId !== ici.chambreId) {
+    const adresse = await adresseDeLaChambre(u.chambreId, espaceDuRole(u.role));
     if (adresse) redirect(`${adresse}/auth?${new URLSearchParams({ email })}`);
     echec("Ce compte appartient à un autre espace.", email, suite);
   }
@@ -98,12 +102,17 @@ export async function connexion(formData: FormData) {
   }
 
   oublier(`connexion:${origine}:${email}`);
+  const sienne = suite === `/${u.role}` || suite.startsWith(`/${u.role}/`);
+  // Le mauvais espace partagé (un membre sur dev., l'équipe sur client.) : la session s'ouvre dans le sien
+  if (ici.partage && ici.partage !== espaceDuRole(u.role)) {
+    const lien = await lienEntree(u.chambreId, u.id, { suite: sienne ? suite : "" });
+    if (lien) redirect(lien);
+  }
   await ouvrirSession(u.id, texte(formData, "souvenir") === "1");
 
   if (u.role === "membre" && u.member?.accueilEnCours) redirect("/bienvenue");
 
   const accueil = ACCUEIL[u.role] ?? "/membre";
-  const sienne = suite === `/${u.role}` || suite.startsWith(`/${u.role}/`);
   redirect(sienne ? suite : accueil);
 }
 

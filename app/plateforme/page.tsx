@@ -73,15 +73,15 @@ const ESPACES = [
 ];
 
 const ETAPES = [
-  { titre: "Créez votre Chambre", texte: "Donnez-lui un nom et une adresse, puis choisissez votre offre." },
+  { titre: "Créez votre Chambre", texte: "Donnez-lui un nom, puis choisissez votre offre." },
   { titre: "Configurez-la", texte: "Ajoutez votre logo, vos coordonnées et vos formules d’adhésion, branchez le paiement par carte et choisissez l’expéditeur des courriels." },
-  { titre: "Accueillez vos membres", texte: "Ils s’inscrivent à l’adresse de votre Chambre et paient leur cotisation en ligne." },
+  { titre: "Accueillez vos membres", texte: "Ils demandent leur adhésion depuis ce site et paient leur cotisation en ligne." },
 ];
 
 const CONFIANCE = [
   { icone: ShieldCheck, titre: "Données séparées", texte: "Les membres, les paiements et les fichiers d’une Chambre ne sont visibles que par elle." },
   { icone: CreditCard, titre: "Paiements par Stripe", texte: "Les cotisations arrivent sur le compte Stripe de la Chambre. La plateforme ne garde aucun numéro de carte." },
-  { icone: Globe, titre: "Votre adresse", texte: "L’espace a sa propre adresse et peut aussi fonctionner sur votre nom de domaine." },
+  { icone: Globe, titre: "Votre domaine", texte: "L’espace de votre Chambre peut aussi fonctionner sur votre propre nom de domaine." },
   { icone: LockKeyhole, titre: "Le support, sur autorisation", texte: "Il n’entre dans votre espace que si vous l’autorisez, et pour la durée que vous choisissez." },
 ];
 
@@ -99,11 +99,11 @@ const QUESTIONS = [
   },
   {
     q: "Comment mes membres rejoignent-ils la Chambre ?",
-    r: "Depuis la page « Devenir membre » de ce site, ou directement à l’adresse de votre Chambre. Vous validez leur demande depuis votre espace.",
+    r: "Depuis la page « Devenir membre » de ce site : ils choisissent votre Chambre et déposent leur demande. Vous la validez depuis votre espace.",
   },
   {
     q: "Puis-je utiliser mon propre nom de domaine ?",
-    r: "Oui. Votre espace a une adresse sur la plateforme et peut aussi répondre à votre domaine : écrivez au Support IT depuis votre espace pour le relier. Vos courriels peuvent partir de votre domaine une fois celui-ci validé.",
+    r: "Oui. Votre espace peut aussi répondre à votre domaine : écrivez au Support IT depuis votre espace pour le relier. Vos courriels peuvent partir de votre domaine une fois celui-ci validé.",
   },
   {
     q: "Puis-je ajouter ou retirer des fonctions plus tard ?",
@@ -131,7 +131,7 @@ export default async function AccueilPlateforme() {
               Gérez votre Chambre en ligne, <span className="texte-degrade">avec un espace pour chaque membre</span>
             </h1>
             <p className="entree entree-3 mt-6 mb-0 max-w-[36rem] text-[18px] leading-[28px] text-white/75">
-              Votre équipe suit les adhésions, les cotisations payées par carte et les événements depuis un espace à l’adresse de la Chambre.
+              Votre équipe suit les adhésions, les cotisations payées par carte et les événements depuis l’espace en ligne de la Chambre.
             </p>
             <div className="entree entree-4 mt-8">
               <FormulaireEmail sombre />

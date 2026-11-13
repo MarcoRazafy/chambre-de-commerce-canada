@@ -23,7 +23,7 @@ export default async function Confidentialite() {
       <h2>Les données traitées</h2>
       <ul>
         <li>Comptes : nom, adresse e-mail, fonction, mot de passe (enregistré sous forme hachée, jamais en clair), dates de connexion.</li>
-        <li>Chambres : nom, adresse de l’espace, coordonnées, logo, réglages, factures de l’abonnement.</li>
+        <li>Chambres : nom, identifiant, domaine éventuel, coordonnées, logo, réglages, factures de l’abonnement.</li>
         <li>Membres des Chambres : fiches des entreprises, contacts, adhésions, cotisations et factures, inscriptions aux événements, messages, saisis par la Chambre ou par les membres eux-mêmes.</li>
         <li>Paiements par carte : traités par Stripe. La plateforme ne conserve jamais de numéro de carte, seulement la marque, les quatre derniers chiffres et la date d’expiration, pour l’affichage.</li>
         <li>Courriels : adresse du destinataire, sujet et état de remise des messages envoyés par la plateforme.</li>

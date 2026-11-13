@@ -96,12 +96,14 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
   return [...parAdresse.values()];
 }
 
-// Lien de désabonnement signé (abonnés à la lettre seulement)
-function signature(email: string) {
-  return createHmac("sha256", process.env.AUTH_SECRET ?? "cancham").update(`desabonnement:${email.toLowerCase()}`).digest("base64url").slice(0, 32);
+// Lien de désabonnement signé (abonnés à la lettre seulement) ; il porte sa Chambre (« c ») : l'espace des membres
+// est partagé entre toutes les Chambres. Les liens plus anciens, sans Chambre, valent à l'adresse de la leur.
+function signature(email: string, chambreId = "") {
+  const charge = chambreId ? `desabonnement:${chambreId}:${email.toLowerCase()}` : `desabonnement:${email.toLowerCase()}`;
+  return createHmac("sha256", process.env.AUTH_SECRET ?? "cancham").update(charge).digest("base64url").slice(0, 32);
 }
-export function signatureValide(email: string, s: string) {
-  const attendu = Buffer.from(signature(email)), recu = Buffer.from(s);
+export function signatureValide(email: string, s: string, chambreId = "") {
+  const attendu = Buffer.from(signature(email, chambreId)), recu = Buffer.from(s);
   return attendu.length === recu.length && timingSafeEqual(attendu, recu);
 }
 
@@ -115,8 +117,9 @@ async function logoEntreprise() {
 }
 
 async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
+  const chambreId = await chambreCourante();
   const desabonnement = d.abonne
-    ? await urlPublique(`/desabonnement?${new URLSearchParams({ e: d.email, s: signature(d.email) })}`)
+    ? await urlPublique(`/desabonnement?${new URLSearchParams({ e: d.email, c: chambreId, s: signature(d.email, chambreId) })}`)
     : null;
   // Lettre composée dans l'éditeur visuel : son rendu, avec les variables du destinataire
   const doc = lireDoc(contenu);

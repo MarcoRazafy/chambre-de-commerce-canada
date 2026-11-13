@@ -2,9 +2,10 @@
 // s'ouvre à l'adresse de la Chambre du compte. Pas de compte, demande en cours ou refusée : retour à la page de
 // connexion de départ (celle de la Chambre, ou celle du site) avec un message.
 import { NextResponse, type NextRequest } from "next/server";
-import { adresseOuSite, adresseSitePlateforme } from "@/lib/adresse-chambre";
+import { adresseEspace, adresseOuSite, adresseSitePlateforme } from "@/lib/adresse-chambre";
 import { prismaSysteme as db } from "@/lib/db";
 import { lienEntree } from "@/lib/entree-chambre";
+import { espaceDuRole, type EspacePartage } from "@/lib/hote-chambre";
 import {
   CHEMIN_COOKIE_GOOGLE,
   COOKIE_GOOGLE,
@@ -24,11 +25,14 @@ const vers = (url: string) => {
   return r;
 };
 
-// La page de connexion d'où l'on est parti : celle de la Chambre, sinon celle du site de la plateforme
+// « depuis » : l'espace partagé de départ (equipe, client), ou la Chambre d'une adresse propre
+const estEspace = (d: string): d is EspacePartage => d === "equipe" || d === "client";
+
+// La page de connexion d'où l'on est parti : celle de l'espace partagé ou de la Chambre, sinon celle du site
 async function pageConnexion(depuis: string, params: Record<string, string> = {}): Promise<string> {
   const q = new URLSearchParams(params);
   const suffixe = q.size ? `?${q}` : "";
-  const chambre = depuis ? await adresseOuSite(depuis) : null;
+  const chambre = estEspace(depuis) ? adresseEspace(depuis) : depuis ? await adresseOuSite(depuis) : null;
   if (chambre) return `${chambre}/auth${suffixe}`;
   const site = adresseSitePlateforme();
   if (site) return `${site}/connexion${suffixe}`;
@@ -62,12 +66,13 @@ export async function GET(req: NextRequest) {
     return erreur(`Aucun compte n’utilise l’adresse ${email}. Connectez-vous avec votre mot de passe, ou demandez une adhésion.`, { email });
   }
   if (u.member?.statut === "refusee") return erreur("Votre demande d’adhésion n’a pas été retenue.", { email });
+  // Parti de son propre espace : la page demandée est gardée ; sinon, chacun arrive dans le sien
+  const chezSoi = estEspace(depuis) ? depuis === espaceDuRole(u.role) : depuis === u.chambreId;
   if (u.member?.statut === "candidature") {
-    return depuis === u.chambreId ? vers(await pageConnexion(depuis, { attente: "1", email })) : erreur("Votre demande d’adhésion est en cours d’examen.", { email });
+    return chezSoi ? vers(await pageConnexion(depuis, { attente: "1", email })) : erreur("Votre demande d’adhésion est en cours d’examen.", { email });
   }
 
-  // La page demandée ne vaut que dans la Chambre de départ ; un compte d'une autre Chambre arrive dans la sienne
-  const lien = await lienEntree(u.chambreId, u.id, { suite: depuis === u.chambreId ? etat.suite : "" });
+  const lien = await lienEntree(u.chambreId, u.id, { suite: chezSoi ? etat.suite : "" });
   if (!lien) return erreur("Votre espace n’a pas encore d’adresse : écrivez à la plateforme.", { email });
   return vers(lien);
 }

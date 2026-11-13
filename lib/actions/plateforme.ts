@@ -30,9 +30,30 @@ const entree = lienEntree;
 // L'inscription seule (la Chambre, son super admin) ; l'offre, le paiement et les informations se font ensuite,
 // dans l'espace de la Chambre (/demarrage)
 
+// L'identifiant court d'une Chambre, tiré de son nom (« Chambre de la Vallée » → « chambre-de-la-vallee ») ; il sert au
+// lien de la demande d'adhésion (client.…/auth/inscription?chambre=…), l'administrateur peut le changer
+const versIdentifiant = (nom: string) =>
+  nom
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 50)
+    .replace(/-+$/, "");
+
+// Un identifiant libre : celui du nom, sinon suivi de -2, -3…
+async function identifiantLibre(nom: string): Promise<string> {
+  const base = slugValide(versIdentifiant(nom)) ? versIdentifiant(nom) : `chambre-${versIdentifiant(nom) || "nouvelle"}`.slice(0, 50).replace(/-+$/, "");
+  for (let i = 1; i < 50; i++) {
+    const essai = i === 1 ? base : `${base}-${i}`;
+    if (slugValide(essai) && !(await db.chambre.findUnique({ where: { slug: essai }, select: { id: true } }))) return essai;
+  }
+  return `${base}-${Date.now().toString(36)}`;
+}
+
 export async function creerChambre(formData: FormData) {
   const nomChambre = texte(formData, "nomChambre", 120);
-  const slug = texte(formData, "slug", 63).toLowerCase();
   const nom = texte(formData, "nom", 100);
   const email = texte(formData, "email").toLowerCase();
   const motDePasse = String(formData.get("motDePasse") ?? "");
@@ -42,20 +63,19 @@ export async function creerChambre(formData: FormData) {
 
   // Erreur : retour au formulaire, saisie gardée (sauf le mot de passe)
   const erreur: (message: string) => never = (message) =>
-    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, slug, nom, email, offre: offreId, fonctions })}`);
+    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, nom, email, offre: offreId, fonctions })}`);
 
   const origine = await origineAppelante();
   const attente = tentative(`creer-chambre:${origine}`, 5, HEURE);
   if (attente) erreur(`Trop de créations depuis cette connexion. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`);
 
   if (!nomChambre) erreur("Indiquez le nom de la Chambre.");
-  if (!slugValide(slug)) erreur("L’adresse : lettres minuscules, chiffres et tirets (ex. ma-chambre).");
   if (!nom) erreur("Indiquez votre nom.");
   if (!ADRESSE.test(email)) erreur("Indiquez une adresse e-mail valide.");
   if (motDePasse.length < MOT_DE_PASSE_MIN) erreur(`Le mot de passe fait au moins ${MOT_DE_PASSE_MIN} caractères.`);
-  if (await db.chambre.findUnique({ where: { slug }, select: { id: true } })) erreur(`L’adresse « ${slug} » est déjà prise.`);
   // Une adresse e-mail = un seul espace
   if (await db.user.findUnique({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
+  const slug = await identifiantLibre(nomChambre);
 
   let creee: { chambreId: string; userId: string };
   try {
@@ -73,13 +93,13 @@ export async function creerChambre(formData: FormData) {
     });
   } catch (e) {
     // Prise entre-temps (même adresse ou même courriel au même moment)
-    if ((e as { code?: string }).code === "P2002") erreur("Cette adresse ou cet e-mail vient d’être pris : réessayez.");
+    if ((e as { code?: string }).code === "P2002") erreur("Ce nom ou cet e-mail vient d’être pris : réessayez.");
     throw e;
   }
   oublierAdresses();
 
   const lien = await entree(creee.chambreId, creee.userId, { offre: offreId, fonctions });
-  const adresse = await adresseOuSite(creee.chambreId);
+  const adresse = await adresseOuSite(creee.chambreId, "equipe");
   // Le courriel de bienvenue : l'adresse de l'espace, à garder
   after(() =>
     avecChambre(creee.chambreId, async () => {

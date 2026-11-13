@@ -2,9 +2,11 @@ import { NextResponse, type NextRequest } from "next/server";
 import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
 import { lireSessionGM, NOM_COOKIE_GM } from "@/lib/auth-gm";
 import { lireVisite, NOM_COOKIE_VISITE } from "@/lib/visite-gm";
-import { resoudreHote } from "@/lib/chambre-courante";
+import { adresseSitePlateforme } from "@/lib/adresse-chambre";
+import { chambreDuSlug, etatChambre, resoudreHote } from "@/lib/chambre-courante";
 import { fonctionDuChemin } from "@/lib/fonctions-plateforme";
-import { estHoteGM, estHotePlateforme } from "@/lib/hote-chambre";
+import { estHoteGM, estHotePlateforme, SOUS_DOMAINE_ESPACE, type EspacePartage } from "@/lib/hote-chambre";
+import { lireChambreChoisie, NOM_COOKIE_CHAMBRE_CHOISIE, scellerChambreChoisie } from "@/lib/signature";
 // Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
 import { prismaSysteme as prisma } from "@/lib/db";
 import { isAccessLocked, PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
@@ -99,6 +101,116 @@ function proxyPlateforme(request: NextRequest): NextResponse {
   return NextResponse.rewrite(url);
 }
 
+// Espaces partagés (dev. : les équipes, client. : les membres) : la Chambre est celle du compte connecté. Sans compte,
+// seules la connexion, le mot de passe, l'entrée par jeton et (sur client.) la demande d'adhésion pour la Chambre
+// choisie s'ouvrent. Chaque espace garde son public : le back-office sur dev., l'espace membre sur client.
+const PROTEGE = ["/admin", "/membre", "/demarrage", "/bienvenue"];
+const DE_L_EQUIPE = (chemin: string) => ["/admin", "/demarrage"].some((p) => chemin === p || chemin.startsWith(`${p}/`));
+
+async function proxyPartage(request: NextRequest, espace: EspacePartage): Promise<NextResponse> {
+  const { pathname, search } = request.nextUrl;
+  const vers = (chemin: string, params?: Record<string, string>) => {
+    const url = request.nextUrl.clone();
+    url.pathname = chemin;
+    url.search = new URLSearchParams(params).toString();
+    return NextResponse.redirect(url);
+  };
+  // Le même chemin sur l'autre espace partagé (dev. ↔ client.)
+  const versEspace = (autre: EspacePartage) => {
+    const hote = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(",")[0].trim();
+    const proto = request.headers.get("x-forwarded-proto")?.split(",")[0].trim() || request.nextUrl.protocol.replace(":", "");
+    return NextResponse.redirect(`${proto}://${SOUS_DOMAINE_ESPACE[autre]}.${hote.slice(hote.indexOf(".") + 1)}${pathname}${search}`);
+  };
+  const versSite = (chemin: string) => NextResponse.redirect(`${adresseSitePlateforme() ?? request.nextUrl.origin}${chemin}`);
+
+  // Demande d'adhésion : sur client., pour la Chambre choisie (?chambre=…), retenue dans un cookie signé limité à cette page
+  if (pathname === "/auth/inscription") {
+    if (espace !== "client") return versEspace("client");
+    const slug = request.nextUrl.searchParams.get("chambre")?.trim().toLowerCase() ?? "";
+    if (slug) {
+      const id = /^[a-z0-9-]{1,63}$/.test(slug) ? await chambreDuSlug(slug) : null;
+      if (!id) return versSite("/devenir-membre");
+      const valeur = scellerChambreChoisie(id);
+      request.cookies.set(NOM_COOKIE_CHAMBRE_CHOISIE, valeur);
+      const reponse = NextResponse.next({ request: { headers: new Headers(request.headers) } });
+      reponse.cookies.set(NOM_COOKIE_CHAMBRE_CHOISIE, valeur, {
+        httpOnly: true,
+        sameSite: "lax",
+        secure: process.env.NODE_ENV === "production",
+        path: "/auth/inscription",
+        maxAge: 2 * 60 * 60,
+      });
+      return reponse;
+    }
+    if (!lireChambreChoisie(request.cookies.get(NOM_COOKIE_CHAMBRE_CHOISIE)?.value)) return versSite("/devenir-membre");
+    return NextResponse.next();
+  }
+
+  if (!PROTEGE.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
+
+  // Le back-office sur dev., l'espace membre sur client.
+  const attendu: EspacePartage = DE_L_EQUIPE(pathname) ? "equipe" : "client";
+  if (attendu !== espace) return versEspace(attendu);
+
+  const session = lireSession(request.cookies.get(NOM_COOKIE)?.value);
+  const user = session
+    ? await prisma.user.findUnique({ where: { id: session.userId }, select: { role: true, memberId: true, motDePasseModifieLe: true, chambreId: true } })
+    : null;
+  if (!session || !user || sessionPerimee(session, user.motDePasseModifieLe)) {
+    const reponse = vers(CONNEXION, { suite: `${pathname}${search}` });
+    if (session) reponse.cookies.delete(NOM_COOKIE);
+    return reponse;
+  }
+
+  // La Chambre du compte : suspendue, en retard de paiement, fonctions de son offre
+  const ici = await etatChambre(user.chambreId);
+  if (!ici) return introuvable();
+  const versAbonnement = pathname.startsWith("/admin") ? { href: "/admin/abonnement?onglet=factures", libelle: "Abonnement" } : undefined;
+  if (ici.suspendue && !OUVERT_SI_SUSPENDUE(pathname)) return pageCourte("Espace suspendu", 403, versAbonnement);
+  if (ici.restriction === "blocage" && !OUVERT_SI_SUSPENDUE(pathname)) return pageCourte("Paiement en retard", 403, versAbonnement);
+  if (ici.restriction === "lecture" && request.method === "POST" && request.headers.has("next-action") && !OUVERT_SI_SUSPENDUE(pathname)) {
+    return new NextResponse("Espace en lecture seule : une facture de l’abonnement attend son paiement.", {
+      status: 403,
+      headers: { "content-type": "text/plain; charset=utf-8" },
+    });
+  }
+  const espaceDuChemin = pathname.startsWith("/admin") ? "admin" : pathname.startsWith("/membre") ? "membre" : null;
+  const fonction = espaceDuChemin ? fonctionDuChemin(pathname) : null;
+  if (fonction && ici.fonctions && !ici.fonctions.includes(fonction)) {
+    return vers(`/${espaceDuChemin}`, { msg: "Cette fonction n’est pas incluse dans l’offre de la Chambre.", ton: "erreur" });
+  }
+
+  // Visite de l'administrateur de la plateforme : une session de visite ne vaut qu'avec son cookie, et tant que la
+  // Chambre l'autorise
+  const cookieVisite = request.cookies.get(NOM_COOKIE_VISITE)?.value;
+  if (session.visite || cookieVisite) {
+    const visite = lireVisite(cookieVisite);
+    if (!session.visite || !visite || !ici.accesDev || visite.u !== session.userId) {
+      const reponse = vers(CONNEXION);
+      reponse.cookies.delete(NOM_COOKIE);
+      reponse.cookies.delete(NOM_COOKIE_VISITE);
+      return reponse;
+    }
+  }
+
+  // /demarrage, /bienvenue : la page contrôle elle-même le rôle
+  if (!espaceDuChemin) return NextResponse.next();
+  if (user.role === "admin" && pathname === "/membre/rendez-vous") {
+    return vers("/admin/rendez-vous", { msg: "Ce lien ouvre la prise de rendez-vous des membres : il fonctionne pour un membre connecté." });
+  }
+  if (user.role !== espaceDuChemin) return vers(ACCUEIL[user.role] ?? CONNEXION);
+  if (espaceDuChemin === "admin") return NextResponse.next();
+
+  const member = user.memberId
+    ? await prisma.member.findUnique({ where: { id: user.memberId }, select: { statut: true, retardDepuis: true } })
+    : null;
+  if (member?.statut === "candidature") return vers(CONNEXION, { attente: "1" });
+  if (TOUJOURS_OUVERT.some((p) => pathname.startsWith(p))) return NextResponse.next();
+  const vue = member ? { statut: member.statut, retardDepuis: member.retardDepuis ? member.retardDepuis.toISOString().slice(0, 10) : null } : null;
+  if (isAccessLocked(vue as Parameters<typeof isAccessLocked>[0])) return vers(REPLI, { verrouille: "1" });
+  return NextResponse.next();
+}
+
 export default async function proxy(request: NextRequest) {
   const hote = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   if (estHoteGM(hote)) return proxyGM(request);
@@ -106,8 +218,9 @@ export default async function proxy(request: NextRequest) {
   // Les pages de l'Admin GM et du site de la plateforme n'existent qu'à leur adresse
   if (estGM(request.nextUrl.pathname) || estSitePlateforme(request.nextUrl.pathname)) return introuvable();
 
-  // La Chambre de l'adresse du site
+  // La Chambre de l'adresse du site ; sur dev. et client., celle du compte connecté
   const ici = await resoudreHote(hote);
+  if (ici.partage) return proxyPartage(request, ici.partage);
   if (!ici.id) return introuvable();
   if (!ici.propre) {
     const canonique = versDomainePrincipal(request);

@@ -12,8 +12,10 @@ import {
 import { BoutonEnvoi, EcranPassage } from "@/components/public/BoutonMarque";
 import { ConnexionGoogle } from "@/components/public/ConnexionGoogle";
 import { Saillant } from "@/components/ui";
+import { PIED_PLATEFORME } from "@/components/plateforme/site/MarqueSite";
 import { connexion } from "@/lib/actions/auth";
-import { chambreCourante } from "@/lib/chambre-courante";
+import { adresseSitePlateforme } from "@/lib/adresse-chambre";
+import { hoteActuel } from "@/lib/chambre-courante";
 import { lienGoogle } from "@/lib/google";
 import { utilisateurConnecte } from "@/lib/session";
 
@@ -36,21 +38,28 @@ export default async function ConnexionPage({
   if (connecte && !enAttente) {
     redirect(connecte.role === "admin" ? "/admin" : "/membre");
   }
-  const google = lienGoogle({ depuis: await chambreCourante(), suite });
+  // Sur les espaces partagés (dev. : les équipes, client. : les membres), la page sert à toutes les Chambres
+  const ici = await hoteActuel();
+  const google = lienGoogle({ depuis: ici.partage ?? ici.chambreId, suite });
+  const site = adresseSitePlateforme() ?? "";
+  const equipe = ici.partage === "equipe";
 
   return (
     <CadreAuth
       illustration="acces"
+      pied={ici.partage ? PIED_PLATEFORME : undefined}
       accroche={
-        <>
-          Deux pays. Un <Saillant>réseau</Saillant>. Des{" "}
-          <Saillant ton="vert">opportunités</Saillant>
-          <span aria-hidden>.</span>
-        </>
+        ici.partage ? undefined : (
+          <>
+            Deux pays. Un <Saillant>réseau</Saillant>. Des{" "}
+            <Saillant ton="vert">opportunités</Saillant>
+            <span aria-hidden>.</span>
+          </>
+        )
       }
-      sous="Retrouvez l’annuaire des membres, les rendez-vous de la chambre et vos échanges."
+      sous={ici.partage ? undefined : "Retrouvez l’annuaire des membres, les rendez-vous de la chambre et vos échanges."}
     >
-      <span className="surtitre text-marque-rouge">Espace membre</span>
+      <span className="surtitre text-marque-rouge">{equipe ? "Espace équipe" : "Espace membre"}</span>
       <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mt-2.5 mb-2">
         Connexion
       </h1>
@@ -64,7 +73,7 @@ export default async function ConnexionPage({
           <strong className="block mb-1">
             Votre demande d’adhésion est envoyée.
           </strong>
-          L’équipe CanCham l’examine. Dès qu’elle sera validée, vous recevrez un
+          L’équipe de la Chambre l’examine. Dès qu’elle sera validée, vous recevrez un
           e-mail avec un lien pour créer votre mot de passe : vous pourrez alors
           vous connecter et compléter votre fiche.
         </Confirmation>
@@ -75,7 +84,7 @@ export default async function ConnexionPage({
             Votre demande d’adhésion est en cours d’examen.
           </strong>
           Vous pourrez vous connecter dès qu’elle sera validée par l’équipe
-          CanCham ; un e-mail vous préviendra.
+          de la Chambre ; un e-mail vous préviendra.
         </Confirmation>
       ) : null}
 
@@ -137,12 +146,12 @@ export default async function ConnexionPage({
       {google ? <ConnexionGoogle href={google} /> : null}
 
       <p className="text-[13.5px] text-muted mt-6 mb-0 pt-5 border-t border-line">
-        Pas encore membre ?{" "}
+        {equipe ? "Pas encore de Chambre ?" : "Pas encore membre ?"}{" "}
         <Link
-          href="/auth/inscription"
+          href={equipe ? `${site}/creer-une-chambre` : ici.partage ? `${site}/devenir-membre` : "/auth/inscription"}
           className="text-marque-vert font-semibold no-underline hover:underline inline-flex items-center gap-1"
         >
-          Demander une adhésion <ArrowRight size={14} />
+          {equipe ? "Créer ma Chambre" : "Demander une adhésion"} <ArrowRight size={14} />
         </Link>
       </p>
     </CadreAuth>

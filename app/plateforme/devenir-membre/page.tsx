@@ -25,7 +25,8 @@ const ETAPES = [
 
 const FILETS = ["filet-vert", "filet-rouge", "filet-degrade"];
 
-// Les Chambres actives : on choisit la sienne (la recherche filtre pendant la saisie), puis on s'inscrit à son adresse
+// Les Chambres actives : on choisit la sienne (la recherche filtre pendant la saisie), puis on dépose sa demande sur
+// l'espace des membres, pour cette Chambre
 export default async function DevenirMembre({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const q = ((await searchParams).q ?? "").trim().slice(0, 100);
   const chambres = (await chambresPubliques("")).filter((c): c is typeof c & { adresse: string } => !!c.adresse);

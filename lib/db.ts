@@ -1,5 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
-import { brancherRechercheChambre, chambreCourante } from "@/lib/chambre-courante";
+import { brancherRechercheChambre, brancherRechercheCompte, chambreCourante } from "@/lib/chambre-courante";
 import { fonctionsOuvertes } from "@/lib/fonctions-plateforme";
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { restreindre } from "@/lib/portee-chambre";
@@ -56,6 +56,9 @@ export async function reglagesRetard(): Promise<ReglagesRetard> {
   reglages = { jusqua: Date.now() + 10_000, valeur };
   return valeur;
 }
+
+// La Chambre d'un compte connecté sur un espace partagé (dev., client.)
+brancherRechercheCompte(async (id) => (await prismaSysteme.user.findUnique({ where: { id }, select: { chambreId: true } }))?.chambreId ?? null);
 
 brancherRechercheChambre(async (r) => {
   const c = await prismaSysteme.chambre.findUnique({

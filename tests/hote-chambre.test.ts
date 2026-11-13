@@ -37,12 +37,20 @@ describe("lireHote : l'adresse du site → la Chambre", () => {
     for (const h of ["app.lalliee-virtuelle.com", "api.lalliee-virtuelle.com", "a.b.lalliee-virtuelle.com", "-x.lalliee-virtuelle.com"]) {
       expect(lireHote(h, P, false).type).toBe("autre");
     }
-    // L'espace de l'Admin GM
-    expect(lireHote("manage.lalliee-virtuelle.com", P, false)).toEqual({ type: "gm" });
-    expect(lireHote("manage.localhost:3000", null, true)).toEqual({ type: "gm" });
-    expect(lireHote("manage.localhost:3000", null, false).type).toBe("autre");
-    // gm. reste réservé : ce n'est ni l'espace administrateur ni une Chambre
+    // L'espace administrateur de la plateforme
+    expect(lireHote("manager.lalliee-virtuelle.com", P, false)).toEqual({ type: "gm" });
+    expect(lireHote("manager.localhost:3000", null, true)).toEqual({ type: "gm" });
+    expect(lireHote("manager.localhost:3000", null, false).type).toBe("autre");
+    // Les espaces partagés : dev. (les équipes), client. (les membres)
+    expect(lireHote("dev.lalliee-virtuelle.com", P, false)).toEqual({ type: "partage", espace: "equipe" });
+    expect(lireHote("client.lalliee-virtuelle.com", P, false)).toEqual({ type: "partage", espace: "client" });
+    expect(lireHote("dev.localhost:3000", null, true)).toEqual({ type: "partage", espace: "equipe" });
+    expect(lireHote("client.localhost:3000", null, true)).toEqual({ type: "partage", espace: "client" });
+    // gm., manage. restent réservés : ni l'espace administrateur ni une Chambre
     expect(lireHote("gm.lalliee-virtuelle.com", P, false).type).toBe("autre");
+    expect(lireHote("manage.lalliee-virtuelle.com", P, false).type).toBe("autre");
+    expect(slugValide("client")).toBe(false);
+    expect(slugValide("dev")).toBe(false);
     expect(slugValide("cancham")).toBe(true);
     expect(slugValide("www")).toBe(false);
     expect(slugValide("Cancham")).toBe(false);
@@ -66,13 +74,16 @@ describe("resoudreHote : recherche en base", () => {
         : { id: r.id, suspendue: false, restriction: null, accesDev: false, fonctions: null },
     );
     brancherRechercheChambre(chercher);
-    expect(await resoudreHote("cancham.lalliee-virtuelle.com")).toEqual({ id: "c-cancham", propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
-    expect(await resoudreHote("inconnue.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
-    expect(await resoudreHote("fermee.lalliee-virtuelle.com")).toEqual({ id: "c-fermee", propre: true, suspendue: true, restriction: null, accesDev: false, fonctions: null });
-    expect(await resoudreHote("retard.lalliee-virtuelle.com")).toEqual({ id: "c-retard", propre: true, suspendue: false, restriction: "lecture", accesDev: false, fonctions: null });
-    expect(await resoudreHote("cancham.mg")).toEqual({ id: "c-cancham", propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
-    expect(await resoudreHote("app.exemple.org")).toEqual({ id: CHAMBRE_PRINCIPALE, propre: false, suspendue: false, restriction: null, accesDev: false, fonctions: null });
-    expect(await resoudreHote("manage.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("cancham.lalliee-virtuelle.com")).toEqual({ id: "c-cancham", propre: true, partage: null, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("inconnue.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, partage: null, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("fermee.lalliee-virtuelle.com")).toEqual({ id: "c-fermee", propre: true, partage: null, suspendue: true, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("retard.lalliee-virtuelle.com")).toEqual({ id: "c-retard", propre: true, partage: null, suspendue: false, restriction: "lecture", accesDev: false, fonctions: null });
+    expect(await resoudreHote("cancham.mg")).toEqual({ id: "c-cancham", propre: true, partage: null, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("app.exemple.org")).toEqual({ id: CHAMBRE_PRINCIPALE, propre: false, partage: null, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("manager.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, partage: null, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    // Espaces partagés : aucune Chambre par l'adresse (elle vient du compte connecté)
+    expect(await resoudreHote("dev.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, partage: "equipe", suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("client.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, partage: "client", suspendue: false, restriction: null, accesDev: false, fonctions: null });
     // Gardé en mémoire : pas de seconde recherche
     await resoudreHote("cancham.lalliee-virtuelle.com");
     expect(chercher).toHaveBeenCalledTimes(7);

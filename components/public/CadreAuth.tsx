@@ -5,7 +5,7 @@ import { LogoOfficiel } from "@/components/public/Marque";
 // Cadre des pages d'authentification (connexion, adhésion, mot de passe, Admin GM, site de la plateforme) :
 // sur grand écran, l'illustration et ses ornements animés à gauche (avec le logo en haut et la mention en bas, le
 // bord en biais), le formulaire posé à nu à droite ; sur téléphone, le logo, le formulaire, la mention.
-// marque, pied : à la place du logo et de la mention de la Chambre (Admin GM, site : la plateforme) ;
+// marque, pied : à la place du logo IMPACT 261 et de la mention de la plateforme ;
 // classe : sur le cadre (« espace-admin », « site-plateforme » : leurs couleurs et leurs titres).
 // photo, alt : gardés pour les pages qui les passent encore ; ils ne s'affichent plus.
 export function CadreAuth({
@@ -35,7 +35,8 @@ export function CadreAuth({
       <LogoOfficiel className="w-[170px] h-auto" priority />
     </LienSite>
   );
-  const mention = pied ?? <>© {new Date().getFullYear()} CanCham · Chambre de Commerce et de Coopération Canada–Madagascar</>;
+  // Les pages de connexion servent à toutes les Chambres (espaces partagés dev. et client.) : la mention de la plateforme
+  const mention = pied ?? <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;
 
   return (
     <div className={`cadre-auth min-h-dvh bg-white text-ink ${classe}`}>

@@ -15,27 +15,32 @@ import { INDICATIFS, PAYS } from "@/lib/accueil";
 import { deposerCandidature } from "@/lib/actions/accueil";
 import { utilisateurConnecte } from "@/lib/session";
 import { getFormules } from "@/lib/formules";
+import { PIED_PLATEFORME } from "@/components/plateforme/site/MarqueSite";
+import { hoteActuel } from "@/lib/chambre-courante";
+import { getProfilChambre } from "@/lib/profil-chambre";
 
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();
   if (connecte) redirect(connecte.role === "admin" ? "/admin" : "/membre");
-  const formules = await getFormules();
+  // La Chambre : celle de l'adresse, ou (sur client.) celle choisie sur le site
+  const [formules, profil, ici] = await Promise.all([getFormules(), getProfilChambre(), hoteActuel()]);
 
   return (
     <CadreAuth
       large
       illustration="adhesion"
+      pied={ici.partage ? PIED_PLATEFORME : undefined}
       accroche={
         <>
           Votre prochain <Saillant>partenariat</Saillant> commence{" "}
           <Saillant ton="vert">ici</Saillant>.
         </>
       }
-      sous="Déposez votre demande en quelques minutes : l’équipe CanCham l’examine, puis vous complétez votre fiche à votre rythme."
+      sous="Déposez votre demande en quelques minutes : l’équipe de la Chambre l’examine, puis vous complétez votre fiche à votre rythme."
     >
       <span className="surtitre text-marque-vert">Demande d’adhésion</span>
       <h1 className="titre text-[clamp(26px,3.4vw,34px)] m-0 mt-2.5 mb-2">
-        Rejoindre CanCham
+        Rejoindre {profil.nom}
       </h1>
       <p className="text-[14.5px] text-muted m-0 mb-7">
         L’équipe examine chaque demande. Une fois la vôtre validée, vous recevez
@@ -186,7 +191,7 @@ export default async function InscriptionPage() {
         <p className="m-0 flex gap-2.5 items-start text-[12.8px] text-muted bg-surface-2 rounded-lg px-3.5 py-3">
           <KeyRound size={16} className="shrink-0 mt-0.5 text-faint" />
           <span>
-            Pas de mot de passe à choisir maintenant : dès que l’équipe CanCham
+            Pas de mot de passe à choisir maintenant : dès que l’équipe de la Chambre
             aura validé votre demande, vous recevrez un e-mail avec un lien pour
             le créer.
           </span>
@@ -198,7 +203,7 @@ export default async function InscriptionPage() {
           </BoutonEnvoi>
           <EcranPassage
             message="Envoi de votre demande…"
-            detail="L’équipe CanCham est prévenue et l’examine au plus vite."
+            detail="L’équipe de la Chambre est prévenue et l’examine au plus vite."
           />
         </div>
       </form>

@@ -1,27 +1,16 @@
 import "server-only";
 
 import { cookies } from "next/headers";
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { timingSafeEqual } from "node:crypto";
+import { NOM_COOKIE_SESSION, signer } from "@/lib/signature";
 
 export { hacher, MOT_DE_PASSE_MIN, verifier } from "@/lib/mots-de-passe";
 
-const COOKIE = "cancham_session";
+const COOKIE = NOM_COOKIE_SESSION;
 const DUREE_JOURS = 30;
 
-function cle(): string {
-  const secret = process.env.AUTH_SECRET;
-  if (secret) return secret;
-  if (process.env.NODE_ENV === "production") {
-    throw new Error(
-      "AUTH_SECRET manquant : définissez-le pour signer les sessions.",
-    );
-  }
-  return "cancham-developpement-uniquement";
-}
-
-// Signature d'une session ; « usage » sépare les sessions (ex. « gm » : Admin GM) d'une même clé
-export const signer = (charge: string, usage = "") =>
-  createHmac("sha256", cle()).update(usage ? `${usage}:${charge}` : charge).digest("base64url");
+// Signature d'une session ; « usage » sépare les sessions (ex. « gm » : l'administrateur de la plateforme) d'une même clé
+export { signer };
 
 // Session d'une visite de l'Admin GM (mode développeur) : marquée comme telle, elle dure le temps de la visite
 export const DUREE_SESSION_VISITE_MS = 2 * 3_600_000;

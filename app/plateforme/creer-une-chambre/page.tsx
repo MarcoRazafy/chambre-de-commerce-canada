@@ -11,7 +11,6 @@ import {
   MarqueSite,
   PIED_PLATEFORME,
 } from "@/components/plateforme/site/MarqueSite";
-import { ChampsChambre } from "@/components/plateforme/ChampsChambre";
 import { creerChambre } from "@/lib/actions/plateforme";
 import { MOT_DE_PASSE_MIN } from "@/lib/mots-de-passe";
 import { offresPubliques } from "@/lib/plateforme-site";
@@ -23,7 +22,6 @@ export const metadata: Metadata = {
 type Saisies = {
   erreur?: string;
   nomChambre?: string;
-  slug?: string;
   nom?: string;
   email?: string;
   offre?: string;
@@ -37,7 +35,6 @@ export default async function CreerUneChambre({
 }) {
   const sp = await searchParams;
   const offres = await offresPubliques();
-  const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   const offreChoisie = offres.find((o) => o.id === sp.offre)?.id;
 
   return (
@@ -54,11 +51,9 @@ export default async function CreerUneChambre({
       {sp.erreur ? <Alerte>{sp.erreur}</Alerte> : null}
 
       <form action={creerChambre} className="flex flex-col gap-5">
-        <ChampsChambre
-          nom={sp.nomChambre ?? ""}
-          slug={sp.slug ?? ""}
-          suffixe={`.${plateforme ?? "localhost"}`}
-        />
+        <ChampAuth label="Nom de la Chambre">
+          <Saisie name="nomChambre" required maxLength={120} autoComplete="organization" defaultValue={sp.nomChambre ?? ""} />
+        </ChampAuth>
 
         <ChampAuth label="Votre nom" icone={<UserRound size={16} />}>
           <Saisie

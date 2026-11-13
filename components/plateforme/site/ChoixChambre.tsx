@@ -110,7 +110,7 @@ export function ChoixChambre({ chambres, initiale, avant, illustration }: { cham
                 return (
                   <li key={c.id} className="grid anim-fondu">
                     <a
-                      href={`${c.adresse}/auth/inscription`}
+                      href={c.adresse}
                       className={`group carte-filet ${FILETS[i % FILETS.length]} flex flex-col rounded-2xl border border-line bg-bg p-6 no-underline text-ink ${FOCUS}`}
                     >
                       <LogoChambre nom={c.nom} logo={c.profil?.logo ?? null} taille={56} />

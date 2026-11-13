@@ -1,7 +1,7 @@
 // Entrée de l'Admin GM dans l'espace d'une Chambre (mode développeur) : le lien signé, valable 2 minutes, ouvre
 // une visite dans le compte du super admin de la Chambre, si elle autorise encore l'accès. Notée au journal.
 import { ouvrirSession } from "@/lib/auth";
-import { chambreCourante } from "@/lib/chambre-courante";
+import { hoteActuel } from "@/lib/chambre-courante";
 import { prismaSysteme as db } from "@/lib/db";
 import { lireLienEntree, ouvrirVisite } from "@/lib/visite-gm";
 
@@ -10,8 +10,10 @@ const refus = (message: string) => vers(`/auth?${new URLSearchParams({ erreur: m
 
 export async function GET(req: Request) {
   const entree = lireLienEntree(new URL(req.url).searchParams.get("jeton"));
-  const ici = await chambreCourante();
-  if (!entree || entree.c !== ici) return refus("Ce lien d’entrée n’est plus valable.");
+  // Sur le back-office partagé (dev.), la Chambre est celle du lien signé ; sur une adresse propre, celle de l'adresse
+  const hote = await hoteActuel();
+  if (!entree || (hote.partage ? hote.partage !== "equipe" : entree.c !== hote.chambreId)) return refus("Ce lien d’entrée n’est plus valable.");
+  const ici = entree.c;
   const [chambre, compte, gm] = await Promise.all([
     db.chambre.findUnique({ where: { id: ici }, select: { accesDevJusqua: true } }),
     db.user.findFirst({ where: { id: entree.u, chambreId: ici, role: "admin", niveauEquipe: "administrateur" }, select: { id: true } }),

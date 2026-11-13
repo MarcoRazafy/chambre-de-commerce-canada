@@ -9,7 +9,7 @@ import { demanderReinitialisationPlateforme } from "@/lib/actions/plateforme";
 
 export const metadata: Metadata = { title: { absolute: "Mot de passe oublié · L’Alliée Virtuelle" } };
 
-// Mot de passe oublié depuis le site : le lien part de la Chambre du compte et mène à son adresse
+// Mot de passe oublié depuis le site : le lien part de la Chambre du compte et mène à son espace
 export default async function MotDePasseOubliePlateforme({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string; envoye?: string }> }) {
   const { erreur, email, envoye } = await searchParams;
 

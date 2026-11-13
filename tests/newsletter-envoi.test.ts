@@ -38,6 +38,11 @@ vi.mock("@/lib/db", () => ({
     auditLog: { create: async () => ({}) },
   },
 }));
+// La Chambre des lettres (en vrai, fixée par la tâche régulière) : le lien de désabonnement la porte
+vi.mock("@/lib/chambre-courante", async (original) => ({
+  ...(await original<typeof import("@/lib/chambre-courante")>()),
+  chambreCourante: async () => "c-essai",
+}));
 vi.mock("@/lib/courriel", () => ({
   courrielsActifs: () => true,
   envoyerCourriel: async () => true,
