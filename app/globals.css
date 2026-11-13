@@ -1410,11 +1410,84 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   }
 }
 @supports (animation-timeline: view()) {
-  .site-plateforme .illustration:not(.illustration-flotte) img {
+  .site-plateforme .illustration:not(.illustration-flotte) > .illustration-corps {
     animation: site-parallaxe linear both;
     animation-timeline: view();
     animation-range: entry 0% exit 100%;
   }
+}
+/* Ornements autour des illustrations (site et pages d'authentification) : arrivent l'un après l'autre une fois le
+   dessin visible, puis flottent (va-et-vient), oscillent (balance), tournent (anneau pointillé) ou pulsent */
+@keyframes site-ornement {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes site-bobine {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-7px);
+  }
+}
+@keyframes site-balance {
+  0%,
+  100% {
+    transform: rotate(-9deg);
+  }
+  50% {
+    transform: rotate(9deg);
+  }
+}
+@keyframes site-tourne {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes site-pulsation {
+  from {
+    transform: scale(1);
+    opacity: 0.45;
+  }
+  to {
+    transform: scale(1.9);
+    opacity: 0;
+  }
+}
+.illustration .ornement {
+  position: absolute;
+  z-index: 1;
+  opacity: 0;
+  pointer-events: none;
+}
+.illustration-visible .ornement {
+  animation: site-ornement 0.6s var(--site-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation-delay: calc(500ms + var(--ordre, 0) * 160ms);
+}
+.illustration .ornement-bobine {
+  animation: site-bobine 6s ease-in-out infinite;
+}
+.illustration .ornement-balance {
+  transform-origin: 50% 0;
+  animation: site-balance 3.6s ease-in-out infinite;
+}
+.illustration .ornement-tourne {
+  animation: site-tourne 22s linear infinite;
+}
+.illustration .ornement-pulsation::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  animation: site-pulsation 2.4s ease-out infinite;
 }
 /* Pages de texte (mentions légales, confidentialité, conditions) */
 .site-plateforme .texte-long h2 {
@@ -1492,10 +1565,18 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   .site-plateforme [data-reveal-groupe].est-visible > *,
   .site-plateforme .visite .pousse-y,
   .site-plateforme .visite .pousse-x,
-  .site-plateforme .illustration:not(.illustration-flotte) img,
+  .site-plateforme .illustration:not(.illustration-flotte) > .illustration-corps,
   .fenetre-composeur[open],
-  .fenetre-composeur[open]::backdrop {
+  .fenetre-composeur[open]::backdrop,
+  .illustration-visible .ornement,
+  .illustration .ornement-bobine,
+  .illustration .ornement-balance,
+  .illustration .ornement-tourne,
+  .illustration .ornement-pulsation::before {
     animation: none;
+  }
+  .illustration .ornement {
+    opacity: 1;
   }
   html.js-pret .site-plateforme [data-reveal]:not(.est-visible),
   html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
