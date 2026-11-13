@@ -12,12 +12,12 @@ export const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 foc
 // Huit teintes pastel, dans l'ordre des cartes
 export const TEINTES = ["bg-[#e8f0fb]", "bg-[#fbe9e1]", "bg-[#fbf3d6]", "bg-[#e4f3ea]", "bg-[#ece8f8]", "bg-[#fbe6ea]", "bg-[#e2f3f0]", "bg-[#f3ecdc]"];
 
-// Une icône au trait, bleu nuit, sur un carré pastel ; « grande » : en tête d'une carte, sur toute sa largeur (grand écran)
+// Une icône au trait, bleu nuit, sur un carré pastel ; « grande » : en tête d'une carte, sur toute sa largeur
 export function IconePastel({ icone: Icone, teinte, grande = false }: { icone: LucideIcon; teinte: number; grande?: boolean }) {
   const fond = TEINTES[teinte % TEINTES.length];
   return (
-    <span className={`icone-pastel grid place-items-center shrink-0 text-marque-nuit ${grande ? "size-14 rounded-[12px] sm:w-full sm:h-auto sm:aspect-[4/3] sm:rounded-none" : "size-16 rounded-[14px]"} ${fond}`}>
-      <Icone className={grande ? "size-7 sm:size-[72px]" : "size-8"} strokeWidth={1.25} aria-hidden />
+    <span className={`icone-pastel grid place-items-center shrink-0 text-marque-nuit ${grande ? "w-full aspect-[4/3] rounded-2xl" : "size-16 rounded-[14px]"} ${fond}`}>
+      <Icone className={grande ? "size-[72px]" : "size-8"} strokeWidth={1.25} aria-hidden />
     </span>
   );
 }

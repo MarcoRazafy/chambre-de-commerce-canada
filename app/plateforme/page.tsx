@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { AppelFinal, EnTeteSection, FOCUS, FormulaireEmail, IconePastel, PageSite, Questions, Rassurances } from "@/components/plateforme/site/blocs";
 import { Saillant } from "@/components/ui";
+import { Carrousel } from "@/components/plateforme/site/Carrousel";
 import { Illustration } from "@/components/plateforme/site/Illustration";
 import { CartesTarifs } from "@/components/plateforme/site/Tarifs";
 import { VisiteEspace } from "@/components/plateforme/site/VisiteEspace";
@@ -149,7 +150,7 @@ export default async function AccueilPlateforme() {
         </div>
       </section>
 
-      {/* Fonctions : des cartes sur grand écran, une liste serrée sur téléphone */}
+      {/* Fonctions : un carrousel de cartes */}
       <section id="fonctions" className="bg-surface border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
@@ -160,17 +161,19 @@ export default async function AccueilPlateforme() {
           />
             <Illustration nom="evenements" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
-          <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid border-t border-line sm:border-0 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {FONCTIONS.map(({ icone: Icone, titre, texte }, i) => (
-              <li key={titre} className={`tuile-hote carte-filet ${i % 2 ? "filet-vert" : "filet-degrade"} flex gap-4 py-4 border-b border-line sm:block sm:p-0 sm:rounded-2xl sm:border sm:bg-bg`}>
-                <IconePastel icone={Icone} teinte={i} grande />
-                <div className="min-w-0 sm:p-6">
-                  <h3 className="m-0 text-[16px] text-ink">{titre}</h3>
-                  <p className="mt-1 sm:mt-2 mb-0 text-[14px] leading-[22px] text-muted">{texte}</p>
+          {/* Les huit fonctions en carrousel : carré pastel, titre, texte */}
+          <div className="mt-12">
+            <Carrousel
+              etiquette="Fonctions"
+              elements={FONCTIONS.map(({ icone: Icone, titre, texte }, i) => (
+                <div key={titre} className="tuile-hote">
+                  <IconePastel icone={Icone} teinte={i} grande />
+                  <h3 className="mt-5 mb-0 text-[18px] text-ink">{titre}</h3>
+                  <p className="mt-2 mb-0 text-[15px] leading-6 text-muted">{texte}</p>
                 </div>
-              </li>
-            ))}
-          </ul>
+              ))}
+            />
+          </div>
         </div>
       </section>
 
