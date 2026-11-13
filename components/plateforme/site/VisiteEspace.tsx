@@ -151,7 +151,7 @@ function EcranTableau() {
   const barres = [42, 58, 51, 73, 66, 88];
   return (
     <>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 sm:gap-3">
+      <div className="grid grid-cols-2 @2xl:grid-cols-4 gap-2 sm:gap-3">
         <Tuile libelle="Membres à jour" valeur="128" detail="+6 vs octobre" />
         <Tuile
           libelle="Encaissé ce mois"
@@ -161,12 +161,12 @@ function EcranTableau() {
         <Tuile libelle="Événements à venir" valeur="4" detail="166 inscrits" />
         <Tuile libelle="Demandes d’adhésion" valeur="3" detail="à examiner" />
       </div>
-      <div className="mt-3 grid gap-3 md:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+      <div className="mt-3 grid gap-3 @2xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
         <div className={`${CARTE} p-4`}>
           <span className="block text-[12px] font-medium text-ink">
             Encaissements, six mois
           </span>
-          <div className="mt-4 h-[112px] flex items-end gap-2 sm:gap-4">
+          <div className="mt-4 h-[96px] flex items-end gap-2 sm:gap-4">
             {barres.map((h, i) => (
               <span
                 key={i}
@@ -186,7 +186,7 @@ function EcranTableau() {
             ))}
           </div>
         </div>
-        <div className={`${CARTE} p-4`}>
+        <div className={`${CARTE} p-4 hidden @2xl:block`}>
           <span className="block text-[12px] font-medium text-ink mb-3">
             Prochains événements
           </span>
@@ -283,9 +283,9 @@ function EcranEvenements() {
     },
   ];
   return (
-    <div className="grid gap-3 md:grid-cols-3">
+    <div className="grid gap-3 @2xl:grid-cols-3">
       {evenements.map((e, i) => (
-        <div key={e.nom} className={`${CARTE} p-4 flex md:flex-col gap-3`}>
+        <div key={e.nom} className={`${CARTE} p-4 flex @2xl:flex-col gap-3`}>
           <span className="grid place-items-center w-12 h-14 rounded-[8px] bg-marque-nuit text-white shrink-0 leading-none">
             <span className="text-center">
               <span className="tabular-nums block text-[17px] font-medium">
@@ -360,7 +360,7 @@ function EcranPaiements() {
 // L'espace d'un membre : sa carte de membre, rendue en code, est le moment de cette vue
 function EcranMembre() {
   return (
-    <div className="grid gap-3 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+    <div className="grid gap-3 @2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
       <div className={`${CARTE} p-4`}>
         <div
           className="rounded-[12px] p-4 sm:p-5 text-white"
@@ -420,7 +420,7 @@ function EcranMembre() {
           </span>
         ))}
       </div>
-      <div className={`${CARTE} p-4`}>
+      <div className={`${CARTE} p-4 hidden @2xl:block`}>
         <span className="block text-[12px] font-medium text-ink mb-2">
           Mises en relation suggérées
         </span>
@@ -589,7 +589,7 @@ export function VisiteEspace() {
         ref={fenetre}
         role="img"
         aria-label={`Illustration de l’espace : ${o.texte}`}
-        className="visite select-none rounded-2xl border border-line bg-surface shadow-[0_40px_80px_-40px_rgba(0,0,0,0.6)] overflow-hidden"
+        className="visite @container select-none rounded-2xl border border-line bg-surface shadow-[0_40px_80px_-40px_rgba(0,0,0,0.6)] overflow-hidden"
       >
         <div className="flex items-center gap-2 px-4 h-10 border-b border-line bg-surface-2">
           <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
@@ -597,9 +597,9 @@ export function VisiteEspace() {
           <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
           <span className="ml-3 h-5 flex-1 max-w-[280px] rounded-full bg-surface border border-line" />
         </div>
-        <div className="flex min-h-[340px] sm:min-h-[400px]">
+        <div className="flex h-[500px] overflow-hidden">
           <div
-            className="hidden sm:flex w-[152px] lg:w-[180px] shrink-0 flex-col gap-1 p-3"
+            className="hidden @md:flex w-[120px] @2xl:w-[180px] shrink-0 flex-col gap-1 p-3"
             style={{
               background:
                 o.menu < 0
@@ -622,7 +622,7 @@ export function VisiteEspace() {
           </div>
           <div
             key={o.cle}
-            className={`visite-ecran flex-1 min-w-0 p-4 sm:p-6 bg-[#f6f4ef] ${sortant ? "est-sortant" : ""}`}
+            className={`visite-ecran flex-1 min-w-0 p-4 @2xl:p-6 bg-[#f6f4ef] ${sortant ? "est-sortant" : ""}`}
           >
             <span className={`block h-2 w-20 ${PISTE}`} />
             <span className="block mt-2 mb-4 text-[16px] sm:text-[18px] font-semibold text-ink">

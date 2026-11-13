@@ -220,17 +220,22 @@ export function Illustration({
           priority={priorite}
           className="block w-full h-auto"
         />
-        {ORNEMENTS[nom].map((o, i) => (
-          <span key={i} aria-hidden className={`ornement ${o.ou}`} style={{ "--ordre": i } as CSSProperties}>
-            <span
-              className={`block ${o.boucle === "balance" ? "ornement-balance" : "ornement-bobine"}`}
-              style={{ animationDelay: `${-i * 1300}ms`, animationDuration: `${5 + (i % 3)}s` }}
-            >
-              <Contenu o={o} />
-            </span>
-          </span>
-        ))}
+        <Ornements liste={ORNEMENTS[nom]} />
       </span>
     </div>
   );
+}
+
+// Les ornements d'un dessin, placés par rapport à leur parent « relative »
+function Ornements({ liste }: { liste: Ornement[] }) {
+  return liste.map((o, i) => (
+    <span key={i} aria-hidden className={`ornement ${o.ou}`} style={{ "--ordre": i } as CSSProperties}>
+      <span
+        className={`block ${o.boucle === "balance" ? "ornement-balance" : "ornement-bobine"}`}
+        style={{ animationDelay: `${-i * 1300}ms`, animationDuration: `${5 + (i % 3)}s` }}
+      >
+        <Contenu o={o} />
+      </span>
+    </span>
+  ));
 }

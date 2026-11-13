@@ -119,7 +119,7 @@ export default async function AccueilPlateforme() {
       {/* Accroche : le texte à gauche, l'aperçu du vrai produit en pleine largeur dessous, sur un fond dégradé */}
       <section className="accroche-site sur-sombre text-white">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-16 lg:pb-24">
-          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
           <div className="max-w-[640px]">
             <p className="entree m-0 text-[15px] text-white/70">Pour les Chambres de commerce et les associations d’affaires</p>
             <h1 className="entree entree-2 mt-4 mb-0 text-[length:clamp(38px,5.2vw,64px)] leading-[1.04] text-white">
@@ -141,15 +141,11 @@ export default async function AccueilPlateforme() {
               </Link>
             </p>
           </div>
-          <Illustration nom="poignee-de-main-claire" flotte priorite className="hidden lg:block w-full max-w-[520px] justify-self-end" />
+          {/* L'aperçu de l'espace, qui flotte lentement */}
+          <div className="illustration illustration-visible illustration-flotte w-full max-w-[620px] justify-self-end">
+            <VisiteEspace />
           </div>
-        </div>
-      </section>
-
-      {/* Aperçu de l'espace : les écrans se succèdent d'eux-mêmes, sur fond blanc */}
-      <section className="bg-white border-b border-line">
-        <div data-reveal="" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 lg:py-20">
-          <VisiteEspace />
+          </div>
         </div>
       </section>
 
