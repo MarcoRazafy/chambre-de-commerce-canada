@@ -7,7 +7,7 @@ import { Alerte, CadreAuth } from "@/components/public/CadreAuth";
 import { ChampAuth, Saisie } from "@/components/public/ChampsAuth";
 import { demanderReinitialisationGM } from "@/lib/actions/gm-compte";
 
-export const metadata: Metadata = { title: "Mot de passe oublié · Admin GM" };
+export const metadata: Metadata = { title: "Mot de passe oublié · Administrateur" };
 
 // Mot de passe oublié (Admin GM) : un lien par courriel, valable une heure
 export default async function MotDePasseOublieGM({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string; envoye?: string }> }) {
@@ -15,7 +15,7 @@ export default async function MotDePasseOublieGM({ searchParams }: { searchParam
 
   return (
     <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM} illustration={envoye ? "courriel" : "oubli"}>
-      <span className="surtitre text-marque-rouge">Admin GM</span>
+      <span className="surtitre text-marque-rouge">Administrateur</span>
 
       {envoye ? (
         <div className="apparition">

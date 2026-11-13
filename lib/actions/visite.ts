@@ -12,7 +12,7 @@ export async function quitterVisite() {
   const chambreId = await chambreCourante();
   if (visite) {
     await prisma.auditLog.create({
-      data: { action: "visite_gm_fin", entite: "Chambre", entiteId: chambreId, acteur: `${visite.n} (Admin GM)`, detail: "Sortie de l’Admin GM." },
+      data: { action: "visite_gm_fin", entite: "Chambre", entiteId: chambreId, acteur: `${visite.n} (administrateur de la plateforme)`, detail: "Sortie de l’administrateur de la plateforme." },
     });
   }
   await fermerSession();

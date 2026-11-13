@@ -9,7 +9,7 @@ import { ChampAuth, ChampMotDePasse, Saisie } from "@/components/public/ChampsAu
 import { connexionGM } from "@/lib/actions/gm";
 import { compteGM } from "@/lib/gm";
 
-export const metadata: Metadata = { title: "Connexion · Admin GM" };
+export const metadata: Metadata = { title: "Connexion · Administrateur" };
 
 export default async function ConnexionGM({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string; suite?: string }> }) {
   const { erreur, email, suite } = await searchParams;
@@ -17,7 +17,7 @@ export default async function ConnexionGM({ searchParams }: { searchParams: Prom
 
   return (
     <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM} illustration="admin">
-      <span className="surtitre text-marque-rouge">Admin GM</span>
+      <span className="surtitre text-marque-rouge">Administrateur</span>
       <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mt-2.5 mb-6">Connexion</h1>
 
       {erreur ? <Alerte>{erreur}</Alerte> : null}

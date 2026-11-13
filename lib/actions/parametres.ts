@@ -203,7 +203,7 @@ export async function activerModeDeveloppeur(formData: FormData) {
   const chambreId = await chambreCourante();
   await prisma.chambre.update({ where: { id: chambreId }, data: { accesDevJusqua: jusqua, accesDevPar: moi.nom } });
   await prisma.auditLog.create({
-    data: { action: "mode_dev_active", entite: "Chambre", entiteId: chambreId, acteur: moi.nom, detail: `Accès de l’Admin GM autorisé jusqu’au ${jusqua.toLocaleDateString("fr-FR", { timeZone: "UTC" })}.` },
+    data: { action: "mode_dev_active", entite: "Chambre", entiteId: chambreId, acteur: moi.nom, detail: `Accès de l’administrateur de la plateforme autorisé jusqu’au ${jusqua.toLocaleDateString("fr-FR", { timeZone: "UTC" })}.` },
   });
   oublierAdresses();
   revalidatePath(PAGE);
@@ -215,7 +215,7 @@ export async function desactiverModeDeveloppeur() {
   const chambreId = await chambreCourante();
   await prisma.chambre.update({ where: { id: chambreId }, data: { accesDevJusqua: null, accesDevPar: null } });
   await prisma.auditLog.create({
-    data: { action: "mode_dev_desactive", entite: "Chambre", entiteId: chambreId, acteur: moi.nom, detail: "Accès de l’Admin GM retiré." },
+    data: { action: "mode_dev_desactive", entite: "Chambre", entiteId: chambreId, acteur: moi.nom, detail: "Accès de l’administrateur de la plateforme retiré." },
   });
   oublierAdresses();
   revalidatePath(PAGE);

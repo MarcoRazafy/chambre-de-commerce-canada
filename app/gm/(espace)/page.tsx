@@ -24,7 +24,7 @@ export default async function TableauDeBordGM() {
   const plusHaut = Math.max(...t.revenus.map((r) => r.total), 0);
   return (
     <>
-      <EnTeteAdmin surtitre={`Admin GM · ${aujourdhui}`} titre={<>Bonjour <Saillant>{gm.nom.split(" ")[0]}</Saillant>,</>} />
+      <EnTeteAdmin surtitre={`Administrateur · ${aujourdhui}`} titre={<>Bonjour <Saillant>{gm.nom.split(" ")[0]}</Saillant>,</>} />
 
       <div className="cascade grid gap-3 sm:gap-4 mb-5 grid-cols-2 xl:grid-cols-4">
         <Compteur icone={<Building2 size={20} />} libelle="Chambres actives" valeur={t.actives} detail={`sur ${t.total}`} href="/gm/chambres?statut=active" teinte="bleu" />

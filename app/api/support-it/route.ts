@@ -27,7 +27,7 @@ export async function GET() {
 export async function POST(requete: NextRequest) {
   if (!memeOrigine(requete)) return Response.json({ ok: false, erreur: "Origine refusée." }, { status: 403 });
   const user = await getCurrentUser("admin");
-  if (user.visiteGM) return Response.json({ ok: false, erreur: "Indisponible pendant une visite de l’Admin GM." }, { status: 403 });
+  if (user.visiteGM) return Response.json({ ok: false, erreur: "Indisponible pendant une visite de l’administrateur de la plateforme." }, { status: 403 });
   let formData: FormData;
   try {
     formData = await requete.formData();

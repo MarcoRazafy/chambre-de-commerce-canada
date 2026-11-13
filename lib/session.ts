@@ -65,7 +65,7 @@ export async function getCurrentUser(space: Space): Promise<User> {
   // Visite de l'Admin GM dans ce compte (mode développeur) : son nom, pour l'affichage et le journal
   const visite = await visiteCourante();
   const visiteGM = visite && visite.u === u.id ? visite.n : null;
-  const nom = visiteGM ? `${visiteGM} (Admin GM)` : u.nom;
+  const nom = visiteGM ? `${visiteGM} (administrateur de la plateforme)` : u.nom;
 
   return {
     id: u.id,
@@ -74,7 +74,7 @@ export async function getCurrentUser(space: Space): Promise<User> {
     space,
     memberId: u.memberId,
     nom,
-    fonction: visiteGM ? "Visite de l’Admin GM" : u.fonction,
+    fonction: visiteGM ? "Visite de l’administrateur de la plateforme" : u.fonction,
     email: u.email,
     tel: u.tel ?? undefined,
     initiales: initiales(nom),

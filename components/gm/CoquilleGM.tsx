@@ -18,7 +18,7 @@ const ACTIVE = "entree-menu-actif bg-accent text-white font-semibold shadow-[0_2
 const REPOS = "text-white/70 hover:bg-white/[0.08] hover:text-white";
 
 const initiales = (nom: string) =>
-  nom.split(/\s+/).filter(Boolean).map((m) => m[0]).slice(0, 2).join("").toUpperCase() || "GM";
+  nom.split(/\s+/).filter(Boolean).map((m) => m[0]).slice(0, 2).join("").toUpperCase() || "A";
 
 function Portrait({ nom, taille }: { nom: string; taille: number }) {
   return (
@@ -64,12 +64,12 @@ export function CoquilleGM({
             <span className="block text-[21px] font-bold leading-tight text-white">L’Alliée Virtuelle</span>
           </Link>
           <div className="mt-5 flex items-center gap-2.5">
-            <span className="surtitre text-white/70">Admin GM</span>
+            <span className="surtitre text-white/70">Administrateur</span>
             <span className="h-px flex-1 bg-white/25" />
           </div>
         </div>
 
-        <nav aria-label="Menu de l’espace Admin GM" className="defilement-sombre flex-1 overflow-y-auto px-3.5 pb-4">
+        <nav aria-label="Menu de l’espace administrateur" className="defilement-sombre flex-1 overflow-y-auto px-3.5 pb-4">
           {nav.map((groupe, i) => (
             <div key={groupe.label || `groupe-${i}`} className={i > 0 ? "mt-4 pt-4 border-t border-white/[0.08]" : ""}>
               {groupe.label ? <div className="surtitre text-white/35 mx-3 mb-2">{groupe.label}</div> : null}
@@ -119,7 +119,7 @@ export function CoquilleGM({
           <Portrait nom={gm.nom} taille={40} />
           <span className="min-w-0 flex-1">
             <span className="block text-[13.5px] font-semibold text-white truncate">{gm.nom}</span>
-            <span className="block text-[11.5px] text-white/50 truncate">Admin GM · L’Alliée Virtuelle</span>
+            <span className="block text-[11.5px] text-white/50 truncate">Administrateur · L’Alliée Virtuelle</span>
           </span>
         </div>
 

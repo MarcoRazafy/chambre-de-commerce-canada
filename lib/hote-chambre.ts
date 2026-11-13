@@ -5,14 +5,17 @@
 
 // Sous-domaines de la plateforme qui ne sont pas des Chambres (site public, Admin GM, services)
 export const SOUS_DOMAINES_RESERVES = new Set([
-  "www", "gm", "app", "api", "admin", "mail", "smtp", "imap", "webmail", "static", "cdn", "assets", "docs", "aide", "support", "status",
+  "www", "manage", "gm", "app", "api", "admin", "mail", "smtp", "imap", "webmail", "static", "cdn", "assets", "docs", "aide", "support", "status",
 ]);
 
 const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 
+// Le sous-domaine de l'espace administrateur de la plateforme (manage.DOMAINE_PLATEFORME, manage.localhost en local)
+export const SOUS_DOMAINE_ADMIN = "manage";
+
 export type Hote = { type: "sous-domaine"; slug: string } | { type: "gm" } | { type: "plateforme" } | { type: "autre"; hote: string };
 
-// « Cancham.Lalliee-Virtuelle.com:443 » → { sous-domaine « cancham » } ; « gm.lalliee-virtuelle.com » → { gm } ;
+// « Cancham.Lalliee-Virtuelle.com:443 » → { sous-domaine « cancham » } ; « manage.lalliee-virtuelle.com » → { gm } (l'espace administrateur) ;
 // « lalliee-virtuelle.com » ou « www.… » → { plateforme } (le site public, en premier sur le domaine) ;
 // « cancham.mg » → { autre « cancham.mg » }. En développement : localhost et www.localhost → le site public.
 export function lireHote(brut: string | null | undefined, plateforme: string | null, dev: boolean): Hote {
@@ -24,8 +27,8 @@ export function lireHote(brut: string | null | undefined, plateforme: string | n
   for (const base of [domaine, dev ? "localhost" : null]) {
     if (!base || !hote.endsWith(`.${base}`)) continue;
     const slug = hote.slice(0, -(base.length + 1));
-    // L'espace de l'Admin GM : gm.DOMAINE_PLATEFORME (gm.localhost en développement)
-    if (slug === "gm") return { type: "gm" };
+    // L'espace administrateur de la plateforme : manage.DOMAINE_PLATEFORME (manage.localhost en développement)
+    if (slug === SOUS_DOMAINE_ADMIN) return { type: "gm" };
     if (SLUG.test(slug) && !SOUS_DOMAINES_RESERVES.has(slug)) return { type: "sous-domaine", slug };
   }
   return { type: "autre", hote };

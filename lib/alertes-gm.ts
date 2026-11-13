@@ -14,7 +14,7 @@ export async function alerterGM(a: { sujet: string; titre: string; paragraphes: 
     const { html, texte } = gabarit({
       titre: a.titre,
       paragraphes: a.paragraphes,
-      bouton: { libelle: a.chambreId ? "Ouvrir la fiche de la Chambre" : "Ouvrir l’espace Admin GM", url },
+      bouton: { libelle: a.chambreId ? "Ouvrir la fiche de la Chambre" : "Ouvrir l’espace administrateur", url },
     });
     await Promise.all(comptes.map((c) => envoyerCourriel({ a: c.email, sujet: a.sujet, html, texte, dePlateforme: true }).catch(() => false)));
   } catch (e) {

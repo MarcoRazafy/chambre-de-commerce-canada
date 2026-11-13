@@ -17,12 +17,12 @@ export async function GET(req: Request) {
     db.user.findFirst({ where: { id: entree.u, chambreId: ici, role: "admin", niveauEquipe: "administrateur" }, select: { id: true } }),
     db.compteGM.findUnique({ where: { id: entree.g }, select: { id: true } }),
   ]);
-  if (!chambre?.accesDevJusqua || chambre.accesDevJusqua <= new Date()) return refus("Cet espace n’autorise pas l’accès de l’Admin GM.");
+  if (!chambre?.accesDevJusqua || chambre.accesDevJusqua <= new Date()) return refus("Cet espace n’autorise pas l’accès de l’administrateur de la plateforme.");
   if (!compte || !gm) return refus("Ce lien d’entrée n’est plus valable.");
   await ouvrirSession(compte.id, false, true);
   await ouvrirVisite({ u: compte.id, g: gm.id, n: entree.n });
   await db.auditLog.create({
-    data: { chambreId: ici, action: "visite_gm", entite: "Chambre", entiteId: ici, acteur: `${entree.n} (Admin GM)`, detail: "Entrée de l’Admin GM dans l’espace." },
+    data: { chambreId: ici, action: "visite_gm", entite: "Chambre", entiteId: ici, acteur: `${entree.n} (administrateur de la plateforme)`, detail: "Entrée de l’administrateur de la plateforme dans l’espace." },
   });
   return vers("/admin");
 }

@@ -4,7 +4,7 @@ import { exigerGM } from "@/lib/gm";
 import { NAV_GM } from "@/lib/nav";
 import { nonLusSupportGM } from "@/lib/support-it";
 
-export const metadata: Metadata = { title: { default: "Admin GM", template: "%s · Admin GM" } };
+export const metadata: Metadata = { title: { default: "Administrateur", template: "%s · Administrateur" } };
 
 // Espace de l'Admin GM : les Chambres clientes de la plateforme et les offres
 export default async function EspaceGM({ children }: { children: React.ReactNode }) {

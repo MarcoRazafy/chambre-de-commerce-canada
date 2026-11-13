@@ -38,9 +38,11 @@ describe("lireHote : l'adresse du site → la Chambre", () => {
       expect(lireHote(h, P, false).type).toBe("autre");
     }
     // L'espace de l'Admin GM
-    expect(lireHote("gm.lalliee-virtuelle.com", P, false)).toEqual({ type: "gm" });
-    expect(lireHote("gm.localhost:3000", null, true)).toEqual({ type: "gm" });
-    expect(lireHote("gm.localhost:3000", null, false).type).toBe("autre");
+    expect(lireHote("manage.lalliee-virtuelle.com", P, false)).toEqual({ type: "gm" });
+    expect(lireHote("manage.localhost:3000", null, true)).toEqual({ type: "gm" });
+    expect(lireHote("manage.localhost:3000", null, false).type).toBe("autre");
+    // gm. reste réservé : ce n'est ni l'espace administrateur ni une Chambre
+    expect(lireHote("gm.lalliee-virtuelle.com", P, false).type).toBe("autre");
     expect(slugValide("cancham")).toBe(true);
     expect(slugValide("www")).toBe(false);
     expect(slugValide("Cancham")).toBe(false);
@@ -70,7 +72,7 @@ describe("resoudreHote : recherche en base", () => {
     expect(await resoudreHote("retard.lalliee-virtuelle.com")).toEqual({ id: "c-retard", propre: true, suspendue: false, restriction: "lecture", accesDev: false, fonctions: null });
     expect(await resoudreHote("cancham.mg")).toEqual({ id: "c-cancham", propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
     expect(await resoudreHote("app.exemple.org")).toEqual({ id: CHAMBRE_PRINCIPALE, propre: false, suspendue: false, restriction: null, accesDev: false, fonctions: null });
-    expect(await resoudreHote("gm.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
+    expect(await resoudreHote("manage.lalliee-virtuelle.com")).toEqual({ id: null, propre: true, suspendue: false, restriction: null, accesDev: false, fonctions: null });
     // Gardé en mémoire : pas de seconde recherche
     await resoudreHote("cancham.lalliee-virtuelle.com");
     expect(chercher).toHaveBeenCalledTimes(7);

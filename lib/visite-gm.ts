@@ -8,6 +8,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { timingSafeEqual } from "node:crypto";
 import { DUREE_SESSION_VISITE_MS, signer } from "@/lib/auth";
+import { SOUS_DOMAINE_ADMIN } from "@/lib/hote-chambre";
 
 export const NOM_COOKIE_VISITE = "gm_visite";
 const DUREE_LIEN_MS = 2 * 60_000;
@@ -63,13 +64,14 @@ export async function visiteCourante(): Promise<Visite | null> {
   return lireVisite((await cookies()).get(NOM_COOKIE_VISITE)?.value);
 }
 
-// L'adresse de l'espace Admin GM (pour y revenir en quittant une visite)
+// L'adresse de l'espace administrateur de la plateforme (manage.…), pour y revenir en quittant une visite, et pour les
+// liens des courriels et des alertes
 export function adresseGM(): string {
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
-  if (plateforme) return `https://gm.${plateforme}`;
+  if (plateforme) return `https://${SOUS_DOMAINE_ADMIN}.${plateforme}`;
   let port = process.env.PORT || "3000";
   try {
     port = new URL(process.env.APP_URL ?? "").port || port;
   } catch {}
-  return `http://gm.localhost:${port}`;
+  return `http://${SOUS_DOMAINE_ADMIN}.localhost:${port}`;
 }

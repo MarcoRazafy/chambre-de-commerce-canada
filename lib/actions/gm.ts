@@ -27,7 +27,7 @@ const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").tr
 const fiche = (id: string) => `/gm/chambres/${encodeURIComponent(id)}`;
 
 async function noter(chambreId: string, acteur: string, action: string, detail: string) {
-  await db.auditLog.create({ data: { chambreId, action, entite: "Chambre", entiteId: chambreId, acteur: `${acteur} (Admin GM)`, detail } });
+  await db.auditLog.create({ data: { chambreId, action, entite: "Chambre", entiteId: chambreId, acteur: `${acteur} (administrateur de la plateforme)`, detail } });
 }
 
 async function chambreOuErreur(fd: FormData) {
@@ -204,7 +204,7 @@ export async function marquerFacturePayee(formData: FormData) {
   const f = await db.facturePlateforme.findFirst({ where: { id, chambreId: c.id }, select: { numero: true, payeeLe: true } });
   if (!f) redirectWithErreur(fiche(c.id), "Facture introuvable.");
   if (f.payeeLe) redirectWithFlash(fiche(c.id), "Facture déjà payée");
-  await marquerPayee(id, null, `${gm.nom} (Admin GM)`);
+  await marquerPayee(id, null, `${gm.nom} (administrateur de la plateforme)`);
   revalidatePath("/gm", "layout");
   redirectWithFlash(fiche(c.id), `Facture ${f.numero} payée`);
 }

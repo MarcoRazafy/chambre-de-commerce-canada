@@ -36,12 +36,12 @@ type Courriel = Parameters<typeof envoyerCourriel>[0];
 export function courrielReinitialisationGM(a: string, nom: string, lien: string): Courriel {
   return {
     a,
-    sujet: "Réinitialiser le mot de passe de votre compte Admin GM",
+    sujet: "Réinitialiser le mot de passe de votre compte administrateur",
     ...gabarit({
       titre: "Réinitialiser votre mot de passe",
       paragraphes: [
         `Bonjour ${nom.split(/\s+/)[0]},`,
-        "Vous avez demandé à changer le mot de passe de votre compte Admin GM de L’Alliée Virtuelle. Ce lien est valable une heure et ne sert qu’une fois.",
+        "Vous avez demandé à changer le mot de passe de votre compte administrateur de L’Alliée Virtuelle. Ce lien est valable une heure et ne sert qu’une fois.",
       ],
       bouton: { libelle: "Choisir un nouveau mot de passe", url: lien },
       apres: ["Si vous n’êtes pas à l’origine de cette demande, ignorez ce message : votre mot de passe actuel reste valable."],

@@ -199,7 +199,7 @@ export function restreindre(modele: string, operation: string, args: unknown, ch
     throw new ChambreHorsPortee("Créer une Chambre se fait hors d'une Chambre (prismaSysteme)");
   }
   if (COMMUNES.has(modele)) {
-    if (!LECTURES.has(operation)) throw new ChambreHorsPortee(`« ${modele} » ne se modifie que dans l'espace Admin GM`);
+    if (!LECTURES.has(operation)) throw new ChambreHorsPortee(`« ${modele} » ne se modifie que dans l'espace administrateur de la plateforme`);
     return a;
   }
   const filtre = filtreChambre(modele, chambreId); // modèle inconnu : erreur

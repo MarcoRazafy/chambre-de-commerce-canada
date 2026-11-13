@@ -200,7 +200,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
         const autorise = gere && !moi.visiteGM;
         const quand = (d: Date) => d.toLocaleString("fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" });
         return (
-          <Panneau titre="Mode développeur" sousTitre="Autoriser l’Admin GM de la plateforme à entrer dans l’espace pour vous aider" teinte="bleu">
+          <Panneau titre="Mode développeur" sousTitre="Autoriser l’administrateur de la plateforme à entrer dans l’espace pour vous aider" teinte="bleu">
             <div className="flex flex-col gap-4">
               {!gere ? verrou : null}
               {actif && chambre?.accesDevJusqua ? (

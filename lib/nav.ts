@@ -128,11 +128,11 @@ export function navFor(space: Space): NavGroup[] {
 }
 
 export const TITLES: Record<string, [string, string]> = {
-  "/gm": ["Admin GM", "Tableau de bord"],
-  "/gm/chambres": ["Admin GM", "Chambres"],
-  "/gm/offres": ["Admin GM", "Offres"],
-  "/gm/parametres": ["Admin GM", "Paramètres"],
-  "/gm/messages": ["Admin GM", "Messages"],
+  "/gm": ["Administrateur", "Tableau de bord"],
+  "/gm/chambres": ["Administrateur", "Chambres"],
+  "/gm/offres": ["Administrateur", "Offres"],
+  "/gm/parametres": ["Administrateur", "Paramètres"],
+  "/gm/messages": ["Administrateur", "Messages"],
   "/membre": ["Espace membre", "Vue d’ensemble"],
   "/membre/recherche": ["Espace membre", "Recherche"],
   "/membre/profil": ["Espace membre", "Mon entreprise"],

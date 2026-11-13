@@ -9,7 +9,7 @@ import { definirMotDePasseGM } from "@/lib/actions/gm-compte";
 import { MOT_DE_PASSE_MIN } from "@/lib/auth";
 import { compteGMDuLien } from "@/lib/gm-compte";
 
-export const metadata: Metadata = { title: "Nouveau mot de passe · Admin GM" };
+export const metadata: Metadata = { title: "Nouveau mot de passe · Administrateur" };
 
 // Nouveau mot de passe (Admin GM), depuis le lien reçu par courriel
 export default async function NouveauMotDePasseGM({ searchParams }: { searchParams: Promise<{ jeton?: string; erreur?: string }> }) {
@@ -18,7 +18,7 @@ export default async function NouveauMotDePasseGM({ searchParams }: { searchPara
 
   return (
     <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM} illustration={!compte ? "oubli" : "mot-de-passe"}>
-      <span className="surtitre text-marque-rouge">Admin GM</span>
+      <span className="surtitre text-marque-rouge">Administrateur</span>
 
       {!compte ? (
         <div className="apparition">

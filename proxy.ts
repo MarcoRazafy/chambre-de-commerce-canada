@@ -66,7 +66,7 @@ const OUVERT_SI_SUSPENDUE = (chemin: string) =>
   chemin === "/admin/abonnement" ||
   chemin.startsWith("/admin/abonnement/");
 
-// Espace Admin GM (gm.DOMAINE_PLATEFORME) : seulement ses pages, avec sa propre session
+// Espace administrateur de la plateforme (manage.DOMAINE_PLATEFORME) : seulement ses pages, avec sa propre session
 // Pages de l'espace GM ouvertes sans session : connexion, mot de passe oublié
 const GM_SANS_SESSION = new Set(["/gm/connexion", "/gm/mot-de-passe-oublie", "/gm/nouveau-mot-de-passe"]);
 
