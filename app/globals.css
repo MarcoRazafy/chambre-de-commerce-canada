@@ -1183,11 +1183,11 @@ html:has(.espace-admin) {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
-/* Accroche de l'accueil : un dégradé en diagonale, du rouge de l'équipe au vert des membres, très dilué dans le papier */
+/* Accroche de l'accueil : un fond sombre, du rouge de l'équipe au vert des membres en passant par le bleu nuit */
 .site-plateforme .accroche-site {
   background:
-    radial-gradient(ellipse 60% 70% at 100% 100%, rgb(0 113 64 / 0.1), transparent 70%),
-    linear-gradient(135deg, #fbe9e5 0%, #faf5f2 30%, var(--bg) 55%, #edf5f0 100%);
+    radial-gradient(ellipse 60% 50% at 50% 100%, rgb(255 255 255 / 0.05), transparent 70%),
+    linear-gradient(100deg, #8c0a0a 0%, #4a0b14 22%, #0f1d2c 50%, #0b2f27 76%, #006b3c 100%);
 }
 /* Mots en couleur dans les titres : rouge et vert (.saillant), ou le dégradé de la marque */
 .site-plateforme .texte-degrade {
@@ -1342,44 +1342,59 @@ html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
 .site-plateforme .btn-action:hover svg {
   transform: translateX(3px);
 }
-/* Aperçu de l'espace : la fenêtre en perspective, un peu inclinée, suit le curseur et respire lentement ; elle se
-   redresse en entrant dans l'écran (navigateurs qui animent au défilement) ; un écran s'efface avant que le suivant
-   n'apparaisse ; les barres montent (ou s'étirent) quand l'aperçu est à l'écran, et à chaque écran */
-@keyframes site-respire {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-.site-plateforme .visite-scene {
-  perspective: 1800px;
-  animation: site-respire 9s ease-in-out infinite;
-}
-.site-plateforme .visite-redresse {
-  transform-style: preserve-3d;
-}
-@keyframes site-redresse {
+/* Aperçu de l'espace : un écran s'efface avant que le suivant n'apparaisse ; dedans, les cartes et les listes sont en
+   perspective (chacune la sienne), arrivent de la profondeur l'une après l'autre et flottent à des rythmes décalés ;
+   les barres montent (ou s'étirent) quand l'aperçu est à l'écran, et à chaque écran */
+@keyframes site-carte-entree {
   from {
-    transform: rotateX(16deg) translateY(24px);
+    opacity: 0;
+    transform: perspective(900px) rotateX(16deg) rotateY(-6deg) translateY(18px) translateZ(-40px);
   }
   to {
-    transform: none;
+    opacity: 1;
+    transform: perspective(900px) rotateX(4deg) rotateY(-4deg) translateY(0);
   }
 }
-@supports (animation-timeline: view()) {
-  .site-plateforme .visite-redresse {
-    animation: site-redresse linear both;
-    animation-timeline: view();
-    animation-range: entry 0% entry 100%;
+@keyframes site-carte-flotte {
+  0%,
+  100% {
+    transform: perspective(900px) rotateX(4deg) rotateY(-4deg) translateY(0);
+  }
+  50% {
+    transform: perspective(900px) rotateX(2deg) rotateY(-2deg) translateY(-5px);
   }
 }
-.site-plateforme .visite {
-  --inclinaison: 5deg;
-  transform: rotateX(calc(var(--inclinaison) + var(--rx, 0deg))) rotateY(var(--ry, 0deg));
-  transition: transform 0.6s var(--site-ease);
+.site-plateforme .visite .c3d {
+  transform: perspective(900px) rotateX(4deg) rotateY(-4deg);
+  box-shadow:
+    0 18px 30px -18px rgb(28 26 23 / 0.35),
+    0 2px 6px rgb(28 26 23 / 0.06);
+  animation:
+    site-carte-entree 0.7s var(--site-ease) both,
+    site-carte-flotte 7s ease-in-out infinite;
+  animation-delay: var(--c-delai, 0ms), calc(var(--c-delai, 0ms) + 0.7s);
+}
+.site-plateforme .visite .c3d:nth-child(2) {
+  --c-delai: 110ms;
+}
+.site-plateforme .visite .c3d:nth-child(3) {
+  --c-delai: 220ms;
+}
+.site-plateforme .visite .c3d:nth-child(4) {
+  --c-delai: 330ms;
+}
+/* Les points sous la fenêtre : gris sur fond clair, blancs sur fond sombre */
+.site-plateforme .visite-point {
+  background: var(--border-champ);
+}
+.site-plateforme .visite-point.est-actif {
+  background: #14263a;
+}
+.site-plateforme .sur-sombre .visite-point {
+  background: rgb(255 255 255 / 0.35);
+}
+.site-plateforme .sur-sombre .visite-point.est-actif {
+  background: #fff;
 }
 @keyframes site-ecran-entree {
   from {
@@ -1618,8 +1633,7 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   .site-plateforme [data-reveal-groupe].est-visible > *,
   .site-plateforme .visite .pousse-y,
   .site-plateforme .visite .pousse-x,
-  .site-plateforme .visite-scene,
-  .site-plateforme .visite-redresse,
+  .site-plateforme .visite .c3d,
   .site-plateforme .visite-ecran,
   .site-plateforme .illustration:not(.illustration-flotte) > .illustration-corps,
   .fenetre-composeur[open],
@@ -1644,13 +1658,9 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   }
   .site-plateforme .illustration,
   .site-plateforme .carte-filet,
-  .site-plateforme .visite,
   .site-plateforme .btn-action svg,
   .site-plateforme details::details-content {
     transition: none;
-  }
-  .site-plateforme .visite {
-    transform: none;
   }
   .site-plateforme .illustration {
     opacity: 1;

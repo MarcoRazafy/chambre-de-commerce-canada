@@ -117,31 +117,34 @@ export default async function AccueilPlateforme() {
   return (
     <PageSite>
       {/* Accroche : le texte à gauche, l'aperçu du vrai produit en pleine largeur dessous, sur un fond dégradé */}
-      <section className="accroche-site border-b border-line">
+      <section className="accroche-site sur-sombre text-white">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-16 lg:pb-24">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
           <div className="max-w-[640px]">
-            <p className="entree m-0 text-[15px] text-muted">Pour les Chambres de commerce et les associations d’affaires</p>
-            <h1 className="entree entree-2 mt-4 mb-0 text-[length:clamp(38px,5.2vw,64px)] leading-[1.04] text-ink">
+            <p className="entree m-0 text-[15px] text-white/70">Pour les Chambres de commerce et les associations d’affaires</p>
+            <h1 className="entree entree-2 mt-4 mb-0 text-[length:clamp(38px,5.2vw,64px)] leading-[1.04] text-white">
               Votre Chambre, ses membres et leurs cotisations, <span className="texte-degrade">au même endroit</span>
             </h1>
-            <p className="entree entree-3 mt-6 mb-0 max-w-[36rem] text-[18px] leading-[28px] text-muted">
+            <p className="entree entree-3 mt-6 mb-0 max-w-[36rem] text-[18px] leading-[28px] text-white/75">
               L’équipe gère les adhésions, les événements et les paiements depuis un espace à l’adresse de la Chambre. Chaque entreprise membre a le sien.
             </p>
             <div className="entree entree-4 mt-8">
-              <FormulaireEmail />
+              <FormulaireEmail sombre />
             </div>
             <div className="entree entree-4 mt-5">
-              <Rassurances points={["Gratuit pour démarrer", "Sans carte bancaire", "Fonctions au choix"]} />
+              <Rassurances sombre points={["Gratuit pour démarrer", "Sans carte bancaire", "Fonctions au choix"]} />
             </div>
-            <p className="entree entree-4 mt-5 mb-0 text-[14px] text-muted">
+            <p className="entree entree-4 mt-5 mb-0 text-[14px] text-white/70">
               Vous êtes une entreprise ?{" "}
-              <Link href="/devenir-membre" className={`font-medium text-ink underline underline-offset-4 decoration-line-champ hover:decoration-ink rounded-sm ${FOCUS}`}>
+              <Link href="/devenir-membre" className="font-medium text-white underline underline-offset-4 decoration-white/40 hover:decoration-white rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
                 Devenir membre d’une Chambre
               </Link>
             </p>
           </div>
-          <Illustration nom="poignee-de-main" flotte priorite className="hidden lg:block w-full max-w-[520px] justify-self-end" />
+          {/* L'illustration sur un panneau de papier, pour rester lisible sur le fond sombre */}
+          <div className="entree entree-3 hidden lg:block justify-self-end w-full max-w-[520px] rounded-[28px] bg-surface p-8 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.55)]">
+            <Illustration nom="poignee-de-main" flotte priorite className="w-full" />
+          </div>
           </div>
 
           <div className="entree-apercu mt-14 lg:mt-16">
