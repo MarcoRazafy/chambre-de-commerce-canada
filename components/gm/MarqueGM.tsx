@@ -1,10 +1,12 @@
-// Marque de la plateforme sur les pages de connexion de l'espace GM (l'espace n'appartient à aucune Chambre)
+import Link from "next/link";
+import { LogoOfficiel } from "@/components/public/Marque";
+
+// Marque sur les pages de connexion de l'espace GM : le logo IMPACT 261, qui mène à l'accueil de l'espace
 export function MarqueGM() {
   return (
-    <div className="mb-7">
-      <span className="block text-[22px] font-bold leading-tight text-ink">L’Alliée Virtuelle</span>
-      <span aria-hidden className="block mt-2 h-1 w-14 rounded-full" style={{ background: "var(--marque-degrade)" }} />
-    </div>
+    <Link href="/gm" aria-label="Admin GM, accueil" className="inline-block">
+      <LogoOfficiel className="w-[170px] h-auto" priority />
+    </Link>
   );
 }
 

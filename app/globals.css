@@ -1184,6 +1184,12 @@ html:has(.espace-admin) {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+/* Accroche de l'accueil : un dégradé en diagonale, du rouge de l'équipe au vert des membres, très dilué dans le papier */
+.site-plateforme .accroche-site {
+  background:
+    radial-gradient(ellipse 60% 70% at 100% 100%, rgb(0 113 64 / 0.1), transparent 70%),
+    linear-gradient(135deg, #fbe9e5 0%, #faf5f2 30%, var(--bg) 55%, #edf5f0 100%);
+}
 /* Mots en couleur dans les titres : rouge et vert (.saillant), ou le dégradé de la marque */
 .site-plateforme .texte-degrade {
   background-image: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);
