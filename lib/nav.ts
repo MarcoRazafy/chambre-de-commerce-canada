@@ -128,6 +128,10 @@ export function navFor(space: Space): NavGroup[] {
 }
 
 export const TITLES: Record<string, [string, string]> = {
+  "/gm": ["Admin GM", "Tableau de bord"],
+  "/gm/chambres": ["Admin GM", "Chambres"],
+  "/gm/offres": ["Admin GM", "Offres"],
+  "/gm/parametres": ["Admin GM", "Paramètres"],
   "/membre": ["Espace membre", "Vue d’ensemble"],
   "/membre/recherche": ["Espace membre", "Recherche"],
   "/membre/profil": ["Espace membre", "Mon entreprise"],
@@ -195,6 +199,7 @@ const SOUS_PAGES: Record<string, string> = {
 };
 
 const FICHES: Record<string, string> = {
+  "/gm/chambres": "Fiche de la Chambre",
   "/admin/membres": "Fiche du membre",
   "/admin/evenements": "Événement",
   "/admin/actualites": "Actualité",
@@ -237,3 +242,15 @@ export function filPour(chemin: string, racine: string, params?: URLSearchParams
   else fil[fil.length - 1] = { ...fil[fil.length - 1], href: null };
   return fil;
 }
+
+// Espace Admin GM : même coquille que le back-office (Paramètres en pied de menu)
+export const NAV_GM: NavGroup[] = [
+  { label: "", items: [{ href: "/gm", label: "Tableau de bord", icon: "gauge" }] },
+  {
+    label: "Plateforme",
+    items: [
+      { href: "/gm/chambres", label: "Chambres", icon: "building" },
+      { href: "/gm/offres", label: "Offres", icon: "abonnement" },
+    ],
+  },
+];
