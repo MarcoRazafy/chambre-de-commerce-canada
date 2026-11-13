@@ -13,13 +13,14 @@ const SLUG = /^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/;
 export type Hote = { type: "sous-domaine"; slug: string } | { type: "gm" } | { type: "plateforme" } | { type: "autre"; hote: string };
 
 // « Cancham.Lalliee-Virtuelle.com:443 » → { sous-domaine « cancham » } ; « gm.lalliee-virtuelle.com » → { gm } ;
-// « lalliee-virtuelle.com » ou « www.… » → { plateforme } (le site public) ; « cancham.mg » → { autre « cancham.mg » }
+// « lalliee-virtuelle.com » ou « www.… » → { plateforme } (le site public, en premier sur le domaine) ;
+// « cancham.mg » → { autre « cancham.mg » }. En développement : localhost et www.localhost → le site public.
 export function lireHote(brut: string | null | undefined, plateforme: string | null, dev: boolean): Hote {
   const hote = (brut ?? "").split(",")[0].trim().toLowerCase().replace(/:\d+$/, "").replace(/\.$/, "");
   const domaine = plateforme?.trim().toLowerCase() || null;
-  // Le site public de la plateforme : son domaine, avec ou sans www (www.localhost en développement)
+  // Le site public de la plateforme : son domaine, avec ou sans www (localhost, avec ou sans www, en développement)
   if (domaine && (hote === domaine || hote === `www.${domaine}`)) return { type: "plateforme" };
-  if (dev && hote === "www.localhost") return { type: "plateforme" };
+  if (dev && (hote === "localhost" || hote === "www.localhost")) return { type: "plateforme" };
   for (const base of [domaine, dev ? "localhost" : null]) {
     if (!base || !hote.endsWith(`.${base}`)) continue;
     const slug = hote.slice(0, -(base.length + 1));

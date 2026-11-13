@@ -15,14 +15,15 @@ describe("lireHote : l'adresse du site → la Chambre", () => {
   it("en développement : « slug ».localhost ; en production, non", () => {
     expect(lireHote("essai-b.localhost:3000", null, true)).toEqual({ type: "sous-domaine", slug: "essai-b" });
     expect(lireHote("essai-b.localhost:3000", null, false)).toEqual({ type: "autre", hote: "essai-b.localhost" });
-    expect(lireHote("localhost:3000", null, true)).toEqual({ type: "autre", hote: "localhost" });
   });
 
   it("le site public de la plateforme : son domaine, avec ou sans www", () => {
     expect(lireHote("lalliee-virtuelle.com", P, false)).toEqual({ type: "plateforme" });
     expect(lireHote("WWW.lalliee-virtuelle.com:443", P, false)).toEqual({ type: "plateforme" });
     expect(lireHote("www.localhost:3000", null, true)).toEqual({ type: "plateforme" });
+    expect(lireHote("localhost:3000", null, true)).toEqual({ type: "plateforme" });
     expect(lireHote("www.localhost:3000", null, false).type).toBe("autre");
+    expect(lireHote("localhost:3000", null, false)).toEqual({ type: "autre", hote: "localhost" });
     expect(lireHote("lalliee-virtuelle.com", null, false).type).toBe("autre");
   });
 

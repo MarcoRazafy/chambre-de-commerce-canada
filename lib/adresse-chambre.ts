@@ -2,8 +2,9 @@ import "server-only";
 
 // L'adresse web d'une Chambre, pour les liens envoyés (courriels, retour de paiement, connexion) :
 //  - son domaine propre s'il y en a un ;
-//  - la Chambre n° 1 : DOMAINE_PRINCIPAL (sinon null : l'adresse habituelle du site, comme avant) ;
-//  - les autres : « slug ».DOMAINE_PLATEFORME ; en développement, http://« slug ».localhost:port.
+//  - la Chambre n° 1 : DOMAINE_PRINCIPAL s'il est réglé ;
+//  - sinon, comme toutes : « slug ».DOMAINE_PLATEFORME ; en développement, http://« slug ».localhost:port
+//    (le domaine nu, et localhost en développement, affichent le site de la plateforme).
 import { CHAMBRE_PRINCIPALE } from "@/lib/chambre-courante";
 import { prismaSysteme } from "@/lib/db";
 
@@ -29,7 +30,7 @@ export async function adresseDeLaChambre(chambreId: string): Promise<string | nu
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   if (!c) adresse = null;
   else if (c.domaine) adresse = `https://${c.domaine}`;
-  else if (chambreId === CHAMBRE_PRINCIPALE) adresse = principal ? `https://${principal}` : null;
+  else if (chambreId === CHAMBRE_PRINCIPALE && principal) adresse = `https://${principal}`;
   else if (plateforme) adresse = `https://${c.slug}.${plateforme}`;
   else if (process.env.NODE_ENV !== "production") adresse = `http://${c.slug}.localhost:${portLocal()}`;
   memoire.set(chambreId, { jusqua: Date.now() + 60_000, adresse });

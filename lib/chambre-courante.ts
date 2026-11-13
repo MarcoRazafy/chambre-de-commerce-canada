@@ -1,7 +1,8 @@
 // La Chambre de la requête en cours : chaque lecture et écriture de la base s'y limite (lib/db.ts).
 //  1. celle fixée par avecChambre() : tâches régulières, webhooks, scripts, tests ;
 //  2. sinon celle de l'adresse du site (sous-domaine de la plateforme, ou domaine propre d'une Chambre) ;
-//     une autre adresse (domaine principal, localhost…) : la Chambre n° 1.
+//     une autre adresse (domaine principal, adresse IP…) : la Chambre n° 1. Le domaine de la plateforme (et localhost
+//     en développement) affiche le site public, sans Chambre.
 // Un compte n'est reconnu que sur l'adresse de sa Chambre (proxy.ts, lib/session.ts).
 // Hors d'une requête et sans avecChambre() : erreur, plutôt qu'une Chambre devinée.
 // Pas de « server-only » ici : les scripts (tsx) importent lib/db.
