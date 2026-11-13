@@ -1601,3 +1601,25 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
     transform: none;
   }
 }
+
+/* Cadre des pages d'authentification (components/public/CadreAuth) : le formulaire à nu à droite ; titre plus grand,
+   champs plus hauts, bouton de 56 px avec une ombre de sa couleur */
+.cadre-auth main h1 {
+  font-size: clamp(30px, 3.2vw, 40px);
+  line-height: 1.1;
+}
+.cadre-auth .champ-auth {
+  padding-top: 15px;
+  padding-bottom: 15px;
+  border-radius: 10px;
+  font-size: 15.5px;
+}
+.cadre-auth .champ-auth-libelle {
+  margin-bottom: 8px;
+  font-size: 15px;
+}
+.cadre-auth .btn-action {
+  min-height: 56px;
+  border-radius: 10px;
+  box-shadow: 0 14px 28px -14px rgb(173 7 7 / 0.6);
+}

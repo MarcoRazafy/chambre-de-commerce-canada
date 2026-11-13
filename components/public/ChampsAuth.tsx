@@ -19,7 +19,7 @@ export function ChampAuth({
 }) {
   return (
     <label className="block group">
-      <span className="block text-[13px] font-semibold text-ink mb-1.5">
+      <span className="champ-auth-libelle block text-[13px] font-semibold text-ink mb-1.5">
         {label}
       </span>
       <span className="relative block">

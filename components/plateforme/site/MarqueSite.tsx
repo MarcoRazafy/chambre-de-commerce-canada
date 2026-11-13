@@ -11,6 +11,9 @@ export function Marque({ className = "w-2 h-6" }: { className?: string }) {
   );
 }
 
+// Mention au pied des pages de la plateforme
+export const PIED_PLATEFORME = <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;
+
 // Marque du site : le logo IMPACT 261 (blanc sur fond sombre), seul dans l'en-tête, avec le nom de la plateforme
 // dans le pied (« avecNom »)
 export function MarqueSite({ clair = false, avecNom = false }: { clair?: boolean; avecNom?: boolean }) {
