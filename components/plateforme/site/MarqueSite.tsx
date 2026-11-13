@@ -11,8 +11,9 @@ export function Marque({ className = "w-2 h-6" }: { className?: string }) {
   );
 }
 
-// Marque du site : le logo IMPACT 261 (blanc sur fond sombre) et le nom de la plateforme ; en-tête et pied du site
-export function MarqueSite({ clair = false }: { clair?: boolean }) {
+// Marque du site : le logo IMPACT 261 (blanc sur fond sombre), seul dans l'en-tête, avec le nom de la plateforme
+// dans le pied (« avecNom »)
+export function MarqueSite({ clair = false, avecNom = false }: { clair?: boolean; avecNom?: boolean }) {
   return (
     <Link
       href="/"
@@ -30,8 +31,12 @@ export function MarqueSite({ clair = false }: { clair?: boolean }) {
         className="h-11 w-auto"
         sizes="140px"
       />
-      <span aria-hidden className={`hidden sm:block w-px h-6 ${clair ? "bg-white/25" : "bg-line-champ"}`} />
-      <span className="hidden sm:inline text-[16px] font-semibold whitespace-nowrap">L’Alliée Virtuelle</span>
+      {avecNom ? (
+        <>
+          <span aria-hidden className={`hidden sm:block w-px h-6 ${clair ? "bg-white/25" : "bg-line-champ"}`} />
+          <span className="hidden sm:inline text-[16px] font-semibold whitespace-nowrap">L’Alliée Virtuelle</span>
+        </>
+      ) : null}
     </Link>
   );
 }

@@ -144,7 +144,7 @@ export default async function AccueilPlateforme() {
           <Illustration nom="poignee-de-main" flotte priorite className="hidden lg:block w-full max-w-[520px] justify-self-end" />
           </div>
 
-          <div className="entree entree-4 mt-14 lg:mt-16">
+          <div className="entree-apercu mt-14 lg:mt-16">
             <VisiteEspace />
           </div>
         </div>
@@ -161,7 +161,7 @@ export default async function AccueilPlateforme() {
           />
             <Illustration nom="evenements" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
-          <ul className="mt-12 m-0 p-0 list-none grid border-t border-line sm:border-0 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid border-t border-line sm:border-0 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FONCTIONS.map(({ icone: Icone, titre, texte }, i) => (
               <li key={titre} className={`tuile-hote carte-filet ${i % 2 ? "filet-vert" : "filet-degrade"} flex gap-4 py-4 border-b border-line sm:block sm:p-6 sm:rounded-2xl sm:border sm:bg-bg`}>
                 <span className={`tuile tuile-sm ${i % 2 ? "tuile-verte" : "tuile-bleue"}`}>
@@ -187,7 +187,7 @@ export default async function AccueilPlateforme() {
         />
           <Illustration nom="reseau" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
         </div>
-        <div className="mt-12 grid gap-4 lg:grid-cols-2">
+        <div data-reveal-groupe="" className="mt-12 grid gap-4 lg:grid-cols-2">
           {ESPACES.map((e) => (
             <article key={e.titre} className={`carte-filet ${e.encre === "bg-marque-rouge" ? "filet-rouge" : "filet-vert"} rounded-2xl border border-line bg-surface p-6 sm:p-8`}>
               <p className="m-0 flex items-center gap-2.5 text-[13px] font-medium text-muted">
@@ -211,11 +211,11 @@ export default async function AccueilPlateforme() {
       {/* Fonctionnement */}
       <section id="fonctionnement" className="sur-sombre bg-marque-nuit text-white">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
-          <div className="max-w-[680px]">
+          <div data-reveal="" className="max-w-[680px]">
             <p className="m-0 text-[15px] font-medium text-[#ff8a8a]">Fonctionnement</p>
             <h2 className="mt-3 mb-0 text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Votre espace en <span className="texte-degrade">trois étapes</span></h2>
           </div>
-          <ol className="mt-12 m-0 p-0 list-none grid gap-4 md:grid-cols-3">
+          <ol data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-4 md:grid-cols-3">
             {ETAPES.map((e, i) => (
               <li key={e.titre} className="carte-filet filet-degrade rounded-2xl border border-white/10 bg-white/[0.04] p-6">
                 <span className="mono text-[13px] text-white/60">{i + 1}</span>
@@ -236,11 +236,11 @@ export default async function AccueilPlateforme() {
           texte="Les membres et leur espace sont inclus dans chaque offre. À la carte, vous ne payez que les fonctions dont votre Chambre a besoin."
         />
         <div className="mt-12">
-          <CartesTarifs offres={offres} />
+          <CartesTarifs offres={offres} revele />
         </div>
-        <p className="mt-8 mb-0 text-center">
-          <Link href="/tarifs" className={`inline-flex items-center gap-2 min-h-[44px] px-2 text-[15px] font-medium text-ink no-underline hover:text-accent-strong rounded-md ${FOCUS}`}>
-            Comparer les offres en détail <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
+        <p data-reveal="" className="mt-8 mb-0 text-center">
+          <Link href="/tarifs" className={`group inline-flex items-center gap-2 min-h-[44px] px-2 text-[15px] font-medium text-ink no-underline hover:text-accent-strong rounded-md ${FOCUS}`}>
+            Comparer les offres en détail <ArrowRight size={16} strokeWidth={1.5} aria-hidden className="transition-transform duration-200 group-hover:translate-x-0.5" />
           </Link>
         </p>
       </section>
@@ -252,7 +252,7 @@ export default async function AccueilPlateforme() {
           <EnTeteSection surtitre="Sécurité" titre={<>Vos données et vos paiements <Saillant ton="vert">restent les vôtres</Saillant></>} />
             <Illustration nom="paiement" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
-          <ul className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {CONFIANCE.map(({ icone: Icone, titre, texte }) => (
               <li key={titre} className="tuile-hote">
                 <span className="tuile tuile-sm tuile-verte">

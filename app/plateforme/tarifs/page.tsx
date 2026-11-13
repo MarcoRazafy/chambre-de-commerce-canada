@@ -67,7 +67,7 @@ export default async function TarifsPlateforme() {
       <section className="bg-surface border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 lg:py-20">
           <h2 className="m-0 text-center text-[clamp(24px,3vw,32px)] leading-[1.15] text-ink">Toutes les offres <Saillant ton="vert">incluent</Saillant></h2>
-          <ul className="mt-10 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+          <ul data-reveal-groupe="" className="mt-10 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {INCLUS.map(({ icone: Icone, titre, texte }) => (
               <li key={titre} className="tuile-hote">
                 <span className="tuile tuile-sm tuile-bleue">
@@ -83,7 +83,7 @@ export default async function TarifsPlateforme() {
 
       <section id="comparer" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
         <EnTeteSection centre surtitre="Comparer" titre={<>Les offres, <Saillant>fonction par fonction</Saillant></>} />
-        <div className="mt-12 max-w-[1040px] mx-auto">
+        <div data-reveal="" className="mt-12 max-w-[1040px] mx-auto">
           <TableauOffres offres={offres} />
         </div>
       </section>

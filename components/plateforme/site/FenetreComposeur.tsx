@@ -28,7 +28,7 @@ export function BoutonComposer({ offre, initiales }: { offre: OffreComposable; i
         onClick={(e) => e.target === e.currentTarget && fermer()}
         className="fenetre-composeur m-auto p-0 border-0 bg-transparent w-[min(960px,calc(100vw-24px))] max-w-none max-h-[calc(100dvh-24px)] overflow-y-auto rounded-[20px] backdrop:bg-[rgba(15,29,44,0.6)] backdrop:backdrop-blur-sm"
       >
-        <div className="anim-fondu rounded-[20px] bg-marque-nuit p-5 sm:p-10">
+        <div className="rounded-[20px] bg-marque-nuit p-5 sm:p-10">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="m-0 text-[14px] text-white/60">{offre.nom}</p>

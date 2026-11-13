@@ -1,20 +1,82 @@
 "use client";
 
 // Visite de l'espace par onglets (site de la plateforme) : des écrans dessinés, pas des captures (aucune donnée réelle).
-// Sur téléphone, les onglets tiennent sur une ligne qui défile.
-import { useId, useRef, useState, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
+// Sur téléphone, les onglets tiennent sur une ligne qui défile. En mouvement : l'onglet choisi glisse, les chiffres
+// se comptent et les barres montent quand l'écran apparaît (rien de tout cela si l'appareil demande moins de mouvements).
+import { createContext, useContext, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
 import { CalendarDays, Check, CreditCard, LayoutDashboard, Search, UserRound, Users, type LucideIcon } from "lucide-react";
 import { Marque } from "@/components/plateforme/site/MarqueSite";
 
 const CARTE = "rounded-[10px] bg-white border border-line";
 const PISTE = "rounded bg-[#e6e3dc]";
 
+// Vrai dès qu'un onglet a été choisi : l'écran qui arrive est en mouvement
+const ContexteVisite = createContext(false);
+
+const delai = (ms: number) => ({ "--delai": `${ms}ms` }) as CSSProperties;
+const formater = (n: number) => String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+
+// Le chiffre d'une tuile se compte de zéro à sa valeur (0,9 s) quand il apparaît ; il reste tel quel s'il est déjà à
+// l'écran au chargement de la page, ou si l'appareil demande moins de mouvements
+function useCompteur(valeur: string) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const interagi = useContext(ContexteVisite);
+
+  useEffect(() => {
+    const el = ref.current;
+    const m = /\d[\d\s]*\d|\d/.exec(valeur);
+    if (!el || !m || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const r = el.getBoundingClientRect();
+    const enVue = r.top < window.innerHeight && r.bottom > 0;
+    if (enVue && !interagi) return;
+
+    const cible = Number(m[0].replace(/\s/g, ""));
+    const avant = valeur.slice(0, m.index);
+    const apres = valeur.slice(m.index + m[0].length);
+    const ecrire = (n: number) => {
+      el.textContent = avant + formater(n) + apres;
+    };
+    let image = 0;
+    const compter = () => {
+      const debut = performance.now();
+      const pas = (t: number) => {
+        const p = Math.min(1, (t - debut) / 900);
+        ecrire(cible * (1 - Math.pow(1 - p, 3)));
+        if (p < 1) image = requestAnimationFrame(pas);
+      };
+      image = requestAnimationFrame(pas);
+    };
+
+    ecrire(0);
+    if (enVue || !("IntersectionObserver" in window)) {
+      compter();
+      return () => cancelAnimationFrame(image);
+    }
+    const obs = new IntersectionObserver(
+      (entrees) => {
+        if (!entrees.some((e) => e.isIntersecting)) return;
+        compter();
+        obs.disconnect();
+      },
+      { threshold: 0.2 },
+    );
+    obs.observe(el);
+    return () => {
+      obs.disconnect();
+      cancelAnimationFrame(image);
+    };
+  }, [valeur, interagi]);
+
+  return ref;
+}
+
 // Une donnée : le libellé, le chiffre, et ce à quoi il se compare
 function Tuile({ libelle, valeur, detail }: { libelle: string; valeur: string; detail?: string }) {
+  const chiffre = useCompteur(valeur);
   return (
     <div className={`${CARTE} p-3 sm:p-4 min-w-0`}>
       <span className="block text-[12px] text-muted truncate">{libelle}</span>
-      <span className="mono block mt-1 text-[18px] sm:text-[22px] font-medium text-ink truncate">{valeur}</span>
+      <span ref={chiffre} className="mono block mt-1 text-[18px] sm:text-[22px] font-medium text-ink truncate">{valeur}</span>
       {detail ? <span className="block mt-1 text-[11px] text-muted truncate">{detail}</span> : null}
     </div>
   );
@@ -48,7 +110,7 @@ function EcranTableau() {
           <span className="block text-[12px] font-medium text-ink">Encaissements, six mois</span>
           <div className="mt-4 h-[112px] flex items-end gap-2 sm:gap-4">
             {barres.map((h, i) => (
-              <span key={i} className={`flex-1 rounded-t-[4px] ${i === barres.length - 1 ? "bg-success" : "bg-[#e6e3dc]"}`} style={{ height: `${h}%` }} />
+              <span key={i} className={`pousse-y flex-1 rounded-t-[4px] ${i === barres.length - 1 ? "bg-success" : "bg-[#e6e3dc]"}`} style={{ height: `${h}%`, ...delai(i * 60) }} />
             ))}
           </div>
           <div className="mt-2 flex gap-2 sm:gap-4">
@@ -57,10 +119,10 @@ function EcranTableau() {
         </div>
         <div className={`${CARTE} p-4`}>
           <span className="block text-[12px] font-medium text-ink mb-3">Prochains événements</span>
-          {[["Petit-déjeuner d’affaires", 78], ["Atelier export", 46], ["Soirée du réseau", 61]].map(([nom, taux]) => (
+          {[["Petit-déjeuner d’affaires", 78], ["Atelier export", 46], ["Soirée du réseau", 61]].map(([nom, taux], i) => (
             <div key={nom} className="mb-3 last:mb-0">
               <div className="flex justify-between gap-2 text-[11px] text-muted mb-1"><span className="truncate">{nom}</span><span className="mono">{taux} %</span></div>
-              <div className="h-1.5 rounded-full bg-[#eeebe5]"><div className="h-full rounded-full bg-marque-nuit" style={{ width: `${taux}%` }} /></div>
+              <div className="h-1.5 rounded-full bg-[#eeebe5]"><div className="pousse-x h-full rounded-full bg-marque-nuit" style={{ width: `${taux}%`, ...delai(200 + i * 90) }} /></div>
             </div>
           ))}
         </div>
@@ -107,7 +169,7 @@ function EcranEvenements() {
   ];
   return (
     <div className="grid gap-3 md:grid-cols-3">
-      {evenements.map((e) => (
+      {evenements.map((e, i) => (
         <div key={e.nom} className={`${CARTE} p-4 flex md:flex-col gap-3`}>
           <span className="grid place-items-center w-12 h-14 rounded-[8px] bg-marque-nuit text-white shrink-0 leading-none">
             <span className="text-center"><span className="mono block text-[17px] font-medium">{e.jour}</span><span className="block mt-1 text-[11px] text-white/70">{e.mois}</span></span>
@@ -115,7 +177,7 @@ function EcranEvenements() {
           <span className="flex-1 min-w-0">
             <span className="block text-[13px] font-medium text-ink truncate">{e.nom}</span>
             <span className="block text-[11px] text-muted">{e.lieu}</span>
-            <span className="block mt-3 h-1.5 rounded-full bg-[#eeebe5]"><span className="block h-full rounded-full bg-marque-nuit" style={{ width: `${(e.inscrits / e.places) * 100}%` }} /></span>
+            <span className="block mt-3 h-1.5 rounded-full bg-[#eeebe5]"><span className="pousse-x block h-full rounded-full bg-marque-nuit" style={{ width: `${(e.inscrits / e.places) * 100}%`, ...delai(i * 90) }} /></span>
             <span className="mono block mt-1.5 text-[11px] text-muted">{e.inscrits} inscrits sur {e.places}</span>
           </span>
         </div>
@@ -211,13 +273,53 @@ const ONGLETS: { cle: string; libelle: string; Icone: LucideIcon; titre: string;
 export function VisiteEspace() {
   const id = useId();
   const [actif, setActif] = useState(0);
+  const [interagi, setInteragi] = useState(false);
   const boutons = useRef<(HTMLButtonElement | null)[]>([]);
+  const indicateur = useRef<HTMLSpanElement>(null);
+  const panneau = useRef<HTMLDivElement>(null);
   const o = ONGLETS[actif];
+
+  // Le fond de l'onglet choisi glisse jusqu'à lui (et suit sa largeur)
+  useEffect(() => {
+    const b = boutons.current[actif];
+    const ind = indicateur.current;
+    if (!b || !ind) return;
+    const placer = () => {
+      ind.style.transform = `translateX(${b.offsetLeft}px)`;
+      ind.style.width = `${b.offsetWidth}px`;
+      ind.style.opacity = "1";
+    };
+    placer();
+    const taille = new ResizeObserver(placer);
+    taille.observe(b);
+    return () => taille.disconnect();
+  }, [actif]);
+
+  // Les barres montent quand l'aperçu entre dans l'écran
+  useEffect(() => {
+    const el = panneau.current;
+    if (!el) return;
+    if (!("IntersectionObserver" in window)) {
+      el.classList.add("est-visible");
+      return;
+    }
+    const obs = new IntersectionObserver(
+      (entrees) => {
+        if (!entrees.some((e) => e.isIntersecting)) return;
+        el.classList.add("est-visible");
+        obs.disconnect();
+      },
+      { threshold: 0.15 },
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
 
   // Sur téléphone, l'onglet choisi vient au centre de la ligne
   const montrer = (b: HTMLButtonElement | null) => b?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
   const choisir = (i: number, e?: MouseEvent<HTMLButtonElement>) => {
     setActif(i);
+    setInteragi(true);
     montrer(e?.currentTarget ?? boutons.current[i]);
   };
 
@@ -234,7 +336,8 @@ export function VisiteEspace() {
   return (
     <div>
       <div className="-mx-5 px-5 sm:mx-0 sm:px-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div role="tablist" aria-label="Visite de l’espace" onKeyDown={clavier} className="inline-flex gap-1 p-1 rounded-[10px] border border-line bg-surface-2 whitespace-nowrap">
+        <div role="tablist" aria-label="Visite de l’espace" onKeyDown={clavier} className="relative inline-flex gap-1 p-1 rounded-[10px] border border-line bg-surface-2 whitespace-nowrap">
+          <span ref={indicateur} aria-hidden className="visite-indicateur absolute top-1 bottom-1 left-0 w-0 rounded-[6px] bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.05)] opacity-0 pointer-events-none" />
           {ONGLETS.map((t, i) => (
             <button
               key={t.cle}
@@ -246,8 +349,8 @@ export function VisiteEspace() {
               aria-controls={`${id}-panneau`}
               tabIndex={i === actif ? 0 : -1}
               onClick={(e) => choisir(i, e)}
-              className={`inline-flex items-center gap-2 h-9 px-4 rounded-[6px] border-0 text-[14px] font-medium cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit ${
-                i === actif ? "bg-surface text-ink shadow-[0_1px_2px_rgba(0,0,0,0.05)]" : "bg-transparent text-muted hover:text-ink"
+              className={`relative z-[1] inline-flex items-center gap-2 h-9 px-4 rounded-[6px] border-0 bg-transparent text-[14px] font-medium cursor-pointer transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit ${
+                i === actif ? "text-ink" : "text-muted hover:text-ink"
               }`}
             >
               <t.Icone size={16} strokeWidth={1.5} aria-hidden /> {t.libelle}
@@ -263,7 +366,7 @@ export function VisiteEspace() {
         tabIndex={0}
         className="mt-6 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marque-nuit"
       >
-        <div role="img" aria-label={`Illustration de l’espace : ${o.texte}`} className="select-none rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden">
+        <div ref={panneau} role="img" aria-label={`Illustration de l’espace : ${o.texte}`} className="visite select-none rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden">
           <div className="flex items-center gap-2 px-4 h-10 border-b border-line bg-surface-2">
             <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
             <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
@@ -285,7 +388,9 @@ export function VisiteEspace() {
             <div key={o.cle} className="flex-1 min-w-0 p-4 sm:p-6 bg-[#f6f4ef] anim-fondu">
               <span className={`block h-2 w-20 ${PISTE}`} />
               <span className="block mt-2 mb-4 text-[16px] sm:text-[18px] font-semibold text-ink">{o.titre}</span>
-              <o.Ecran />
+              <ContexteVisite.Provider value={interagi}>
+                <o.Ecran />
+              </ContexteVisite.Provider>
             </div>
           </div>
         </div>

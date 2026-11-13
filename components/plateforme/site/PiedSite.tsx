@@ -10,9 +10,9 @@ const LISTE = "mt-2 m-0 p-0 list-none grid";
 export function PiedSite() {
   return (
     <footer className="border-t border-line bg-surface">
-      <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+      <div data-reveal-groupe="" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
         <div>
-          <MarqueSite />
+          <MarqueSite avecNom />
           <p className="mt-3 mb-0 max-w-[320px] text-[14px] leading-[22px] text-muted">
             L’espace de gestion des Chambres de commerce et des associations d’affaires, avec un espace pour leurs membres.
           </p>

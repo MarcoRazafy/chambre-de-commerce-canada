@@ -1159,6 +1159,7 @@ html:has(.espace-admin) {
   --site-ease: cubic-bezier(0.22, 1, 0.36, 1);
   font-family: var(--font-texte);
   color: var(--text);
+  interpolate-size: allow-keywords;
 }
 .site-plateforme h1,
 .site-plateforme h2,
@@ -1274,6 +1275,147 @@ html:has(.fenetre-composeur[open]) {
 .site-plateforme .entree-4 {
   animation-delay: 150ms;
 }
+/* L'aperçu de l'espace, dans l'accroche : arrive d'un peu plus bas, légèrement agrandi */
+@keyframes site-entree-apercu {
+  from {
+    opacity: 0;
+    transform: translateY(24px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.site-plateforme .entree-apercu {
+  animation: site-entree-apercu 0.8s var(--site-ease) 0.25s both;
+}
+/* Révélation au défilement (Revelateur) : un bloc (data-reveal) ou les enfants d'un groupe l'un après l'autre
+   (data-reveal-groupe, --delai posé par le script). Caché seulement quand le script tourne (html.js-pret) ; une fois
+   l'animation finie, l'élément retrouve ses styles (le survol des cartes reste possible) */
+html.js-pret .site-plateforme [data-reveal]:not(.est-visible),
+html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
+  opacity: 0;
+}
+@keyframes site-revele {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.site-plateforme [data-reveal].est-visible,
+.site-plateforme [data-reveal-groupe].est-visible > * {
+  animation: site-revele 0.65s var(--site-ease) backwards;
+  animation-delay: var(--delai, 0ms);
+}
+.site-plateforme [data-reveal].est-visible.sans-mouvement,
+.site-plateforme [data-reveal-groupe].est-visible.sans-mouvement > * {
+  animation: none;
+}
+/* Cartes : se soulèvent sous le curseur (appareils qui en ont un) */
+.site-plateforme .carte-filet {
+  transition:
+    transform 0.3s var(--site-ease),
+    box-shadow 0.3s var(--site-ease);
+}
+@media (hover: hover) {
+  .site-plateforme .carte-filet:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 14px 30px -14px rgb(28 26 23 / 0.22);
+  }
+  .site-plateforme .sur-sombre .carte-filet:hover {
+    box-shadow: 0 14px 30px -14px rgb(0 0 0 / 0.55);
+  }
+}
+/* La flèche d'un bouton avance d'un pas au survol */
+.site-plateforme .btn-action svg {
+  transition: transform 0.2s var(--site-ease);
+}
+.site-plateforme .btn-action:hover svg {
+  transform: translateX(3px);
+}
+/* Aperçu de l'espace : l'onglet choisi glisse ; les barres montent (ou s'étirent) quand l'aperçu est à l'écran,
+   et à chaque changement d'écran */
+.site-plateforme .visite-indicateur {
+  transition:
+    transform 0.3s var(--site-ease),
+    width 0.3s var(--site-ease),
+    opacity 0.2s;
+}
+@keyframes site-pousse-y {
+  from {
+    transform: scaleY(0);
+  }
+}
+@keyframes site-pousse-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-y {
+  transform: scaleY(0);
+}
+html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
+  transform: scaleX(0);
+}
+.site-plateforme .visite.est-visible .pousse-y {
+  transform-origin: bottom;
+  animation: site-pousse-y 0.8s var(--site-ease) both;
+  animation-delay: var(--delai, 0ms);
+}
+.site-plateforme .visite.est-visible .pousse-x {
+  transform-origin: left;
+  animation: site-pousse-x 0.8s var(--site-ease) both;
+  animation-delay: var(--delai, 0ms);
+}
+/* Fenêtre de l'offre à la carte : arrive en fondu, le voile aussi */
+@keyframes site-fenetre {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.97);
+  }
+}
+@keyframes site-voile {
+  from {
+    opacity: 0;
+  }
+}
+.fenetre-composeur[open] {
+  animation: site-fenetre 0.35s var(--site-ease, ease-out) both;
+}
+.fenetre-composeur[open]::backdrop {
+  animation: site-voile 0.3s ease-out both;
+}
+/* Questions : la réponse se déplie (navigateurs qui savent animer la hauteur d'un details) */
+.site-plateforme details::details-content {
+  height: 0;
+  overflow: clip;
+  transition:
+    height 0.35s var(--site-ease),
+    content-visibility 0.35s allow-discrete;
+}
+.site-plateforme details[open]::details-content {
+  height: auto;
+}
+/* Illustrations des sections : glissent lentement avec le défilement (navigateurs qui le permettent) */
+@keyframes site-parallaxe {
+  from {
+    transform: translateY(28px);
+  }
+  to {
+    transform: translateY(-28px);
+  }
+}
+@supports (animation-timeline: view()) {
+  .site-plateforme .illustration:not(.illustration-flotte) img {
+    animation: site-parallaxe linear both;
+    animation-timeline: view();
+    animation-range: entry 0% exit 100%;
+  }
+}
 /* Pages de texte (mentions légales, confidentialité, conditions) */
 .site-plateforme .texte-long h2 {
   margin: 40px 0 12px;
@@ -1323,20 +1465,58 @@ html:has(.fenetre-composeur[open]) {
     transform: translateY(-10px);
   }
 }
+/* Dans l'accroche : entre avec le texte, puis un lent va-et-vient */
+@keyframes site-entree-illustration {
+  from {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
 .site-plateforme .illustration-flotte.illustration-visible {
-  animation: site-flotte 7s ease-in-out 0.6s infinite;
+  animation:
+    site-entree-illustration 0.8s var(--site-ease) 0.15s both,
+    site-flotte 7s ease-in-out 0.95s infinite;
 }
 @media (prefers-reduced-motion: reduce) {
   html:has(.site-plateforme) {
     scroll-behavior: auto;
   }
   .site-plateforme .entree,
-  .site-plateforme .illustration-flotte.illustration-visible {
+  .site-plateforme .entree-apercu,
+  .site-plateforme .illustration-flotte.illustration-visible,
+  .site-plateforme [data-reveal].est-visible,
+  .site-plateforme [data-reveal-groupe].est-visible > *,
+  .site-plateforme .visite .pousse-y,
+  .site-plateforme .visite .pousse-x,
+  .site-plateforme .illustration:not(.illustration-flotte) img,
+  .fenetre-composeur[open],
+  .fenetre-composeur[open]::backdrop {
     animation: none;
+  }
+  html.js-pret .site-plateforme [data-reveal]:not(.est-visible),
+  html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
+    opacity: 1;
+  }
+  html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-y,
+  html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
+    transform: none;
+  }
+  .site-plateforme .illustration,
+  .site-plateforme .carte-filet,
+  .site-plateforme .visite-indicateur,
+  .site-plateforme .btn-action svg,
+  .site-plateforme details::details-content {
+    transition: none;
   }
   .site-plateforme .illustration {
     opacity: 1;
     transform: none;
-    transition: none;
+  }
+  .site-plateforme .carte-filet:hover {
+    transform: none;
   }
 }

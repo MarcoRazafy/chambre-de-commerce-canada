@@ -5,10 +5,11 @@ import Link from "next/link";
 import { ArrowRight, Check, ChevronDown } from "lucide-react";
 import { EnTeteSite } from "@/components/plateforme/site/EnTeteSite";
 import { PiedSite } from "@/components/plateforme/site/PiedSite";
+import { Revelateur } from "@/components/plateforme/site/Revelateur";
 
 export const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit";
 
-// Une page du site : lien d'évitement, en-tête fixe, contenu, pied
+// Une page du site : lien d'évitement, en-tête fixe, contenu, pied ; les blocs marqués data-reveal apparaissent en défilant
 export function PageSite({ children }: { children: ReactNode }) {
   return (
     <div className="site-plateforme min-h-dvh bg-bg text-ink">
@@ -18,14 +19,16 @@ export function PageSite({ children }: { children: ReactNode }) {
       <EnTeteSite />
       <main id="contenu">{children}</main>
       <PiedSite />
+      <Revelateur />
     </div>
   );
 }
 
+// Titre d'une section ; les titres de niveau 2 apparaissent quand la section entre dans l'écran
 export function EnTeteSection({ surtitre, titre, texte, centre = false, niveau = 2 }: { surtitre: string; titre: ReactNode; texte?: string; centre?: boolean; niveau?: 1 | 2 }) {
   const Titre = niveau === 1 ? "h1" : "h2";
   return (
-    <div className={`max-w-[680px] ${centre ? "mx-auto text-center" : ""}`}>
+    <div data-reveal={niveau === 2 ? "" : undefined} className={`max-w-[680px] ${centre ? "mx-auto text-center" : ""}`}>
       <p className="m-0 text-[15px] font-medium text-accent-strong">{surtitre}</p>
       <Titre className={`mt-3 mb-0 leading-[1.1] text-ink ${niveau === 1 ? "text-[clamp(36px,4.6vw,56px)]" : "text-[clamp(28px,3.4vw,40px)]"}`}>{titre}</Titre>
       {texte ? <p className="mt-4 mb-0 text-[17px] leading-[28px] text-muted">{texte}</p> : null}
@@ -78,7 +81,7 @@ export function Rassurances({ points, sombre = false, centre = false }: { points
 
 export function Questions({ questions }: { questions: { q: string; r: string }[] }) {
   return (
-    <div className="divide-y divide-line border-y border-line">
+    <div data-reveal-groupe="" className="divide-y divide-line border-y border-line">
       {questions.map(({ q, r }) => (
         <details key={q} className="group">
           <summary className={`flex items-center justify-between gap-6 py-5 cursor-pointer list-none text-[16px] font-medium text-ink [&::-webkit-details-marker]:hidden ${FOCUS}`}>
@@ -96,7 +99,7 @@ export function Questions({ questions }: { questions: { q: string; r: string }[]
 export function AppelFinal() {
   return (
     <section className="px-5 sm:px-8 pb-20 lg:pb-28">
-      <div className="sur-sombre max-w-[1200px] mx-auto rounded-[20px] bg-marque-nuit px-6 py-14 sm:px-14 sm:py-16 text-center">
+      <div data-reveal="" className="sur-sombre max-w-[1200px] mx-auto rounded-[20px] bg-marque-nuit px-6 py-14 sm:px-14 sm:py-16 text-center">
         <div className="flex flex-col items-center">
           <h2 className="m-0 max-w-[640px] text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Ouvrez l’espace de <span className="texte-degrade">votre Chambre</span></h2>
           <p className="mt-4 mb-0 max-w-[480px] text-[17px] leading-[28px] text-white/70">Créez-le maintenant, composez votre offre et accueillez vos premiers membres.</p>

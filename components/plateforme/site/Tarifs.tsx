@@ -73,12 +73,13 @@ function CarteOffre({ o, miseEnAvant }: { o: OffrePublique; miseEnAvant: boolean
   );
 }
 
-// Les offres en cartes, côte à côte ; l'offre à la carte ouvre sa fenêtre de choix
-export function CartesTarifs({ offres }: { offres: OffrePublique[] }) {
+// Les offres en cartes, côte à côte ; l'offre à la carte ouvre sa fenêtre de choix ; « revele » : les cartes
+// apparaissent l'une après l'autre quand elles entrent dans l'écran
+export function CartesTarifs({ offres, revele = false }: { offres: OffrePublique[]; revele?: boolean }) {
   const cartes = offres.filter((o) => !o.surMesure || o.options.length);
   const n = cartes.length;
   return (
-    <div className={`mx-auto grid gap-4 ${n >= 3 ? "max-w-[1200px] md:grid-cols-2 lg:grid-cols-3" : n === 2 ? "max-w-[920px] md:grid-cols-2" : "max-w-[500px]"}`}>
+    <div data-reveal-groupe={revele ? "" : undefined} className={`mx-auto grid gap-4 ${n >= 3 ? "max-w-[1200px] md:grid-cols-2 lg:grid-cols-3" : n === 2 ? "max-w-[920px] md:grid-cols-2" : "max-w-[500px]"}`}>
       {cartes.map((o, i) => (
         <div key={o.id} className={`grid ${n === 3 && i === 2 ? "md:col-span-2 lg:col-span-1" : ""}`}>
           <CarteOffre o={o} miseEnAvant={!o.gratuite && !o.surMesure} />
