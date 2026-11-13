@@ -141,15 +141,15 @@ export default async function AccueilPlateforme() {
               </Link>
             </p>
           </div>
-          {/* L'illustration sur un panneau de papier, pour rester lisible sur le fond sombre */}
-          <div className="entree entree-3 hidden lg:block justify-self-end w-full max-w-[520px] rounded-[28px] bg-surface p-8 shadow-[0_40px_80px_-30px_rgba(0,0,0,0.55)]">
-            <Illustration nom="poignee-de-main" flotte priorite className="w-full" />
+          <Illustration nom="poignee-de-main-claire" flotte priorite className="hidden lg:block w-full max-w-[520px] justify-self-end" />
           </div>
-          </div>
+        </div>
+      </section>
 
-          <div className="entree-apercu mt-14 lg:mt-16">
-            <VisiteEspace />
-          </div>
+      {/* Aperçu de l'espace : les écrans se succèdent d'eux-mêmes, sur fond blanc */}
+      <section className="bg-white border-b border-line">
+        <div data-reveal="" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 lg:py-20">
+          <VisiteEspace />
         </div>
       </section>
 

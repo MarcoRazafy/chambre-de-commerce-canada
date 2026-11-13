@@ -23,13 +23,15 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
+// « poignee-de-main-claire » : la même poignée de main, silhouettes claires, pour un fond sombre
 export type NomIllustration =
-  | "poignee-de-main" | "evenements" | "reseau" | "paiement" | "questions" | "chambre" | "membres"
+  | "poignee-de-main" | "poignee-de-main-claire" | "evenements" | "reseau" | "paiement" | "questions" | "chambre" | "membres"
   | "acces" | "adhesion" | "oubli" | "courriel" | "mot-de-passe" | "bienvenue" | "admin";
 
 // Proportions de chaque dessin (largeur / hauteur de son viewBox), pour réserver la place avant le chargement
 const PROPORTIONS: Record<NomIllustration, [number, number]> = {
   "poignee-de-main": [759, 615],
+  "poignee-de-main-claire": [759, 615],
   evenements: [801, 614],
   reseau: [807, 699],
   paiement: [904, 586],
@@ -56,13 +58,16 @@ type Ornement = { ou: string; boucle?: "bobine" | "balance" | "pulsation" } & (
   | { type: "anneau"; icone: LucideIcon; ton: Ton }
 );
 
+const POIGNEE: Ornement[] = [
+  { type: "puce", icone: Check, ton: "vert", texte: "Cotisation payée", ou: "-left-[6%] top-[10%]" },
+  { type: "puce", initiales: ["BC"], texte: "Nouveau membre", ou: "-right-[4%] top-[6%]" },
+  { type: "puce", icone: CalendarDays, ton: "bleu", texte: "12 déc. · 47 inscrits", ou: "-left-[6%] top-[52%]" },
+  { type: "anneau", icone: Lock, ton: "rouge", ou: "-right-[2%] bottom-[10%]" },
+];
+
 const ORNEMENTS: Record<NomIllustration, Ornement[]> = {
-  "poignee-de-main": [
-    { type: "puce", icone: Check, ton: "vert", texte: "Cotisation payée", ou: "-left-[6%] top-[10%]" },
-    { type: "puce", initiales: ["BC"], texte: "Nouveau membre", ou: "-right-[4%] top-[6%]" },
-    { type: "puce", icone: CalendarDays, ton: "bleu", texte: "12 déc. · 47 inscrits", ou: "-left-[6%] top-[52%]" },
-    { type: "anneau", icone: Lock, ton: "rouge", ou: "-right-[2%] bottom-[10%]" },
-  ],
+  "poignee-de-main": POIGNEE,
+  "poignee-de-main-claire": POIGNEE,
   evenements: [
     { type: "tuile", icone: Bell, ton: "rouge", point: true, boucle: "balance", ou: "-right-[2%] top-0" },
     { type: "puce", icone: Check, ton: "vert", texte: "Inscription confirmée", ou: "-left-[6%] top-[66%]" },
