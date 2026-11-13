@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
 import { BoutonEnvoi } from "@/components/public/BoutonMarque";
 import { Alerte } from "@/components/public/CadreAuth";
@@ -23,6 +24,9 @@ export default async function ConnexionPlateforme({ searchParams }: { searchPara
           <ChampMotDePasse label="Mot de passe" icone={<Lock size={16} />} name="motDePasse" required autoComplete="current-password" />
           <BoutonEnvoi enCours="Connexion…">Se connecter</BoutonEnvoi>
         </form>
+        <p className="text-[14px] m-0 mt-5">
+          <Link href="/mot-de-passe-oublie" className="text-marque-vert font-medium no-underline hover:underline">Mot de passe oublié ?</Link>
+        </p>
       </CartePlateforme>
     </CadrePlateforme>
   );

@@ -8,12 +8,13 @@ import { redirect } from "next/navigation";
 import { adresseOuSite } from "@/lib/adresse-chambre";
 import { verifier } from "@/lib/auth";
 import { avecChambre, oublierAdresses } from "@/lib/chambre-courante";
-import { envoyerCourriel, gabarit } from "@/lib/courriel";
+import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
 import { estFonction } from "@/lib/fonctions-plateforme";
 import { prismaSysteme as db } from "@/lib/db";
 import { slugValide } from "@/lib/hote-chambre";
 import { creerJeton } from "@/lib/jetons";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
+import { courrielReinitialisation } from "@/lib/modeles-courriels";
 import { hacher, MOT_DE_PASSE_MIN } from "@/lib/mots-de-passe";
 
 const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").trim().slice(0, max);
@@ -130,4 +131,31 @@ export async function connexionPlateforme(formData: FormData) {
   const lien = await entree(u.chambreId, u.id);
   if (!lien) echec("Votre espace n’a pas encore d’adresse : écrivez à la plateforme.");
   redirect(lien);
+}
+
+// --- Mot de passe oublié depuis le site de la plateforme ---
+// Le compte est cherché dans toutes les Chambres ; le lien part de la sienne et mène à son adresse.
+// La réponse ne dit pas si l'adresse a un compte.
+
+const OUBLI = "/mot-de-passe-oublie";
+
+export async function demanderReinitialisationPlateforme(formData: FormData) {
+  const email = texte(formData, "email").toLowerCase();
+  const vers = (params: Record<string, string>): never => redirect(`${OUBLI}?${new URLSearchParams(params)}`);
+  if (!ADRESSE.test(email)) vers({ erreur: "Indiquez une adresse e-mail valide.", email });
+
+  const origine = await origineAppelante();
+  const attente = Math.max(tentative(`oubli:${email}`, 3, HEURE), tentative(`oubli:${origine}`, 10, HEURE));
+  if (attente) vers({ erreur: `Trop de demandes. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`, email });
+
+  after(async () => {
+    const u = await db.user.findUnique({ where: { email }, select: { id: true, nom: true, role: true, chambreId: true } });
+    if (!u || u.role === "visiteur") return;
+    await avecChambre(u.chambreId, async () => {
+      const base = await urlPublique("/auth/nouveau-mot-de-passe");
+      const jeton = await creerJeton(u.id, "reinitialisation");
+      await envoyerCourriel(courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`)).catch((e) => console.error("[plateforme] courriel de réinitialisation", e));
+    });
+  });
+  vers({ envoye: email });
 }
