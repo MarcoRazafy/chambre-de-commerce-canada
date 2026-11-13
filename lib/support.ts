@@ -2,7 +2,6 @@ import "server-only";
 
 import { prisma } from "@/lib/db";
 import { initialesDe, LOGO_EQUIPE } from "@/lib/avatars";
-import { visiteurDuFil } from "@/lib/support-visiteur";
 import type { PieceJointe } from "@/lib/types";
 
 export interface MessageSupport {
@@ -25,17 +24,6 @@ export interface ConversationSupport {
   membreId: string | null;
   nonLus: number;
   messages: MessageSupport[];
-}
-
-export interface ResumeSupport {
-  id: string;
-  nom: string;
-  sousTitre: string;
-  avatar: string | null;
-  init: string;
-  nonLus: number;
-  apercu: string;
-  le: string;
 }
 
 const PERSONNE = {
@@ -130,117 +118,6 @@ export async function supportMembre(userId: string): Promise<{
       messages,
     },
     nonLus,
-  };
-}
-
-interface Participant {
-  user: {
-    id: string;
-    nom: string;
-    photo: string | null;
-    role: string;
-    member: { id: string; nom: string } | null;
-  };
-}
-
-function membreDuFil(participants: Participant[]) {
-  return (
-    participants.find((p) => p.user.role !== "admin")?.user ??
-    participants[0]?.user ??
-    null
-  );
-}
-
-export async function supportEquipe(userId: string): Promise<{
-  fils: ResumeSupport[];
-  nonLus: number;
-}> {
-  const [lignes, compte] = await Promise.all([
-    prisma.messageThread.findMany({
-      where: { equipe: true, participants: { some: { userId } } },
-      include: {
-        participants: { include: { user: { select: PERSONNE } } },
-        messages: { orderBy: { sentAt: "desc" }, take: 1 },
-      },
-    }),
-    nonLusParFil(userId),
-  ]);
-
-  const fils = lignes
-    .map((t): ResumeSupport => {
-      const visiteur = visiteurDuFil(t.visiteur);
-      const membre = membreDuFil(t.participants);
-      const dernier = t.messages[0];
-      const nom = visiteur?.nom ?? membre?.nom ?? "Conversation";
-      let apercu = "Nouvelle conversation";
-      if (dernier) {
-        const corps = dernier.supprimeLe
-          ? "Message supprimé"
-          : dernier.texte || "📎 Pièce jointe";
-        apercu =
-          dernier.userId === userId
-            ? `Vous : ${corps}`
-            : dernier.userId === null || dernier.userId === membre?.id
-              ? corps
-              : `${dernier.auteur.split(" ")[0]} : ${corps}`;
-      }
-      return {
-        id: t.id,
-        nom,
-        sousTitre: visiteur
-          ? ["Visiteur du site", visiteur.email, visiteur.telephone]
-              .filter(Boolean)
-              .join(" · ")
-          : (membre?.member?.nom ?? ""),
-        avatar: visiteur ? null : (membre?.photo ?? null),
-        init: initialesDe(nom),
-        nonLus: compte.get(t.id) ?? 0,
-        apercu,
-        le: (dernier?.sentAt ?? t.createdAt).toISOString(),
-      };
-    })
-    .sort((a, b) => b.le.localeCompare(a.le));
-
-  return {
-    fils,
-    nonLus: fils.reduce((n, f) => n + f.nonLus, 0),
-  };
-}
-
-export async function conversationEquipe(
-  threadId: string,
-  userId: string,
-): Promise<ConversationSupport | null> {
-  const t = await prisma.messageThread.findFirst({
-    where: {
-      id: threadId,
-      equipe: true,
-      participants: { some: { userId } },
-    },
-    include: { participants: { include: { user: { select: PERSONNE } } } },
-  });
-  if (!t) return null;
-
-  const visiteur = visiteurDuFil(t.visiteur);
-  const membre = membreDuFil(t.participants);
-  const [compte, messages] = await Promise.all([
-    nonLusParFil(userId),
-    messagesDe(t.id, userId),
-  ]);
-  const nom = visiteur?.nom ?? membre?.nom ?? "Conversation";
-  return {
-    id: t.id,
-    nom,
-    sousTitre: visiteur
-      ? ["Visiteur du site", visiteur.email, visiteur.telephone]
-          .filter(Boolean)
-          .join(" · ")
-      : (membre?.member?.nom ?? ""),
-    avatar: visiteur ? null : (membre?.photo ?? null),
-    init: initialesDe(nom),
-    membreId: membre?.member?.id ?? null,
-    nonLus: compte.get(t.id) ?? 0,
-    messages,
   };
 }
 

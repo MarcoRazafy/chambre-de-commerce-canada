@@ -15,8 +15,6 @@ import {
   type PointerEvent,
 } from "react";
 import {
-  Building2,
-  ChevronLeft,
   Headset,
   Maximize2,
   MessageCircle,
@@ -25,15 +23,16 @@ import {
 } from "lucide-react";
 import { Pastille } from "@/components/messagerie/outils";
 import { PiecesJointes } from "@/components/messagerie/PiecesJointes";
+import {
+  ajouterPieces,
+  BoutonJoindre,
+  PiecesChoisies,
+} from "@/components/support/ChoixPieces";
 import { TexteLie } from "@/components/TexteLie";
 import { ecrireAuSupport, markThreadRead } from "@/lib/actions/messages";
 import { LOGO_EQUIPE } from "@/lib/avatars";
-import { heureExacte, heureRelative, jourLisible } from "@/lib/enums";
-import type {
-  ConversationSupport,
-  MessageSupport,
-  ResumeSupport,
-} from "@/lib/support";
+import { heureExacte, jourLisible } from "@/lib/enums";
+import type { ConversationSupport, MessageSupport } from "@/lib/support";
 
 const TAILLE = 56;
 const MARGE = 16;
@@ -50,7 +49,18 @@ const SUGGESTIONS = [
   "Je rencontre un problème sur la plateforme.",
 ];
 
+// Espace admin : le Support IT (l'Admin GM de la plateforme)
+const SUGGESTIONS_IT = [
+  "Je rencontre un problème sur la plateforme.",
+  "J’ai une question sur notre abonnement.",
+  "Je voudrais une nouvelle fonction.",
+];
+
+// « admin » : Support IT (l'équipe de la Chambre écrit à l'Admin GM) ; « membre » : le membre écrit à son équipe
 type Espace = "membre" | "admin";
+
+const urlPieceIT = (id: string, telecharger = false) =>
+  `/api/support-it/pieces/${id}${telecharger ? "?telecharger=1" : ""}`;
 
 interface Position {
   cote: "gauche" | "droite";
@@ -104,14 +114,12 @@ const borne = (n: number, min: number, max: number) =>
 
 interface EtatPanneau {
   ouvert: boolean;
-  fil: string | null;
   nonLus: number;
   brouillons: Record<string, string>;
 }
 
 const ETAT_INITIAL: EtatPanneau = {
   ouvert: false,
-  fil: null,
   nonLus: 0,
   brouillons: {},
 };
@@ -131,9 +139,7 @@ function modifierPanneau(maj: Partial<EtatPanneau>) {
 }
 
 interface Donnees {
-  cle: string;
   conversation: ConversationSupport | null;
-  fils: ResumeSupport[];
 }
 
 export function BulleSupport({
@@ -155,7 +161,6 @@ export function BulleSupport({
     () => ETAT_INITIAL,
   );
   const { ouvert, nonLus } = panneauEtat;
-  const filActif = espace === "admin" ? panneauEtat.fil : null;
   const setOuvert = (o: boolean) => modifierPanneau({ ouvert: o });
 
   const [glisse, setGlisse] = useState<{ x: number; y: number } | null>(null);
@@ -166,11 +171,12 @@ export function BulleSupport({
   const saisie = useRef<HTMLTextAreaElement>(null);
   const defilement = useRef<HTMLDivElement>(null);
 
-  const masquee = pathname.startsWith(`/${espace}/messagerie`);
+  // Le membre retrouve cette conversation dans sa messagerie : pas de bulle par-dessus
+  const masquee =
+    espace === "membre" && pathname.startsWith("/membre/messagerie");
 
-  const url = `/api/support?espace=${espace}${
-    filActif ? `&t=${encodeURIComponent(filActif)}` : ""
-  }`;
+  const url =
+    espace === "admin" ? "/api/support-it" : "/api/support?espace=membre";
   const [donnees, setDonnees] = useState<Donnees | null>(null);
   const [erreur, setErreur] = useState(false);
   const derniereDemande = useRef(0);
@@ -182,15 +188,10 @@ export function BulleSupport({
       if (!r.ok) throw new Error(String(r.status));
       const d = (await r.json()) as {
         conversation: ConversationSupport | null;
-        fils?: ResumeSupport[];
         nonLus: number;
       };
       if (numero !== derniereDemande.current) return;
-      setDonnees({
-        cle: url,
-        conversation: d.conversation,
-        fils: d.fils ?? [],
-      });
+      setDonnees({ conversation: d.conversation });
       setErreur(false);
       modifierPanneau({ nonLus: d.nonLus });
     } catch {
@@ -215,9 +216,23 @@ export function BulleSupport({
     };
   }, [charger, ouvert, masquee, pathname]);
 
-  const conversation = donnees?.cle === url ? donnees.conversation : null;
-  const fils = donnees?.fils ?? [];
-  const chargement = !donnees || (filActif !== null && donnees.cle !== url);
+  const conversation = donnees?.conversation ?? null;
+  const chargement = !donnees;
+
+  // Lien d'un courriel du Support IT (« ?support=it ») : la bulle s'ouvre
+  useEffect(() => {
+    if (espace !== "admin") return;
+    const p = new URLSearchParams(window.location.search);
+    if (p.get("support") !== "it") return;
+    modifierPanneau({ ouvert: true });
+    p.delete("support");
+    const reste = p.toString();
+    window.history.replaceState(
+      null,
+      "",
+      `${window.location.pathname}${reste ? `?${reste}` : ""}`,
+    );
+  }, [espace]);
 
   const marque = useRef<string | null>(null);
   useEffect(() => {
@@ -225,12 +240,14 @@ export function BulleSupport({
     const repere = `${conversation.id}:${conversation.messages.at(-1)?.id}`;
     if (marque.current === repere) return;
     marque.current = repere;
-    markThreadRead(conversation.id, espace)
-      .then(charger)
-      .catch(() => {});
+    const lire =
+      espace === "admin"
+        ? fetch("/api/support-it", { method: "PATCH" }).then(() => undefined)
+        : markThreadRead(conversation.id, espace);
+    lire.then(charger).catch(() => {});
   }, [ouvert, conversation, espace, charger]);
 
-  const cleBrouillon = espace === "membre" ? "membre" : (filActif ?? "");
+  const cleBrouillon = espace;
   const brouillon = panneauEtat.brouillons[cleBrouillon] ?? "";
   const setBrouillon = (texte: string) =>
     modifierPanneau({
@@ -238,24 +255,53 @@ export function BulleSupport({
     });
   const [envoi, setEnvoi] = useState<string | null>(null);
   const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
+  // Photos, vidéos, PDF joints (Support IT)
+  const [pieces, setPieces] = useState<File[]>([]);
+  const joindre = (nouveaux: File[]) => {
+    const r = ajouterPieces(pieces, nouveaux);
+    setPieces(r.fichiers);
+    setErreurEnvoi(r.erreur);
+  };
 
   const envoyer = async () => {
     const texte = brouillon.trim();
-    if (!texte || envoi) return;
-    setEnvoi(texte);
+    if ((!texte && !pieces.length) || envoi) return;
+    const joints = pieces;
+    const PERDU = "Le message n’est pas parti. Réessayez dans un instant.";
+    setEnvoi(
+      texte ||
+        `Envoi de ${joints.length} pièce${joints.length > 1 ? "s" : ""} jointe${joints.length > 1 ? "s" : ""}`,
+    );
     setErreurEnvoi(null);
     setBrouillon("");
+    setPieces([]);
     if (saisie.current) saisie.current.style.height = "auto";
     try {
-      const r = await ecrireAuSupport(espace, conversation?.id ?? null, texte);
+      let r: { ok: true } | { ok: false; erreur: string };
+      if (espace === "admin") {
+        const corps = new FormData();
+        corps.set("texte", texte);
+        for (const f of joints) corps.append("pieces", f);
+        const reponse = await fetch("/api/support-it", {
+          method: "POST",
+          body: corps,
+        });
+        r = await reponse
+          .json()
+          .catch(() => ({ ok: false as const, erreur: PERDU }));
+      } else {
+        r = await ecrireAuSupport(espace, conversation?.id ?? null, texte);
+      }
       if (!r.ok) {
         setErreurEnvoi(r.erreur);
         setBrouillon(texte);
+        setPieces(joints);
       }
       await charger();
     } catch {
-      setErreurEnvoi("Le message n’est pas parti. Réessayez dans un instant.");
+      setErreurEnvoi(PERDU);
       setBrouillon(texte);
+      setPieces(joints);
     } finally {
       setEnvoi(null);
       saisie.current?.focus();
@@ -267,6 +313,27 @@ export function BulleSupport({
     const zone = defilement.current;
     if (zone) zone.scrollTop = zone.scrollHeight;
   }, [ouvert, conversation?.id, dernier, envoi]);
+
+  // Une photo ou une vidéo qui se charge agrandit le fil : on reste en bas si on y était
+  const contenu = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const zone = defilement.current;
+    const bloc = contenu.current;
+    if (!ouvert || !zone || !bloc) return;
+    let enBas = true;
+    const surDefilement = () => {
+      enBas = zone.scrollHeight - zone.scrollTop - zone.clientHeight < 48;
+    };
+    const suivi = new ResizeObserver(() => {
+      if (enBas) zone.scrollTop = zone.scrollHeight;
+    });
+    zone.addEventListener("scroll", surDefilement, { passive: true });
+    suivi.observe(bloc);
+    return () => {
+      suivi.disconnect();
+      zone.removeEventListener("scroll", surDefilement);
+    };
+  }, [ouvert]);
 
   useEffect(() => {
     if (!ouvert) return;
@@ -379,13 +446,11 @@ export function BulleSupport({
       };
 
   const fermer = () => setOuvert(false);
-  const liste = espace === "admin" && !filActif;
-  const demandesNonLues = fils.filter((f) => f.nonLus > 0).length;
   const Icone = espace === "admin" ? Headset : MessageCircle;
   const libelle =
-    espace === "admin" ? "Support membres" : "Écrire à l’équipe CanCham";
+    espace === "admin" ? "Support IT" : "Écrire à l’équipe CanCham";
 
-  const versMessagerie = `/${espace}/messagerie${
+  const versMessagerie = `/membre/messagerie${
     conversation ? `?t=${conversation.id}` : ""
   }`;
 
@@ -447,82 +512,50 @@ export function BulleSupport({
             className="flex items-center gap-3 px-3.5 py-3 text-white shrink-0"
             style={{ background: "var(--superieure)" }}
           >
-            {espace === "admin" && filActif ? (
-              <button
-                type="button"
-                onClick={() => modifierPanneau({ fil: null })}
-                aria-label="Retour aux demandes"
-                className="w-8 h-8 -mr-1 rounded-md bg-transparent hover:bg-white/10 text-white flex items-center justify-center cursor-pointer border-0 shrink-0"
-              >
-                <ChevronLeft size={19} />
-              </button>
-            ) : null}
-
-            {liste ? (
+            {espace === "admin" ? (
               <span className="w-10 h-10 rounded-full bg-white/12 flex items-center justify-center shrink-0">
                 <Headset size={19} aria-hidden />
               </span>
             ) : (
               <span className="relative shrink-0">
                 <Pastille
-                  src={
-                    espace === "membre"
-                      ? LOGO_EQUIPE
-                      : (conversation?.avatar ?? null)
-                  }
+                  src={LOGO_EQUIPE}
                   alt=""
                   initiales={conversation?.init ?? "…"}
                   taille={40}
                   className="bg-white/15 text-white"
                 />
-                {espace === "membre" ? (
-                  <span
-                    aria-hidden
-                    className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2fbf71] border-2 border-[#12243a]"
-                  />
-                ) : null}
+                <span
+                  aria-hidden
+                  className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2fbf71] border-2 border-[#12243a]"
+                />
               </span>
             )}
 
             <div className="min-w-0 flex-1">
               <div className="text-[15px] font-semibold leading-tight truncate">
-                {liste
-                  ? "Support membres"
-                  : espace === "membre"
-                    ? (conversation?.nom ?? "Équipe CanCham")
-                    : (conversation?.nom ?? "Chargement…")}
+                {espace === "admin"
+                  ? "Support IT"
+                  : (conversation?.nom ?? "Équipe CanCham")}
               </div>
               <div className="text-[12px] text-white/65 truncate">
-                {liste
-                  ? demandesNonLues
-                    ? `${demandesNonLues} demande${demandesNonLues > 1 ? "s" : ""} en attente de lecture`
-                    : "Toutes les demandes sont lues"
-                  : espace === "membre"
-                    ? "Support membres · réponse ici même"
-                    : conversation?.sousTitre || "Assistance"}
+                {espace === "admin"
+                  ? "L’Alliée Virtuelle · réponse ici même"
+                  : "Support membres · réponse ici même"}
               </div>
             </div>
 
-            {espace === "admin" && conversation?.membreId ? (
+            {espace === "membre" ? (
               <Link
-                href={`/admin/membres/${conversation.membreId}`}
+                href={versMessagerie}
                 onClick={fermer}
-                aria-label="Ouvrir la fiche du membre"
-                title="Fiche du membre"
+                aria-label="Ouvrir dans la messagerie"
+                title="Ouvrir dans la messagerie"
                 className="w-8 h-8 rounded-md bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shrink-0"
               >
-                <Building2 size={15} />
+                <Maximize2 size={15} />
               </Link>
             ) : null}
-            <Link
-              href={versMessagerie}
-              onClick={fermer}
-              aria-label="Ouvrir dans la messagerie"
-              title="Ouvrir dans la messagerie"
-              className="w-8 h-8 rounded-md bg-white/10 hover:bg-white/20 text-white flex items-center justify-center shrink-0"
-            >
-              <Maximize2 size={15} />
-            </Link>
             <button
               type="button"
               onClick={fermer}
@@ -533,20 +566,13 @@ export function BulleSupport({
             </button>
           </div>
 
-          {liste ? (
-            <ListeDemandes
-              fils={fils}
-              chargement={chargement}
-              erreur={erreur}
-              ouvrir={(id) => modifierPanneau({ fil: id })}
-            />
-          ) : (
-            <>
-              <div
-                ref={defilement}
-                aria-live="polite"
-                className="flex-1 min-h-0 overflow-y-auto px-3.5 py-4 flex flex-col gap-1.5 bg-[#f7f9fc]"
-              >
+          <>
+            <div
+              ref={defilement}
+              aria-live="polite"
+              className="flex-1 min-h-0 overflow-y-auto px-3.5 py-4 bg-[#f7f9fc]"
+            >
+              <div ref={contenu} className="min-h-full flex flex-col gap-1.5">
                 {erreur && !conversation ? (
                   <p className="m-auto text-[13px] text-bad text-center">
                     Le support ne répond pas pour le moment.
@@ -558,18 +584,15 @@ export function BulleSupport({
                     messages={conversation.messages}
                     espace={espace}
                   />
-                ) : espace === "membre" ? (
+                ) : (
                   <Accueil
+                    espace={espace}
                     prenom={prenom}
                     choisir={(texte) => {
                       setBrouillon(texte);
                       saisie.current?.focus();
                     }}
                   />
-                ) : (
-                  <p className="m-auto text-[13px] text-faint text-center">
-                    Aucun message dans cette conversation.
-                  </p>
                 )}
 
                 {envoi ? (
@@ -581,64 +604,74 @@ export function BulleSupport({
                   </div>
                 ) : null}
               </div>
+            </div>
 
-              <form
-                onSubmit={(e) => {
-                  e.preventDefault();
-                  envoyer();
-                }}
-                className="shrink-0 border-t border-line bg-surface px-3 pt-2.5 pb-3"
-              >
-                {erreurEnvoi ? (
-                  <p role="alert" className="m-0 mb-2 text-[12.5px] text-bad">
-                    {erreurEnvoi}
-                  </p>
-                ) : null}
-                <div className="flex items-end gap-2">
-                  <textarea
-                    ref={saisie}
-                    value={brouillon}
-                    onChange={(e) => {
-                      setBrouillon(e.target.value);
-                      const t = e.currentTarget;
-                      t.style.height = "auto";
-                      t.style.height = `${Math.min(t.scrollHeight, 120)}px`;
-                    }}
-                    onKeyDown={(e) => {
-                      if (
-                        e.key === "Enter" &&
-                        !e.shiftKey &&
-                        !e.nativeEvent.isComposing
-                      ) {
-                        e.preventDefault();
-                        envoyer();
-                      }
-                    }}
-                    rows={1}
-                    aria-label="Votre message"
-                    placeholder={
-                      espace === "membre"
-                        ? "Écrivez votre message…"
-                        : "Répondre au membre…"
-                    }
-                    disabled={espace === "admin" && !conversation}
-                    className="flex-1 min-w-0 resize-none rounded-[20px] border border-line bg-surface-2 text-ink px-3.5 py-2.5 text-[13.5px] leading-[1.4] outline-none focus:border-navy focus:bg-surface max-h-[120px]"
-                  />
-                  <button
-                    type="submit"
-                    disabled={!brouillon.trim() || envoi !== null}
-                    aria-label="Envoyer"
-                    className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center shrink-0 border-0 cursor-pointer transition-opacity disabled:opacity-40 disabled:cursor-default"
-                  >
-                    <SendHorizontal size={17} />
-                  </button>
-                </div>
-                <p className="m-0 mt-1.5 text-[11px] text-faint pointer-coarse:hidden">
-                  Entrée pour envoyer · Maj + Entrée pour aller à la ligne
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                envoyer();
+              }}
+              className="shrink-0 border-t border-line bg-surface px-3 pt-2.5 pb-3"
+            >
+              {erreurEnvoi ? (
+                <p role="alert" className="m-0 mb-2 text-[12.5px] text-bad">
+                  {erreurEnvoi}
                 </p>
-              </form>
-            </>
-          )}
+              ) : null}
+              {espace === "admin" ? (
+                <PiecesChoisies
+                  fichiers={pieces}
+                  retirer={(i) => setPieces((p) => p.filter((_, k) => k !== i))}
+                />
+              ) : null}
+              <div className="flex items-end gap-2">
+                {espace === "admin" ? (
+                  <BoutonJoindre choisir={joindre} desactive={envoi !== null} />
+                ) : null}
+                <textarea
+                  ref={saisie}
+                  value={brouillon}
+                  onChange={(e) => {
+                    setBrouillon(e.target.value);
+                    const t = e.currentTarget;
+                    t.style.height = "auto";
+                    t.style.height = `${Math.min(t.scrollHeight, 120)}px`;
+                  }}
+                  onKeyDown={(e) => {
+                    if (
+                      e.key === "Enter" &&
+                      !e.shiftKey &&
+                      !e.nativeEvent.isComposing
+                    ) {
+                      e.preventDefault();
+                      envoyer();
+                    }
+                  }}
+                  rows={1}
+                  aria-label="Votre message"
+                  placeholder={
+                    espace === "membre"
+                      ? "Écrivez votre message…"
+                      : "Décrivez votre demande…"
+                  }
+                  className="flex-1 min-w-0 resize-none rounded-[20px] border border-line bg-surface-2 text-ink px-3.5 py-2.5 text-[13.5px] leading-[1.4] outline-none focus:border-navy focus:bg-surface max-h-[120px]"
+                />
+                <button
+                  type="submit"
+                  disabled={
+                    (!brouillon.trim() && !pieces.length) || envoi !== null
+                  }
+                  aria-label="Envoyer"
+                  className="w-10 h-10 rounded-full bg-accent text-white flex items-center justify-center shrink-0 border-0 cursor-pointer transition-opacity disabled:opacity-40 disabled:cursor-default"
+                >
+                  <SendHorizontal size={17} />
+                </button>
+              </div>
+              <p className="m-0 mt-1.5 text-[11px] text-faint pointer-coarse:hidden">
+                Entrée pour envoyer · Maj + Entrée pour aller à la ligne
+              </p>
+            </form>
+          </>
         </div>
       ) : null}
     </>
@@ -659,12 +692,13 @@ function FilMessages({
         const jour = jourLisible(m.envoyeLe);
         const nouveauJour =
           !precedent || jourLisible(precedent.envoyeLe) !== jour;
+        // Support IT (admin) : à droite, ce qu'écrit l'équipe de la Chambre ; à gauche, l'Admin GM.
+        // Signés : les messages de l'autre côté, et ceux d'un collègue
+        const aDroite = espace === "admin" ? !m.equipe : m.moi;
         const signe =
-          m.equipe &&
           !m.supprime &&
-          (nouveauJour || precedent?.de !== m.de || precedent?.moi);
-
-        const aDroite = m.moi || (espace === "admin" && m.equipe);
+          (m.equipe || (espace === "admin" && !m.moi)) &&
+          (nouveauJour || precedent?.de !== m.de || precedent?.moi !== m.moi);
         const cote = aDroite ? "self-end" : "self-start";
         return (
           <Fragment key={m.id}>
@@ -677,7 +711,11 @@ function FilMessages({
               <div
                 className={`${aDroite ? "self-end mr-1" : "self-start ml-1"} mt-1 -mb-0.5 text-[11px] font-semibold text-muted`}
               >
-                {espace === "membre" ? "Équipe CanCham" : `${m.de} · équipe`}
+                {espace === "membre"
+                  ? "Équipe CanCham"
+                  : m.equipe
+                    ? `${m.de} · Support IT`
+                    : m.de}
               </div>
             ) : null}
             {m.supprime ? (
@@ -691,25 +729,30 @@ function FilMessages({
             ) : (
               <div
                 className={`${cote} max-w-[82%] min-w-0 px-3 py-2 text-[13.3px] leading-relaxed whitespace-pre-line [overflow-wrap:anywhere] rounded-[14px] ${
-                  m.moi
+                  aDroite
                     ? "bg-accent text-white"
                     : "bg-surface border border-line"
                 } ${aDroite ? "rounded-br-[4px]" : "rounded-bl-[4px]"} ${
                   m.pieces.length ? "min-w-[200px]" : ""
                 }`}
               >
-                <PiecesJointes pieces={m.pieces} moi={m.moi} space={espace} />
+                <PiecesJointes
+                  pieces={m.pieces}
+                  moi={aDroite}
+                  space={espace}
+                  url={espace === "admin" ? urlPieceIT : undefined}
+                />
                 <TexteLie
                   texte={m.texte}
                   classeLien={
-                    m.moi
+                    aDroite
                       ? "text-white underline underline-offset-2 decoration-white/60 hover:decoration-white [overflow-wrap:anywhere]"
                       : undefined
                   }
                 />
                 <span
                   className={`block text-right text-[10.5px] mt-1 tabular-nums ${
-                    m.moi ? "text-white/70" : "text-faint"
+                    aDroite ? "text-white/70" : "text-faint"
                   }`}
                 >
                   {heureExacte(m.envoyeLe)}
@@ -724,9 +767,11 @@ function FilMessages({
 }
 
 function Accueil({
+  espace,
   prenom,
   choisir,
 }: {
+  espace: Espace;
   prenom: string;
   choisir: (texte: string) => void;
 }) {
@@ -734,12 +779,12 @@ function Accueil({
     <div className="my-auto flex flex-col gap-3">
       <div className="self-start max-w-[88%] px-3.5 py-3 bg-surface border border-line rounded-[14px] rounded-bl-[4px] text-[13.5px] leading-relaxed">
         <strong className="block mb-1">Bonjour {prenom},</strong>
-        Une question sur votre adhésion, un paiement, un événement ou un service
-        ? Écrivez-nous : l’équipe CanCham vous répond ici même, et la
-        conversation reste dans votre messagerie.
+        {espace === "admin"
+          ? "Un problème, une question sur la plateforme ? Écrivez au Support IT, avec une capture ou une vidéo si besoin."
+          : "Une question sur votre adhésion, un paiement, un événement ou un service ? Écrivez-nous : l’équipe CanCham vous répond ici même, et la conversation reste dans votre messagerie."}
       </div>
       <div className="flex flex-wrap gap-1.5">
-        {SUGGESTIONS.map((s) => (
+        {(espace === "admin" ? SUGGESTIONS_IT : SUGGESTIONS).map((s) => (
           <button
             key={s}
             type="button"
@@ -751,89 +796,5 @@ function Accueil({
         ))}
       </div>
     </div>
-  );
-}
-
-function ListeDemandes({
-  fils,
-  chargement,
-  erreur,
-  ouvrir,
-}: {
-  fils: ResumeSupport[];
-  chargement: boolean;
-  erreur: boolean;
-  ouvrir: (id: string) => void;
-}) {
-  if (erreur && !fils.length) {
-    return (
-      <p className="m-auto text-[13px] text-bad text-center px-6">
-        Le support ne répond pas pour le moment.
-      </p>
-    );
-  }
-  if (chargement) {
-    return <p className="m-auto text-[13px] text-faint">Chargement…</p>;
-  }
-  if (!fils.length) {
-    return (
-      <p className="m-auto text-[13px] text-faint text-center px-6">
-        Aucune demande de membre pour l’instant.
-      </p>
-    );
-  }
-  return (
-    <ul className="flex-1 min-h-0 overflow-y-auto m-0 p-0 list-none">
-      {fils.map((f) => (
-        <li key={f.id} className="border-b border-line last:border-b-0">
-          <button
-            type="button"
-            onClick={() => ouvrir(f.id)}
-            className="w-full flex gap-3 px-3.5 py-3 text-left bg-transparent border-0 cursor-pointer hover:bg-surface-2"
-          >
-            <Pastille
-              src={f.avatar}
-              alt=""
-              initiales={f.init}
-              taille={40}
-              className="bg-accent-soft text-accent-strong"
-            />
-            <span className="flex-1 min-w-0">
-              <span className="flex items-baseline gap-2">
-                <span
-                  className={`flex-1 min-w-0 truncate text-[13.5px] ${
-                    f.nonLus ? "font-bold text-ink" : "font-semibold text-ink"
-                  }`}
-                >
-                  {f.nom}
-                </span>
-                <span className="text-[11px] text-faint shrink-0 tabular-nums">
-                  {heureRelative(new Date(f.le))}
-                </span>
-              </span>
-              {f.sousTitre ? (
-                <span className="block text-[11.5px] text-muted truncate">
-                  {f.sousTitre}
-                </span>
-              ) : null}
-              <span className="flex items-center gap-2 mt-0.5">
-                <span
-                  className={`flex-1 min-w-0 truncate text-[12.5px] ${
-                    f.nonLus ? "text-ink font-medium" : "text-faint"
-                  }`}
-                >
-                  {f.apercu}
-                </span>
-                {f.nonLus ? (
-                  <span className="text-[10.5px] font-bold px-[7px] py-px rounded-full bg-accent text-white shrink-0">
-                    {f.nonLus}
-                  </span>
-                ) : null}
-              </span>
-            </span>
-          </button>
-        </li>
-      ))}
-    </ul>
   );
 }

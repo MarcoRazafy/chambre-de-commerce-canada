@@ -620,54 +620,17 @@ export async function reserverService(formData: FormData) {
   );
 }
 
+// Bulle de l'espace membre : le membre écrit à l'équipe de sa Chambre
+// (l'espace admin a la sienne : Support IT, /api/support-it)
 export async function ecrireAuSupport(
-  espaceDemande: string,
-  threadId: string | null,
+  _espace: string,
+  _threadId: string | null,
   contenuBrut: string,
 ): Promise<{ ok: true; threadId: string } | { ok: false; erreur: string }> {
   const contenu = String(contenuBrut ?? "").trim();
   if (!contenu) return { ok: false, erreur: "Le message est vide." };
-
-  if (espaceDemande !== "admin") {
-    const user = await getCurrentUser("membre");
-    const fil = await ecrireAEquipe(user, contenu);
-    revalidatePath("/", "layout");
-    return { ok: true, threadId: fil };
-  }
-
-  const user = await getCurrentUser("admin");
-  const fil = threadId
-    ? await prisma.messageThread.findFirst({
-        where: {
-          id: threadId,
-          equipe: true,
-          participants: { some: { userId: user.id } },
-        },
-        select: { id: true },
-      })
-    : null;
-  if (!fil) {
-    return { ok: false, erreur: "Cette conversation n’est plus disponible." };
-  }
-
-  const maintenant = new Date();
-  await prisma.message.create({
-    data: {
-      threadId: fil.id,
-      auteur: user.nom,
-      userId: user.id,
-      sentAt: maintenant,
-      texte: contenu,
-    },
-  });
-  await prisma.participantFil.update({
-    where: { threadId_userId: { threadId: fil.id, userId: user.id } },
-    data: { luLe: maintenant },
-  });
-
-  after(() => prevenirVisiteur(fil.id, contenu));
-  after(() => prevenirParticipants(fil.id, user, contenu, 0));
-
+  const user = await getCurrentUser("membre");
+  const fil = await ecrireAEquipe(user, contenu);
   revalidatePath("/", "layout");
-  return { ok: true, threadId: fil.id };
+  return { ok: true, threadId: fil };
 }

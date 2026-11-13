@@ -7,12 +7,16 @@ export function PiecesJointes({
   pieces,
   moi,
   space,
+  url,
 }: {
   pieces: PieceJointe[];
   moi: boolean;
   space: Space;
+  // Adresse des fichiers, si elle n'est pas celle de la messagerie (Support IT)
+  url?: (id: string, telecharger?: boolean) => string;
 }) {
   if (!pieces.length) return null;
+  const lien = url ?? ((id: string, telecharger = false) => urlPiece(id, space, telecharger));
   const images = pieces.filter((p) => p.type === "image");
   const autres = pieces.filter((p) => p.type !== "image");
 
@@ -25,14 +29,14 @@ export function PiecesJointes({
           {images.map((p) => (
             <Agrandir
               key={p.id}
-              src={urlPiece(p.id, space)}
+              src={lien(p.id)}
               alt={p.nom}
               legende={p.nom}
               className="rounded-[10px] overflow-hidden"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={urlPiece(p.id, space)}
+                src={lien(p.id)}
                 alt={p.nom}
                 loading="lazy"
                 className={`block w-full object-cover ${images.length > 1 ? "aspect-square" : "max-h-[260px]"}`}
@@ -46,7 +50,7 @@ export function PiecesJointes({
         p.type === "video" ? (
           <video
             key={p.id}
-            src={urlPiece(p.id, space)}
+            src={lien(p.id)}
             controls
             preload="metadata"
             playsInline
@@ -68,7 +72,7 @@ export function PiecesJointes({
               <FileText size={17} />
             </span>
             <a
-              href={urlPiece(p.id, space)}
+              href={lien(p.id)}
               target="_blank"
               rel="noopener noreferrer"
               className={`min-w-0 flex-1 no-underline hover:underline ${moi ? "text-white" : "text-ink"}`}
@@ -83,7 +87,7 @@ export function PiecesJointes({
               </span>
             </a>
             <a
-              href={urlPiece(p.id, space, true)}
+              href={lien(p.id, true)}
               aria-label={`Enregistrer ${p.nom}`}
               className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${
                 moi

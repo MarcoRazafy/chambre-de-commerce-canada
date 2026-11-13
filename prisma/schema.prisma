@@ -236,8 +236,55 @@ model Chambre {
   reglesTags          RegleTag[]
   profil              ProfilChambre?
   formulesAdhesion    FormuleAdhesion[]
+  filSupportIT        FilSupportIT?
 
   @@map("chambres")
+}
+
+// Support IT : la conversation de l'équipe d'une Chambre avec l'Admin GM (une par Chambre).
+// Lu par chaque côté jusqu'à une date (équipe de la Chambre, Admin GM) : les messages d'après sont non lus.
+model FilSupportIT {
+  id          String    @id @default(cuid())
+  chambreId   String    @unique
+  chambre     Chambre   @relation(fields: [chambreId], references: [id])
+  luChambreLe DateTime?
+  luGMLe      DateTime?
+  dernierLe   DateTime  @default(now())
+  createdAt   DateTime  @default(now())
+
+  messages MessageSupportIT[]
+
+  @@map("fils_support_it")
+}
+
+model MessageSupportIT {
+  id       String       @id @default(cuid())
+  filId    String
+  fil      FilSupportIT @relation(fields: [filId], references: [id], onDelete: Cascade)
+  deGM     Boolean      @default(false) // écrit par l'Admin GM ; sinon par l'équipe de la Chambre
+  auteur   String
+  userId   String? // le compte de l'équipe qui a écrit
+  texte    String
+  envoyeLe DateTime     @default(now())
+
+  pieces PieceSupportIT[]
+
+  @@index([filId, envoyeLe])
+  @@map("messages_support_it")
+}
+
+model PieceSupportIT {
+  id        String           @id @default(cuid())
+  nom       String
+  type      TypePieceJointe
+  fichier   String
+  taille    Int
+  messageId String
+  message   MessageSupportIT @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+
+  @@index([messageId])
+  @@map("pieces_support_it")
 }
 
 // Formule d'adhésion d'une Chambre (ex. « Madagascar — Entreprise, 150 $ par an ») : réglée dans ses Paramètres.

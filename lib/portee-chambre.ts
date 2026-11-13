@@ -13,6 +13,7 @@ export const DIRECTES = new Set([
   "Member", "User", "Event", "News", "Resource", "DossierRessource", "Offer", "CanchamService", "Invoice",
   "Paiement", "CoordonneesPaiement", "MessageThread", "AuditLog", "Abonne", "TypeRendezvous", "Rendezvous",
   "MiseEnRelation", "Lettre", "Tag", "FacturePlateforme", "RegleTag", "ProfilChambre", "FormuleAdhesion",
+  "FilSupportIT",
 ]);
 
 // Tables communes à toute la plateforme : lecture sans filtre, écriture refusée (Admin GM : prismaSysteme)
@@ -48,6 +49,8 @@ export const PAR_PARENT: Record<string, (c: string) => object> = {
   PieceJointe: (c) => ({ message: { is: { thread: dans(c) } } }),
   Disponibilite: (c) => ({ type: dans(c) }),
   EnvoiLettre: (c) => ({ lettre: dans(c) }),
+  MessageSupportIT: (c) => ({ fil: dans(c) }),
+  PieceSupportIT: (c) => ({ message: { is: { fil: dans(c) } } }),
 };
 
 // Relations entre tables (sauf « chambre »), pour suivre les créations imbriquées.
@@ -64,6 +67,7 @@ export const RELATIONS: Record<string, Record<string, string>> = {
   EnvoiLettre: { lettre: "Lettre" },
   Event: { inscriptions: "Registration", rappels: "RappelEnvoye", rappelsProgrammes: "RappelEvenement", participants: "Attendee", programme: "EventAgenda", intervenants: "EventIntervenant", factures: "Invoice" },
   EventAgenda: { event: "Event" },
+  FilSupportIT: { messages: "MessageSupportIT" },
   EventIntervenant: { event: "Event" },
   Invoice: { member: "Member", event: "Event", paiements: "Paiement" },
   JetonCompte: { user: "User" },
@@ -73,6 +77,7 @@ export const RELATIONS: Record<string, Record<string, string>> = {
   Maillage: { member: "Member" },
   Member: { formule: "FormuleAdhesion", maillage: "Maillage", relationsA: "MiseEnRelation", relationsB: "MiseEnRelation", users: "User", produits: "Produit", offres: "Offer", actualites: "News", factures: "Invoice", inscriptions: "Registration", rendezvous: "Rendezvous", notes: "NoteMembre", acces: "AccesRessource", accesDossiers: "AccesDossier", reglements: "Paiement" },
   Message: { thread: "MessageThread", piecesJointes: "PieceJointe" },
+  MessageSupportIT: { fil: "FilSupportIT", pieces: "PieceSupportIT" },
   MessageThread: { messages: "Message", participants: "ParticipantFil" },
   MiseEnRelation: { memberA: "Member", memberB: "Member" },
   News: { member: "Member", commentaires: "Comment", jaimes: "NewsLike" },
@@ -82,6 +87,7 @@ export const RELATIONS: Record<string, Record<string, string>> = {
   Paiement: { invoice: "Invoice", member: "Member" },
   ParticipantFil: { thread: "MessageThread", user: "User" },
   PieceJointe: { message: "Message" },
+  PieceSupportIT: { message: "MessageSupportIT" },
   Produit: { member: "Member" },
   Rappel: { user: "User" },
   RappelEnvoye: { event: "Event" },

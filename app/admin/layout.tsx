@@ -44,7 +44,8 @@ export default async function AdminLayout({
       ) : null}
       <BandeauRetard etat={paiement} />
       {children}
-      <BulleSupport espace="admin" prenom={user.nom.split(" ")[0]} />
+      {/* Support IT : l'équipe de la Chambre écrit à l'Admin GM (pas pendant une visite de l'Admin GM) */}
+      {user.visiteGM ? null : <BulleSupport espace="admin" prenom={user.nom.split(" ")[0]} />}
     </CoquilleAdmin>
   );
 }

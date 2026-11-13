@@ -132,6 +132,7 @@ export const TITLES: Record<string, [string, string]> = {
   "/gm/chambres": ["Admin GM", "Chambres"],
   "/gm/offres": ["Admin GM", "Offres"],
   "/gm/parametres": ["Admin GM", "Paramètres"],
+  "/gm/messages": ["Admin GM", "Messages"],
   "/membre": ["Espace membre", "Vue d’ensemble"],
   "/membre/recherche": ["Espace membre", "Recherche"],
   "/membre/profil": ["Espace membre", "Mon entreprise"],
@@ -253,4 +254,5 @@ export const NAV_GM: NavGroup[] = [
       { href: "/gm/offres", label: "Offres", icon: "abonnement" },
     ],
   },
+  { label: "Support", items: [{ href: "/gm/messages", label: "Messages", icon: "chat" }] },
 ];

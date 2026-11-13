@@ -32,7 +32,17 @@ function Portrait({ nom, taille }: { nom: string; taille: number }) {
   );
 }
 
-export function CoquilleGM({ gm, nav, children }: { gm: { nom: string; email: string }; nav: NavGroup[]; children: ReactNode }) {
+export function CoquilleGM({
+  gm,
+  nav,
+  badges = {},
+  children,
+}: {
+  gm: { nom: string; email: string };
+  nav: NavGroup[];
+  badges?: Record<string, number>;
+  children: ReactNode;
+}) {
   const pathname = usePathname();
   const [menuOuvert, setMenuOuvert] = useState(false);
   const actif = (href: string) => pathname === href || (href !== "/gm" && pathname.startsWith(`${href}/`));
@@ -66,6 +76,7 @@ export function CoquilleGM({ gm, nav, children }: { gm: { nom: string; email: st
               {groupe.items.map((item) => {
                 const Icone = NAV_ICONS[item.icon] ?? NAV_ICONS.home;
                 const courant = actif(item.href);
+                const badge = badges[item.href];
                 return (
                   <Link
                     key={item.href}
@@ -77,6 +88,16 @@ export function CoquilleGM({ gm, nav, children }: { gm: { nom: string; email: st
                     <Icone size={18} className="shrink-0 opacity-90" aria-hidden />
                     <span className="flex-1">{item.label}</span>
                     <EnCoursLien />
+                    {badge ? (
+                      <span
+                        aria-label={`${badge} non lu${badge > 1 ? "s" : ""}`}
+                        className={`pastille text-[11px] font-bold min-w-[22px] h-[22px] px-1.5 rounded-full flex items-center justify-center ${
+                          courant ? "bg-white/25 text-white" : "bg-accent text-white"
+                        }`}
+                      >
+                        {badge}
+                      </span>
+                    ) : null}
                   </Link>
                 );
               })}
