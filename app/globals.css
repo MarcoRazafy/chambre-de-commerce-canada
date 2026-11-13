@@ -351,7 +351,6 @@ label:has(.sr-only) {
 
 .espace-membre,
 .espace-admin {
-  --bg: #f5f7f9;
   --surface: #ffffff;
   --surface-2: #f1f4f7;
   --surface-3: #e5eaf0;
@@ -1343,13 +1342,61 @@ html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
 .site-plateforme .btn-action:hover svg {
   transform: translateX(3px);
 }
-/* Aperçu de l'espace : l'onglet choisi glisse ; les barres montent (ou s'étirent) quand l'aperçu est à l'écran,
-   et à chaque changement d'écran */
-.site-plateforme .visite-indicateur {
-  transition:
-    transform 0.3s var(--site-ease),
-    width 0.3s var(--site-ease),
-    opacity 0.2s;
+/* Aperçu de l'espace : la fenêtre en perspective, un peu inclinée, suit le curseur et respire lentement ; elle se
+   redresse en entrant dans l'écran (navigateurs qui animent au défilement) ; un écran s'efface avant que le suivant
+   n'apparaisse ; les barres montent (ou s'étirent) quand l'aperçu est à l'écran, et à chaque écran */
+@keyframes site-respire {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.site-plateforme .visite-scene {
+  perspective: 1800px;
+  animation: site-respire 9s ease-in-out infinite;
+}
+.site-plateforme .visite-redresse {
+  transform-style: preserve-3d;
+}
+@keyframes site-redresse {
+  from {
+    transform: rotateX(16deg) translateY(24px);
+  }
+  to {
+    transform: none;
+  }
+}
+@supports (animation-timeline: view()) {
+  .site-plateforme .visite-redresse {
+    animation: site-redresse linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 100%;
+  }
+}
+.site-plateforme .visite {
+  --inclinaison: 5deg;
+  transform: rotateX(calc(var(--inclinaison) + var(--rx, 0deg))) rotateY(var(--ry, 0deg));
+  transition: transform 0.6s var(--site-ease);
+}
+@keyframes site-ecran-entree {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+@keyframes site-ecran-sortie {
+  to {
+    opacity: 0;
+  }
+}
+.site-plateforme .visite-ecran {
+  animation: site-ecran-entree 0.5s var(--site-ease) both;
+}
+.site-plateforme .visite-ecran.est-sortant {
+  animation: site-ecran-sortie 0.26s ease-in both;
 }
 @keyframes site-pousse-y {
   from {
@@ -1571,6 +1618,9 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   .site-plateforme [data-reveal-groupe].est-visible > *,
   .site-plateforme .visite .pousse-y,
   .site-plateforme .visite .pousse-x,
+  .site-plateforme .visite-scene,
+  .site-plateforme .visite-redresse,
+  .site-plateforme .visite-ecran,
   .site-plateforme .illustration:not(.illustration-flotte) > .illustration-corps,
   .fenetre-composeur[open],
   .fenetre-composeur[open]::backdrop,
@@ -1594,10 +1644,13 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   }
   .site-plateforme .illustration,
   .site-plateforme .carte-filet,
-  .site-plateforme .visite-indicateur,
+  .site-plateforme .visite,
   .site-plateforme .btn-action svg,
   .site-plateforme details::details-content {
     transition: none;
+  }
+  .site-plateforme .visite {
+    transform: none;
   }
   .site-plateforme .illustration {
     opacity: 1;
@@ -1628,4 +1681,8 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   min-height: 56px;
   border-radius: 10px;
   box-shadow: 0 14px 28px -14px rgb(173 7 7 / 0.6);
+}
+/* Le cadre reste blanc, même dans l'espace GM (dont la classe pose son propre fond) */
+.cadre-auth {
+  background: #fff;
 }

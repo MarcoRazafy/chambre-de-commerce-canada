@@ -1,10 +1,11 @@
 "use client";
 
-// Visite de l'espace par onglets (site de la plateforme) : des écrans dessinés, pas des captures (aucune donnée réelle).
-// Sur téléphone, les onglets tiennent sur une ligne qui défile. En mouvement : l'onglet choisi glisse, les chiffres
-// se comptent et les barres montent quand l'écran apparaît (rien de tout cela si l'appareil demande moins de mouvements).
-import { createContext, useContext, useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent, type ReactNode } from "react";
-import { CalendarDays, Check, CreditCard, LayoutDashboard, Search, UserRound, Users, type LucideIcon } from "lucide-react";
+// Visite de l'espace (site de la plateforme) : des écrans dessinés, pas des captures (aucune donnée réelle), dans une
+// fenêtre en perspective qui suit le curseur et se redresse en entrant dans l'écran. Les écrans se succèdent d'eux-mêmes
+// (l'un s'efface, le suivant apparaît), des points permettent d'en choisir un ; les chiffres se comptent et les barres
+// montent à chaque écran. Rien de tout cela si l'appareil demande moins de mouvements : l'écran reste, les points marchent.
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type PointerEvent, type ReactNode } from "react";
+import { Check, Search } from "lucide-react";
 import { Marque } from "@/components/plateforme/site/MarqueSite";
 
 const CARTE = "rounded-[10px] bg-white border border-line";
@@ -76,7 +77,7 @@ function Tuile({ libelle, valeur, detail }: { libelle: string; valeur: string; d
   return (
     <div className={`${CARTE} p-3 sm:p-4 min-w-0`}>
       <span className="block text-[12px] text-muted truncate">{libelle}</span>
-      <span ref={chiffre} className="mono block mt-1 text-[18px] sm:text-[22px] font-medium text-ink truncate">{valeur}</span>
+      <span ref={chiffre} className="tabular-nums block mt-1 text-[18px] sm:text-[22px] font-medium text-ink truncate">{valeur}</span>
       {detail ? <span className="block mt-1 text-[11px] text-muted truncate">{detail}</span> : null}
     </div>
   );
@@ -114,14 +115,14 @@ function EcranTableau() {
             ))}
           </div>
           <div className="mt-2 flex gap-2 sm:gap-4">
-            {MOIS.map((m) => <span key={m} className="mono flex-1 text-center text-[11px] text-muted">{m}</span>)}
+            {MOIS.map((m) => <span key={m} className="tabular-nums flex-1 text-center text-[11px] text-muted">{m}</span>)}
           </div>
         </div>
         <div className={`${CARTE} p-4`}>
           <span className="block text-[12px] font-medium text-ink mb-3">Prochains événements</span>
           {[["Petit-déjeuner d’affaires", 78], ["Atelier export", 46], ["Soirée du réseau", 61]].map(([nom, taux], i) => (
             <div key={nom} className="mb-3 last:mb-0">
-              <div className="flex justify-between gap-2 text-[11px] text-muted mb-1"><span className="truncate">{nom}</span><span className="mono">{taux} %</span></div>
+              <div className="flex justify-between gap-2 text-[11px] text-muted mb-1"><span className="truncate">{nom}</span><span className="tabular-nums">{taux} %</span></div>
               <div className="h-1.5 rounded-full bg-[#eeebe5]"><div className="pousse-x h-full rounded-full bg-marque-nuit" style={{ width: `${taux}%`, ...delai(200 + i * 90) }} /></div>
             </div>
           ))}
@@ -172,13 +173,13 @@ function EcranEvenements() {
       {evenements.map((e, i) => (
         <div key={e.nom} className={`${CARTE} p-4 flex md:flex-col gap-3`}>
           <span className="grid place-items-center w-12 h-14 rounded-[8px] bg-marque-nuit text-white shrink-0 leading-none">
-            <span className="text-center"><span className="mono block text-[17px] font-medium">{e.jour}</span><span className="block mt-1 text-[11px] text-white/70">{e.mois}</span></span>
+            <span className="text-center"><span className="tabular-nums block text-[17px] font-medium">{e.jour}</span><span className="block mt-1 text-[11px] text-white/70">{e.mois}</span></span>
           </span>
           <span className="flex-1 min-w-0">
             <span className="block text-[13px] font-medium text-ink truncate">{e.nom}</span>
             <span className="block text-[11px] text-muted">{e.lieu}</span>
             <span className="block mt-3 h-1.5 rounded-full bg-[#eeebe5]"><span className="pousse-x block h-full rounded-full bg-marque-nuit" style={{ width: `${(e.inscrits / e.places) * 100}%`, ...delai(i * 90) }} /></span>
-            <span className="mono block mt-1.5 text-[11px] text-muted">{e.inscrits} inscrits sur {e.places}</span>
+            <span className="tabular-nums block mt-1.5 text-[11px] text-muted">{e.inscrits} inscrits sur {e.places}</span>
           </span>
         </div>
       ))}
@@ -203,9 +204,9 @@ function EcranPaiements() {
       <div className={`${CARTE} mt-3 overflow-hidden`}>
         {factures.map(([n, nom, montant, ton]) => (
           <div key={n} className="flex items-center gap-3 px-3 sm:px-4 h-11 border-b border-line last:border-b-0 text-[12px] sm:text-[13px]">
-            <span className="mono w-12 text-muted">{n}</span>
+            <span className="tabular-nums w-12 text-muted">{n}</span>
             <span className="flex-1 min-w-0 truncate text-ink">{nom}</span>
-            <span className="mono font-medium text-ink">{montant}</span>
+            <span className="tabular-nums font-medium text-ink">{montant}</span>
             <Statut ton={ton}>{ton === "ok" ? "Payée par carte" : "À régler"}</Statut>
           </div>
         ))}
@@ -232,7 +233,7 @@ function EcranMembre() {
               <span className="block text-[15px] sm:text-[17px] font-medium truncate">Boréal Conseil</span>
               <span className="block text-[11px] text-white/60">Membre depuis 2021 · Formule PME</span>
             </span>
-            <span className="mono text-[11px] text-white/80">2026</span>
+            <span className="tabular-nums text-[11px] text-white/80">2026</span>
           </div>
         </div>
         <div className="mt-4 flex items-center justify-between gap-3">
@@ -262,52 +263,43 @@ function EcranMembre() {
   );
 }
 
-const ONGLETS: { cle: string; libelle: string; Icone: LucideIcon; titre: string; texte: string; Ecran: () => ReactNode; menu: number }[] = [
-  { cle: "tableau", libelle: "Tableau de bord", Icone: LayoutDashboard, titre: "Tableau de bord", texte: "membres à jour, encaissements, événements et demandes d’adhésion", Ecran: EcranTableau, menu: 0 },
-  { cle: "membres", libelle: "Membres", Icone: Users, titre: "Membres", texte: "liste des entreprises membres, leur formule et leur statut", Ecran: EcranMembres, menu: 1 },
-  { cle: "evenements", libelle: "Événements", Icone: CalendarDays, titre: "Événements", texte: "événements à venir et inscriptions", Ecran: EcranEvenements, menu: 2 },
-  { cle: "paiements", libelle: "Paiements", Icone: CreditCard, titre: "Paiements", texte: "cotisations encaissées, en attente et payées par carte", Ecran: EcranPaiements, menu: 3 },
-  { cle: "membre", libelle: "Espace membre", Icone: UserRound, titre: "Bonjour, Boréal Conseil", texte: "l’espace d’un membre : sa carte de membre, sa cotisation, ses inscriptions et des mises en relation", Ecran: EcranMembre, menu: -1 },
+const ECRANS: { cle: string; libelle: string; titre: string; texte: string; Ecran: () => ReactNode; menu: number }[] = [
+  { cle: "tableau", libelle: "Tableau de bord", titre: "Tableau de bord", texte: "membres à jour, encaissements, événements et demandes d’adhésion", Ecran: EcranTableau, menu: 0 },
+  { cle: "membres", libelle: "Membres", titre: "Membres", texte: "liste des entreprises membres, leur formule et leur statut", Ecran: EcranMembres, menu: 1 },
+  { cle: "evenements", libelle: "Événements", titre: "Événements", texte: "événements à venir et inscriptions", Ecran: EcranEvenements, menu: 2 },
+  { cle: "paiements", libelle: "Paiements", titre: "Paiements", texte: "cotisations encaissées, en attente et payées par carte", Ecran: EcranPaiements, menu: 3 },
+  { cle: "membre", libelle: "Espace membre", titre: "Bonjour, Boréal Conseil", texte: "l’espace d’un membre : sa carte de membre, sa cotisation, ses inscriptions et des mises en relation", Ecran: EcranMembre, menu: -1 },
 ];
 
+const DUREE = 3200; // ms d'affichage d'un écran
+const SORTIE = 260; // ms d'effacement avant le suivant
+
+const calme = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 export function VisiteEspace() {
-  const id = useId();
   const [actif, setActif] = useState(0);
+  const [sortant, setSortant] = useState(false);
   const [interagi, setInteragi] = useState(false);
-  const boutons = useRef<(HTMLButtonElement | null)[]>([]);
-  const indicateur = useRef<HTMLSpanElement>(null);
-  const panneau = useRef<HTMLDivElement>(null);
-  const o = ONGLETS[actif];
+  const [pause, setPause] = useState(false);
+  const scene = useRef<HTMLDivElement>(null);
+  const fenetre = useRef<HTMLDivElement>(null);
+  const enVue = useRef(false);
+  const manuel = useRef(0);
+  const o = ECRANS[actif];
 
-  // Le fond de l'onglet choisi glisse jusqu'à lui (et suit sa largeur)
+  // La fenêtre est-elle à l'écran ? Les barres montent à sa première apparition ; hors de l'écran, les écrans attendent
   useEffect(() => {
-    const b = boutons.current[actif];
-    const ind = indicateur.current;
-    if (!b || !ind) return;
-    const placer = () => {
-      ind.style.transform = `translateX(${b.offsetLeft}px)`;
-      ind.style.width = `${b.offsetWidth}px`;
-      ind.style.opacity = "1";
-    };
-    placer();
-    const taille = new ResizeObserver(placer);
-    taille.observe(b);
-    return () => taille.disconnect();
-  }, [actif]);
-
-  // Les barres montent quand l'aperçu entre dans l'écran
-  useEffect(() => {
-    const el = panneau.current;
+    const el = fenetre.current;
     if (!el) return;
     if (!("IntersectionObserver" in window)) {
       el.classList.add("est-visible");
+      enVue.current = true;
       return;
     }
     const obs = new IntersectionObserver(
       (entrees) => {
-        if (!entrees.some((e) => e.isIntersecting)) return;
-        el.classList.add("est-visible");
-        obs.disconnect();
+        enVue.current = entrees.some((e) => e.isIntersecting);
+        if (enVue.current) el.classList.add("est-visible");
       },
       { threshold: 0.15 },
     );
@@ -315,85 +307,119 @@ export function VisiteEspace() {
     return () => obs.disconnect();
   }, []);
 
-  // Sur téléphone, l'onglet choisi vient au centre de la ligne
-  const montrer = (b: HTMLButtonElement | null) => b?.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-  const choisir = (i: number, e?: MouseEvent<HTMLButtonElement>) => {
-    setActif(i);
+  // L'écran suivant toutes les DUREE ms : l'écran s'efface, le suivant apparaît. Pas sous le curseur ni au clavier,
+  // pas hors de l'écran ni dans un onglet caché, jamais si l'appareil demande moins de mouvements
+  useEffect(() => {
+    if (pause || calme()) return;
+    let t1 = 0;
+    let t2 = 0;
+    const tic = () => {
+      if (!enVue.current || document.hidden) {
+        t1 = window.setTimeout(tic, 800);
+        return;
+      }
+      setSortant(true);
+      setInteragi(true);
+      t2 = window.setTimeout(() => {
+        setActif((a) => (a + 1) % ECRANS.length);
+        setSortant(false);
+      }, SORTIE);
+    };
+    t1 = window.setTimeout(tic, DUREE);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [pause, actif]);
+
+  useEffect(() => () => clearTimeout(manuel.current), []);
+
+  // Un point : cet écran, tout de suite (après l'effacement)
+  const aller = (i: number) => {
+    if (i === actif) return;
     setInteragi(true);
-    montrer(e?.currentTarget ?? boutons.current[i]);
+    if (calme()) {
+      setActif(i);
+      return;
+    }
+    setSortant(true);
+    clearTimeout(manuel.current);
+    manuel.current = window.setTimeout(() => {
+      setActif(i);
+      setSortant(false);
+    }, SORTIE);
   };
 
-  // Flèches, Début, Fin : d'un onglet à l'autre
-  const clavier = (e: KeyboardEvent<HTMLDivElement>) => {
-    const n = ONGLETS.length;
-    const cible = { ArrowRight: (actif + 1) % n, ArrowLeft: (actif - 1 + n) % n, Home: 0, End: n - 1 }[e.key];
-    if (cible === undefined) return;
-    e.preventDefault();
-    choisir(cible);
-    boutons.current[cible]?.focus();
+  // La fenêtre s'incline vers le curseur (souris seulement), et se redresse quand il sort
+  const incliner = (e: PointerEvent<HTMLDivElement>) => {
+    const el = fenetre.current;
+    const s = scene.current;
+    if (!el || !s || e.pointerType !== "mouse" || calme()) return;
+    const r = s.getBoundingClientRect();
+    const x = (e.clientX - r.left) / r.width - 0.5;
+    const y = (e.clientY - r.top) / r.height - 0.5;
+    el.style.setProperty("--ry", `${(x * 6).toFixed(2)}deg`);
+    el.style.setProperty("--rx", `${(-y * 5).toFixed(2)}deg`);
+  };
+  const redresser = () => {
+    fenetre.current?.style.setProperty("--ry", "0deg");
+    fenetre.current?.style.setProperty("--rx", "0deg");
   };
 
   return (
-    <div>
-      <div className="-mx-5 px-5 sm:mx-0 sm:px-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        <div role="tablist" aria-label="Visite de l’espace" onKeyDown={clavier} className="relative inline-flex gap-1 p-1 rounded-[10px] border border-line bg-surface-2 whitespace-nowrap">
-          <span ref={indicateur} aria-hidden className="visite-indicateur absolute top-1 bottom-1 left-0 w-0 rounded-[6px] bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.05)] opacity-0 pointer-events-none" />
-          {ONGLETS.map((t, i) => (
-            <button
-              key={t.cle}
-              ref={(b) => { boutons.current[i] = b; }}
-              type="button"
-              role="tab"
-              id={`${id}-onglet-${t.cle}`}
-              aria-selected={i === actif}
-              aria-controls={`${id}-panneau`}
-              tabIndex={i === actif ? 0 : -1}
-              onClick={(e) => choisir(i, e)}
-              className={`relative z-[1] inline-flex items-center gap-2 h-9 px-4 rounded-[6px] border-0 bg-transparent text-[14px] font-medium cursor-pointer transition-colors duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit ${
-                i === actif ? "text-ink" : "text-muted hover:text-ink"
-              }`}
-            >
-              <t.Icone size={16} strokeWidth={1.5} aria-hidden /> {t.libelle}
-            </button>
-          ))}
+    <div onPointerEnter={() => setPause(true)} onPointerLeave={() => setPause(false)} onFocus={() => setPause(true)} onBlur={() => setPause(false)}>
+      <div ref={scene} className="visite-scene" onPointerMove={incliner} onPointerLeave={redresser}>
+        <div className="visite-redresse">
+          <div
+            ref={fenetre}
+            role="img"
+            aria-label={`Illustration de l’espace : ${o.texte}`}
+            className="visite select-none rounded-2xl border border-line bg-surface shadow-[0_40px_80px_-40px_rgba(15,29,44,0.45)] overflow-hidden"
+          >
+            <div className="flex items-center gap-2 px-4 h-10 border-b border-line bg-surface-2">
+              <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
+              <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
+              <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
+              <span className="ml-3 h-5 flex-1 max-w-[280px] rounded-full bg-surface border border-line" />
+            </div>
+            <div className="flex min-h-[340px] sm:min-h-[400px]">
+              <div
+                className="hidden sm:flex w-[152px] lg:w-[180px] shrink-0 flex-col gap-1 p-3"
+                style={{ background: o.menu < 0 ? "linear-gradient(180deg, #0f1d2c 0%, #006b3c 100%)" : "linear-gradient(180deg, #8c0a0a 0%, #1d2a36 55%, #006b3c 100%)" }}
+              >
+                <span className="h-2.5 w-16 rounded bg-white/70 mb-4 mt-1" />
+                {[0, 1, 2, 3, 4, 5].map((i) => (
+                  <span key={i} className={`h-8 rounded-[6px] flex items-center px-2 transition-colors duration-300 ${i === o.menu ? "bg-white/15" : ""}`}>
+                    <span className="h-2 rounded bg-white/45" style={{ width: `${72 - i * 7}%` }} />
+                  </span>
+                ))}
+              </div>
+              <div key={o.cle} className={`visite-ecran flex-1 min-w-0 p-4 sm:p-6 bg-[#f6f4ef] ${sortant ? "est-sortant" : ""}`}>
+                <span className={`block h-2 w-20 ${PISTE}`} />
+                <span className="block mt-2 mb-4 text-[16px] sm:text-[18px] font-semibold text-ink">{o.titre}</span>
+                <ContexteVisite.Provider value={interagi}>
+                  <o.Ecran />
+                </ContexteVisite.Provider>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
-      <div
-        role="tabpanel"
-        id={`${id}-panneau`}
-        aria-labelledby={`${id}-onglet-${o.cle}`}
-        tabIndex={0}
-        className="mt-6 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-marque-nuit"
-      >
-        <div ref={panneau} role="img" aria-label={`Illustration de l’espace : ${o.texte}`} className="visite select-none rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(0,0,0,0.06)] overflow-hidden">
-          <div className="flex items-center gap-2 px-4 h-10 border-b border-line bg-surface-2">
-            <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
-            <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
-            <span className="size-2.5 rounded-full bg-[#dcd8d0]" />
-            <span className="ml-3 h-5 flex-1 max-w-[280px] rounded-full bg-surface border border-line" />
-          </div>
-          <div className="flex min-h-[340px] sm:min-h-[400px]">
-            <div
-              className="hidden sm:flex w-[152px] lg:w-[180px] shrink-0 flex-col gap-1 p-3"
-              style={{ background: o.menu < 0 ? "linear-gradient(180deg, #0f1d2c 0%, #006b3c 100%)" : "linear-gradient(180deg, #8c0a0a 0%, #1d2a36 55%, #006b3c 100%)" }}
-            >
-              <span className="h-2.5 w-16 rounded bg-white/70 mb-4 mt-1" />
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                <span key={i} className={`h-8 rounded-[6px] flex items-center px-2 ${i === o.menu ? "bg-white/15" : ""}`}>
-                  <span className="h-2 rounded bg-white/45" style={{ width: `${72 - i * 7}%` }} />
-                </span>
-              ))}
-            </div>
-            <div key={o.cle} className="flex-1 min-w-0 p-4 sm:p-6 bg-[#f6f4ef] anim-fondu">
-              <span className={`block h-2 w-20 ${PISTE}`} />
-              <span className="block mt-2 mb-4 text-[16px] sm:text-[18px] font-semibold text-ink">{o.titre}</span>
-              <ContexteVisite.Provider value={interagi}>
-                <o.Ecran />
-              </ContexteVisite.Provider>
-            </div>
-          </div>
-        </div>
+      {/* Les points : l'écran affiché ; un clic en choisit un autre */}
+      <div role="group" aria-label="Écrans de l’aperçu" className="mt-5 flex justify-center">
+        {ECRANS.map((e, i) => (
+          <button
+            key={e.cle}
+            type="button"
+            aria-label={e.libelle}
+            aria-pressed={i === actif}
+            onClick={() => aller(i)}
+            className="group grid place-items-center size-11 -mx-1 rounded-full border-0 bg-transparent cursor-pointer focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit"
+          >
+            <span className={`block h-2 rounded-full transition-[width,background-color] duration-300 ${i === actif ? "w-6 bg-marque-nuit" : "w-2 bg-line-champ group-hover:bg-faint"}`} />
+          </button>
+        ))}
       </div>
     </div>
   );
