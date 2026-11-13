@@ -18,10 +18,14 @@ const quand = (iso: string) => {
     : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 };
 
-// Support IT : les conversations avec les Chambres (leurs équipes écrivent depuis la bulle de l'espace admin)
+// Support IT : les conversations avec les Chambres (leurs équipes écrivent depuis la bulle de l'espace admin).
+// Sans choix : la plus récente est ouverte sur écran large ; sur téléphone, la liste reste affichée.
 export default async function MessagesGM({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
   const { c } = await searchParams;
-  const [fils, chambres, conversation] = await Promise.all([filsSupportGM(), chambresSupportGM(), c ? conversationGM(c) : null]);
+  const [fils, chambres] = await Promise.all([filsSupportGM(), chambresSupportGM()]);
+  const choisie = Boolean(c);
+  const cible = c ?? fils[0]?.chambreId;
+  const conversation = cible ? await conversationGM(cible) : null;
   const sansConversation = chambres.filter((ch) => !fils.some((f) => f.chambreId === ch.id));
 
   return (
@@ -30,7 +34,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
       <RelectureAuto />
 
       <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-5 items-start">
-        <Card className={`p-0 overflow-hidden ${conversation ? "hidden lg:block" : ""}`}>
+        <Card className={`p-0 overflow-hidden ${choisie ? "hidden lg:block" : ""}`}>
           <div className="px-4 pt-4 pb-3 border-b border-line">
             <h2 className="text-[16px] m-0 mb-3">Conversations</h2>
             {sansConversation.length ? (
@@ -96,7 +100,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
         </Card>
 
         {conversation ? (
-          <Card className="p-0 overflow-hidden flex flex-col h-[calc(100vh-200px)] min-h-[480px]">
+          <Card className={`p-0 overflow-hidden flex-col h-[calc(100vh-200px)] min-h-[480px] ${choisie ? "flex" : "hidden lg:flex"}`}>
             <div className="flex items-center gap-3 px-4 py-3 border-b border-line shrink-0">
               <Link
                 href="/gm/messages"
@@ -126,11 +130,11 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
               </div>
             )}
             <RedactionSupportGM key={conversation.id} chambreId={conversation.id} />
-            {conversation.nonLus ? <MarquerLu chambreId={conversation.id} repere={conversation.messages.at(-1)?.id ?? ""} /> : null}
+            {conversation.nonLus ? <MarquerLu chambreId={conversation.id} repere={conversation.messages.at(-1)?.id ?? ""} seulementLarge={!choisie} /> : null}
           </Card>
         ) : (
           <Card className="hidden lg:flex items-center justify-center h-[calc(100vh-200px)] min-h-[480px]">
-            <Vide icone={<MessageSquare size={26} />}>Choisissez une conversation.</Vide>
+            <Vide icone={<MessageSquare size={26} />}>Aucune conversation</Vide>
           </Card>
         )}
       </div>

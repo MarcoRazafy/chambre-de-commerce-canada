@@ -84,7 +84,7 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
         }
       />
 
-      <div className="cascade grid gap-4 mb-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="cascade grid gap-3 sm:gap-4 mb-5 grid-cols-2 xl:grid-cols-4">
         <Compteur icone={<Users size={20} />} libelle="Membres" valeur={membres} teinte="bleu" />
         <Compteur icone={<UserCog size={20} />} libelle="Comptes d’équipe" valeur={equipe.length} teinte="vert" />
         <Compteur icone={<CalendarDays size={20} />} libelle="Événements" valeur={evenements} teinte="degrade" />

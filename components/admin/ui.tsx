@@ -62,14 +62,14 @@ export function Compteur({
 }) {
   const corps = (
     <Card
-      className={`tuile-hote carte-filet ${href && !actif ? "" : "filet-fixe"} ${TEINTES[teinte].filet} p-5 h-full flex gap-4 items-start ${
+      className={`tuile-hote carte-filet ${href && !actif ? "" : "filet-fixe"} ${TEINTES[teinte].filet} p-4 sm:p-5 h-full flex gap-3 sm:gap-4 items-start ${
         actif ? "ring-2 ring-accent/60" : ""
       }`}
     >
       <span className={`tuile tuile-sm ${TEINTES[teinte].tuile}`}>{icone}</span>
       <span className="min-w-0 flex-1">
         <span className="block text-[13px] text-muted">{libelle}</span>
-        <span className="titre block text-[28px] leading-tight text-ink tabular-nums mt-0.5">
+        <span className="titre block text-[24px] sm:text-[28px] leading-tight text-ink tabular-nums mt-0.5">
           {valeur}
         </span>
         {detail ? (

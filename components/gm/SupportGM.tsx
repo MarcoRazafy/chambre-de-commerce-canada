@@ -157,10 +157,12 @@ export function RelectureAuto({ intervalle = 8_000 }: { intervalle?: number }) {
   return null;
 }
 
-// Conversation ouverte avec des messages non lus : lue
-export function MarquerLu({ chambreId, repere }: { chambreId: string; repere: string }) {
+// Conversation ouverte avec des messages non lus : lue. « seulementLarge » : la conversation ouverte d'office n'est
+// affichée que sur écran large ; sur téléphone, elle reste non lue
+export function MarquerLu({ chambreId, repere, seulementLarge = false }: { chambreId: string; repere: string; seulementLarge?: boolean }) {
   useEffect(() => {
+    if (seulementLarge && !window.matchMedia("(min-width: 1024px)").matches) return;
     marquerLuSupportIT(chambreId).catch(() => {});
-  }, [chambreId, repere]);
+  }, [chambreId, repere, seulementLarge]);
   return null;
 }
