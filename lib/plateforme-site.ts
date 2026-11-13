@@ -4,6 +4,7 @@ import "server-only";
 // Hors de toute Chambre : lectures sans limite (prismaSysteme), seulement ce qui est public.
 import { adresseOuSite } from "@/lib/adresse-chambre";
 import { prismaSysteme as db } from "@/lib/db";
+import { FONCTIONS } from "@/lib/fonctions-plateforme";
 import { fmtDollars, offreGratuite } from "@/lib/plateforme";
 
 // Les Chambres actives (nom, ville, pays), avec le lien vers leur inscription
@@ -20,7 +21,7 @@ export async function chambresPubliques(q: string) {
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-// Les offres, résumées pour le choix à la création
+// Les offres, résumées pour le choix à la création et pour les tarifs du site (fonctions incluses : leurs libellés)
 export async function offresPubliques() {
   const offres = await db.offre.findMany({ orderBy: { ordre: "asc" } });
   return offres.map((o) => {
@@ -38,6 +39,8 @@ export async function offresPubliques() {
       prix: gratuite ? "Gratuit" : fmtDollars(o.forfait),
       periode: gratuite ? "" : "mois",
       detail: majuscule([parCompte, limites].filter(Boolean).join(" · ")),
+      gratuite,
+      fonctions: FONCTIONS.filter((f) => o.fonctions.includes(f.cle)).map((f) => f.libelle),
     };
   });
 }

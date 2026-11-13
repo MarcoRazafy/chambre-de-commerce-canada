@@ -1137,3 +1137,86 @@ html:has(.espace-admin) {
 .champ-fondu:focus-visible {
   outline: none;
 }
+
+/* Site public de la plateforme (app/plateforme) : police du texte, titres serrés, entrée en douceur,
+   fond quadrillé ; mouvements coupés si l'appareil demande moins d'animations */
+.site-plateforme {
+  font-family: var(--font-texte);
+}
+.site-plateforme h1,
+.site-plateforme h2,
+.site-plateforme h3 {
+  font-family: var(--font-texte);
+  letter-spacing: -0.022em;
+  text-wrap: balance;
+}
+.site-plateforme [id] {
+  scroll-margin-top: 88px;
+}
+html:has(.site-plateforme) {
+  scroll-behavior: smooth;
+}
+.site-plateforme .texte-degrade {
+  background: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.site-plateforme .site-grille {
+  background-image:
+    linear-gradient(to right, rgb(15 29 44 / 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(15 29 44 / 0.05) 1px, transparent 1px);
+  background-size: 44px 44px;
+  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 100%);
+}
+@keyframes site-entree {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.site-plateforme .entree {
+  animation: site-entree 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+.site-plateforme .entree-2 {
+  animation-delay: 0.08s;
+}
+.site-plateforme .entree-3 {
+  animation-delay: 0.16s;
+}
+.site-plateforme .entree-4 {
+  animation-delay: 0.24s;
+}
+@keyframes site-flotte {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+.site-plateforme .flottant {
+  animation: site-flotte 6s ease-in-out infinite;
+}
+.site-plateforme .flottant-2 {
+  animation-delay: -3s;
+}
+@media (prefers-reduced-motion: reduce) {
+  html:has(.site-plateforme) {
+    scroll-behavior: auto;
+  }
+  .site-plateforme .entree,
+  .site-plateforme .flottant {
+    animation: none;
+  }
+}
+.site-plateforme .titre {
+  font-family: var(--font-texte);
+  font-weight: 800;
+  letter-spacing: -0.028em;
+}
