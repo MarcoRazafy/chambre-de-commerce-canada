@@ -84,6 +84,9 @@ const CONFIANCE = [
   { icone: LockKeyhole, titre: "Vous gardez la main", texte: "Le support n’entre dans votre espace que si vous l’autorisez, pour la durée que vous choisissez" },
 ];
 
+// Les tuiles de la sécurité : vert, rouge, bleu nuit, puis le dégradé de la marque
+const TONS_CONFIANCE = ["tuile-verte", "tuile-rouge", "tuile-bleue", "tuile-degrade"];
+
 const QUESTIONS = [
   {
     q: "Faut-il une carte bancaire pour commencer ?",
@@ -253,9 +256,9 @@ export default async function AccueilPlateforme() {
             <Illustration nom="paiement" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
           <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {CONFIANCE.map(({ icone: Icone, titre, texte }) => (
+            {CONFIANCE.map(({ icone: Icone, titre, texte }, i) => (
               <li key={titre} className="tuile-hote">
-                <span className="tuile tuile-sm tuile-verte">
+                <span className={`tuile tuile-sm ${TONS_CONFIANCE[i % TONS_CONFIANCE.length]}`}>
                   <Icone size={20} aria-hidden />
                 </span>
                 <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>

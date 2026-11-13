@@ -580,6 +580,14 @@ label:has(.sr-only) {
   background-color: #007140;
 }
 
+.tuile-degrade {
+  background-image: var(--marque-degrade);
+}
+
+.tuile-hote:hover .tuile-degrade {
+  background-image: linear-gradient(90deg, #007140, #ad0707);
+}
+
 .tuile-hote:hover .tuile-verte {
   background-image: var(--bouton-rouge);
 }
