@@ -3,16 +3,16 @@ import { Lock, Mail, UserRound } from "lucide-react";
 import { BoutonEnvoi } from "@/components/public/BoutonMarque";
 import { Alerte } from "@/components/public/CadreAuth";
 import { ChampAuth, ChampMotDePasse, Saisie } from "@/components/public/ChampsAuth";
-import { ChoixCarte } from "@/components/public/ChoixCarte";
 import { CadrePlateforme, CartePlateforme } from "@/components/plateforme/CadrePlateforme";
 import { ChampsChambre } from "@/components/plateforme/ChampsChambre";
+import { ChoixOffre } from "@/components/plateforme/ChoixOffre";
 import { creerChambre } from "@/lib/actions/plateforme";
 import { MOT_DE_PASSE_MIN } from "@/lib/mots-de-passe";
 import { offresPubliques } from "@/lib/plateforme-site";
 
 export const metadata: Metadata = { title: { absolute: "Créer une Chambre · L’Alliée Virtuelle" } };
 
-type Saisies = { erreur?: string; nomChambre?: string; slug?: string; nom?: string; email?: string; offre?: string };
+type Saisies = { erreur?: string; nomChambre?: string; slug?: string; nom?: string; email?: string; offre?: string; fonctions?: string };
 
 export default async function CreerUneChambre({ searchParams }: { searchParams: Promise<Saisies> }) {
   const sp = await searchParams;
@@ -45,14 +45,7 @@ export default async function CreerUneChambre({ searchParams }: { searchParams: 
             autoComplete="new-password"
           />
 
-          <fieldset className="m-0 p-0 border-0 min-w-0">
-            <legend className="block text-[13px] font-semibold text-ink mb-2">Offre</legend>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {offres.map((o) => (
-                <ChoixCarte key={o.id} name="offre" value={o.id} requis defaultChecked={o.id === offreChoisie} titre={o.nom} detail={o.detail} prix={o.prix} periode={o.periode} />
-              ))}
-            </div>
-          </fieldset>
+          <ChoixOffre offres={offres} choisie={offreChoisie} fonctions={(sp.fonctions ?? "").split(",").filter(Boolean)} />
 
           <div className="pt-2">
             <BoutonEnvoi enCours="Création de l’espace…">Créer mon espace</BoutonEnvoi>

@@ -138,6 +138,10 @@ model Offre {
   maxMembres          Int?
   maxUtilisateurs     Int?
   fonctions           String[] @default([])
+  // Offre à la carte : la Chambre choisit ses fonctions parmi « fonctions », chacune à son prix mensuel
+  // (prixFonctions : { cle: prix en $ }), ajouté au forfait de base
+  surMesure           Boolean  @default(false)
+  prixFonctions       Json     @default("{}")
   ordre               Int      @default(0)
   updatedAt           DateTime @updatedAt
 
@@ -191,6 +195,8 @@ model Chambre {
   // Abonnement à la plateforme (offre réglée par l'Admin GM) et accès à l'espace
   offreId     String        @default("gratuite")
   offre       Offre         @relation(fields: [offreId], references: [id])
+  // Offre à la carte : les fonctions choisies par la Chambre
+  fonctionsChoisies String[] @default([])
   statut      StatutChambre @default(active)
   suspendueLe DateTime?
 

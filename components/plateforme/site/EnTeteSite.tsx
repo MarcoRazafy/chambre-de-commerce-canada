@@ -9,7 +9,7 @@ import { MarqueSite } from "@/components/plateforme/site/MarqueSite";
 export const LIENS_SITE = [
   { href: "/#fonctions", libelle: "Fonctions" },
   { href: "/#fonctionnement", libelle: "Fonctionnement" },
-  { href: "/#tarifs", libelle: "Tarifs" },
+  { href: "/tarifs", libelle: "Tarifs" },
   { href: "/#questions", libelle: "Questions" },
 ];
 

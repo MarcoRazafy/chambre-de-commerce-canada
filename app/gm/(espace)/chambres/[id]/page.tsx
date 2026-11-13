@@ -12,7 +12,8 @@ import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
 import { fmtDateShort } from "@/lib/format";
 import { ficheChambre, offresPlateforme, STATUTS } from "@/lib/gm";
-import { configPlateforme, facturePlateforme, fmtDollars, offreGratuite } from "@/lib/plateforme";
+import { FONCTIONS, fonctionsOuvertes } from "@/lib/fonctions-plateforme";
+import { configPlateforme, facturePlateforme, fmtDollars, forfaitOffre, offreGratuite } from "@/lib/plateforme";
 
 export const metadata: Metadata = { title: "Chambre" };
 
@@ -49,9 +50,11 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
   const adresse = await adresseDeLaChambre(c.id);
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   // Ce que l'offre coûte aujourd'hui, avec l'équipe actuelle (avant taxes)
-  const estimation = offreGratuite(c.offre)
+  const forfait = forfaitOffre(c.offre, c.fonctionsChoisies);
+  const estimation = offreGratuite({ forfait, parUtilisateur: c.offre.parUtilisateur })
     ? null
-    : facturePlateforme(equipe.length, { ...configPlateforme(), forfait: c.offre.forfait, parUtilisateur: c.offre.parUtilisateur }, c.offre.utilisateursOfferts);
+    : facturePlateforme(equipe.length, { ...configPlateforme(), forfait, parUtilisateur: c.offre.parUtilisateur }, c.offre.utilisateursOfferts);
+  const ouvertes = fonctionsOuvertes(c.offre, c.fonctionsChoisies);
 
   return (
     <>
@@ -116,6 +119,11 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                     </>
                   ) : "Rien à payer"}
                 </Ligne>
+                {c.offre.surMesure ? (
+                  <Ligne libelle="Fonctions choisies">
+                    {ouvertes.length ? FONCTIONS.filter((x) => ouvertes.includes(x.cle)).map((x) => x.libelle).join(", ") : <span className="font-normal text-muted">Aucune</span>}
+                  </Ligne>
+                ) : null}
                 <Ligne libelle="Carte enregistrée">
                   {c.stripeCarteId ? <span className="tabular-nums">{c.carteMarque} •••• {c.carteFin} · {c.carteExpire}</span> : <span className="font-normal text-muted">Aucune</span>}
                 </Ligne>

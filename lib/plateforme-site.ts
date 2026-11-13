@@ -5,7 +5,7 @@ import "server-only";
 import { adresseOuSite } from "@/lib/adresse-chambre";
 import { prismaSysteme as db } from "@/lib/db";
 import { FONCTIONS } from "@/lib/fonctions-plateforme";
-import { fmtDollars, offreGratuite } from "@/lib/plateforme";
+import { fmtDollars, lirePrixFonctions, offreGratuite } from "@/lib/plateforme";
 
 // Les Chambres actives (nom, ville, pays), avec le lien vers leur inscription
 export async function chambresPubliques(q: string) {
@@ -21,11 +21,12 @@ export async function chambresPubliques(q: string) {
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-// Les offres, résumées pour le choix à la création et pour les tarifs du site (fonctions incluses : leurs libellés)
+// Les offres, résumées pour le choix à la création et pour les tarifs du site (fonctions incluses : leurs libellés).
+// Offre à la carte : le forfait de base (« dès »), et chaque fonction au choix avec son prix.
 export async function offresPubliques() {
   const offres = await db.offre.findMany({ orderBy: { ordre: "asc" } });
   return offres.map((o) => {
-    const gratuite = offreGratuite(o);
+    const gratuite = !o.surMesure && offreGratuite(o);
     const limites = [
       o.maxMembres != null ? `jusqu’à ${o.maxMembres} membres` : "membres illimités",
       o.maxUtilisateurs != null ? `${o.maxUtilisateurs} compte${o.maxUtilisateurs > 1 ? "s" : ""} d’équipe` : null,
@@ -33,14 +34,27 @@ export async function offresPubliques() {
     const parCompte = o.parUtilisateur > 0
       ? `${fmtDollars(o.parUtilisateur)} par compte d’équipe en plus${o.utilisateursOfferts ? ` (${o.utilisateursOfferts} offert${o.utilisateursOfferts > 1 ? "s" : ""})` : ""}`
       : null;
+    const prix = lirePrixFonctions(o.prixFonctions);
+    const incluses = FONCTIONS.filter((f) => o.fonctions.includes(f.cle));
     return {
       id: o.id,
       nom: o.nom,
-      prix: gratuite ? "Gratuit" : fmtDollars(o.forfait),
+      prix: gratuite ? "Gratuit" : o.surMesure ? `dès ${fmtDollars(o.forfait)}` : fmtDollars(o.forfait),
       periode: gratuite ? "" : "mois",
       detail: majuscule([parCompte, limites].filter(Boolean).join(" · ")),
       gratuite,
-      fonctions: FONCTIONS.filter((f) => o.fonctions.includes(f.cle)).map((f) => f.libelle),
+      surMesure: o.surMesure,
+      fonctions: incluses.map((f) => f.libelle),
+      cles: incluses.map((f) => f.cle as string),
+      // Chiffres (offre à la carte, tableau comparatif)
+      base: o.forfait,
+      parUtilisateur: o.parUtilisateur,
+      offerts: o.utilisateursOfferts,
+      maxMembres: o.maxMembres,
+      maxUtilisateurs: o.maxUtilisateurs,
+      options: o.surMesure ? incluses.map((f) => ({ cle: f.cle as string, libelle: f.libelle as string, prix: prix[f.cle] ?? 0 })) : [],
     };
   });
 }
+
+export type OffrePublique = Awaited<ReturnType<typeof offresPubliques>>[number];

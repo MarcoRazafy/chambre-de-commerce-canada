@@ -17,7 +17,7 @@ import { enCents, stripe, stripeConfigure } from "@/lib/stripe";
 const TENTATIVES_MAX = 3;
 const ENTRE_TENTATIVES_MS = 2 * 86_400_000;
 
-async function noter(chambreId: string, action: string, detail: string, acteur = "Paiement en ligne") {
+export async function noter(chambreId: string, action: string, detail: string, acteur = "Paiement en ligne") {
   await db.auditLog.create({ data: { chambreId, action, entite: "Chambre", entiteId: chambreId, acteur, detail } });
 }
 

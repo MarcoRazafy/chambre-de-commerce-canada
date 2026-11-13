@@ -9,6 +9,7 @@ import { adresseOuSite } from "@/lib/adresse-chambre";
 import { verifier } from "@/lib/auth";
 import { avecChambre, oublierAdresses } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit } from "@/lib/courriel";
+import { estFonction, libellesFonctions } from "@/lib/fonctions-plateforme";
 import { prismaSysteme as db } from "@/lib/db";
 import { slugValide } from "@/lib/hote-chambre";
 import { creerJeton } from "@/lib/jetons";
@@ -36,10 +37,11 @@ export async function creerChambre(formData: FormData) {
   const email = texte(formData, "email").toLowerCase();
   const motDePasse = String(formData.get("motDePasse") ?? "");
   const offreId = texte(formData, "offre", 50);
+  const fonctions = [...new Set(formData.getAll("fonctions").map(String).filter(estFonction))];
 
   // Erreur : retour au formulaire, saisie gardée (sauf le mot de passe)
   const erreur: (message: string) => never = (message) =>
-    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, slug, nom, email, offre: offreId })}`);
+    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, slug, nom, email, offre: offreId, fonctions: fonctions.join(",") })}`);
 
   const origine = await origineAppelante();
   const attente = tentative(`creer-chambre:${origine}`, 5, HEURE);
@@ -50,8 +52,10 @@ export async function creerChambre(formData: FormData) {
   if (!nom) erreur("Indiquez votre nom.");
   if (!ADRESSE.test(email)) erreur("Indiquez une adresse e-mail valide.");
   if (motDePasse.length < MOT_DE_PASSE_MIN) erreur(`Le mot de passe fait au moins ${MOT_DE_PASSE_MIN} caractères.`);
-  const offre = await db.offre.findUnique({ where: { id: offreId }, select: { id: true, nom: true } });
+  const offre = await db.offre.findUnique({ where: { id: offreId }, select: { id: true, nom: true, surMesure: true, fonctions: true } });
   if (!offre) erreur("Choisissez une offre.");
+  // Offre à la carte : les fonctions cochées, parmi celles de l'offre
+  const choisies = offre.surMesure ? fonctions.filter((f) => offre.fonctions.includes(f)) : [];
   if (await db.chambre.findUnique({ where: { slug }, select: { id: true } })) erreur(`L’adresse « ${slug} » est déjà prise.`);
   // Une adresse e-mail = un seul espace
   if (await db.user.findUnique({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
@@ -59,14 +63,14 @@ export async function creerChambre(formData: FormData) {
   let creee: { chambreId: string; userId: string };
   try {
     creee = await db.$transaction(async (tx) => {
-      const c = await tx.chambre.create({ data: { slug, nom: nomChambre, offreId: offre.id }, select: { id: true } });
+      const c = await tx.chambre.create({ data: { slug, nom: nomChambre, offreId: offre.id, fonctionsChoisies: choisies }, select: { id: true } });
       await tx.profilChambre.create({ data: { chambreId: c.id, nom: nomChambre, email } });
       const u = await tx.user.create({
         data: { chambreId: c.id, role: "admin", niveauEquipe: "administrateur", nom, fonction: "", email, motDePasse: hacher(motDePasse) },
         select: { id: true },
       });
       await tx.auditLog.create({
-        data: { chambreId: c.id, action: "chambre_creee", entite: "Chambre", entiteId: c.id, acteur: nom, detail: `Espace créé, offre ${offre.nom}.` },
+        data: { chambreId: c.id, action: "chambre_creee", entite: "Chambre", entiteId: c.id, acteur: nom, detail: `Espace créé, offre ${offre.nom}.${offre.surMesure ? ` Fonctions : ${libellesFonctions(choisies) || "aucune"}.` : ""}` },
       });
       return { chambreId: c.id, userId: u.id };
     });

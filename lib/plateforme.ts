@@ -37,6 +37,21 @@ export const UTILISATEURS_OFFERTS = 1;
 export type PrixOffre = { forfait: number; parUtilisateur: number; utilisateursOfferts: number };
 export const offreGratuite = (o: Pick<PrixOffre, "forfait" | "parUtilisateur">) => o.forfait <= 0 && o.parUtilisateur <= 0;
 
+// Prix mensuels des fonctions d'une offre à la carte (montants positifs seulement)
+export function lirePrixFonctions(v: unknown): Record<string, number> {
+  if (!v || typeof v !== "object" || Array.isArray(v)) return {};
+  return Object.fromEntries(Object.entries(v).filter(([, n]) => typeof n === "number" && Number.isFinite(n) && n >= 0));
+}
+
+// Forfait mensuel d'une offre ; à la carte : le forfait de base plus le prix des fonctions choisies (parmi celles
+// de l'offre)
+export type OffreALaCarte = { forfait: number; surMesure: boolean; prixFonctions: unknown; fonctions: readonly string[] };
+export function forfaitOffre(o: OffreALaCarte, choisies: readonly string[]): number {
+  if (!o.surMesure) return o.forfait;
+  const prix = lirePrixFonctions(o.prixFonctions);
+  return cents(o.fonctions.filter((f) => choisies.includes(f)).reduce((t, f) => t + (prix[f] ?? 0), o.forfait));
+}
+
 // Comptes payants parmi les comptes de l'équipe
 export const utilisateursPayants = (utilisateurs: number, offerts = UTILISATEURS_OFFERTS) => Math.max(0, utilisateurs - offerts);
 

@@ -1156,6 +1156,10 @@ html:has(.espace-admin) {
 html:has(.site-plateforme) {
   scroll-behavior: smooth;
 }
+/* Fenêtre de l'offre à la carte ouverte : la page derrière ne défile plus */
+html:has(.fenetre-composeur[open]) {
+  overflow: hidden;
+}
 .site-plateforme .texte-degrade {
   background: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);
   -webkit-background-clip: text;

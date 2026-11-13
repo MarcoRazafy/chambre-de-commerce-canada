@@ -1,18 +1,21 @@
 import Link from "next/link";
-import { CreditCard, Download, Eye, FileText, Sparkles } from "lucide-react";
+import { CreditCard, Download, Eye, FileText, Save, Sparkles } from "lucide-react";
 import { OngletEquipe } from "@/components/admin/OngletEquipe";
 import { EnTeteAdmin, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { AjouterUtilisateur } from "@/components/forms/EquipeForms";
+import { SubmitButton } from "@/components/form-bits";
+import { ComposeurOffre } from "@/components/plateforme/ComposeurOffre";
+import { FONCTIONS, libellesFonctions } from "@/lib/fonctions-plateforme";
 import { estAdministrateur } from "@/lib/autorisations";
 import { assurerFactureDuMois, getFacturesPlateforme } from "@/lib/factures-plateforme";
 import { Card, Pill, Saillant } from "@/components/ui";
 import { aujourdhuiISO, fmtDate } from "@/lib/format";
 import { configDeLaChambre } from "@/lib/offre-chambre";
-import { facturePlateforme, fmtDollars, fmtPourcent, offreGratuite, payantsFacture, prochaineFacturation } from "@/lib/plateforme";
+import { facturePlateforme, fmtDollars, fmtPourcent, lirePrixFonctions, offreGratuite, payantsFacture, prochaineFacturation } from "@/lib/plateforme";
 import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
 import { appliquerSession } from "@/lib/abonnement-stripe";
-import { enregistrerCarteAbonnement, passerAOffrePayante, payerFactureAbonnement } from "@/lib/actions/abonnement";
+import { composerOffre, enregistrerCarteAbonnement, passerAOffrePayante, payerFactureAbonnement } from "@/lib/actions/abonnement";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -36,12 +39,13 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
     redirectWithErreur(retour, "Le paiement n’a pas abouti.");
   }
   await assurerFactureDuMois();
-  const [moi, equipe, factures, carte, payante] = await Promise.all([
+  const [moi, equipe, factures, carte, payante, aLaCarte] = await Promise.all([
     getCurrentUser("admin"),
     getAdministrateurs(),
     getFacturesPlateforme(),
     prisma.chambre.findFirst({ select: { stripeCarteId: true, carteMarque: true, carteFin: true, carteExpire: true } }),
     prisma.offre.findUnique({ where: { id: "payante" }, select: { nom: true } }),
+    prisma.offre.findFirst({ where: { surMesure: true }, orderBy: { ordre: "asc" } }),
   ]);
   const gere = estAdministrateur(moi);
   const parCarte = stripeConfigure();
@@ -54,6 +58,9 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
     offre?.maxMembres != null ? `${offre.maxMembres} membres` : null,
     offre?.maxUtilisateurs != null ? `${offre.maxUtilisateurs} compte${offre.maxUtilisateurs > 1 ? "s" : ""} d’équipe` : null,
   ].filter(Boolean);
+  // L'offre à la carte : ses fonctions au choix et leur prix
+  const prixALaCarte = lirePrixFonctions(aLaCarte?.prixFonctions);
+  const options = FONCTIONS.filter((x) => aLaCarte?.fonctions.includes(x.cle)).map((x) => ({ cle: x.cle as string, libelle: x.libelle as string, prix: prixALaCarte[x.cle] ?? 0 }));
   const echeance = prochaineFacturation(aujourdhuiISO(), c.jourFacturation);
   const bloc = "rounded-[var(--radius-m)] border border-line bg-surface-2 px-4 py-2.5 flex flex-col";
   const ligne = "flex justify-between gap-3 items-baseline tabular-nums";
@@ -83,14 +90,16 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
             </div>
           </div>
           {gratuite ? null : <div className="flex flex-wrap items-center gap-2.5 text-[16px]">
-            <div className={bloc}><small className="text-[12px] text-muted">Forfait Chambre</small><b className="tabular-nums">{fmtDollars(f.forfait)}</b></div>
+            <div className={bloc}><small className="text-[12px] text-muted">{offre?.surMesure ? "Forfait et fonctions" : "Forfait Chambre"}</small><b className="tabular-nums">{fmtDollars(f.forfait)}</b></div>
             <span className="text-muted font-bold">+</span>
             <div className={bloc}><small className="text-[12px] text-muted">{f.payants} utilisateur{f.payants > 1 ? "s" : ""} × {fmtDollars(c.parUtilisateur)}{f.offerts ? " · super admin offert" : ""}</small><b className="tabular-nums">{fmtDollars(f.equipe)}</b></div>
             <span className="text-muted font-bold">=</span>
             <div className={`${bloc} border-accent`}><small className="text-[12px] text-muted">par mois, avant taxes</small><b className="tabular-nums">{fmtDollars(f.sousTotal)}</b></div>
           </div>}
           <p className="m-0 text-[13px] text-muted">
-            {limites.length
+            {offre?.surMesure
+              ? `Fonctions choisies : ${libellesFonctions(offre.fonctions) || "aucune"}.`
+              : limites.length
               ? `Jusqu’à ${limites.join(" et ")}.`
               : "Tout est inclus : membres et annuaire avec suggestions de mises en relation, événements, agenda, rendez-vous, ressources, messagerie, newsletter, factures et règlements. Membres et abonnés illimités."}
           </p>
@@ -108,6 +117,28 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
           </div>
         </Panneau>}
       </div>
+
+      {gere && aLaCarte && options.length ? (
+        <form action={composerOffre} className="block mb-4">
+          <Panneau
+            titre={offre?.surMesure ? "Mes fonctions" : "Composer mon offre"}
+            sousTitre={offre?.surMesure ? undefined : `Offre ${aLaCarte.nom} · dès ${fmtDollars(aLaCarte.forfait)} par mois`}
+            teinte="vert"
+          >
+            <ComposeurOffre
+              mode="champ"
+              offre={{ id: aLaCarte.id, nom: aLaCarte.nom, base: aLaCarte.forfait, parUtilisateur: aLaCarte.parUtilisateur, offerts: aLaCarte.utilisateursOfferts, options }}
+              initiales={offre?.surMesure ? offre.choisies : (offre?.fonctions ?? [])}
+              equipe={n}
+            />
+            <div className="flex justify-end pt-4">
+              <SubmitButton pendingLabel="Enregistrement…">
+                <Save size={15} aria-hidden /> {offre?.surMesure ? "Enregistrer" : `Passer à l’offre ${aLaCarte.nom}`}
+              </SubmitButton>
+            </div>
+          </Panneau>
+        </form>
+      ) : null}
 
       {parCarte ? (
         <Panneau titre="Carte bancaire" teinte="bleu">

@@ -13,6 +13,15 @@ export const FONCTIONS = [
 export type Fonction = (typeof FONCTIONS)[number]["cle"];
 export const estFonction = (v: string): v is Fonction => FONCTIONS.some((f) => f.cle === v);
 
+// Les libellés de fonctions données, dans l'ordre de la liste, séparés par des virgules
+export const libellesFonctions = (cles: readonly string[]) => FONCTIONS.filter((f) => cles.includes(f.cle)).map((f) => f.libelle).join(", ");
+
+// Les fonctions ouvertes à une Chambre : celles de son offre ; offre à la carte : celles qu'elle a choisies
+// parmi celles de l'offre
+export function fonctionsOuvertes(offre: { fonctions: readonly string[]; surMesure: boolean }, choisies: readonly string[]): string[] {
+  return offre.surMesure ? offre.fonctions.filter((f) => choisies.includes(f)) : [...offre.fonctions];
+}
+
 // Les pages de chaque fonction (espace admin et espace membre) : masquées du menu et fermées si l'offre de la
 // Chambre ne l'inclut pas
 export const CHEMINS: Record<Fonction, string[]> = {

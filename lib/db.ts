@@ -1,5 +1,6 @@
 import { PrismaPg } from "@prisma/adapter-pg";
 import { brancherRechercheChambre, chambreCourante } from "@/lib/chambre-courante";
+import { fonctionsOuvertes } from "@/lib/fonctions-plateforme";
 import { PrismaClient } from "@/lib/generated/prisma/client";
 import { restreindre } from "@/lib/portee-chambre";
 import { etatRetard, REGLAGES_PAR_DEFAUT, type ReglagesRetard } from "@/lib/retards";
@@ -63,7 +64,8 @@ brancherRechercheChambre(async (r) => {
       id: true,
       statut: true,
       accesDevJusqua: true,
-      offre: { select: { fonctions: true } },
+      offre: { select: { fonctions: true, surMesure: true } },
+      fonctionsChoisies: true,
       // La plus ancienne facture suivie impayée de l'abonnement : elle décide du retard
       facturesPlateforme: { where: { payeeLe: null, suivie: true }, orderBy: { date: "asc" }, take: 1, select: { date: true, payeeLe: true, suivie: true } },
     },
@@ -74,7 +76,7 @@ brancherRechercheChambre(async (r) => {
     suspendue: c.statut === "suspendue",
     restriction: etatRetard(c.facturesPlateforme, await reglagesRetard()).restriction,
     accesDev: !!c.accesDevJusqua && c.accesDevJusqua > new Date(),
-    fonctions: c.offre.fonctions,
+    fonctions: fonctionsOuvertes(c.offre, c.fonctionsChoisies),
   };
 });
 

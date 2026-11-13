@@ -13,7 +13,7 @@ import { oublierAdresses } from "@/lib/chambre-courante";
 import { oublierReglages, prismaSysteme as db } from "@/lib/db";
 import { lireRelances } from "@/lib/retards";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
-import { estFonction } from "@/lib/fonctions-plateforme";
+import { estFonction, FONCTIONS } from "@/lib/fonctions-plateforme";
 import { exigerGM } from "@/lib/gm";
 import { slugValide } from "@/lib/hote-chambre";
 import { lienEntree } from "@/lib/visite-gm";
@@ -77,10 +77,12 @@ export async function deconnexionGM() {
 export async function changerOffreChambre(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
-  const offre = await db.offre.findUnique({ where: { id: texte(formData, "offreId", 50) }, select: { id: true, nom: true } });
+  const offre = await db.offre.findUnique({ where: { id: texte(formData, "offreId", 50) }, select: { id: true, nom: true, surMesure: true } });
   if (!offre) redirectWithErreur(fiche(c.id), "Offre inconnue.");
   if (offre.id === c.offreId) redirectWithFlash(fiche(c.id), "Offre inchangée");
-  await db.chambre.update({ where: { id: c.id }, data: { offreId: offre.id } });
+  // Vers l'offre à la carte : la Chambre garde les fonctions qu'elle avait
+  const avant = offre.surMesure ? await db.offre.findUnique({ where: { id: c.offreId }, select: { fonctions: true } }) : null;
+  await db.chambre.update({ where: { id: c.id }, data: { offreId: offre.id, ...(avant ? { fonctionsChoisies: avant.fonctions } : {}) } });
   await noter(c.id, gm.nom, "offre_changee", `Offre ${offre.nom}.`);
   revalidatePath("/gm", "layout");
   redirectWithFlash(fiche(c.id), `Offre ${offre.nom}`);
@@ -154,7 +156,7 @@ const limite = (fd: FormData, k: string): number | null | undefined => {
 export async function enregistrerOffre(formData: FormData) {
   await exigerGM();
   const id = texte(formData, "offreId", 50);
-  const offre = await db.offre.findUnique({ where: { id }, select: { id: true } });
+  const offre = await db.offre.findUnique({ where: { id }, select: { id: true, surMesure: true } });
   if (!offre) redirectWithErreur("/gm/offres", "Offre inconnue.");
   const nom = texte(formData, "nom", 60);
   const forfait = montant(formData, "forfait");
@@ -168,9 +170,21 @@ export async function enregistrerOffre(formData: FormData) {
     redirectWithErreur("/gm/offres", "Les limites sont des nombres entiers (vide : sans limite).");
   }
   const fonctions = [...new Set(formData.getAll("fonctions").map(String).filter(estFonction))];
+  // À la carte : le prix de chaque fonction (vide : 0)
+  const prixFonctions: Record<string, number> = {};
+  if (offre.surMesure) {
+    for (const f of FONCTIONS) {
+      const p = texte(formData, `prix_${f.cle}`, 20) ? montant(formData, `prix_${f.cle}`) : 0;
+      if (p === null) redirectWithErreur("/gm/offres", "Les prix sont des montants positifs.");
+      prixFonctions[f.cle] = p;
+    }
+  }
   await db.offre.update({
     where: { id: offre.id },
-    data: { nom, forfait, parUtilisateur, utilisateursOfferts: offerts ?? 0, maxMembres, maxUtilisateurs, fonctions },
+    data: {
+      nom, forfait, parUtilisateur, utilisateursOfferts: offerts ?? 0, maxMembres, maxUtilisateurs, fonctions,
+      ...(offre.surMesure ? { prixFonctions } : {}),
+    },
   });
   revalidatePath("/", "layout");
   redirectWithFlash("/gm/offres", `Offre ${nom} enregistrée`);
