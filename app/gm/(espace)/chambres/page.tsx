@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Building2, ChevronRight, Search } from "lucide-react";
 import { EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
+import { LogoChambre } from "@/components/gm/LogoChambre";
 import { Card, Pill, Saillant, Td, Th } from "@/components/ui";
 import { fmtDateShort } from "@/lib/format";
 import { listeChambres, offresPlateforme, STATUTS, type StatutAffiche } from "@/lib/gm";
@@ -18,15 +19,6 @@ const ONGLETS: { cle: "toutes" | StatutAffiche; libelle: string }[] = [
 
 const jour = (d: Date) => fmtDateShort(d.toISOString().slice(0, 10));
 const fiche = (id: string) => `/gm/chambres/${encodeURIComponent(id)}`;
-
-function Initiales({ nom }: { nom: string }) {
-  const lettres = nom.split(/\s+/).filter(Boolean).map((m) => m[0]).slice(0, 2).join("").toUpperCase();
-  return (
-    <span aria-hidden className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-[13px] font-bold bg-navy-soft text-navy">
-      {lettres || "?"}
-    </span>
-  );
-}
 
 // Les Chambres clientes : recherche, statut, offre
 export default async function ChambresGM({ searchParams }: { searchParams: Promise<{ q?: string; statut?: string; offre?: string }> }) {
@@ -92,7 +84,7 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
                     <tr key={c.id} className="group hover:bg-surface-2">
                       <Td>
                         <Link href={fiche(c.id)} className="flex items-center gap-3 no-underline text-ink">
-                          <Initiales nom={c.nom} />
+                          <LogoChambre nom={c.nom} logo={c.logo} />
                           <span className="min-w-0">
                             <span className="block font-semibold group-hover:text-accent">{c.nom}</span>
                             <span className="block text-[12px] text-faint">{c.domaine ?? c.slug}</span>
@@ -123,7 +115,7 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
                 <Card className="carte-filet filet-degrade p-4">
                   <Link href={fiche(c.id)} className="block no-underline text-ink">
                     <div className="flex items-center gap-3">
-                      <Initiales nom={c.nom} />
+                      <LogoChambre nom={c.nom} logo={c.logo} />
                       <span className="min-w-0 flex-1">
                         <span className="block font-semibold text-[14.5px] truncate">{c.nom}</span>
                         <span className="block text-[12.5px] text-muted truncate">{c.domaine ?? c.slug}</span>

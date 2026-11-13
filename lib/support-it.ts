@@ -244,7 +244,7 @@ export async function filsSupportGM() {
       select: {
         chambreId: true,
         dernierLe: true,
-        chambre: { select: { nom: true, slug: true } },
+        chambre: { select: { nom: true, slug: true, profil: { select: { logo: true } } } },
         messages: {
           orderBy: { envoyeLe: "desc" },
           take: 1,
@@ -264,6 +264,7 @@ export async function filsSupportGM() {
       chambreId: f.chambreId,
       nom: f.chambre.nom,
       slug: f.chambre.slug,
+      logo: f.chambre.profil?.logo ?? null,
       le: f.dernierLe.toISOString(),
       apercu: dernier
         ? `${dernier.deGM ? "Vous : " : ""}${dernier.texte ? apercu(dernier.texte, 90) : resumePieces(dernier._count.pieces)}`
@@ -298,6 +299,7 @@ export async function conversationGM(chambreId: string) {
       id: true,
       nom: true,
       slug: true,
+      profil: { select: { logo: true } },
       filSupportIT: {
         select: {
           luGMLe: true,
@@ -320,6 +322,7 @@ export async function conversationGM(chambreId: string) {
     id: chambre.id,
     nom: chambre.nom,
     slug: chambre.slug,
+    logo: chambre.profil?.logo ?? null,
     nonLus,
     messages: messages.map((m) => versMessage(m, "gm", null)),
   };

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { AlertTriangle, Building2, Coins, Sparkles } from "lucide-react";
 import { Compteur, EnTeteAdmin, Jauge, Panneau, Vide } from "@/components/admin/ui";
+import { LogoChambre } from "@/components/gm/LogoChambre";
 import { Pill, Saillant } from "@/components/ui";
 import { fmtDateShort, today } from "@/lib/format";
 import { exigerGM, STATUTS, tableauDeBordGM } from "@/lib/gm";
@@ -49,7 +50,9 @@ export default async function TableauDeBordGM() {
             <ul className="m-0 p-0 list-none">
               {t.enRetard.slice(0, 6).map((c) => (
                 <li key={c.id} className={ligne}>
-                  <Link href={fiche(c.id)} className="font-semibold text-ink no-underline hover:text-accent truncate">{c.nom}</Link>
+                  <Link href={fiche(c.id)} className="flex items-center gap-3 min-w-0 font-semibold text-ink no-underline hover:text-accent">
+                    <LogoChambre nom={c.nom} logo={c.logo} taille={30} /> <span className="truncate">{c.nom}</span>
+                  </Link>
                   <Pill tone={STATUTS[c.statut].ton}>{c.offre.nom}</Pill>
                 </li>
               ))}
@@ -62,7 +65,9 @@ export default async function TableauDeBordGM() {
             <ul className="m-0 p-0 list-none">
               {t.nouvelles.slice(0, 6).map((c) => (
                 <li key={c.id} className={ligne}>
-                  <Link href={fiche(c.id)} className="font-semibold text-ink no-underline hover:text-accent truncate">{c.nom}</Link>
+                  <Link href={fiche(c.id)} className="flex items-center gap-3 min-w-0 font-semibold text-ink no-underline hover:text-accent">
+                    <LogoChambre nom={c.nom} logo={c.logo} taille={30} /> <span className="truncate">{c.nom}</span>
+                  </Link>
                   <span className="text-muted whitespace-nowrap">{c.offre.nom} · {jour(c.creeLe)}</span>
                 </li>
               ))}
@@ -75,8 +80,9 @@ export default async function TableauDeBordGM() {
             <ul className="m-0 p-0 list-none">
               {t.derniersPaiements.map((f) => (
                 <li key={f.id} className={ligne}>
-                  <Link href={fiche(f.chambre.id)} className="min-w-0 no-underline text-ink hover:text-accent truncate">
-                    <b>{f.chambre.nom}</b> <span className="text-muted">· {f.numero}</span>
+                  <Link href={fiche(f.chambre.id)} className="flex items-center gap-3 min-w-0 no-underline text-ink hover:text-accent">
+                    <LogoChambre nom={f.chambre.nom} logo={f.chambre.profil?.logo ?? null} taille={30} />
+                    <span className="truncate"><b>{f.chambre.nom}</b> <span className="text-muted">· {f.numero}</span></span>
                   </Link>
                   <span className="text-muted whitespace-nowrap tabular-nums">{fmtDollars(f.total)} · {f.payeeLe ? jour(f.payeeLe) : ""}</span>
                 </li>

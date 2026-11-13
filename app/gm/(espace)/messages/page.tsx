@@ -3,14 +3,12 @@ import Link from "next/link";
 import { ArrowLeft, Building2, ExternalLink, MessageSquare } from "lucide-react";
 import { EnTeteAdmin, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
+import { LogoChambre } from "@/components/gm/LogoChambre";
 import { FilSupportGM, MarquerLu, RedactionSupportGM, RelectureAuto } from "@/components/gm/SupportGM";
 import { Card, Saillant } from "@/components/ui";
 import { chambresSupportGM, conversationGM, filsSupportGM } from "@/lib/support-it";
 
 export const metadata: Metadata = { title: "Messages" };
-
-const initiales = (nom: string) =>
-  nom.split(/\s+/).filter(Boolean).map((m) => m[0]).slice(0, 2).join("").toUpperCase() || "?";
 
 const quand = (iso: string) => {
   const d = new Date(iso);
@@ -67,12 +65,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
                         actif ? "bg-accent-soft" : "hover:bg-surface-2"
                       }`}
                     >
-                      <span
-                        aria-hidden
-                        className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-[13px] font-bold bg-navy-soft text-navy"
-                      >
-                        {initiales(f.nom)}
-                      </span>
+                      <LogoChambre nom={f.nom} logo={f.logo} />
                       <span className="flex-1 min-w-0">
                         <span className="flex items-baseline gap-2">
                           <span className={`flex-1 min-w-0 truncate text-[14px] ${f.nonLus ? "font-bold" : "font-semibold"}`}>{f.nom}</span>
@@ -112,9 +105,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
               >
                 <ArrowLeft size={18} aria-hidden />
               </Link>
-              <span aria-hidden className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 text-[13px] font-bold bg-navy-soft text-navy">
-                {initiales(conversation.nom)}
-              </span>
+              <LogoChambre nom={conversation.nom} logo={conversation.logo} />
               <div className="min-w-0 flex-1">
                 <div className="text-[15px] font-semibold truncate">{conversation.nom}</div>
                 <div className="text-[12px] text-muted truncate">{conversation.slug}</div>

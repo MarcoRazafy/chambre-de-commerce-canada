@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays, Coins, ExternalLink, LogIn, MessageSquare, Pause, Play, Save, UserCog, Users } from "lucide-react";
 import { Compteur, EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
+import { LogoChambre } from "@/components/gm/LogoChambre";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
 import { changerOffreChambre, entrerDansChambre, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
@@ -60,7 +61,12 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
             Chambre · créée le {jour(c.createdAt)} <Pill tone={STATUTS[statut].ton}>{STATUTS[statut].libelle}</Pill>
           </span>
         }
-        titre={c.nom}
+        titre={
+          <span className="inline-flex items-center gap-4 flex-wrap">
+            <LogoChambre nom={c.nom} logo={c.profil?.logo ?? null} taille={52} />
+            {c.nom}
+          </span>
+        }
         actions={
           <>
             <Link href={`/gm/messages?c=${encodeURIComponent(c.id)}`} className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">

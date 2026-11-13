@@ -46,6 +46,7 @@ export async function listeChambres() {
       select: {
         id: true, nom: true, slug: true, domaine: true, statut: true, createdAt: true,
         offre: { select: { id: true, nom: true } },
+        profil: { select: { logo: true } },
         _count: { select: { membres: { where: MEMBRES }, utilisateurs: { where: { role: "admin" } } } },
       },
     }),
@@ -56,6 +57,8 @@ export async function listeChambres() {
   const enRetard = new Set(retards.map((r) => r.chambreId));
   return chambres.map((c) => ({
     id: c.id, nom: c.nom, slug: c.slug, domaine: c.domaine, creeLe: c.createdAt, offre: c.offre,
+    // Le logo réglé par la Chambre (Mon entreprise) ; sans logo : ses initiales
+    logo: c.profil?.logo ?? null,
     statut: (c.statut === "suspendue" ? "suspendue" : enRetard.has(c.id) ? "en_retard" : "active") as StatutAffiche,
     membres: c._count.membres,
     equipe: c._count.utilisateurs,
@@ -64,7 +67,7 @@ export async function listeChambres() {
 }
 
 export async function ficheChambre(id: string) {
-  const c = await db.chambre.findUnique({ where: { id }, include: { offre: true } });
+  const c = await db.chambre.findUnique({ where: { id }, include: { offre: true, profil: { select: { logo: true } } } });
   if (!c) return null;
   const [equipe, factures, membres, evenements, journal, retard] = await Promise.all([
     db.user.findMany({
@@ -103,7 +106,7 @@ export async function tableauDeBordGM(maintenant = new Date()) {
       where: { payeeLe: { not: null } },
       orderBy: { payeeLe: "desc" },
       take: 6,
-      select: { id: true, numero: true, total: true, payeeLe: true, chambre: { select: { id: true, nom: true } } },
+      select: { id: true, numero: true, total: true, payeeLe: true, chambre: { select: { id: true, nom: true, profil: { select: { logo: true } } } } },
     }),
   ]);
   // Revenus encaissés par mois, des 6 derniers mois (le plus ancien d'abord)
