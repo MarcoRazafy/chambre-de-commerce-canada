@@ -3,6 +3,9 @@ import Link from "next/link";
 import { PageTexte } from "@/components/plateforme/site/blocs";
 import { identitePlateforme } from "@/lib/identite-plateforme";
 
+// Lu à chaque visite : l'identité de la plateforme (Paramètres GM) changent sans redéploiement (et la base n'est pas joignable à la construction)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = { title: { absolute: "Conditions d’utilisation · L’Alliée Virtuelle" } };
 
 // Conditions d'utilisation de la plateforme par les Chambres

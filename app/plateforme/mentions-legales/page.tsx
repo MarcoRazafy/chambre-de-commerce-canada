@@ -3,6 +3,9 @@ import Link from "next/link";
 import { PageTexte } from "@/components/plateforme/site/blocs";
 import { identitePlateforme, numerosPlateforme } from "@/lib/identite-plateforme";
 
+// Lu à chaque visite : l'identité de la plateforme (Paramètres GM) changent sans redéploiement (et la base n'est pas joignable à la construction)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = { title: { absolute: "Mentions légales · L’Alliée Virtuelle" } };
 
 // Mentions légales du site : l'éditeur vient des Paramètres de l'Admin GM (Plateforme)

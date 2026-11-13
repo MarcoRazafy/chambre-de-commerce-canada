@@ -5,6 +5,9 @@ import { CartesTarifs, TableauOffres } from "@/components/plateforme/site/Tarifs
 import { Saillant } from "@/components/ui";
 import { offresPubliques } from "@/lib/plateforme-site";
 
+// Lu à chaque visite : les offres de l'Admin GM changent sans redéploiement (et la base n'est pas joignable à la construction)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { absolute: "Tarifs · L’Alliée Virtuelle" },
   description: "Les offres de L’Alliée Virtuelle : gratuite pour démarrer, tout inclus, ou à la carte avec seulement les fonctions dont votre Chambre a besoin.",

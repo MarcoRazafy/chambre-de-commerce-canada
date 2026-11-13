@@ -3,6 +3,9 @@ import Link from "next/link";
 import { PageTexte } from "@/components/plateforme/site/blocs";
 import { identitePlateforme } from "@/lib/identite-plateforme";
 
+// Lu à chaque visite : l'identité de la plateforme (Paramètres GM) changent sans redéploiement (et la base n'est pas joignable à la construction)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = { title: { absolute: "Confidentialité · L’Alliée Virtuelle" } };
 
 // Politique de confidentialité : ce que la plateforme traite, pourquoi, combien de temps, avec qui

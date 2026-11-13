@@ -24,6 +24,9 @@ import { CartesTarifs } from "@/components/plateforme/site/Tarifs";
 import { VisiteEspace } from "@/components/plateforme/site/VisiteEspace";
 import { offresPubliques } from "@/lib/plateforme-site";
 
+// Lu à chaque visite : les offres de l'Admin GM changent sans redéploiement (et la base n'est pas joignable à la construction)
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: { absolute: "L’Alliée Virtuelle · La plateforme des Chambres de commerce" },
   description:
