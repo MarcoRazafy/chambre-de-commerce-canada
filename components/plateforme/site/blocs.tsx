@@ -10,13 +10,14 @@ import { Revelateur } from "@/components/plateforme/site/Revelateur";
 export const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit";
 
 // Une page du site : lien d'évitement, en-tête fixe, contenu, pied ; les blocs marqués data-reveal apparaissent en défilant
-export function PageSite({ children }: { children: ReactNode }) {
+// enteteTransparent : la barre se fond dans l'accroche en haut de page (l'accueil, dont l'accroche passe sous la barre)
+export function PageSite({ enteteTransparent = false, children }: { enteteTransparent?: boolean; children: ReactNode }) {
   return (
     <div className="site-plateforme min-h-dvh bg-bg text-ink">
       <a href="#contenu" className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[60] focus:rounded-md focus:bg-surface focus:px-4 focus:py-2 focus:shadow-lg">
         Aller au contenu
       </a>
-      <EnTeteSite />
+      <EnTeteSite transparent={enteteTransparent} />
       <main id="contenu">{children}</main>
       <PiedSite />
       <Revelateur />

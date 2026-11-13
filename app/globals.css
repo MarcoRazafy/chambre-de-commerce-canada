@@ -1189,6 +1189,11 @@ html:has(.espace-admin) {
     radial-gradient(ellipse 60% 50% at 50% 100%, rgb(255 255 255 / 0.05), transparent 70%),
     linear-gradient(100deg, #8c0a0a 0%, #4a0b14 22%, #0f1d2c 50%, #0b2f27 76%, #006b3c 100%);
 }
+/* Barre du site sur l'accueil : transparente sur l'accroche tant que la page n'a pas défilé, puis bleu nuit avec son ombre */
+.site-plateforme .entete-transparent:not([data-defile]) {
+  background-color: transparent;
+  border-bottom-color: transparent;
+}
 /* Mots en couleur dans les titres : rouge et vert (.saillant), ou le dégradé de la marque */
 .site-plateforme .texte-degrade {
   background-image: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);

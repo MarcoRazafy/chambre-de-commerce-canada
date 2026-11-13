@@ -22,7 +22,8 @@ const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visi
 const SOULIGNE =
   "after:absolute after:left-3 after:right-3 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-[#ff8a8a] after:origin-left after:scale-x-0 after:transition-transform after:duration-300 after:ease-[var(--site-ease)]";
 
-export function EnTeteSite() {
+// transparent : en haut de page, la barre se fond dans l'accroche (l'accueil) ; elle redevient bleu nuit dès que la page a défilé
+export function EnTeteSite({ transparent = false }: { transparent?: boolean }) {
   const chemin = usePathname();
   const [ouvert, setOuvert] = useState(false);
   const [section, setSection] = useState("");
@@ -77,7 +78,7 @@ export function EnTeteSite() {
   return (
     <header
       ref={entete}
-      className="sur-sombre sticky top-0 z-50 border-b border-white/10 bg-marque-nuit text-white transition-shadow duration-300 data-defile:shadow-[0_8px_24px_rgba(15,29,44,0.28)]"
+      className={`sur-sombre sticky top-0 z-50 border-b border-white/10 bg-marque-nuit text-white transition-[background-color,border-color,box-shadow] duration-300 data-defile:shadow-[0_8px_24px_rgba(15,29,44,0.28)] ${transparent ? "entete-transparent" : ""}`}
     >
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8 h-16 flex items-center gap-4">
         <MarqueSite clair />

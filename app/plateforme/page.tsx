@@ -115,9 +115,9 @@ export default async function AccueilPlateforme() {
   const offres = await offresPubliques();
 
   return (
-    <PageSite>
+    <PageSite enteteTransparent>
       {/* Accroche : le texte à gauche, l'aperçu du vrai produit en pleine largeur dessous, sur un fond dégradé */}
-      <section className="accroche-site sur-sombre text-white">
+      <section className="accroche-site sur-sombre text-white -mt-16 pt-16">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-16 lg:pb-24">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
           <div className="max-w-[640px]">
