@@ -229,6 +229,27 @@ export async function enregistrerReglages(formData: FormData) {
   redirectWithFlash("/gm/parametres", "Paramètres enregistrés");
 }
 
+// Identité de la plateforme sur les factures de l'abonnement (Paramètres › Plateforme)
+export async function enregistrerIdentitePlateforme(formData: FormData) {
+  await exigerGM();
+  const retour = "/gm/parametres?onglet=plateforme";
+  const courriel = texte(formData, "courriel", 200).toLowerCase();
+  if (courriel && !/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(courriel)) redirectWithErreur(retour, "Indiquez une adresse e-mail valide.");
+  const data = {
+    nom: texte(formData, "nom", 120),
+    raisonSociale: texte(formData, "raisonSociale", 200),
+    adresse: String(formData.get("adresse") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 400),
+    courriel,
+    telephone: texte(formData, "telephone", 60),
+    neq: texte(formData, "neq", 40),
+    numeroTps: texte(formData, "numeroTps", 40),
+    numeroTvq: texte(formData, "numeroTvq", 40),
+  };
+  await db.reglagesPlateforme.upsert({ where: { id: "plateforme" }, create: { id: "plateforme", ...data }, update: data });
+  revalidatePath("/", "layout");
+  redirectWithFlash(retour, "Identité de la plateforme enregistrée");
+}
+
 // --- Mode développeur ---
 
 // « Entrer » : une visite dans l'espace de la Chambre, si elle l'autorise (dans le compte de son super admin

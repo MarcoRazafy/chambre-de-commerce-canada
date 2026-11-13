@@ -4,16 +4,18 @@ import { EnTeteAdmin, Onglets, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Saillant } from "@/components/ui";
-import { enregistrerReglages } from "@/lib/actions/gm";
+import { enregistrerIdentitePlateforme, enregistrerReglages } from "@/lib/actions/gm";
 import { changerMotDePasseGM, modifierCompteGM } from "@/lib/actions/gm-compte";
 import { MOT_DE_PASSE_MIN } from "@/lib/auth";
 import { exigerGM, reglagesPlateforme } from "@/lib/gm";
+import { NOM_PLATEFORME } from "@/lib/identite-plateforme";
 import { stripeConfigure } from "@/lib/stripe";
 
 export const metadata: Metadata = { title: "Paramètres" };
 
 const ONGLETS = [
   { cle: "compte", libelle: "Compte" },
+  { cle: "plateforme", libelle: "Plateforme" },
   { cle: "facturation", libelle: "Facturation" },
   { cle: "paiement", libelle: "Paiement par carte" },
 ] as const;
@@ -32,7 +34,7 @@ const Etat = ({ ok, libelle, cle }: { ok: boolean; libelle: string; cle: string 
   </li>
 );
 
-// Paramètres de la plateforme : le compte GM, la facturation de l'abonnement (retards, commission), le paiement par carte
+// Paramètres : le compte GM, l'identité de la plateforme (factures), la facturation de l'abonnement, le paiement par carte
 export default async function ParametresGM({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
   const sp = await searchParams;
   const onglet: Onglet = ONGLETS.find((o) => o.cle === sp.onglet)?.cle ?? "compte";
@@ -82,6 +84,48 @@ export default async function ParametresGM({ searchParams }: { searchParams: Pro
             </Panneau>
           </form>
         </div>
+      ) : null}
+
+      {onglet === "plateforme" ? (
+        <form action={enregistrerIdentitePlateforme} className="max-w-[760px]">
+          <Panneau titre="Identité de la plateforme" sousTitre="L’émetteur des factures de l’abonnement des Chambres" teinte="degrade">
+            <div className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Nom">
+                  <input name="nom" maxLength={120} defaultValue={r.nom} placeholder={NOM_PLATEFORME} className={INPUT} />
+                </Field>
+                <Field label="Raison sociale">
+                  <input name="raisonSociale" maxLength={200} defaultValue={r.raisonSociale} className={INPUT} />
+                </Field>
+              </div>
+              <Field label="Adresse">
+                <textarea name="adresse" rows={3} maxLength={400} defaultValue={r.adresse} className={`${INPUT} block w-full leading-relaxed resize-y`} />
+              </Field>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Courriel">
+                  <input name="courriel" type="email" maxLength={200} defaultValue={r.courriel} className={INPUT} />
+                </Field>
+                <Field label="Téléphone">
+                  <input name="telephone" maxLength={60} defaultValue={r.telephone} className={INPUT} />
+                </Field>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-3">
+                <Field label="NEQ">
+                  <input name="neq" maxLength={40} defaultValue={r.neq} className={INPUT} />
+                </Field>
+                <Field label="N° TPS">
+                  <input name="numeroTps" maxLength={40} defaultValue={r.numeroTps} className={INPUT} />
+                </Field>
+                <Field label="N° TVQ">
+                  <input name="numeroTvq" maxLength={40} defaultValue={r.numeroTvq} className={INPUT} />
+                </Field>
+              </div>
+              <div className="flex justify-end pt-1">
+                <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
+              </div>
+            </div>
+          </Panneau>
+        </form>
       ) : null}
 
       {onglet === "facturation" ? (

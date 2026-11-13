@@ -171,6 +171,15 @@ model ReglagesPlateforme {
   actionRetard          ActionRetard @default(lecture)
   // Part prélevée par la plateforme sur les cotisations payées par carte aux Chambres (en %, 0 : aucune)
   commissionCotisations Float        @default(0)
+  // Identité de la plateforme sur les factures de l'abonnement (vide : L'Alliée Virtuelle, sans coordonnées)
+  nom                   String       @default("")
+  raisonSociale         String       @default("")
+  adresse               String       @default("")
+  courriel              String       @default("")
+  telephone             String       @default("")
+  neq                   String       @default("")
+  numeroTps             String       @default("")
+  numeroTvq             String       @default("")
   updatedAt             DateTime     @updatedAt
 
   @@map("reglages_plateforme")
