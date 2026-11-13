@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CreditCard, Headset, ShieldCheck, Users } from "lucide-react";
-import { AppelFinal, EnTeteSection, IconePastel, PageSite, Questions } from "@/components/plateforme/site/blocs";
+import { AppelFinal, EnTeteSection, PageSite, Questions } from "@/components/plateforme/site/blocs";
 import { CartesTarifs, TableauOffres } from "@/components/plateforme/site/Tarifs";
 import { Saillant } from "@/components/ui";
 import { offresPubliques } from "@/lib/plateforme-site";
@@ -68,9 +68,11 @@ export default async function TarifsPlateforme() {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 lg:py-20">
           <h2 className="m-0 text-center text-[clamp(24px,3vw,32px)] leading-[1.15] text-ink">Toutes les offres <Saillant ton="vert">incluent</Saillant></h2>
           <ul data-reveal-groupe="" className="mt-10 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {INCLUS.map(({ icone: Icone, titre, texte }, i) => (
+            {INCLUS.map(({ icone: Icone, titre, texte }) => (
               <li key={titre} className="tuile-hote">
-                <IconePastel icone={Icone} teinte={i} />
+                <span className="tuile tuile-sm tuile-bleue">
+                  <Icone size={20} aria-hidden />
+                </span>
                 <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>
                 <p className="mt-2 mb-0 text-[14px] leading-[22px] text-muted">{texte}</p>
               </li>

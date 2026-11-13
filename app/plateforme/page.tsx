@@ -253,9 +253,11 @@ export default async function AccueilPlateforme() {
             <Illustration nom="paiement" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
           <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {CONFIANCE.map(({ icone: Icone, titre, texte }, i) => (
+            {CONFIANCE.map(({ icone: Icone, titre, texte }) => (
               <li key={titre} className="tuile-hote">
-                <IconePastel icone={Icone} teinte={i + 3} />
+                <span className="tuile tuile-sm tuile-verte">
+                  <Icone size={20} aria-hidden />
+                </span>
                 <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>
                 <p className="mt-2 mb-0 text-[14px] leading-[22px] text-muted">{texte}</p>
               </li>
