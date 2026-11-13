@@ -53,8 +53,8 @@ export function CadreAuth({
         </div>
 
         {panneau ? (
-          <aside className="hidden lg:flex flex-col items-center justify-center gap-8 px-12 xl:px-20 py-16 bg-surface-2 border-l border-line">
-            {illustration ? <Illustration nom={illustration} priorite className="w-full max-w-[520px]" /> : null}
+          <aside className="hidden lg:flex lg:sticky lg:top-0 lg:h-dvh flex-col items-center justify-center gap-8 px-12 xl:px-20 py-12 bg-surface-2 border-l border-line overflow-hidden">
+            {illustration ? <Illustration nom={illustration} priorite contenir className="w-full max-w-[460px]" /> : null}
             {accroche ? <h2 className="m-0 max-w-[520px] text-center text-[clamp(26px,2.6vw,36px)] leading-[1.15] text-ink">{accroche}</h2> : null}
             {sous ? <p className="m-0 max-w-[460px] text-center text-[16px] leading-[26px] text-muted">{sous}</p> : null}
           </aside>

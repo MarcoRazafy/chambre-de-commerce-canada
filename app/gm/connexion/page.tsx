@@ -8,7 +8,6 @@ import { BoutonEnvoi } from "@/components/public/BoutonMarque";
 import { ChampAuth, ChampMotDePasse, Saisie } from "@/components/public/ChampsAuth";
 import { connexionGM } from "@/lib/actions/gm";
 import { compteGM } from "@/lib/gm";
-import { Saillant } from "@/components/ui";
 
 export const metadata: Metadata = { title: "Connexion · Admin GM" };
 
@@ -17,14 +16,7 @@ export default async function ConnexionGM({ searchParams }: { searchParams: Prom
   if (await compteGM()) redirect("/gm");
 
   return (
-    <CadreAuth
-      classe="espace-admin"
-      marque={<MarqueGM />}
-      pied={PIED_GM}
-      illustration="admin"
-      accroche={<>Les Chambres, leurs <Saillant>offres</Saillant> et leurs <Saillant ton="vert">abonnements</Saillant>, au même endroit.</>}
-      sous="L’espace d’administration de la plateforme : Chambres, offres, factures de l’abonnement et Support IT."
-    >
+    <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM} illustration="admin">
       <span className="surtitre text-marque-rouge">Admin GM</span>
       <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mt-2.5 mb-6">Connexion</h1>
 

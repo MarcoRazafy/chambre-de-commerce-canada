@@ -32,12 +32,15 @@ export function Illustration({
   className = "",
   flotte = false,
   priorite = false,
+  contenir = false,
 }: {
   nom: NomIllustration;
   className?: string;
   flotte?: boolean;
   /** Dans l'accroche : chargée et visible tout de suite */
   priorite?: boolean;
+  /** Bornée à la moitié de la hauteur de l'écran (panneau d'une page d'authentification) */
+  contenir?: boolean;
 }) {
   const cadre = useRef<HTMLDivElement>(null);
   const [largeur, hauteur] = PROPORTIONS[nom];
@@ -65,7 +68,16 @@ export function Illustration({
 
   return (
     <div ref={cadre} className={`illustration ${priorite ? "illustration-visible" : ""} ${flotte ? "illustration-flotte" : ""} ${className}`}>
-      <Image src={`/illustrations/${nom}.svg`} alt="" aria-hidden width={largeur} height={hauteur} unoptimized priority={priorite} className="w-full h-auto" />
+      <Image
+        src={`/illustrations/${nom}.svg`}
+        alt=""
+        aria-hidden
+        width={largeur}
+        height={hauteur}
+        unoptimized
+        priority={priorite}
+        className={contenir ? "block mx-auto w-auto h-auto max-w-full max-h-[48vh]" : "w-full h-auto"}
+      />
     </div>
   );
 }
