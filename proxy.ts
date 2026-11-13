@@ -79,6 +79,8 @@ function proxyGM(request: NextRequest): NextResponse {
     return u;
   };
   if (pathname === "/") return NextResponse.redirect(url("/gm"));
+  // Les fichiers publics (illustrations, icônes…) passent tels quels
+  if (/\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
   if (!estGM(pathname)) return introuvable();
   if (GM_SANS_SESSION.has(pathname)) return NextResponse.next();
   if (!lireSessionGM(request.cookies.get(NOM_COOKIE_GM)?.value)) {

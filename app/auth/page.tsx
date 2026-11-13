@@ -36,8 +36,7 @@ export default async function ConnexionPage({
 
   return (
     <CadreAuth
-      photo="/photos/auth-rencontre.jpg"
-      alt="Membres et partenaires réunis lors d’une rencontre CanCham"
+      illustration="acces"
       accroche={
         <>
           Deux pays. Un <Saillant>réseau</Saillant>. Des{" "}

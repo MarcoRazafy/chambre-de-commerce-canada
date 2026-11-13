@@ -14,7 +14,7 @@ export default async function MotDePasseOublieGM({ searchParams }: { searchParam
   const { erreur, email, envoye } = await searchParams;
 
   return (
-    <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM}>
+    <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM} illustration={envoye ? "courriel" : "oubli"}>
       <span className="surtitre text-marque-rouge">Admin GM</span>
 
       {envoye ? (

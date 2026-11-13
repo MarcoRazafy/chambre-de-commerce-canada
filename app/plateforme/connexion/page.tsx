@@ -13,7 +13,7 @@ export const metadata: Metadata = { title: { absolute: "Connexion · L’Alliée
 export default async function ConnexionPlateforme({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string }> }) {
   const { erreur, email } = await searchParams;
   return (
-    <CadrePlateforme illustration="connexion">
+    <CadrePlateforme illustration="acces">
       <CartePlateforme>
         <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mb-6">Connexion</h1>
         {erreur ? <Alerte>{erreur}</Alerte> : null}

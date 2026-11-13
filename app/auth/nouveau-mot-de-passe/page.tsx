@@ -22,8 +22,7 @@ export default async function NouveauMotDePassePage({
 
   return (
     <CadreAuth
-      photo="/photos/auth-rencontre.jpg"
-      alt="Membres et partenaires réunis lors d’une rencontre CanCham"
+      illustration={!jeton ? "oubli" : invitation ? "bienvenue" : "mot-de-passe"}
       accroche={
         invitation ? (
           <>

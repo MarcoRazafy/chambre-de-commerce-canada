@@ -14,7 +14,7 @@ export default async function MotDePasseOubliePlateforme({ searchParams }: { sea
   const { erreur, email, envoye } = await searchParams;
 
   return (
-    <CadrePlateforme illustration="connexion">
+    <CadrePlateforme illustration={envoye ? "courriel" : "oubli"}>
       <CartePlateforme>
         {envoye ? (
           <div className="apparition">

@@ -5,7 +5,9 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 
-export type NomIllustration = "poignee-de-main" | "evenements" | "reseau" | "paiement" | "questions" | "chambre" | "membres" | "connexion";
+export type NomIllustration =
+  | "poignee-de-main" | "evenements" | "reseau" | "paiement" | "questions" | "chambre" | "membres"
+  | "acces" | "adhesion" | "oubli" | "courriel" | "mot-de-passe" | "bienvenue" | "admin";
 
 // Proportions de chaque dessin (largeur / hauteur de son viewBox), pour réserver la place avant le chargement
 const PROPORTIONS: Record<NomIllustration, [number, number]> = {
@@ -16,7 +18,13 @@ const PROPORTIONS: Record<NomIllustration, [number, number]> = {
   questions: [861, 632],
   chambre: [1010, 771],
   membres: [809, 630],
-  connexion: [752, 539],
+  acces: [793, 552],
+  adhesion: [512, 532],
+  oubli: [951, 632],
+  courriel: [570, 512],
+  "mot-de-passe": [493, 481],
+  bienvenue: [943, 796],
+  admin: [543, 634],
 };
 
 export function Illustration({

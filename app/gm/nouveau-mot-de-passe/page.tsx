@@ -17,7 +17,7 @@ export default async function NouveauMotDePasseGM({ searchParams }: { searchPara
   const compte = await compteGMDuLien(jeton);
 
   return (
-    <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM}>
+    <CadreAuth classe="espace-admin" marque={<MarqueGM />} pied={PIED_GM} illustration={!compte ? "oubli" : "mot-de-passe"}>
       <span className="surtitre text-marque-rouge">Admin GM</span>
 
       {!compte ? (

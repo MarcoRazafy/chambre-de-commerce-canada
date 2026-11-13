@@ -19,8 +19,7 @@ export default async function MotDePasseOubliePage({
 
   return (
     <CadreAuth
-      photo="/photos/auth-rencontre.jpg"
-      alt="Membres et partenaires réunis lors d’une rencontre CanCham"
+      illustration={envoye ? "courriel" : "oubli"}
       accroche={
         <>
           Un <Saillant>oubli</Saillant>, et vous voilà{" "}
