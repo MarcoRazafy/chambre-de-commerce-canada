@@ -1183,6 +1183,22 @@ html:has(.espace-admin) {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
+/* Mots en couleur dans les titres : rouge et vert (.saillant), ou le dégradé de la marque */
+.site-plateforme .texte-degrade {
+  background-image: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.site-plateforme .sur-sombre .texte-degrade {
+  background-image: linear-gradient(90deg, #ff8a8a 0%, #5fd39b 100%);
+}
+.site-plateforme .sur-sombre .saillant {
+  color: #ff8a8a;
+}
+.site-plateforme .sur-sombre .saillant-vert {
+  color: #5fd39b;
+}
 .site-plateforme [id] {
   scroll-margin-top: 80px;
 }

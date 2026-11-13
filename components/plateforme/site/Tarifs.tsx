@@ -21,7 +21,7 @@ function CarteOffre({ o, miseEnAvant }: { o: OffrePublique; miseEnAvant: boolean
   return (
     <article
       id={o.surMesure ? "sur-mesure" : undefined}
-      className={`flex flex-col rounded-2xl bg-surface p-6 sm:p-8 ${miseEnAvant ? "border-2 border-marque-nuit" : "border border-line"}`}
+      className={`carte-filet ${o.gratuite ? "filet-vert" : o.surMesure ? "filet-degrade" : "filet-rouge"} flex flex-col rounded-2xl bg-surface p-6 sm:p-8 ${miseEnAvant ? "border-2 border-marque-nuit" : "border border-line"}`}
     >
       <p className="m-0 flex items-baseline justify-between gap-3">
         <span className="text-[18px] font-semibold text-ink">{o.nom}</span>

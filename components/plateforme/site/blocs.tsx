@@ -26,7 +26,7 @@ export function EnTeteSection({ surtitre, titre, texte, centre = false, niveau =
   const Titre = niveau === 1 ? "h1" : "h2";
   return (
     <div className={`max-w-[680px] ${centre ? "mx-auto text-center" : ""}`}>
-      <p className="m-0 text-[15px] text-muted">{surtitre}</p>
+      <p className="m-0 text-[15px] font-medium text-accent-strong">{surtitre}</p>
       <Titre className={`mt-3 mb-0 leading-[1.1] text-ink ${niveau === 1 ? "text-[clamp(36px,4.6vw,56px)]" : "text-[clamp(28px,3.4vw,40px)]"}`}>{titre}</Titre>
       {texte ? <p className="mt-4 mb-0 text-[17px] leading-[28px] text-muted">{texte}</p> : null}
     </div>
@@ -96,9 +96,9 @@ export function Questions({ questions }: { questions: { q: string; r: string }[]
 export function AppelFinal() {
   return (
     <section className="px-5 sm:px-8 pb-20 lg:pb-28">
-      <div className="max-w-[1200px] mx-auto rounded-[20px] bg-marque-nuit px-6 py-14 sm:px-14 sm:py-16 text-center">
+      <div className="sur-sombre max-w-[1200px] mx-auto rounded-[20px] bg-marque-nuit px-6 py-14 sm:px-14 sm:py-16 text-center">
         <div className="flex flex-col items-center">
-          <h2 className="m-0 max-w-[640px] text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Ouvrez l’espace de votre Chambre</h2>
+          <h2 className="m-0 max-w-[640px] text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Ouvrez l’espace de <span className="texte-degrade">votre Chambre</span></h2>
           <p className="mt-4 mb-0 max-w-[480px] text-[17px] leading-[28px] text-white/70">Créez-le maintenant, composez votre offre et accueillez vos premiers membres.</p>
           <div className="mt-8 w-full flex justify-center">
             <FormulaireEmail sombre />

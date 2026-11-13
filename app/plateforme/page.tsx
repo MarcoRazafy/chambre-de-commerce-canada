@@ -17,6 +17,7 @@ import {
   Users,
 } from "lucide-react";
 import { AppelFinal, EnTeteSection, FOCUS, FormulaireEmail, PageSite, Questions, Rassurances } from "@/components/plateforme/site/blocs";
+import { Saillant } from "@/components/ui";
 import { CartesTarifs } from "@/components/plateforme/site/Tarifs";
 import { VisiteEspace } from "@/components/plateforme/site/VisiteEspace";
 import { offresPubliques } from "@/lib/plateforme-site";
@@ -120,7 +121,7 @@ export default async function AccueilPlateforme() {
           <div className="max-w-[760px]">
             <p className="entree m-0 text-[15px] text-muted">Pour les Chambres de commerce et les associations d’affaires</p>
             <h1 className="entree entree-2 mt-4 mb-0 text-[length:clamp(38px,5.2vw,64px)] leading-[1.04] text-ink">
-              Votre Chambre, ses membres et leurs cotisations, au même endroit
+              Votre Chambre, ses membres et leurs cotisations, <span className="texte-degrade">au même endroit</span>
             </h1>
             <p className="entree entree-3 mt-6 mb-0 max-w-[36rem] text-[18px] leading-[28px] text-muted">
               L’équipe gère les adhésions, les événements et les paiements depuis un espace à l’adresse de la Chambre. Chaque entreprise membre a le sien.
@@ -150,13 +151,13 @@ export default async function AccueilPlateforme() {
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
           <EnTeteSection
             surtitre="Fonctions"
-            titre="Membres, cotisations, événements, réseau"
+            titre={<>Membres, cotisations, événements, <Saillant ton="vert">réseau</Saillant></>}
             texte="Chaque fonction est reliée aux autres, de la demande d’adhésion au paiement de la cotisation."
           />
           <ul className="mt-12 m-0 p-0 list-none grid border-t border-line sm:border-0 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {FONCTIONS.map(({ icone: Icone, titre, texte }) => (
-              <li key={titre} className="flex gap-4 py-4 border-b border-line sm:block sm:p-6 sm:rounded-2xl sm:border sm:bg-bg">
-                <span className="grid place-items-center size-11 shrink-0 rounded-xl bg-marque-nuit text-white">
+            {FONCTIONS.map(({ icone: Icone, titre, texte }, i) => (
+              <li key={titre} className={`tuile-hote carte-filet ${i % 2 ? "filet-vert" : "filet-degrade"} flex gap-4 py-4 border-b border-line sm:block sm:p-6 sm:rounded-2xl sm:border sm:bg-bg`}>
+                <span className={`tuile tuile-sm ${i % 2 ? "tuile-verte" : "tuile-bleue"}`}>
                   <Icone size={20} aria-hidden />
                 </span>
                 <div className="min-w-0">
@@ -173,12 +174,12 @@ export default async function AccueilPlateforme() {
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
         <EnTeteSection
           surtitre="Deux espaces"
-          titre="Un espace pour l’équipe, un autre pour les membres"
+          titre={<>Un espace pour <Saillant>l’équipe</Saillant>, un autre pour <Saillant ton="vert">les membres</Saillant></>}
           texte="L’équipe gère la Chambre. Chaque entreprise membre retrouve ses événements, ses factures et le réseau."
         />
         <div className="mt-12 grid gap-4 lg:grid-cols-2">
           {ESPACES.map((e) => (
-            <article key={e.titre} className="rounded-2xl border border-line bg-surface p-6 sm:p-8">
+            <article key={e.titre} className={`carte-filet ${e.encre === "bg-marque-rouge" ? "filet-rouge" : "filet-vert"} rounded-2xl border border-line bg-surface p-6 sm:p-8`}>
               <p className="m-0 flex items-center gap-2.5 text-[13px] font-medium text-muted">
                 <span aria-hidden className={`size-2.5 rounded-[3px] ${e.encre}`} />
                 {e.sous}
@@ -198,15 +199,15 @@ export default async function AccueilPlateforme() {
       </section>
 
       {/* Fonctionnement */}
-      <section id="fonctionnement" className="bg-marque-nuit text-white">
+      <section id="fonctionnement" className="sur-sombre bg-marque-nuit text-white">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
           <div className="max-w-[680px]">
-            <p className="m-0 text-[15px] text-white/60">Fonctionnement</p>
-            <h2 className="mt-3 mb-0 text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Trois étapes</h2>
+            <p className="m-0 text-[15px] font-medium text-[#ff8a8a]">Fonctionnement</p>
+            <h2 className="mt-3 mb-0 text-[clamp(28px,3.4vw,40px)] leading-[1.1] text-white">Votre espace en <span className="texte-degrade">trois étapes</span></h2>
           </div>
           <ol className="mt-12 m-0 p-0 list-none grid gap-4 md:grid-cols-3">
             {ETAPES.map((e, i) => (
-              <li key={e.titre} className="rounded-2xl border border-white/10 bg-white/[0.04] p-6">
+              <li key={e.titre} className="carte-filet filet-degrade rounded-2xl border border-white/10 bg-white/[0.04] p-6">
                 <span className="mono text-[13px] text-white/60">{i + 1}</span>
                 <h3 className="mt-4 mb-0 text-[18px] font-semibold text-white">{e.titre}</h3>
                 <p className="mt-2 mb-0 text-[15px] leading-6 text-white/70">{e.texte}</p>
@@ -221,7 +222,7 @@ export default async function AccueilPlateforme() {
         <EnTeteSection
           centre
           surtitre="Tarifs"
-          titre="Choisissez votre offre, ou composez-la"
+          titre={<>Choisissez votre offre, <Saillant>ou composez-la</Saillant></>}
           texte="Les membres et leur espace sont inclus dans chaque offre. À la carte, vous ne payez que les fonctions dont votre Chambre a besoin."
         />
         <div className="mt-12">
@@ -237,11 +238,11 @@ export default async function AccueilPlateforme() {
       {/* Confiance */}
       <section className="bg-surface border-y border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-24">
-          <EnTeteSection surtitre="Sécurité" titre="Vos données et vos paiements restent les vôtres" />
+          <EnTeteSection surtitre="Sécurité" titre={<>Vos données et vos paiements <Saillant ton="vert">restent les vôtres</Saillant></>} />
           <ul className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {CONFIANCE.map(({ icone: Icone, titre, texte }) => (
-              <li key={titre}>
-                <span className="grid place-items-center size-11 rounded-xl bg-marque-vert text-white">
+              <li key={titre} className="tuile-hote">
+                <span className="tuile tuile-sm tuile-verte">
                   <Icone size={20} aria-hidden />
                 </span>
                 <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>
@@ -255,7 +256,7 @@ export default async function AccueilPlateforme() {
       {/* Questions */}
       <section id="questions" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28 grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div>
-          <EnTeteSection surtitre="Questions" titre="Questions fréquentes" />
+          <EnTeteSection surtitre="Questions" titre={<>Questions <Saillant>fréquentes</Saillant></>} />
           <p className="mt-5 mb-0 text-[15px] leading-6 text-muted inline-flex items-start gap-2.5">
             <Headset size={18} strokeWidth={1.5} className="shrink-0 mt-0.5" aria-hidden />
             Une autre question ? Le Support IT répond depuis votre espace.

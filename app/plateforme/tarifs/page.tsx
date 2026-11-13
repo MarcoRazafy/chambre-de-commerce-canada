@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CreditCard, Headset, ShieldCheck, Users } from "lucide-react";
 import { AppelFinal, EnTeteSection, PageSite, Questions } from "@/components/plateforme/site/blocs";
 import { CartesTarifs, TableauOffres } from "@/components/plateforme/site/Tarifs";
+import { Saillant } from "@/components/ui";
 import { offresPubliques } from "@/lib/plateforme-site";
 
 export const metadata: Metadata = {
@@ -52,7 +53,7 @@ export default async function TarifsPlateforme() {
               niveau={1}
               centre
               surtitre="Tarifs"
-              titre="Choisissez votre offre, ou composez-la"
+              titre={<>Choisissez votre offre, <Saillant>ou composez-la</Saillant></>}
               texte="Commencez gratuitement, prenez tout, ou gardez seulement les fonctions dont votre Chambre a besoin."
             />
           </div>
@@ -65,11 +66,11 @@ export default async function TarifsPlateforme() {
 
       <section className="bg-surface border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 lg:py-20">
-          <h2 className="m-0 text-center text-[clamp(24px,3vw,32px)] leading-[1.15] text-ink">Toutes les offres incluent</h2>
+          <h2 className="m-0 text-center text-[clamp(24px,3vw,32px)] leading-[1.15] text-ink">Toutes les offres <Saillant ton="vert">incluent</Saillant></h2>
           <ul className="mt-10 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {INCLUS.map(({ icone: Icone, titre, texte }) => (
-              <li key={titre}>
-                <span className="grid place-items-center size-11 rounded-xl bg-marque-nuit text-white">
+              <li key={titre} className="tuile-hote">
+                <span className="tuile tuile-sm tuile-bleue">
                   <Icone size={20} aria-hidden />
                 </span>
                 <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>
@@ -81,14 +82,14 @@ export default async function TarifsPlateforme() {
       </section>
 
       <section id="comparer" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
-        <EnTeteSection centre surtitre="Comparer" titre="Les offres, fonction par fonction" />
+        <EnTeteSection centre surtitre="Comparer" titre={<>Les offres, <Saillant>fonction par fonction</Saillant></>} />
         <div className="mt-12 max-w-[1040px] mx-auto">
           <TableauOffres offres={offres} />
         </div>
       </section>
 
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-20 lg:pb-28 grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
-        <EnTeteSection surtitre="Questions" titre="Questions sur les tarifs" />
+        <EnTeteSection surtitre="Questions" titre={<>Questions <Saillant>sur les tarifs</Saillant></>} />
         <Questions questions={QUESTIONS} />
       </section>
 
