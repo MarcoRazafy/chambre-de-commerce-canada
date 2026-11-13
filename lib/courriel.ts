@@ -15,6 +15,8 @@ export interface Courriel {
   html: string;
   texte: string;
   pieces?: PieceCourriel[];
+  /** Envoyé au nom de la plateforme, même depuis le contexte d'une Chambre (alertes à l'Admin GM) */
+  dePlateforme?: boolean;
 }
 
 export interface PieceCourriel {
@@ -56,7 +58,8 @@ export function oublierExpediteur() {
 // Hors de toute Chambre (espace Admin GM, site de la plateforme) : la plateforme écrit depuis l'adresse du serveur
 const PLATEFORME: Expediteur = { de: { name: "L’Alliée Virtuelle", address: SERVEUR.address }, secours: null, reponse: COURRIEL_EQUIPE };
 
-async function expediteur(): Promise<Expediteur> {
+async function expediteur(c?: Courriel): Promise<Expediteur> {
+  if (c?.dePlateforme) return PLATEFORME;
   let chambreId: string;
   try {
     chambreId = await chambreCourante();
@@ -141,7 +144,7 @@ function transporteur(): Transporter {
 }
 
 async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> {
-  const exp = await expediteur();
+  const exp = await expediteur(c);
   let de = exp.de;
   for (let essai = 1; essai <= ESSAIS_ENVOI; essai++) {
     try {
@@ -181,7 +184,7 @@ async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> 
 
 async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null> {
   const cle = process.env.RESEND_API_KEY!;
-  const exp = await expediteur();
+  const exp = await expediteur(c);
   let de = exp.de;
   let idempotence = randomUUID();
   let limites = 0;

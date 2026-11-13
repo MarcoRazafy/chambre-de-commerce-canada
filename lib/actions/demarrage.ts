@@ -4,7 +4,9 @@
 // page de Stripe (offre payante), informations de la Chambre. Chaque étape mène à la suivante (/demarrage).
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { noter, sessionPaiement } from "@/lib/abonnement-stripe";
+import { alerterGM } from "@/lib/alertes-gm";
 import { exigerAdministrateur } from "@/lib/autorisations";
 import { chambreCourante, oublierAdresses } from "@/lib/chambre-courante";
 import { oublierExpediteur, urlPublique } from "@/lib/courriel";
@@ -113,5 +115,15 @@ export async function terminerDemarrage(formData: FormData) {
   await noter(chambreId, "demarrage_termine", "Démarrage terminé.", moi.nom);
   oublierAdresses();
   revalidatePath("/", "layout");
+  after(async () => {
+    const c = await db.chambre.findUnique({ where: { id: chambreId }, select: { nom: true, fonctionsChoisies: true, offre: { select: { nom: true, surMesure: true } } } });
+    if (!c) return;
+    await alerterGM({
+      sujet: `Démarrage terminé : ${c.nom}`,
+      titre: "Démarrage terminé",
+      paragraphes: [`${c.nom} a terminé son démarrage avec l’offre ${c.offre.nom}${c.offre.surMesure ? ` (${libellesFonctions(c.fonctionsChoisies) || "aucune fonction"})` : ""}.`],
+      chambreId,
+    });
+  });
   redirectWithFlash("/admin", "Votre espace est prêt");
 }

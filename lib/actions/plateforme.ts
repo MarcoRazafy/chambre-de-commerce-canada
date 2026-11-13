@@ -6,6 +6,7 @@
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { adresseOuSite } from "@/lib/adresse-chambre";
+import { alerterGM } from "@/lib/alertes-gm";
 import { verifier } from "@/lib/auth";
 import { avecChambre, oublierAdresses } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
@@ -95,6 +96,12 @@ export async function creerChambre(formData: FormData) {
         bouton: { libelle: "Ouvrir mon espace", url: `${adresse}/auth` },
       });
       await envoyerCourriel({ a: email, sujet: `Votre espace ${nomChambre}`, html, texte: brut });
+      await alerterGM({
+        sujet: `Nouvelle Chambre : ${nomChambre}`,
+        titre: "Nouvelle Chambre",
+        paragraphes: [`${nom} (${email}) vient de créer la Chambre ${nomChambre}, à l’adresse ${adresse.replace(/^https?:\/\//, "")}.`, "Son démarrage (offre, paiement, informations) est en cours."],
+        chambreId: creee.chambreId,
+      });
     }),
   );
   redirect(lien ?? "/connexion");

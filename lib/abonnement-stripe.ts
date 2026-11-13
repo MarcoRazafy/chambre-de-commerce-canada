@@ -7,6 +7,7 @@ import "server-only";
 //  - les tâches régulières prélèvent les factures dues et envoient les relances (réglages de l'Admin GM).
 // Écritures sans limite de Chambre (prismaSysteme), toujours avec la Chambre en clair.
 import type Stripe from "stripe";
+import { alerterGM } from "@/lib/alertes-gm";
 import { oublierAdresses } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
 import { prismaSysteme as db, reglagesRetard } from "@/lib/db";
@@ -96,7 +97,7 @@ export async function passerALOffre(chambreId: string, offreId: string, acteur?:
 
 // Facture payée (carte, ou réglée autrement et notée par l'Admin GM) : sans effet si elle l'est déjà
 export async function marquerPayee(factureId: string, paiementId: string | null, acteur?: string) {
-  const f = await db.facturePlateforme.findUnique({ where: { id: factureId }, select: { chambreId: true, numero: true } });
+  const f = await db.facturePlateforme.findUnique({ where: { id: factureId }, select: { chambreId: true, numero: true, total: true, chambre: { select: { nom: true } } } });
   if (!f) return false;
   const r = await db.facturePlateforme.updateMany({
     where: { id: factureId, payeeLe: null },
@@ -105,6 +106,15 @@ export async function marquerPayee(factureId: string, paiementId: string | null,
   if (!r.count) return false;
   oublierAdresses(); // un espace en retard se rouvre tout de suite
   await noter(f.chambreId, "facture_payee", `Facture ${f.numero} payée.`, acteur);
+  // Paiement par carte (pas une facture marquée payée par l'Admin GM) : l'Admin GM est prévenu
+  if (!acteur) {
+    await alerterGM({
+      sujet: `Paiement reçu : ${f.chambre.nom}`,
+      titre: "Paiement reçu",
+      paragraphes: [`${f.chambre.nom} a payé par carte la facture ${f.numero} (${fmtDollars(f.total)}).`],
+      chambreId: f.chambreId,
+    });
+  }
   return true;
 }
 
@@ -151,7 +161,7 @@ export function messageRefus(e: unknown): string {
 // Prélève une facture sur la carte enregistrée
 async function prelever(
   f: { id: string; numero: string; total: number; tentatives: number },
-  c: { id: string; stripeClientId: string; stripeCarteId: string },
+  c: { id: string; nom: string; stripeClientId: string; stripeCarteId: string },
 ): Promise<"payee" | "refusee" | "attente"> {
   try {
     const pi = await stripe().paymentIntents.create(
@@ -172,9 +182,22 @@ async function prelever(
       return "payee";
     }
     await echec(f.id, "Paiement en attente de confirmation");
+    await alerterGM({
+      sujet: `Prélèvement en attente : ${c.nom}`,
+      titre: "Prélèvement en attente de confirmation",
+      paragraphes: [`Le prélèvement de la facture ${f.numero} (${fmtDollars(f.total)}) de ${c.nom} attend une confirmation de la banque.`],
+      chambreId: c.id,
+    });
     return "attente";
   } catch (e) {
-    await echec(f.id, messageRefus(e));
+    const message = messageRefus(e);
+    await echec(f.id, message);
+    await alerterGM({
+      sujet: `Prélèvement refusé : ${c.nom}`,
+      titre: "Prélèvement refusé",
+      paragraphes: [`Le prélèvement de la facture ${f.numero} (${fmtDollars(f.total)}) de ${c.nom} a été refusé : ${message}.`, `Essai ${f.tentatives + 1} sur ${TENTATIVES_MAX}.`],
+      chambreId: c.id,
+    });
     return "refusee";
   }
 }
@@ -189,7 +212,7 @@ async function echec(factureId: string, message: string) {
 // Tâche régulière, pour une Chambre : prélève ses factures suivies impayées (3 essais, 2 jours d'écart)
 export async function prelevementsDus(chambreId: string, maintenant = new Date()): Promise<number> {
   if (!stripeConfigure()) return 0;
-  const c = await db.chambre.findUnique({ where: { id: chambreId }, select: { id: true, stripeClientId: true, stripeCarteId: true } });
+  const c = await db.chambre.findUnique({ where: { id: chambreId }, select: { id: true, nom: true, stripeClientId: true, stripeCarteId: true } });
   if (!c?.stripeClientId || !c.stripeCarteId) return 0;
   const factures = await db.facturePlateforme.findMany({
     where: {
@@ -204,7 +227,7 @@ export async function prelevementsDus(chambreId: string, maintenant = new Date()
   });
   let payees = 0;
   for (const f of factures) {
-    if ((await prelever(f, { id: c.id, stripeClientId: c.stripeClientId, stripeCarteId: c.stripeCarteId })) === "payee") payees++;
+    if ((await prelever(f, { id: c.id, nom: c.nom, stripeClientId: c.stripeClientId, stripeCarteId: c.stripeCarteId })) === "payee") payees++;
   }
   return payees;
 }
@@ -220,7 +243,10 @@ export async function relancesDues(chambreId: string, maintenant = new Date()): 
   });
   const aRelancer = factures.map((f) => ({ f, jour: relanceDue(f, r, maintenant) })).filter((x) => x.jour !== null);
   if (!aRelancer.length) return 0;
-  const destinataires = await db.user.findMany({ where: { chambreId, role: "admin", niveauEquipe: "administrateur" }, select: { email: true, nom: true } });
+  const [destinataires, chambre] = await Promise.all([
+    db.user.findMany({ where: { chambreId, role: "admin", niveauEquipe: "administrateur" }, select: { email: true, nom: true } }),
+    db.chambre.findUnique({ where: { id: chambreId }, select: { nom: true } }),
+  ]);
   const lien = await urlPublique("/admin/abonnement?onglet=factures");
   for (const { f } of aRelancer) {
     const jours = joursDepuis(f.date, maintenant);
@@ -242,6 +268,15 @@ export async function relancesDues(chambreId: string, maintenant = new Date()): 
     // Toutes les relances passées comptent comme faites : une seule par passage
     const faites = [...new Set([...f.relances, ...r.relances.filter((d) => d <= jours)])];
     await db.facturePlateforme.update({ where: { id: f.id }, data: { relances: faites } });
+    await alerterGM({
+      sujet: `Facture en retard : ${chambre?.nom ?? chambreId}`,
+      titre: "Facture de l’abonnement en retard",
+      paragraphes: [
+        `${chambre?.nom ?? chambreId} : la facture ${f.numero} (${fmtDollars(f.total)}) attend son paiement depuis ${jours} jour${jours > 1 ? "s" : ""}.`,
+        "Une relance vient d’être envoyée à ses super admins.",
+      ],
+      chambreId,
+    });
   }
   return aRelancer.length;
 }
