@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ExternalLink, LogIn, Pause, Play, Save } from "lucide-react";
-import { EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
+import { CalendarDays, Coins, ExternalLink, LogIn, MessageSquare, Pause, Play, Save, UserCog, Users } from "lucide-react";
+import { Compteur, EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
@@ -17,11 +17,25 @@ export const metadata: Metadata = { title: "Chambre" };
 
 const jour = (d: Date) => fmtDateShort(d.toISOString().slice(0, 10));
 
-// Tableau dans un panneau : défile sur petit écran, sans second cadre
+// Tableau dans un panneau (écran large ; sur téléphone : une liste)
 function Tableau({ children }: { children: React.ReactNode }) {
   return (
-    <div className="overflow-x-auto border-t border-line">
+    <div className="hidden md:block overflow-x-auto border-t border-line">
       <table className="w-full border-collapse text-[13.3px] [&_tbody_tr:last-child_td]:border-b-0">{children}</table>
+    </div>
+  );
+}
+
+function ListeMobile({ children }: { children: React.ReactNode }) {
+  return <ul className="md:hidden m-0 p-0 list-none border-t border-line divide-y divide-line">{children}</ul>;
+}
+
+// Une ligne « libellé : valeur » d'un panneau
+function Ligne({ libelle, children }: { libelle: string; children: React.ReactNode }) {
+  return (
+    <div className="flex items-start justify-between gap-4 py-2.5 text-[13.5px]">
+      <dt className="text-muted shrink-0">{libelle}</dt>
+      <dd className="m-0 text-right text-ink font-semibold min-w-0">{children}</dd>
     </div>
   );
 }
@@ -37,50 +51,78 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
   const estimation = offreGratuite(c.offre)
     ? null
     : facturePlateforme(equipe.length, { ...configPlateforme(), forfait: c.offre.forfait, parUtilisateur: c.offre.parUtilisateur }, c.offre.utilisateursOfferts);
-  const chiffre = "flex justify-between gap-3 py-1.5 text-[14px] tabular-nums";
 
   return (
     <>
-      <Link href="/gm/chambres" className="inline-flex items-center gap-1 text-[13px] font-semibold text-muted no-underline hover:text-accent mb-3">
-        <ChevronLeft size={15} aria-hidden /> Chambres
-      </Link>
       <EnTeteAdmin
-        surtitre={<span className="inline-flex items-center gap-2">Chambre <Pill tone={STATUTS[statut].ton}>{STATUTS[statut].libelle}</Pill></span>}
+        surtitre={
+          <span className="inline-flex items-center gap-2 flex-wrap">
+            Chambre · créée le {jour(c.createdAt)} <Pill tone={STATUTS[statut].ton}>{STATUTS[statut].libelle}</Pill>
+          </span>
+        }
         titre={c.nom}
-        actions={adresse ? (
-          <a href={adresse} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">
-            <ExternalLink size={14} aria-hidden /> {adresse.replace(/^https?:\/\//, "")}
-          </a>
-        ) : undefined}
+        actions={
+          <>
+            <Link href={`/gm/messages?c=${encodeURIComponent(c.id)}`} className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">
+              <MessageSquare size={14} aria-hidden /> Écrire
+            </Link>
+            {adresse ? (
+              <a href={adresse} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline max-w-full">
+                <ExternalLink size={14} aria-hidden /> <span className="truncate">{adresse.replace(/^https?:\/\//, "")}</span>
+              </a>
+            ) : null}
+          </>
+        }
       />
+
+      <div className="cascade grid gap-4 mb-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+        <Compteur icone={<Users size={20} />} libelle="Membres" valeur={membres} teinte="bleu" />
+        <Compteur icone={<UserCog size={20} />} libelle="Comptes d’équipe" valeur={equipe.length} teinte="vert" />
+        <Compteur icone={<CalendarDays size={20} />} libelle="Événements" valeur={evenements} teinte="degrade" />
+        <Compteur
+          icone={<Coins size={20} />}
+          libelle="Abonnement par mois"
+          valeur={estimation ? fmtDollars(estimation.sousTotal) : "Gratuit"}
+          detail={estimation ? `Offre ${c.offre.nom} · avant taxes` : `Offre ${c.offre.nom}`}
+          teinte="rouge"
+        />
+      </div>
 
       <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
         <div className="flex flex-col gap-4 min-w-0">
           <form action={changerOffreChambre}>
             <input type="hidden" name="chambreId" value={c.id} />
             <Panneau titre="Abonnement" teinte="rouge">
-              <div className="flex flex-col gap-4">
-                <div className="flex items-end gap-2.5 flex-wrap">
-                  <Field label="Offre">
-                    <select name="offreId" defaultValue={c.offreId} className={`${INPUT} sm:w-[240px]`}>
-                      {offres.map((o) => <option key={o.id} value={o.id}>{o.nom}</option>)}
-                    </select>
-                  </Field>
-                  <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
-                </div>
-                <p className="m-0 text-[14px] text-muted">
-                  Encaissement des cotisations par carte :{" "}
-                  {c.stripeCompteActif ? <b className="text-ink">Stripe actif{c.stripeComptePays ? ` (${c.stripeComptePays})` : ""}</b> : c.stripeCompteId ? "inscription chez Stripe à terminer" : "non connecté"}
-                </p>
-                <p className="m-0 text-[14px] text-muted">
-                  Carte : {c.stripeCarteId ? <b className="text-ink">{c.carteMarque} •••• {c.carteFin} · {c.carteExpire}</b> : "aucune"}
-                </p>
-                <p className="m-0 text-[14px] text-muted">
-                  {estimation
-                    ? <>Aujourd’hui : <b className="text-ink tabular-nums">{fmtDollars(estimation.sousTotal)}</b> par mois avant taxes ({fmtDollars(estimation.forfait)} + {estimation.payants} compte{estimation.payants > 1 ? "s" : ""} d’équipe).</>
-                    : "Rien à payer."}
-                </p>
+              <div className="flex items-end gap-2.5 flex-wrap mb-3">
+                <Field label="Offre">
+                  <select name="offreId" defaultValue={c.offreId} className={`${INPUT} sm:w-[240px]`}>
+                    {offres.map((o) => <option key={o.id} value={o.id}>{o.nom}</option>)}
+                  </select>
+                </Field>
+                <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
               </div>
+              <dl className="m-0 flex flex-col divide-y divide-line border-t border-line">
+                <Ligne libelle="Coût actuel">
+                  {estimation ? (
+                    <>
+                      <span className="tabular-nums">{fmtDollars(estimation.sousTotal)}</span> <span className="font-normal text-muted">/ mois avant taxes</span>
+                      <span className="block text-[12px] font-normal text-muted">{fmtDollars(estimation.forfait)} + {estimation.payants} compte{estimation.payants > 1 ? "s" : ""} d’équipe</span>
+                    </>
+                  ) : "Rien à payer"}
+                </Ligne>
+                <Ligne libelle="Carte enregistrée">
+                  {c.stripeCarteId ? <span className="tabular-nums">{c.carteMarque} •••• {c.carteFin} · {c.carteExpire}</span> : <span className="font-normal text-muted">Aucune</span>}
+                </Ligne>
+                <Ligne libelle="Cotisations par carte">
+                  {c.stripeCompteActif ? (
+                    <Pill tone="ok">Stripe actif{c.stripeComptePays ? ` (${c.stripeComptePays})` : ""}</Pill>
+                  ) : c.stripeCompteId ? (
+                    <Pill tone="warn">Inscription à terminer</Pill>
+                  ) : (
+                    <span className="font-normal text-muted">Non connecté</span>
+                  )}
+                </Ligne>
+              </dl>
             </Panneau>
           </form>
 
@@ -112,6 +154,32 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                 </tbody>
               </Tableau>
             ) : <Vide>Aucune facture</Vide>}
+            {factures.length ? (
+              <ListeMobile>
+                {factures.map((x) => (
+                  <li key={x.id} className="px-5 py-3">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-semibold text-[13.5px]">{x.numero}</span>
+                      <span className="font-semibold text-[13.5px] tabular-nums">{fmtDollars(x.total)}</span>
+                    </div>
+                    <div className="mt-1.5 flex items-center justify-between gap-2 flex-wrap">
+                      <span className="text-[12.5px] text-muted">{jour(x.date)}</span>
+                      {x.payeeLe ? <Pill tone="ok">Payée le {jour(x.payeeLe)}</Pill> : (
+                        <span className="flex items-center gap-2">
+                          <Pill tone="warn">À payer</Pill>
+                          <form action={marquerFacturePayee}>
+                            <input type="hidden" name="chambreId" value={c.id} />
+                            <input type="hidden" name="factureId" value={x.id} />
+                            <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">Marquer payée</button>
+                          </form>
+                        </span>
+                      )}
+                    </div>
+                    {!x.payeeLe && x.dernierEchec ? <div className="text-[12px] text-bad mt-1">{x.dernierEchec}</div> : null}
+                  </li>
+                ))}
+              </ListeMobile>
+            ) : null}
           </Panneau>
 
           <Panneau titre="Équipe" teinte="vert" corpsClassName="px-0 pb-0">
@@ -130,6 +198,20 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                 </tbody>
               </Tableau>
             ) : <Vide>Aucun compte d’équipe</Vide>}
+            {equipe.length ? (
+              <ListeMobile>
+                {equipe.map((u) => (
+                  <li key={u.id} className="px-5 py-3 min-w-0">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <span className="font-semibold text-[13.5px] truncate">{u.nom}</span>
+                      <span className="text-[12px] text-muted shrink-0">{NIVEAU_EQUIPE_LABEL[u.niveauEquipe ?? "manager"]}</span>
+                    </div>
+                    <div className="text-[12.5px] text-muted truncate">{u.email}</div>
+                    <div className="text-[12px] text-faint">Depuis le {jour(u.createdAt)}</div>
+                  </li>
+                ))}
+              </ListeMobile>
+            ) : null}
           </Panneau>
         </div>
 
@@ -191,15 +273,6 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                 </form>
               </details>
             )}
-          </Panneau>
-
-          <Panneau titre="Chiffres" teinte="bleu">
-            <div className="flex flex-col divide-y divide-line">
-              <div className={chiffre}><span>Membres</span><b>{membres}</b></div>
-              <div className={chiffre}><span>Comptes d’équipe</span><b>{equipe.length}</b></div>
-              <div className={chiffre}><span>Événements</span><b>{evenements}</b></div>
-              <div className={chiffre}><span>Créée le</span><b>{jour(c.createdAt)}</b></div>
-            </div>
           </Panneau>
 
           <Panneau titre="Historique" teinte="vert">

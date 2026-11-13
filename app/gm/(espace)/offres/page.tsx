@@ -17,7 +17,7 @@ export default async function OffresGM() {
   const offres = await offresPlateforme();
   return (
     <>
-      <EnTeteAdmin surtitre="Admin GM" titre={<Saillant>Offres</Saillant>} />
+      <EnTeteAdmin surtitre="Plateforme" titre={<>Les <Saillant>offres</Saillant></>} />
       <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-2">
         {offres.map((o, i) => (
           <form key={o.id} action={enregistrerOffre}>
@@ -31,11 +31,11 @@ export default async function OffresGM() {
                 <Field label="Nom">
                   <input name="nom" required maxLength={60} defaultValue={o.nom} className={INPUT} />
                 </Field>
-                <div className="grid gap-4 sm:grid-cols-2">
+                <div className="grid gap-x-3 gap-y-4 grid-cols-2 items-end">
                   <Field label="Forfait mensuel ($)">
                     <input name="forfait" inputMode="decimal" required defaultValue={nombre(o.forfait)} className={INPUT} />
                   </Field>
-                  <Field label="Par compte d’équipe, par mois ($)">
+                  <Field label="Par compte d’équipe ($/mois)">
                     <input name="parUtilisateur" inputMode="decimal" required defaultValue={nombre(o.parUtilisateur)} className={INPUT} />
                   </Field>
                   <Field label="Comptes d’équipe offerts">

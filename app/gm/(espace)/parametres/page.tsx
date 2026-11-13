@@ -10,10 +10,16 @@ import { stripeConfigure } from "@/lib/stripe";
 
 export const metadata: Metadata = { title: "Paramètres" };
 
-const Etat = ({ ok, libelle }: { ok: boolean; libelle: string }) => (
-  <li className="flex items-center gap-2.5 text-[14px]">
-    {ok ? <CheckCircle2 size={17} className="text-success" aria-hidden /> : <XCircle size={17} className="text-faint" aria-hidden />}
-    <span className={ok ? "text-ink" : "text-muted"}>{libelle}</span>
+const Etat = ({ ok, libelle, cle }: { ok: boolean; libelle: string; cle: string }) => (
+  <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
+    {ok ? <CheckCircle2 size={18} className="text-success shrink-0 mt-px" aria-hidden /> : <XCircle size={18} className="text-faint shrink-0 mt-px" aria-hidden />}
+    <span className="min-w-0 flex-1">
+      <span className="flex items-center justify-between gap-3">
+        <span className="text-[14px] font-semibold text-ink">{libelle}</span>
+        <span className={`text-[12px] font-semibold shrink-0 ${ok ? "text-success" : "text-faint"}`}>{ok ? "Réglée" : "Absente"}</span>
+      </span>
+      <code className="block text-[11.5px] text-muted break-all mt-0.5">{cle}</code>
+    </span>
   </li>
 );
 
@@ -24,7 +30,7 @@ export default async function ParametresGM() {
   const webhookComptes = Boolean(process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim());
   return (
     <>
-      <EnTeteAdmin surtitre="Admin GM" titre={<Saillant>Paramètres</Saillant>} />
+      <EnTeteAdmin surtitre="Administration" titre={<Saillant>Paramètres</Saillant>} />
       <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
         <form action={enregistrerReglages}>
           <Panneau titre="Abonnement et paiements" teinte="rouge">
@@ -62,10 +68,10 @@ export default async function ParametresGM() {
         </form>
 
         <Panneau titre="Paiement par carte" teinte="bleu">
-          <ul className="m-0 p-0 list-none flex flex-col gap-2.5">
-            <Etat ok={stripeConfigure()} libelle="Clé Stripe (STRIPE_SECRET_KEY)" />
-            <Etat ok={webhook} libelle="Notifications Stripe (STRIPE_WEBHOOK_SECRET)" />
-            <Etat ok={webhookComptes} libelle="Notifications des comptes des Chambres (STRIPE_CONNECT_WEBHOOK_SECRET)" />
+          <ul className="m-0 p-0 list-none flex flex-col divide-y divide-line">
+            <Etat ok={stripeConfigure()} libelle="Clé Stripe" cle="STRIPE_SECRET_KEY" />
+            <Etat ok={webhook} libelle="Notifications Stripe" cle="STRIPE_WEBHOOK_SECRET" />
+            <Etat ok={webhookComptes} libelle="Notifications des comptes des Chambres" cle="STRIPE_CONNECT_WEBHOOK_SECRET" />
           </ul>
         </Panneau>
       </div>

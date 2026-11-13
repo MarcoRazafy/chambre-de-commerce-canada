@@ -1,9 +1,12 @@
 import { LienSite } from "@/components/Application";
 import { LogoOfficiel } from "@/components/public/Marque";
 
-// photo, alt, accroche, sous : gardés pour les pages qui les passent encore ; la connexion n'affiche plus de photo
+// photo, alt, accroche, sous : gardés pour les pages qui les passent encore ; la connexion n'affiche plus de photo.
+// marque, pied : à la place du logo et de la mention de la Chambre (connexion de l'Admin GM : la plateforme)
 export function CadreAuth({
   large = false,
+  marque,
+  pied,
   children,
 }: {
   photo?: string;
@@ -11,6 +14,8 @@ export function CadreAuth({
   accroche?: React.ReactNode;
   sous?: string;
   large?: boolean;
+  marque?: React.ReactNode;
+  pied?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
@@ -50,16 +55,22 @@ export function CadreAuth({
             }`}
           >
             <div className="carte-filet filet-fixe filet-degrade rounded-[var(--radius-l)] border border-line bg-surface shadow-[0_18px_44px_-24px_rgb(15_29_44/0.35)] px-6 py-8 sm:px-10 sm:py-11">
-              <LienSite className="block mb-6">
-                <LogoOfficiel className="w-[178px] h-auto" priority />
-              </LienSite>
+              {marque ?? (
+                <LienSite className="block mb-6">
+                  <LogoOfficiel className="w-[178px] h-auto" priority />
+                </LienSite>
+              )}
               {children}
             </div>
           </main>
 
           <p className="text-[12px] text-faint text-center m-0 mt-8">
-            © {new Date().getFullYear()} CanCham · Chambre de Commerce et de
-            Coopération Canada–Madagascar
+            {pied ?? (
+              <>
+                © {new Date().getFullYear()} CanCham · Chambre de Commerce et de
+                Coopération Canada–Madagascar
+              </>
+            )}
           </p>
         </div>
       </div>

@@ -3,8 +3,8 @@ import Link from "next/link";
 import { AlertTriangle, Building2, Coins, Sparkles } from "lucide-react";
 import { Compteur, EnTeteAdmin, Jauge, Panneau, Vide } from "@/components/admin/ui";
 import { Pill, Saillant } from "@/components/ui";
-import { fmtDateShort } from "@/lib/format";
-import { STATUTS, tableauDeBordGM } from "@/lib/gm";
+import { fmtDateShort, today } from "@/lib/format";
+import { exigerGM, STATUTS, tableauDeBordGM } from "@/lib/gm";
 import { fmtDollars } from "@/lib/plateforme";
 
 export const metadata: Metadata = { title: "Tableau de bord" };
@@ -15,13 +15,14 @@ const ligne = "flex items-center justify-between gap-3 py-2.5 text-[13.5px] bord
 
 // Tableau de bord de l'Admin GM
 export default async function TableauDeBordGM() {
-  const t = await tableauDeBordGM();
+  const [t, gm] = await Promise.all([tableauDeBordGM(), exigerGM()]);
+  const aujourdhui = today().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const plusHaut = Math.max(...t.revenus.map((r) => r.total), 0);
   return (
     <>
-      <EnTeteAdmin surtitre="Admin GM" titre={<>Tableau de <Saillant>bord</Saillant></>} />
+      <EnTeteAdmin surtitre={`Admin GM · ${aujourdhui}`} titre={<>Bonjour <Saillant>{gm.nom.split(" ")[0]}</Saillant>,</>} />
 
-      <div className="grid gap-4 mb-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="cascade grid gap-4 mb-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-4">
         <Compteur icone={<Building2 size={20} />} libelle="Chambres actives" valeur={t.actives} detail={`sur ${t.total}`} href="/gm/chambres?statut=active" teinte="bleu" />
         <Compteur icone={<Coins size={20} />} libelle="Revenus du mois" valeur={fmtDollars(t.revenusDuMois)} detail="factures de l’abonnement payées" teinte="vert" />
         <Compteur icone={<AlertTriangle size={20} />} libelle="En retard" valeur={t.enRetard.length} detail="facture de l’abonnement en attente" href="/gm/chambres?statut=en_retard" teinte="rouge" />

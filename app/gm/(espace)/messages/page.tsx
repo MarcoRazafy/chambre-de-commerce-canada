@@ -28,7 +28,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
 
   return (
     <>
-      <EnTeteAdmin surtitre="Admin GM" titre={<Saillant>Messages</Saillant>} />
+      <EnTeteAdmin surtitre="Support" titre={<>Les <Saillant>messages</Saillant></>} />
       <RelectureAuto />
 
       <div className="grid lg:grid-cols-[340px_minmax(0,1fr)] gap-5 items-start">
