@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, Coins, ExternalLink, LogIn, MessageSquare, Pause, Play, Save, UserCog, Users } from "lucide-react";
+import { CalendarDays, Coins, ExternalLink, KeyRound, LogIn, MessageSquare, Pause, Play, Save, UserCog, Users } from "lucide-react";
 import { Compteur, EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { LogoChambre } from "@/components/gm/LogoChambre";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
-import { changerOffreChambre, entrerDansChambre, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
+import { changerOffreChambre, entrerDansChambre, envoyerLienConnexion, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
 import { fmtDateShort } from "@/lib/format";
@@ -204,7 +204,7 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
           <Panneau titre="Équipe" teinte="vert" corpsClassName="px-0 pb-0">
             {equipe.length ? (
               <Tableau>
-                <thead><tr><Th>Nom</Th><Th>Courriel</Th><Th>Rôle</Th><Th>Depuis</Th></tr></thead>
+                <thead><tr><Th>Nom</Th><Th>Courriel</Th><Th>Rôle</Th><Th>Depuis</Th><Th><span className="sr-only">Actions</span></Th></tr></thead>
                 <tbody>
                   {equipe.map((u) => (
                     <tr key={u.id}>
@@ -212,6 +212,15 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                       <Td className="break-all">{u.email}</Td>
                       <Td>{NIVEAU_EQUIPE_LABEL[u.niveauEquipe ?? "manager"]}</Td>
                       <Td className="whitespace-nowrap">{jour(u.createdAt)}</Td>
+                      <Td className="text-right">
+                        <form action={envoyerLienConnexion}>
+                          <input type="hidden" name="chambreId" value={c.id} />
+                          <input type="hidden" name="userId" value={u.id} />
+                          <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 whitespace-nowrap" title="Envoie par courriel un lien pour choisir un nouveau mot de passe">
+                            <KeyRound size={14} aria-hidden /> Lien de connexion
+                          </button>
+                        </form>
+                      </Td>
                     </tr>
                   ))}
                 </tbody>
@@ -226,7 +235,16 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                       <span className="text-[12px] text-muted shrink-0">{NIVEAU_EQUIPE_LABEL[u.niveauEquipe ?? "manager"]}</span>
                     </div>
                     <div className="text-[12.5px] text-muted truncate">{u.email}</div>
-                    <div className="text-[12px] text-faint">Depuis le {jour(u.createdAt)}</div>
+                    <div className="flex items-center justify-between gap-3 mt-1.5">
+                      <span className="text-[12px] text-faint">Depuis le {jour(u.createdAt)}</span>
+                      <form action={envoyerLienConnexion}>
+                        <input type="hidden" name="chambreId" value={c.id} />
+                        <input type="hidden" name="userId" value={u.id} />
+                        <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 whitespace-nowrap">
+                          <KeyRound size={14} aria-hidden /> Lien de connexion
+                        </button>
+                      </form>
+                    </div>
                   </li>
                 ))}
               </ListeMobile>

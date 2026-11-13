@@ -17,6 +17,10 @@ import { estFonction, FONCTIONS } from "@/lib/fonctions-plateforme";
 import { exigerGM } from "@/lib/gm";
 import { slugValide } from "@/lib/hote-chambre";
 import { lienEntree } from "@/lib/visite-gm";
+import { avecChambre } from "@/lib/chambre-courante";
+import { envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { creerJeton } from "@/lib/jetons";
+import { courrielReinitialisation } from "@/lib/modeles-courriels";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
 
 const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").trim().slice(0, max);
@@ -248,6 +252,27 @@ export async function enregistrerIdentitePlateforme(formData: FormData) {
   await db.reglagesPlateforme.upsert({ where: { id: "plateforme" }, create: { id: "plateforme", ...data }, update: data });
   revalidatePath("/", "layout");
   redirectWithFlash(retour, "Identité de la plateforme enregistrée");
+}
+
+// --- Lien de connexion à un compte de l'équipe ---
+// Un lien pour choisir un nouveau mot de passe (une heure, un seul usage), envoyé à l'adresse du compte depuis
+// la Chambre (son expéditeur, son adresse) ; noté dans l'historique
+export async function envoyerLienConnexion(formData: FormData) {
+  const gm = await exigerGM();
+  const c = await chambreOuErreur(formData);
+  const userId = texte(formData, "userId", 100);
+  const u = await db.user.findFirst({ where: { id: userId, chambreId: c.id, role: "admin" }, select: { id: true, nom: true, email: true } });
+  if (!u) redirectWithErreur(fiche(c.id), "Compte introuvable.");
+  const attente = tentative(`gm-lien:${u.id}`, 3, 60 * 60 * 1000);
+  if (attente) redirectWithErreur(fiche(c.id), `Un lien vient déjà d’être envoyé. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`);
+  const envoye = await avecChambre(c.id, async () => {
+    const base = await urlPublique("/auth/nouveau-mot-de-passe");
+    const jeton = await creerJeton(u.id, "reinitialisation");
+    return envoyerCourriel(courrielReinitialisation(u.email, u.nom, `${base}?jeton=${jeton}`));
+  });
+  if (!envoye) redirectWithErreur(fiche(c.id), "Le courriel n’est pas parti : l’envoi de courriels n’est pas configuré.");
+  await noter(c.id, gm.nom, "lien_connexion_envoye", `Lien de connexion envoyé à ${u.nom} (${u.email}).`);
+  redirectWithFlash(fiche(c.id), `Lien envoyé à ${u.email}`);
 }
 
 // --- Mode développeur ---
