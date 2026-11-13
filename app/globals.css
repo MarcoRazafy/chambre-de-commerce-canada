@@ -1138,20 +1138,53 @@ html:has(.espace-admin) {
   outline: none;
 }
 
-/* Site public de la plateforme (app/plateforme) : police du texte, titres serrés, entrée en douceur,
-   fond quadrillé ; mouvements coupés si l'appareil demande moins d'animations */
+/* Site public de la plateforme (app/plateforme) : une gamme de neutres chauds (papier et encre), les titres en Inter
+   gras, les chiffres en Plex Mono, les boutons en bas de casse ; mouvements coupés si l'appareil le demande */
 .site-plateforme {
+  --bg: #faf9f6;
+  --surface: #ffffff;
+  --surface-2: #f3f1ec;
+  --surface-3: #e9e6df;
+  --border: rgb(28 26 23 / 0.08);
+  --border-champ: rgb(28 26 23 / 0.18);
+  --text: #1c1a17;
+  --text-muted: #5c574f;
+  --text-faint: #7c766c;
+  --accent: #ad0707;
+  --accent-strong: #8b0512;
+  --accent-soft: #fbecec;
+  --success: #007140;
+  --success-strong: #005c34;
+  --success-soft: #e4f2ea;
+  --site-ease: cubic-bezier(0.22, 1, 0.36, 1);
   font-family: var(--font-texte);
+  color: var(--text);
 }
 .site-plateforme h1,
 .site-plateforme h2,
-.site-plateforme h3 {
+.site-plateforme .titre,
+.site-plateforme .serif {
   font-family: var(--font-texte);
-  letter-spacing: -0.022em;
+  font-weight: 800;
+  letter-spacing: -0.028em;
   text-wrap: balance;
 }
+.site-plateforme h3 {
+  font-family: var(--font-texte);
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
+}
+.site-plateforme .sans {
+  font-family: var(--font-texte);
+  letter-spacing: 0;
+}
+.site-plateforme .mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}
 .site-plateforme [id] {
-  scroll-margin-top: 88px;
+  scroll-margin-top: 80px;
 }
 html:has(.site-plateforme) {
   scroll-behavior: smooth;
@@ -1160,23 +1193,45 @@ html:has(.site-plateforme) {
 html:has(.fenetre-composeur[open]) {
   overflow: hidden;
 }
-.site-plateforme .texte-degrade {
-  background: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+/* Boutons du site : bas de casse, 48 px, rayon 10 ; la couleur reste celle de la marque */
+.site-plateforme .btn-action,
+.site-plateforme .btn-contour {
+  min-height: 48px;
+  padding: 0 20px;
+  gap: 8px;
+  border-radius: 10px;
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  transition:
+    background-color 160ms var(--site-ease),
+    border-color 160ms var(--site-ease),
+    color 160ms var(--site-ease),
+    transform 120ms var(--site-ease);
 }
-.site-plateforme .site-grille {
-  background-image:
-    linear-gradient(to right, rgb(15 29 44 / 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgb(15 29 44 / 0.05) 1px, transparent 1px);
-  background-size: 44px 44px;
-  mask-image: radial-gradient(ellipse 80% 70% at 50% 30%, #000 30%, transparent 100%);
+.site-plateforme .btn-action-sm,
+.site-plateforme .btn-contour-sm {
+  min-height: 40px;
+  padding: 0 16px;
+  font-size: 14px;
+}
+.site-plateforme .btn-action:active:not(:disabled),
+.site-plateforme .btn-contour:active {
+  transform: scale(0.98);
+}
+.site-plateforme .btn-contour {
+  border-color: var(--border-champ);
+  background: var(--surface);
+  color: var(--text);
+}
+.site-plateforme .btn-contour:hover {
+  background: var(--surface-2);
 }
 @keyframes site-entree {
   from {
     opacity: 0;
-    transform: translateY(14px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -1184,43 +1239,22 @@ html:has(.fenetre-composeur[open]) {
   }
 }
 .site-plateforme .entree {
-  animation: site-entree 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation: site-entree 0.5s var(--site-ease) both;
 }
 .site-plateforme .entree-2 {
-  animation-delay: 0.08s;
+  animation-delay: 50ms;
 }
 .site-plateforme .entree-3 {
-  animation-delay: 0.16s;
+  animation-delay: 100ms;
 }
 .site-plateforme .entree-4 {
-  animation-delay: 0.24s;
-}
-@keyframes site-flotte {
-  0%,
-  100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-6px);
-  }
-}
-.site-plateforme .flottant {
-  animation: site-flotte 6s ease-in-out infinite;
-}
-.site-plateforme .flottant-2 {
-  animation-delay: -3s;
+  animation-delay: 150ms;
 }
 @media (prefers-reduced-motion: reduce) {
   html:has(.site-plateforme) {
     scroll-behavior: auto;
   }
-  .site-plateforme .entree,
-  .site-plateforme .flottant {
+  .site-plateforme .entree {
     animation: none;
   }
-}
-.site-plateforme .titre {
-  font-family: var(--font-texte);
-  font-weight: 800;
-  letter-spacing: -0.028em;
 }

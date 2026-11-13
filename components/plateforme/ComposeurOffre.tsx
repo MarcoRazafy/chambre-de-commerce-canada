@@ -64,7 +64,7 @@ export function ComposeurOffre({
         {offre.options.map((x) => (
           <label
             key={x.cle}
-            className={`group flex items-center gap-3 min-h-[48px] rounded-xl border px-3.5 py-2.5 cursor-pointer select-none transition-colors has-focus-visible:ring-2 ${
+            className={`group flex items-center gap-3 min-h-[48px] rounded-[10px] border px-4 py-2 cursor-pointer select-none transition-colors has-focus-visible:ring-2 ${
               sombre
                 ? "border-white/12 bg-white/[0.04] hover:bg-white/[0.08] has-checked:border-white/35 has-checked:bg-white/[0.11] has-focus-visible:ring-white/60"
                 : "border-line bg-white hover:bg-surface-2 has-checked:border-marque-vert has-checked:bg-marque-vert/[0.05] has-focus-visible:ring-marque-vert/30"
@@ -80,7 +80,7 @@ export function ComposeurOffre({
             />
             <span
               aria-hidden
-              className={`grid place-items-center size-5 shrink-0 rounded-md border-2 transition-colors group-has-checked:border-marque-vert group-has-checked:bg-marque-vert ${
+              className={`grid place-items-center size-5 shrink-0 rounded-[6px] border-2 transition-colors group-has-checked:border-marque-vert group-has-checked:bg-marque-vert ${
                 sombre ? "border-white/40" : "border-[#c5cdd8] bg-white"
               }`}
             >
@@ -111,7 +111,7 @@ export function ComposeurOffre({
       <div className={`mt-2 pt-3 border-t flex items-baseline justify-between gap-3 ${sombre ? "border-white/15" : "border-line"}`}>
         <span className={`text-[14px] font-semibold ${sombre ? "text-white" : "text-ink"}`}>Total</span>
         <span aria-live="polite" className="text-right">
-          <span className={`block text-[30px] leading-none font-extrabold tracking-[-0.02em] tabular-nums ${sombre ? "text-white" : "text-ink"}`}>{fmtDollars(c.total)}</span>
+          <span className={`block text-[30px] leading-none font-semibold tabular-nums ${sombre ? "text-white" : "text-ink"}`}>{fmtDollars(c.total)}</span>
           <span className={`block mt-1 text-[12.5px] ${sombre ? "text-white/60" : "text-muted"}`}>par mois, avant taxes</span>
         </span>
       </div>
@@ -122,7 +122,7 @@ export function ComposeurOffre({
     return (
       <div className="flex flex-col gap-4">
         {options}
-        <div className="rounded-xl border border-line bg-surface-2 p-4">{resume}</div>
+        <div className="rounded-[12px] border border-line bg-surface-2 p-4">{resume}</div>
       </div>
     );
   }
@@ -133,7 +133,7 @@ export function ComposeurOffre({
   return (
     <div className="grid gap-8 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] items-start">
       {options}
-      <div className="rounded-2xl border border-white/12 bg-white/[0.05] p-5 sm:p-6 flex flex-col gap-5">
+      <div className="rounded-[14px] border border-white/10 bg-white/[0.05] p-5 sm:p-6 flex flex-col gap-5">
         <div>
           <div className="flex items-center justify-between gap-3">
             <span id={`${id}-comptes`} className="text-[14px] font-bold text-white">Comptes d’équipe</span>
@@ -155,7 +155,7 @@ export function ComposeurOffre({
         </div>
         {resume}
         <Link href={lien} className="btn-action w-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-          Créer ma Chambre <ArrowRight size={17} aria-hidden />
+          Créer ma Chambre <ArrowRight size={16} strokeWidth={1.5} aria-hidden />
         </Link>
       </div>
     </div>

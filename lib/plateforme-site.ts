@@ -13,7 +13,7 @@ export async function chambresPubliques(q: string) {
     where: { statut: "active", ...(q ? { nom: { contains: q, mode: "insensitive" as const } } : {}) },
     orderBy: { nom: "asc" },
     take: 100,
-    select: { id: true, nom: true, profil: { select: { ville: true, pays: true } } },
+    select: { id: true, nom: true, profil: { select: { ville: true, pays: true, logo: true } } },
   });
   const avecAdresse = await Promise.all(chambres.map(async (c) => ({ ...c, adresse: await adresseOuSite(c.id) })));
   return avecAdresse.filter((c) => c.adresse);

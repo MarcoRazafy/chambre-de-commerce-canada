@@ -197,6 +197,7 @@ const SOUS_PAGES: Record<string, string> = {
   inscrits: "Inscrits",
   certificat: "Certificat",
   retour: "Retour du paiement",
+  historique: "Historique",
 };
 
 const FICHES: Record<string, string> = {

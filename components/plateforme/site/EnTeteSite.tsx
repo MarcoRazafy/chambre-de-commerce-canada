@@ -32,20 +32,20 @@ export function EnTeteSite() {
   }, [ouvert]);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-line/80 bg-white/85 backdrop-blur-md">
+    <header className="sticky top-0 z-50 border-b border-line bg-bg/90 backdrop-blur-md">
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8 h-16 flex items-center gap-4">
         <MarqueSite />
 
         <nav aria-label="Sections du site" className="hidden lg:flex items-center gap-1 ml-8">
           {LIENS_SITE.map((l) => (
-            <Link key={l.href} href={l.href} className={`inline-flex items-center min-h-[44px] px-3 rounded-md text-[14.5px] font-medium text-muted no-underline transition-colors hover:text-ink hover:bg-surface-2 ${FOCUS}`}>
+            <Link key={l.href} href={l.href} className={`inline-flex items-center min-h-[44px] px-3 rounded-lg text-[15px] text-muted no-underline transition-colors hover:text-ink ${FOCUS}`}>
               {l.libelle}
             </Link>
           ))}
         </nav>
 
         <div className="ml-auto flex items-center gap-2">
-          <Link href="/connexion" className={`hidden sm:inline-flex items-center min-h-[44px] px-3 rounded-md text-[14.5px] font-semibold text-ink no-underline transition-colors hover:bg-surface-2 ${FOCUS}`}>
+          <Link href="/connexion" className={`hidden sm:inline-flex items-center min-h-[44px] px-3 rounded-lg text-[15px] font-medium text-ink no-underline transition-colors hover:bg-surface-2 ${FOCUS}`}>
             Se connecter
           </Link>
           <span className="hidden sm:inline-flex">
@@ -59,27 +59,27 @@ export function EnTeteSite() {
             aria-expanded={ouvert}
             aria-controls="menu-site"
             aria-label={ouvert ? "Fermer le menu" : "Ouvrir le menu"}
-            className={`lg:hidden w-11 h-11 -mr-2 rounded-lg flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer hover:bg-surface-2 ${FOCUS}`}
+            className={`lg:hidden w-11 h-11 -mr-2 rounded-lg flex items-center justify-center bg-transparent border-0 text-ink cursor-pointer transition-colors hover:bg-surface-2 ${FOCUS}`}
           >
-            {ouvert ? <X size={22} aria-hidden /> : <Menu size={22} aria-hidden />}
+            {ouvert ? <X size={22} strokeWidth={1.5} aria-hidden /> : <Menu size={22} strokeWidth={1.5} aria-hidden />}
           </button>
         </div>
       </div>
 
       {ouvert ? (
-        <div id="menu-site" className="lg:hidden border-t border-line bg-white anim-fondu">
-          <nav aria-label="Sections du site" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-3 flex flex-col">
+        <div id="menu-site" className="lg:hidden border-t border-line bg-surface anim-fondu">
+          <nav aria-label="Sections du site" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-2 flex flex-col">
             {LIENS_SITE.map((l) => (
-              <Link key={l.href} href={l.href} onClick={() => setOuvert(false)} className={`py-3 text-[16px] font-semibold text-ink no-underline border-b border-line last:border-b-0 ${FOCUS}`}>
+              <Link key={l.href} href={l.href} onClick={() => setOuvert(false)} className={`py-3 text-[16px] font-medium text-ink no-underline border-b border-line last:border-b-0 ${FOCUS}`}>
                 {l.libelle}
               </Link>
             ))}
           </nav>
-          <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-5 grid gap-2.5 sm:hidden">
+          <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pb-5 pt-2 grid gap-2 sm:hidden">
             <Link href="/creer-une-chambre" onClick={() => setOuvert(false)} className="btn-action w-full">
               Créer ma Chambre
             </Link>
-            <Link href="/connexion" onClick={() => setOuvert(false)} className="btn-contour w-full text-ink">
+            <Link href="/connexion" onClick={() => setOuvert(false)} className="btn-contour w-full">
               Se connecter
             </Link>
           </div>

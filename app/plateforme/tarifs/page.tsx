@@ -10,10 +10,10 @@ export const metadata: Metadata = {
 };
 
 const INCLUS = [
-  { icone: Users, titre: "Espace membre", texte: "Chaque entreprise membre a son espace : cotisation, factures, événements et réseau." },
-  { icone: CreditCard, titre: "Cotisations par carte", texte: "Les membres paient sur une page sécurisée de Stripe ; l’argent arrive sur le compte de la Chambre." },
-  { icone: Headset, titre: "Support IT", texte: "Écrivez au support depuis votre espace, captures d’écran et vidéos comprises." },
-  { icone: ShieldCheck, titre: "Données séparées", texte: "Les membres, paiements et fichiers de votre Chambre ne sont visibles que d’elle." },
+  { icone: Users, titre: "Espace membre", texte: "Chaque entreprise membre a son espace : cotisation, factures, événements et réseau" },
+  { icone: CreditCard, titre: "Cotisations par carte", texte: "Les membres paient sur une page sécurisée de Stripe, l’argent arrive sur le compte de la Chambre" },
+  { icone: Headset, titre: "Support IT", texte: "Écrivez au support depuis votre espace, captures d’écran et vidéos comprises" },
+  { icone: ShieldCheck, titre: "Données séparées", texte: "Les membres, paiements et fichiers de votre Chambre ne sont visibles que d’elle" },
 ];
 
 const QUESTIONS = [
@@ -45,37 +45,35 @@ export default async function TarifsPlateforme() {
 
   return (
     <PageSite>
-      <section className="relative overflow-hidden">
-        <div aria-hidden className="absolute inset-0 site-grille" />
-        <div aria-hidden className="absolute -top-40 -left-32 w-[560px] h-[560px] rounded-full blur-3xl opacity-60" style={{ background: "radial-gradient(circle, rgb(173 7 7 / 0.14), transparent 70%)" }} />
-        <div className="relative max-w-[1200px] mx-auto px-5 sm:px-8 pt-14 pb-20 sm:pt-20 lg:pb-24">
+      <section className="border-b border-line">
+        <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-20 lg:pb-24">
           <div className="entree">
             <EnTeteSection
               niveau={1}
               centre
               surtitre="Tarifs"
-              titre={<>Choisissez votre offre, <span className="texte-degrade">ou composez-la</span></>}
-              texte="Commencez gratuitement, prenez tout, ou ne gardez que les fonctions dont votre Chambre a besoin."
+              titre="Choisissez votre offre, ou composez-la"
+              texte="Commencez gratuitement, prenez tout, ou gardez seulement les fonctions dont votre Chambre a besoin."
             />
           </div>
-          <div className="entree entree-2 mt-14">
+          <div className="entree entree-2 mt-12">
             <h2 className="sr-only">Les offres</h2>
             <CartesTarifs offres={offres} />
           </div>
         </div>
       </section>
 
-      <section className="bg-[#f6f8fb] border-y border-line">
+      <section className="bg-surface border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 lg:py-20">
-          <h2 className="m-0 text-center text-[clamp(24px,3vw,32px)] font-extrabold text-ink">Toutes les offres incluent</h2>
+          <h2 className="m-0 text-center text-[clamp(24px,3vw,32px)] leading-[1.15] text-ink">Toutes les offres incluent</h2>
           <ul className="mt-10 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
             {INCLUS.map(({ icone: Icone, titre, texte }) => (
               <li key={titre}>
                 <span className="grid place-items-center size-11 rounded-xl bg-marque-nuit text-white">
                   <Icone size={20} aria-hidden />
                 </span>
-                <h3 className="mt-4 mb-0 text-[17px] font-bold text-ink">{titre}</h3>
-                <p className="mt-2 mb-0 text-[14.5px] leading-relaxed text-muted">{texte}</p>
+                <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>
+                <p className="mt-2 mb-0 text-[14px] leading-[22px] text-muted">{texte}</p>
               </li>
             ))}
           </ul>

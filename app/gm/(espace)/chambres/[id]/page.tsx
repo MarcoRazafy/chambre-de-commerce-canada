@@ -46,7 +46,7 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
   const { id } = await params;
   const [f, offres] = await Promise.all([ficheChambre(decodeURIComponent(id)), offresPlateforme()]);
   if (!f) notFound();
-  const { chambre: c, statut, equipe, factures, membres, evenements, journal } = f;
+  const { chambre: c, statut, equipe, factures, membres, evenements, journal, journalTotal } = f;
   const adresse = await adresseDeLaChambre(c.id);
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   // Ce que l'offre coûte aujourd'hui, avec l'équipe actuelle (avant taxes)
@@ -294,7 +294,7 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
             )}
           </Panneau>
 
-          <Panneau titre="Historique" teinte="vert">
+          <Panneau titre="Historique" teinte="vert" lien={journalTotal > journal.length ? { href: `/gm/chambres/${encodeURIComponent(c.id)}/historique`, libelle: "Tout voir" } : undefined}>
             {journal.length ? (
               <ul className="m-0 p-0 list-none flex flex-col gap-2.5">
                 {journal.map((j) => (

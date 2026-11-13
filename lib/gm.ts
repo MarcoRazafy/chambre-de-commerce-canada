@@ -69,7 +69,7 @@ export async function listeChambres() {
 export async function ficheChambre(id: string) {
   const c = await db.chambre.findUnique({ where: { id }, include: { offre: true, profil: { select: { logo: true } } } });
   if (!c) return null;
-  const [equipe, factures, membres, evenements, journal, retard] = await Promise.all([
+  const [equipe, factures, membres, evenements, journal, journalTotal, retard] = await Promise.all([
     db.user.findMany({
       where: { chambreId: id, role: "admin" },
       orderBy: { createdAt: "asc" },
@@ -79,10 +79,25 @@ export async function ficheChambre(id: string) {
     db.member.count({ where: { chambreId: id, ...MEMBRES } }),
     db.event.count({ where: { chambreId: id } }),
     db.auditLog.findMany({ where: { chambreId: id, entite: "Chambre" }, orderBy: { createdAt: "desc" }, take: 20 }),
+    db.auditLog.count({ where: { chambreId: id, entite: "Chambre" } }),
     db.facturePlateforme.count({ where: { chambreId: id, payeeLe: null, date: { lt: limiteRetard() } } }),
   ]);
   const statut: StatutAffiche = c.statut === "suspendue" ? "suspendue" : retard ? "en_retard" : "active";
-  return { chambre: c, statut, equipe, factures, membres, evenements, journal };
+  return { chambre: c, statut, equipe, factures, membres, evenements, journal, journalTotal };
+}
+
+export const HISTORIQUE_PAR_PAGE = 50;
+
+// Tout l'historique d'une Chambre (offre, accès, adresse, paiements, démarrage), du plus récent au plus ancien, par pages
+export async function historiqueChambre(id: string, page = 1) {
+  const where = { chambreId: id, entite: "Chambre" };
+  const [chambre, total, entrees] = await Promise.all([
+    db.chambre.findUnique({ where: { id }, select: { id: true, nom: true, profil: { select: { logo: true } } } }),
+    db.auditLog.count({ where }),
+    db.auditLog.findMany({ where, orderBy: { createdAt: "desc" }, skip: (page - 1) * HISTORIQUE_PAR_PAGE, take: HISTORIQUE_PAR_PAGE }),
+  ]);
+  if (!chambre) return null;
+  return { chambre, total, entrees, pages: Math.max(1, Math.ceil(total / HISTORIQUE_PAR_PAGE)) };
 }
 
 export function offresPlateforme() {

@@ -1,6 +1,16 @@
 import Link from "next/link";
 
-// Marque de la plateforme (texte) : en-tête et pied du site, pages de connexion et d'inscription
+// Le signe de la plateforme : deux encres, le rouge de l'équipe sur le vert des membres
+export function Marque({ className = "w-2 h-6" }: { className?: string }) {
+  return (
+    <span aria-hidden className={`flex flex-col rounded-[3px] overflow-hidden shrink-0 ${className}`}>
+      <span className="flex-1 bg-marque-rouge" />
+      <span className="flex-1 bg-marque-vert" />
+    </span>
+  );
+}
+
+// Marque de la plateforme (signe et nom) : en-tête et pied du site, pages de connexion et d'inscription
 export function MarqueSite({ clair = false }: { clair?: boolean }) {
   return (
     <Link
@@ -10,8 +20,8 @@ export function MarqueSite({ clair = false }: { clair?: boolean }) {
         clair ? "text-white focus-visible:outline-white" : "text-ink focus-visible:outline-marque-nuit"
       }`}
     >
-      <span aria-hidden className="block w-2 h-7 rounded-full" style={{ background: "linear-gradient(180deg, #ad0707, #007140)" }} />
-      <span className="text-[18px] font-extrabold tracking-[-0.02em] whitespace-nowrap">L’Alliée Virtuelle</span>
+      <Marque />
+      <span className="text-[17px] font-semibold whitespace-nowrap">L’Alliée Virtuelle</span>
     </Link>
   );
 }

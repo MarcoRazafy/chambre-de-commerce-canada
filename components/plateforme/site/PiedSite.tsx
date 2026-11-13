@@ -2,22 +2,24 @@ import Link from "next/link";
 import { MarqueSite } from "@/components/plateforme/site/MarqueSite";
 import { FONCTIONS } from "@/lib/fonctions-plateforme";
 
-const LIEN = "inline-flex items-center min-h-[44px] md:min-h-[32px] text-[14.5px] text-muted no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit rounded-sm";
+const LIEN = "inline-flex items-center min-h-[44px] md:min-h-[32px] text-[14px] text-muted no-underline hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit rounded-sm";
+const TITRE = "sans m-0 text-[13px] font-medium text-ink";
+const LISTE = "mt-2 m-0 p-0 list-none grid";
 
 // Pied du site de la plateforme
 export function PiedSite() {
   return (
-    <footer className="border-t border-line bg-white">
-      <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-14 grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
+    <footer className="border-t border-line bg-surface">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-16 grid gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_repeat(3,minmax(0,1fr))]">
         <div>
           <MarqueSite />
-          <p className="mt-4 mb-0 max-w-[340px] text-[14.5px] leading-relaxed text-muted">
+          <p className="mt-3 mb-0 max-w-[320px] text-[14px] leading-[22px] text-muted">
             L’espace de gestion des Chambres de commerce et des associations d’affaires, avec un espace pour leurs membres.
           </p>
         </div>
         <nav aria-label="Plateforme">
-          <h2 className="m-0 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">Plateforme</h2>
-          <ul className="mt-1.5 md:mt-2.5 m-0 p-0 list-none grid">
+          <h2 className={TITRE}>Plateforme</h2>
+          <ul className={LISTE}>
             <li><Link href="/#fonctionnement" className={LIEN}>Fonctionnement</Link></li>
             <li><Link href="/tarifs" className={LIEN}>Tarifs</Link></li>
             <li><Link href="/tarifs#sur-mesure" className={LIEN}>Offre à la carte</Link></li>
@@ -26,8 +28,8 @@ export function PiedSite() {
           </ul>
         </nav>
         <nav aria-label="Fonctions">
-          <h2 className="m-0 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">Fonctions</h2>
-          <ul className="mt-1.5 md:mt-2.5 m-0 p-0 list-none grid">
+          <h2 className={TITRE}>Fonctions</h2>
+          <ul className={LISTE}>
             <li><Link href="/#fonctions" className={LIEN}>Membres et cotisations</Link></li>
             {FONCTIONS.map((f) => (
               <li key={f.cle}><Link href="/#fonctions" className={LIEN}>{f.libelle}</Link></li>
@@ -35,8 +37,8 @@ export function PiedSite() {
           </ul>
         </nav>
         <nav aria-label="Accès">
-          <h2 className="m-0 text-[13px] font-bold uppercase tracking-[0.1em] text-ink">Accès</h2>
-          <ul className="mt-1.5 md:mt-2.5 m-0 p-0 list-none grid">
+          <h2 className={TITRE}>Accès</h2>
+          <ul className={LISTE}>
             <li><Link href="/creer-une-chambre" className={LIEN}>Créer une Chambre</Link></li>
             <li><Link href="/devenir-membre" className={LIEN}>Devenir membre</Link></li>
             <li><Link href="/connexion" className={LIEN}>Se connecter</Link></li>
