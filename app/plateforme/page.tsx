@@ -16,7 +16,7 @@ import {
   Tag,
   Users,
 } from "lucide-react";
-import { AppelFinal, EnTeteSection, FOCUS, FormulaireEmail, PageSite, Questions, Rassurances } from "@/components/plateforme/site/blocs";
+import { AppelFinal, EnTeteSection, FOCUS, FormulaireEmail, IconePastel, PageSite, Questions, Rassurances } from "@/components/plateforme/site/blocs";
 import { Saillant } from "@/components/ui";
 import { Illustration } from "@/components/plateforme/site/Illustration";
 import { CartesTarifs } from "@/components/plateforme/site/Tarifs";
@@ -162,12 +162,10 @@ export default async function AccueilPlateforme() {
           </div>
           <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid border-t border-line sm:border-0 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
             {FONCTIONS.map(({ icone: Icone, titre, texte }, i) => (
-              <li key={titre} className={`tuile-hote carte-filet ${i % 2 ? "filet-vert" : "filet-degrade"} flex gap-4 py-4 border-b border-line sm:block sm:p-6 sm:rounded-2xl sm:border sm:bg-bg`}>
-                <span className={`tuile tuile-sm ${i % 2 ? "tuile-verte" : "tuile-bleue"}`}>
-                  <Icone size={20} aria-hidden />
-                </span>
-                <div className="min-w-0">
-                  <h3 className="m-0 sm:mt-5 text-[16px] text-ink">{titre}</h3>
+              <li key={titre} className={`tuile-hote carte-filet ${i % 2 ? "filet-vert" : "filet-degrade"} flex gap-4 py-4 border-b border-line sm:block sm:p-0 sm:rounded-2xl sm:border sm:bg-bg`}>
+                <IconePastel icone={Icone} teinte={i} grande />
+                <div className="min-w-0 sm:p-6">
+                  <h3 className="m-0 text-[16px] text-ink">{titre}</h3>
                   <p className="mt-1 sm:mt-2 mb-0 text-[14px] leading-[22px] text-muted">{texte}</p>
                 </div>
               </li>
@@ -252,11 +250,9 @@ export default async function AccueilPlateforme() {
             <Illustration nom="paiement" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
           <ul data-reveal-groupe="" className="mt-12 m-0 p-0 list-none grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
-            {CONFIANCE.map(({ icone: Icone, titre, texte }) => (
+            {CONFIANCE.map(({ icone: Icone, titre, texte }, i) => (
               <li key={titre} className="tuile-hote">
-                <span className="tuile tuile-sm tuile-verte">
-                  <Icone size={20} aria-hidden />
-                </span>
+                <IconePastel icone={Icone} teinte={i + 3} />
                 <h3 className="mt-5 mb-0 text-[16px] text-ink">{titre}</h3>
                 <p className="mt-2 mb-0 text-[14px] leading-[22px] text-muted">{texte}</p>
               </li>

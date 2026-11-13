@@ -1340,6 +1340,13 @@ html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
     box-shadow: 0 14px 30px -14px rgb(0 0 0 / 0.55);
   }
 }
+/* Icônes sur carré pastel : l'icône s'anime sous le curseur (la carte se soulève déjà) */
+.site-plateforme .icone-pastel svg {
+  transition: transform 0.35s var(--site-ease);
+}
+.site-plateforme .tuile-hote:hover .icone-pastel svg {
+  transform: scale(1.08) rotate(-4deg);
+}
 /* La flèche d'un bouton avance d'un pas au survol */
 .site-plateforme .btn-action svg {
   transition: transform 0.2s var(--site-ease);
