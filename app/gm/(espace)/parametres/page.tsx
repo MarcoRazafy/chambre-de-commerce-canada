@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
 import { CheckCircle2, Save, XCircle } from "lucide-react";
-import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
+import { EnTeteAdmin, Onglets, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Saillant } from "@/components/ui";
 import { enregistrerReglages } from "@/lib/actions/gm";
-import { reglagesPlateforme } from "@/lib/gm";
+import { changerMotDePasseGM, modifierCompteGM } from "@/lib/actions/gm-compte";
+import { MOT_DE_PASSE_MIN } from "@/lib/auth";
+import { exigerGM, reglagesPlateforme } from "@/lib/gm";
 import { stripeConfigure } from "@/lib/stripe";
 
 export const metadata: Metadata = { title: "Paramètres" };
+
+const ONGLETS = [
+  { cle: "compte", libelle: "Compte" },
+  { cle: "facturation", libelle: "Facturation" },
+  { cle: "paiement", libelle: "Paiement par carte" },
+] as const;
+type Onglet = (typeof ONGLETS)[number]["cle"];
 
 const Etat = ({ ok, libelle, cle }: { ok: boolean; libelle: string; cle: string }) => (
   <li className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
@@ -23,17 +32,61 @@ const Etat = ({ ok, libelle, cle }: { ok: boolean; libelle: string; cle: string 
   </li>
 );
 
-// Paramètres de la plateforme : retards de paiement de l'abonnement, paiement par carte
-export default async function ParametresGM() {
-  const r = await reglagesPlateforme();
+// Paramètres de la plateforme : le compte GM, la facturation de l'abonnement (retards, commission), le paiement par carte
+export default async function ParametresGM({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
+  const sp = await searchParams;
+  const onglet: Onglet = ONGLETS.find((o) => o.cle === sp.onglet)?.cle ?? "compte";
+  const [gm, r] = await Promise.all([exigerGM(), reglagesPlateforme()]);
   const webhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET?.trim());
   const webhookComptes = Boolean(process.env.STRIPE_CONNECT_WEBHOOK_SECRET?.trim());
+
   return (
     <>
       <EnTeteAdmin surtitre="Administration" titre={<Saillant>Paramètres</Saillant>} />
-      <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-        <form action={enregistrerReglages}>
-          <Panneau titre="Abonnement et paiements" teinte="rouge">
+      <Onglets actif={onglet} onglets={ONGLETS.map((o) => ({ cle: o.cle, libelle: o.libelle, href: `/gm/parametres?onglet=${o.cle}` }))} />
+
+      {onglet === "compte" ? (
+        <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-2">
+          <form action={modifierCompteGM}>
+            <Panneau titre="Mon compte" sousTitre="Le nom affiché et l’adresse de connexion" teinte="bleu">
+              <div className="flex flex-col gap-4">
+                <Field label="Nom">
+                  <input name="nom" required maxLength={100} defaultValue={gm.nom} autoComplete="name" className={INPUT} />
+                </Field>
+                <Field label="Adresse e-mail">
+                  <input name="email" type="email" required maxLength={200} defaultValue={gm.email} autoComplete="email" className={INPUT} />
+                </Field>
+                <div className="flex justify-end pt-1">
+                  <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer</SubmitButton>
+                </div>
+              </div>
+            </Panneau>
+          </form>
+
+          <form action={changerMotDePasseGM}>
+            <Panneau titre="Mot de passe" sousTitre="Les autres sessions ouvertes se fermeront" teinte="rouge">
+              <div className="flex flex-col gap-4">
+                <Field label="Mot de passe actuel">
+                  <input name="actuel" type="password" required autoComplete="current-password" className={INPUT} />
+                </Field>
+                <Field label={`Nouveau mot de passe (${MOT_DE_PASSE_MIN} caractères au moins)`}>
+                  <input name="nouveau" type="password" required minLength={MOT_DE_PASSE_MIN} autoComplete="new-password" className={INPUT} />
+                </Field>
+                <Field label="Confirmation">
+                  <input name="confirmation" type="password" required minLength={MOT_DE_PASSE_MIN} autoComplete="new-password" className={INPUT} />
+                </Field>
+                <div className="flex justify-end pt-1">
+                  <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Changer le mot de passe</SubmitButton>
+                </div>
+              </div>
+            </Panneau>
+          </form>
+        </div>
+      ) : null}
+
+      {onglet === "facturation" ? (
+        <form action={enregistrerReglages} className="max-w-[760px]">
+          <Panneau titre="Abonnement des Chambres" sousTitre="Relances et retards de paiement, part sur les cotisations" teinte="rouge">
             <div className="flex flex-col gap-4">
               <div className="grid gap-4 sm:grid-cols-2">
                 <Field label="Relances (jours après la facture)">
@@ -66,15 +119,19 @@ export default async function ParametresGM() {
             </div>
           </Panneau>
         </form>
+      ) : null}
 
-        <Panneau titre="Paiement par carte" teinte="bleu">
-          <ul className="m-0 p-0 list-none flex flex-col divide-y divide-line">
-            <Etat ok={stripeConfigure()} libelle="Clé Stripe" cle="STRIPE_SECRET_KEY" />
-            <Etat ok={webhook} libelle="Notifications Stripe" cle="STRIPE_WEBHOOK_SECRET" />
-            <Etat ok={webhookComptes} libelle="Notifications des comptes des Chambres" cle="STRIPE_CONNECT_WEBHOOK_SECRET" />
-          </ul>
-        </Panneau>
-      </div>
+      {onglet === "paiement" ? (
+        <div className="max-w-[560px]">
+          <Panneau titre="Paiement par carte" sousTitre="Variables du serveur (.env)" teinte="bleu">
+            <ul className="m-0 p-0 list-none flex flex-col divide-y divide-line">
+              <Etat ok={stripeConfigure()} libelle="Clé Stripe" cle="STRIPE_SECRET_KEY" />
+              <Etat ok={webhook} libelle="Notifications Stripe" cle="STRIPE_WEBHOOK_SECRET" />
+              <Etat ok={webhookComptes} libelle="Notifications des comptes des Chambres" cle="STRIPE_CONNECT_WEBHOOK_SECRET" />
+            </ul>
+          </Panneau>
+        </div>
+      ) : null}
     </>
   );
 }

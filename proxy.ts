@@ -67,6 +67,9 @@ const OUVERT_SI_SUSPENDUE = (chemin: string) =>
   chemin.startsWith("/admin/abonnement/");
 
 // Espace Admin GM (gm.DOMAINE_PLATEFORME) : seulement ses pages, avec sa propre session
+// Pages de l'espace GM ouvertes sans session : connexion, mot de passe oublié
+const GM_SANS_SESSION = new Set(["/gm/connexion", "/gm/mot-de-passe-oublie", "/gm/nouveau-mot-de-passe"]);
+
 function proxyGM(request: NextRequest): NextResponse {
   const { pathname, search } = request.nextUrl;
   const url = (chemin: string, params?: Record<string, string>) => {
@@ -77,7 +80,7 @@ function proxyGM(request: NextRequest): NextResponse {
   };
   if (pathname === "/") return NextResponse.redirect(url("/gm"));
   if (!estGM(pathname)) return introuvable();
-  if (pathname === "/gm/connexion") return NextResponse.next();
+  if (GM_SANS_SESSION.has(pathname)) return NextResponse.next();
   if (!lireSessionGM(request.cookies.get(NOM_COOKIE_GM)?.value)) {
     return NextResponse.redirect(url("/gm/connexion", { suite: `${pathname}${search}` }));
   }

@@ -183,6 +183,9 @@ model CompteGM {
   email               String    @unique
   motDePasse          String
   motDePasseModifieLe DateTime?
+  // Mot de passe oublié : empreinte du lien envoyé par courriel, et sa fin de validité
+  jetonReinitialisation String?   @unique
+  jetonExpire           DateTime?
   createdAt           DateTime  @default(now())
 
   @@map("comptes_gm")

@@ -53,8 +53,16 @@ const memoire = new Map<string, { jusqua: number; valeur: Expediteur }>();
 export function oublierExpediteur() {
   memoire.clear();
 }
+// Hors de toute Chambre (espace Admin GM, site de la plateforme) : la plateforme écrit depuis l'adresse du serveur
+const PLATEFORME: Expediteur = { de: { name: "L’Alliée Virtuelle", address: SERVEUR.address }, secours: null, reponse: COURRIEL_EQUIPE };
+
 async function expediteur(): Promise<Expediteur> {
-  const chambreId = await chambreCourante();
+  let chambreId: string;
+  try {
+    chambreId = await chambreCourante();
+  } catch {
+    return PLATEFORME;
+  }
   const m = memoire.get(chambreId);
   if (m && m.jusqua > Date.now()) return m.valeur;
   let p: { nom: string; email: string; expediteurNom: string; expediteurDomaine: string; expediteurEmail: string } | null = null;
