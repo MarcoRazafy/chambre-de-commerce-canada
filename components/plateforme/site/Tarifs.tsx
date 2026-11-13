@@ -29,11 +29,17 @@ function CarteOffre({ o, miseEnAvant }: { o: OffrePublique; miseEnAvant: boolean
         </span>
       ) : null}
       <h3 className="m-0 text-[20px] font-extrabold text-ink">{o.nom}</h3>
-      <p className="mt-5 mb-0 flex flex-wrap items-baseline gap-x-2 gap-y-1">
-        {o.surMesure ? <span className="text-[15px] text-muted">dès</span> : null}
-        <span className="text-[44px] leading-none font-extrabold tracking-[-0.03em] text-ink tabular-nums">{o.surMesure ? fmtDollars(o.base) : o.prix}</span>
-        {o.periode ? <span className="text-[15px] text-muted">par {o.periode}, avant taxes</span> : null}
-      </p>
+      {o.surMesure ? (
+        <>
+          <p className="mt-5 mb-0 text-[34px] leading-[1.15] font-extrabold tracking-[-0.03em] text-ink">Selon vos choix</p>
+          <p className="mt-3 mb-0 text-[14px] leading-relaxed text-muted">Cochez les fonctions dont votre Chambre a besoin : le prix s’affiche avant la création.</p>
+        </>
+      ) : (
+        <p className="mt-5 mb-0 flex flex-wrap items-baseline gap-x-2 gap-y-1">
+          <span className="text-[44px] leading-none font-extrabold tracking-[-0.03em] text-ink tabular-nums">{o.prix}</span>
+          {o.periode ? <span className="text-[15px] text-muted">par {o.periode}, avant taxes</span> : null}
+        </p>
+      )}
       {o.detail ? <p className="mt-3 mb-0 text-[14px] leading-relaxed text-muted">{o.detail}</p> : null}
       <ul className="mt-7 m-0 p-0 list-none grid gap-2.5 content-start">
         {[...TOUJOURS_INCLUS.slice(0, 2), ...(o.surMesure ? [] : o.fonctions)].map((f) => (
@@ -48,9 +54,7 @@ function CarteOffre({ o, miseEnAvant }: { o: OffrePublique; miseEnAvant: boolean
           <ul className="m-0 p-0 list-none grid gap-2.5 flex-1 content-start">
             {o.options.map((x) => (
               <li key={x.cle} className="flex items-start gap-2.5 text-[14.5px] text-ink">
-                <Plus size={17} className="text-muted shrink-0 mt-0.5" aria-hidden />
-                <span className="flex-1">{x.libelle}</span>
-                <span className="text-[13.5px] text-muted tabular-nums whitespace-nowrap">{x.prix > 0 ? `+${fmtDollars(x.prix)}` : "Incluse"}</span>
+                <Plus size={17} className="text-muted shrink-0 mt-0.5" aria-hidden /> {x.libelle}
               </li>
             ))}
           </ul>
@@ -109,7 +113,7 @@ export function TableauOffres({ offres }: { offres: OffrePublique[] }) {
     {
       titre: "Prix",
       lignes: [
-        { libelle: "Par mois, avant taxes", valeurs: offres.map((o) => (o.gratuite ? "Gratuit" : o.surMesure ? `${fmtDollars(o.base)} + fonctions` : fmtDollars(o.base))) },
+        { libelle: "Par mois, avant taxes", valeurs: offres.map((o) => (o.gratuite ? "Gratuit" : o.surMesure ? "Selon vos choix" : fmtDollars(o.base))) },
         { libelle: "Compte d’équipe en plus", valeurs: offres.map((o) => (o.parUtilisateur > 0 ? `${fmtDollars(o.parUtilisateur)} / mois` : <Non key="n" />)) },
       ],
     },
@@ -129,8 +133,7 @@ export function TableauOffres({ offres }: { offres: OffrePublique[] }) {
         valeurs: offres.map((o) => {
           if (!o.cles.includes(f.cle)) return <Non key={o.id} />;
           if (!o.surMesure) return <Oui key={o.id} />;
-          const p = o.options.find((x) => x.cle === f.cle)?.prix ?? 0;
-          return <span key={o.id} className="text-[13.5px] font-semibold text-ink tabular-nums">{p > 0 ? `+${fmtDollars(p)}` : "Incluse"}</span>;
+          return <span key={o.id} className="text-[13.5px] font-semibold text-ink">Au choix</span>;
         }),
       })),
     },

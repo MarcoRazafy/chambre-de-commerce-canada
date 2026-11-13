@@ -22,7 +22,7 @@ export async function chambresPubliques(q: string) {
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
 // Les offres, résumées pour le choix à la création et pour les tarifs du site (fonctions incluses : leurs libellés).
-// Offre à la carte : le forfait de base (« dès »), et chaque fonction au choix avec son prix.
+// Offre à la carte : pas de prix affiché (il se calcule en composant l'offre), chaque fonction au choix avec son prix.
 export async function offresPubliques() {
   const offres = await db.offre.findMany({ orderBy: { ordre: "asc" } });
   return offres.map((o) => {
@@ -39,9 +39,9 @@ export async function offresPubliques() {
     return {
       id: o.id,
       nom: o.nom,
-      prix: gratuite ? "Gratuit" : o.surMesure ? `dès ${fmtDollars(o.forfait)}` : fmtDollars(o.forfait),
-      periode: gratuite ? "" : "mois",
-      detail: majuscule([parCompte, limites].filter(Boolean).join(" · ")),
+      prix: gratuite ? "Gratuit" : o.surMesure ? "Selon vos choix" : fmtDollars(o.forfait),
+      periode: gratuite || o.surMesure ? "" : "mois",
+      detail: majuscule((o.surMesure ? [limites] : [parCompte, limites]).filter(Boolean).join(" · ")),
       gratuite,
       surMesure: o.surMesure,
       fonctions: incluses.map((f) => f.libelle),
