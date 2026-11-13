@@ -10,8 +10,11 @@ import {
   Saisie,
 } from "@/components/public/CadreAuth";
 import { BoutonEnvoi, EcranPassage } from "@/components/public/BoutonMarque";
+import { ConnexionGoogle } from "@/components/public/ConnexionGoogle";
 import { Saillant } from "@/components/ui";
 import { connexion } from "@/lib/actions/auth";
+import { chambreCourante } from "@/lib/chambre-courante";
+import { lienGoogle } from "@/lib/google";
 import { utilisateurConnecte } from "@/lib/session";
 
 export default async function ConnexionPage({
@@ -33,6 +36,7 @@ export default async function ConnexionPage({
   if (connecte && !enAttente) {
     redirect(connecte.role === "admin" ? "/admin" : "/membre");
   }
+  const google = lienGoogle({ depuis: await chambreCourante(), suite });
 
   return (
     <CadreAuth
@@ -129,6 +133,8 @@ export default async function ConnexionPage({
           />
         </div>
       </form>
+
+      {google ? <ConnexionGoogle href={google} /> : null}
 
       <p className="text-[13.5px] text-muted mt-6 mb-0 pt-5 border-t border-line">
         Pas encore membre ?{" "}

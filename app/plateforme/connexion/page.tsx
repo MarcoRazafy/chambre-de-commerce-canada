@@ -3,15 +3,18 @@ import Link from "next/link";
 import { Lock, Mail } from "lucide-react";
 import { BoutonEnvoi } from "@/components/public/BoutonMarque";
 import { Alerte, CadreAuth } from "@/components/public/CadreAuth";
+import { ConnexionGoogle } from "@/components/public/ConnexionGoogle";
 import { ChampAuth, ChampMotDePasse, Saisie } from "@/components/public/ChampsAuth";
 import { MarqueSite, PIED_PLATEFORME } from "@/components/plateforme/site/MarqueSite";
 import { connexionPlateforme } from "@/lib/actions/plateforme";
+import { lienGoogle } from "@/lib/google";
 
 export const metadata: Metadata = { title: { absolute: "Connexion · L’Alliée Virtuelle" } };
 
 // Connexion depuis le site de la plateforme : on arrive dans l'espace de sa Chambre
 export default async function ConnexionPlateforme({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string }> }) {
   const { erreur, email } = await searchParams;
+  const google = lienGoogle();
   return (
     <CadreAuth classe="site-plateforme" marque={<MarqueSite />} pied={PIED_PLATEFORME} illustration="acces">
       <h1 className="titre m-0 mb-2">Se connecter</h1>
@@ -27,6 +30,7 @@ export default async function ConnexionPlateforme({ searchParams }: { searchPara
         </p>
         <BoutonEnvoi enCours="Connexion…">Se connecter</BoutonEnvoi>
       </form>
+      {google ? <ConnexionGoogle href={google} /> : null}
       <p className="text-[14px] text-muted text-center m-0 mt-8">
         Pas encore de Chambre ?{" "}
         <Link href="/creer-une-chambre" className="text-marque-vert font-medium no-underline hover:underline">Créer ma Chambre</Link>

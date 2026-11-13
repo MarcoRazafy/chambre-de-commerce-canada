@@ -43,3 +43,11 @@ export async function adresseOuSite(chambreId: string): Promise<string | null> {
   if (chambreId !== CHAMBRE_PRINCIPALE) return null;
   return process.env.APP_URL?.trim().replace(/\/+$/, "") || null;
 }
+
+// L'adresse du site public de la plateforme (DOMAINE_PLATEFORME) ; en développement, http://www.localhost:port
+export function adresseSitePlateforme(): string | null {
+  const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
+  if (plateforme) return `https://${plateforme}`;
+  if (process.env.NODE_ENV !== "production") return `http://www.localhost:${portLocal()}`;
+  return null;
+}

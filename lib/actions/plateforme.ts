@@ -13,6 +13,7 @@ import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
 import { estFonction } from "@/lib/fonctions-plateforme";
 import { prismaSysteme as db } from "@/lib/db";
 import { slugValide } from "@/lib/hote-chambre";
+import { lienEntree } from "@/lib/entree-chambre";
 import { creerJeton } from "@/lib/jetons";
 import { minutes, oublier, origineAppelante, tentative } from "@/lib/limite";
 import { courrielReinitialisation } from "@/lib/modeles-courriels";
@@ -22,15 +23,8 @@ const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").tr
 const ADRESSE = /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/;
 const HEURE = 60 * 60 * 1000;
 
-// Le lien qui ouvre la session dans la Chambre du compte ; « choix » : l'offre (et ses fonctions) choisie sur le
-// site, présélectionnée au démarrage
-async function entree(chambreId: string, userId: string, choix: Record<string, string> = {}): Promise<string | null> {
-  const adresse = await adresseOuSite(chambreId);
-  if (!adresse) return null;
-  const jeton = await avecChambre(chambreId, () => creerJeton(userId, "connexion"));
-  const plus = Object.fromEntries(Object.entries(choix).filter(([, v]) => v));
-  return `${adresse}/auth/entree?${new URLSearchParams({ jeton, ...plus })}`;
-}
+// Le lien qui ouvre la session dans la Chambre du compte (lib/entree-chambre.ts)
+const entree = lienEntree;
 
 // --- Créer une Chambre ---
 // L'inscription seule (la Chambre, son super admin) ; l'offre, le paiement et les informations se font ensuite,
