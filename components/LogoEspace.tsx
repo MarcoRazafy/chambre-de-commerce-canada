@@ -1,8 +1,7 @@
 import Image from "next/image";
 
 // Logo en tête de la barre latérale d'un espace (back-office, espace membre) : celui de la Chambre (Mon entreprise),
-// sur une plaque blanche pour rester lisible sur la barre sombre quelles que soient ses couleurs ; sans logo, le logo
-// IMPACT 261 en blanc
+// posé tel quel sur la barre ; sans logo, le logo IMPACT 261 en blanc
 export function LogoEspace({ logo, nom }: { logo: string | null; nom: string }) {
   if (!logo) {
     return (
@@ -17,9 +16,5 @@ export function LogoEspace({ logo, nom }: { logo: string | null; nom: string }) 
       />
     );
   }
-  return (
-    <span className="inline-flex max-w-full items-center rounded-xl bg-white px-3 py-2 shadow-[0_8px_20px_-10px_rgba(0,0,0,0.55)]">
-      <Image src={logo} alt={nom} width={400} height={160} priority sizes="200px" className="block h-11 w-auto max-w-[200px] object-contain" />
-    </span>
-  );
+  return <Image src={logo} alt={nom} width={400} height={160} priority sizes="200px" className="block h-14 w-auto max-w-[200px] object-contain object-left" />;
 }
