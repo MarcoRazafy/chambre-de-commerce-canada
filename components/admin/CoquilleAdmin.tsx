@@ -7,6 +7,7 @@ import { Suspense, useState, type ReactNode } from "react";
 import { ChevronRight, Menu, MessageSquare, Search, Settings } from "lucide-react";
 import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
 import { BoutonInstaller } from "@/components/Application";
+import { LogoEspace } from "@/components/LogoEspace";
 import { MenuNotifications } from "@/components/MenuNotifications";
 import { MenuProfil } from "@/components/admin/MenuProfil";
 import { EnCoursLien, TirerPourRafraichir } from "@/components/Mouvement";
@@ -22,6 +23,7 @@ export function CoquilleAdmin({
   badges = {},
   notifications = [],
   messagerie = true,
+  marque,
   children,
 }: {
   user: User;
@@ -30,6 +32,8 @@ export function CoquilleAdmin({
   notifications?: Notification[];
   /** Icône Messagerie de la barre du haut : seulement si l'offre de la Chambre ouvre la fonction */
   messagerie?: boolean;
+  /** Le logo de la Chambre (Mon entreprise) et son nom ; sans logo, IMPACT 261 */
+  marque: { logo: string | null; nom: string };
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -60,15 +64,7 @@ export function CoquilleAdmin({
             className="no-underline block"
             aria-label="Tableau de bord"
           >
-            <Image
-              src="/marque/logo-blanc.png"
-              alt="IMPACT 261"
-              width={1600}
-              height={647}
-              priority
-              sizes="170px"
-              className="w-[170px] max-w-full h-auto"
-            />
+            <LogoEspace logo={marque.logo} nom={marque.nom} />
           </Link>
           <div className="mt-5 flex items-center gap-2.5">
             <span className="surtitre text-white/70">Back-office</span>

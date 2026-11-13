@@ -18,6 +18,12 @@ export async function logoPourCourriel(): Promise<string | undefined> {
   }
 }
 
+// Le logo de la Chambre (null : elle n'en a pas réglé, l'espace montre IMPACT 261) et son nom, pour l'en-tête des espaces
+export async function marqueDeLaChambre(): Promise<{ logo: string | null; nom: string }> {
+  const brut = await getProfilChambreBrut();
+  return { logo: brut?.logo?.trim() || null, nom: completerProfil(brut).nom };
+}
+
 // Le profil complété par les valeurs par défaut (pour les factures et l'affichage)
 export async function getProfilChambre(): Promise<ProfilChambre> {
   return completerProfil(await getProfilChambreBrut());

@@ -9,6 +9,7 @@ import { isAccessLocked, joursDeRetard, retardBloque } from "@/lib/membership";
 import { NAV_MEMBRE } from "@/lib/nav";
 import { filtrerNav } from "@/lib/fonctions-plateforme";
 import { offreDeLaChambre } from "@/lib/offre-chambre";
+import { marqueDeLaChambre } from "@/lib/profil-chambre";
 import { BandeauCotisation } from "@/components/paiement/Cotisation";
 import { cotisationDue } from "@/lib/cotisation";
 import { modesProposes } from "@/lib/reglements";
@@ -23,7 +24,7 @@ export default async function MembreLayout({
   const membre = user.memberId ? await getMember(user.memberId) : null;
   if (!membre) notFound();
 
-  const [unread, stats, notifications, cotisation, modes, paiement, offre] = await Promise.all([
+  const [unread, stats, notifications, cotisation, modes, paiement, offre, marque] = await Promise.all([
     getUnreadTotal(user.id),
     getStatsPubliques(),
     getNotifications("membre", membre.id, user.id),
@@ -31,6 +32,7 @@ export default async function MembreLayout({
     modesProposes(),
     etatPaiementChambre(),
     offreDeLaChambre(),
+    marqueDeLaChambre(),
   ]);
   // Le menu sans les fonctions que l'offre de la Chambre n'inclut pas
   const nav = filtrerNav(NAV_MEMBRE, offre?.fonctions);
@@ -49,6 +51,7 @@ export default async function MembreLayout({
         "/membre/messagerie": unread,
       }}
       notifications={notifications}
+      marque={marque}
       bandeau={
         cotisation ? (
           <BandeauCotisation

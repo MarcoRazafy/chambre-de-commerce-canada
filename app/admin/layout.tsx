@@ -10,6 +10,7 @@ import { getCurrentUser } from "@/lib/session";
 import { NAV_ADMIN } from "@/lib/nav";
 import { filtrerNav } from "@/lib/fonctions-plateforme";
 import { offreDeLaChambre } from "@/lib/offre-chambre";
+import { marqueDeLaChambre } from "@/lib/profil-chambre";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
 
@@ -22,12 +23,13 @@ export default async function AdminLayout({
   // Chambre qui vient d'être créée : d'abord son démarrage (offre, paiement, informations)
   const chambre = await prisma.chambre.findFirst({ select: { demarrage: true } });
   if (chambre?.demarrage && !user.visiteGM) redirect("/demarrage");
-  const [stats, unread, notifications, paiement, offre] = await Promise.all([
+  const [stats, unread, notifications, paiement, offre, marque] = await Promise.all([
     getMemberStats(),
     getUnreadTotal(user.id),
     getNotifications("admin", null, user.id),
     etatPaiementChambre(),
     offreDeLaChambre(),
+    marqueDeLaChambre(),
   ]);
 
   const aTraiter = stats.total - stats.aJour;
@@ -39,6 +41,7 @@ export default async function AdminLayout({
       badges={{ "/admin/membres": aTraiter, "/admin/messagerie": unread }}
       messagerie={!offre || offre.fonctions.includes("messagerie")}
       notifications={notifications}
+      marque={marque}
     >
       {user.visiteGM ? (
         <div role="status" className="mb-5 flex items-center justify-between gap-3 flex-wrap rounded-[var(--radius-m)] border border-navy/30 bg-navy-soft px-4 py-3 text-[13.5px] text-ink">

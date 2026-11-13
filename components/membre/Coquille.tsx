@@ -7,6 +7,7 @@ import { Suspense, useState, type ReactNode } from "react";
 import { ChevronDown, Menu, Search } from "lucide-react";
 import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
 import { BoutonInstaller } from "@/components/Application";
+import { LogoEspace } from "@/components/LogoEspace";
 import { MenuNotifications } from "@/components/MenuNotifications";
 import { EnCoursLien, TirerPourRafraichir } from "@/components/Mouvement";
 import { FilAriane } from "@/components/FilAriane";
@@ -23,6 +24,8 @@ interface CoquilleProps {
   lockedHrefs?: string[];
   notifications?: Notification[];
   bandeau?: ReactNode;
+  /** Le logo de la Chambre (Mon entreprise) et son nom ; sans logo, IMPACT 261 */
+  marque: { logo: string | null; nom: string };
   children: ReactNode;
 }
 
@@ -34,6 +37,7 @@ export function Coquille({
   lockedHrefs = [],
   notifications = [],
   bandeau,
+  marque,
   children,
 }: CoquilleProps) {
   const pathname = usePathname();
@@ -63,17 +67,9 @@ export function Coquille({
           <Link
             href="/membre"
             className="no-underline block"
-            aria-label="IMPACT 261"
+            aria-label={`${marque.nom}, accueil`}
           >
-            <Image
-              src="/marque/logo-blanc.png"
-              alt="IMPACT 261"
-              width={1600}
-              height={647}
-              priority
-              sizes="170px"
-              className="w-[170px] max-w-full h-auto"
-            />
+            <LogoEspace logo={marque.logo} nom={marque.nom} />
           </Link>
         </div>
 
