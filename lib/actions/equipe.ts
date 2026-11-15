@@ -259,7 +259,7 @@ export async function retirerAdmin(formData: FormData) {
   if (userId === acteur.id) {
     redirectWithErreur(
       EQUIPE,
-      "Vous ne pouvez pas retirer votre propre accès : demandez-le à un autre super admin.",
+      "Vous ne pouvez pas retirer votre propre accès : demandez-le à un autre admin.",
     );
   }
 
@@ -304,7 +304,7 @@ export async function changerNiveauEquipe(formData: FormData) {
   if (userId === acteur.id) {
     redirectWithErreur(
       EQUIPE,
-      "Vous ne pouvez pas changer votre propre rôle : demandez-le à un autre super admin.",
+      "Vous ne pouvez pas changer votre propre rôle : demandez-le à un autre admin.",
     );
   }
   const u = await prisma.user.findUnique({

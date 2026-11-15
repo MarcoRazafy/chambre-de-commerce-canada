@@ -21,7 +21,7 @@ export default async function Conditions() {
 
       <h2>2. Compte et accès</h2>
       <ul>
-        <li>Une adresse e-mail correspond à un seul compte. La personne qui crée la Chambre en devient le super admin et peut ouvrir des comptes à son équipe.</li>
+        <li>Une adresse e-mail correspond à un seul compte. La personne qui crée la Chambre en devient l’admin et peut ouvrir des comptes à son équipe.</li>
         <li>Chaque personne garde son mot de passe confidentiel et prévient la plateforme en cas d’usage non autorisé.</li>
         <li>Un nom de Chambre ou un domaine trompeur peut être refusé.</li>
       </ul>

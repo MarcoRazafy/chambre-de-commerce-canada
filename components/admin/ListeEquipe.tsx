@@ -5,7 +5,7 @@ import { useMemo, useState } from "react";
 import { Search, Users } from "lucide-react";
 import { Vide } from "@/components/admin/ui";
 import { CarteEquipier } from "@/components/forms/EquipeForms";
-import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
+import { NIVEAU_EQUIPE_PLURIEL } from "@/lib/enums";
 import type { CompteEquipe } from "@/lib/queries-admin";
 import type { NiveauEquipe } from "@/lib/types";
 
@@ -59,7 +59,7 @@ export function ListeEquipe({
             return (
               <section key={niveau}>
                 <h3 className="m-0 flex items-center gap-2 border-b border-line pb-2 text-[13px] font-semibold text-muted">
-                  {NIVEAU_EQUIPE_LABEL[niveau]}s
+                  {NIVEAU_EQUIPE_PLURIEL[niveau]}
                   <span className="text-[11px] font-bold px-[7px] py-px rounded-full bg-surface-3 text-muted">{groupe.length}</span>
                 </h3>
                 <ul className="list-none m-0 p-0">

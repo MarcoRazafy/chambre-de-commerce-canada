@@ -81,7 +81,7 @@ export default async function FactureAbonnement({
             </div>
             <div className="text-[14px]">
               <div className={ligne}><span>Forfait Chambre</span><span>{fmtDollars(f.forfait)}</span></div>
-              {f.utilisateurs > payants ? <div className={ligne}><span>Super admin</span><span>Offert</span></div> : null}
+              {f.utilisateurs > payants ? <div className={ligne}><span>Admin</span><span>Offert</span></div> : null}
               <div className={ligne}><span>{payants} utilisateur{payants > 1 ? "s" : ""} × {fmtDollars(f.parUtilisateur)}</span><span>{fmtDollars(f.sousTotal - f.forfait)}</span></div>
               <div className={`${ligne} border-t border-[#e5eaf0] mt-1`}><span>Sous-total</span><span>{fmtDollars(f.sousTotal)}</span></div>
               <div className={ligne}><span>TPS ({fmtPourcent(f.tauxTps)})</span><span>{fmtDollars(f.tps)}</span></div>

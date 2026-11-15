@@ -292,7 +292,7 @@ export async function entrerDansChambre(formData: FormData) {
     orderBy: { createdAt: "asc" },
     select: { id: true },
   });
-  if (!compte) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas de super admin.");
+  if (!compte) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas d’admin.");
   const adresse = await adresseOuSite(c.id, "equipe");
   if (!adresse) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas encore d’adresse.");
   redirect(`${adresse}/auth/entree-gm?${new URLSearchParams({ jeton: lienEntree({ c: c.id, u: compte.id, g: gm.id, n: gm.nom }) })}`);

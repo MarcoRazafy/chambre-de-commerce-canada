@@ -31,6 +31,7 @@ import {
   ouvrirAccesPour,
   ouvrirAccesRessources,
   retirerAccesPour,
+  supprimerRessources,
 } from "@/lib/actions/content";
 
 export type MembreChoisissable = { id: string; nom: string; statut: string };
@@ -441,6 +442,19 @@ export function BarreSelection({
         <Scissors size={14} /> Couper
       </SubmitButton>
       <BoutonOuvrirAcces membres={membres} dossierId={dossierId} />
+      <SubmitButton
+        sm
+        variant="line"
+        formAction={supprimerRessources}
+        pendingLabel="Suppression…"
+        onClick={(e: React.MouseEvent<HTMLButtonElement>) => {
+          const n = document.querySelectorAll<HTMLInputElement>('input[name="ressource"]:checked').length;
+          if (!n) return;
+          if (!window.confirm(`Supprimer ${n} ressource${n > 1 ? "s" : ""} et leurs fichiers ? C’est définitif.`)) e.preventDefault();
+        }}
+      >
+        <Trash2 size={14} /> Supprimer
+      </SubmitButton>
     </div>
   );
 }

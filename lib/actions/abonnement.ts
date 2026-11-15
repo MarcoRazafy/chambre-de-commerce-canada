@@ -76,3 +76,23 @@ export async function composerOffre(formData: FormData) {
   if (!stripeConfigure()) redirectWithErreur(PAGE, INDISPONIBLE);
   redirect(await sessionCarte(chambreId, await urlPublique(PAGE), offre.id));
 }
+
+// « Passer sur cette formule » (onglet Les formules) : une offre gratuite s'applique tout de suite, une offre payante
+// aussi si une carte est enregistrée (sinon après son enregistrement) ; l'offre à la carte, avec ses fonctions cochées
+export async function changerFormule(formData: FormData) {
+  const offre = await prisma.offre.findUnique({ where: { id: String(formData.get("offreId") ?? "").slice(0, 64) } });
+  if (!offre) redirectWithErreur(PAGE, "Cette formule n’existe plus.");
+  if (offre.surMesure) return composerOffre(formData);
+  const moi = await exigerAdministrateur(PAGE);
+  const chambreId = await chambreCourante();
+  const c = await prisma.chambre.findFirst({ select: { offreId: true, stripeCarteId: true } });
+  if (c?.offreId === offre.id) redirectWithFlash(PAGE, `Vous êtes déjà sur la formule ${offre.nom}`);
+  if (offreGratuite(offre) || c?.stripeCarteId) {
+    await passerALOffre(chambreId, offre.id, moi.nom);
+    oublierAdresses();
+    revalidatePath("/", "layout");
+    redirectWithFlash(PAGE, `Formule ${offre.nom}`);
+  }
+  if (!stripeConfigure()) redirectWithErreur(PAGE, INDISPONIBLE);
+  redirect(await sessionCarte(chambreId, await urlPublique(PAGE), offre.id));
+}

@@ -84,7 +84,7 @@ export default async function AdminEtiquettes({
 
         <Card className="p-0 overflow-x-auto">
           <div className="px-5 pt-4 pb-3 font-semibold text-ink">
-            {avec.length} entreprise{avec.length > 1 ? "s" : ""}
+            {avec.length} contact{avec.length > 1 ? "s" : ""}
           </div>
           {avec.length ? (
             <table className="w-full border-collapse text-[13.4px]">
@@ -98,7 +98,7 @@ export default async function AdminEtiquettes({
               </tbody>
             </table>
           ) : (
-            <p className="m-0 px-5 pb-5 text-[13px] text-muted">Aucune entreprise n’a ce tag.</p>
+            <p className="m-0 px-5 pb-5 text-[13px] text-muted">Aucun contact n’a ce tag.</p>
           )}
         </Card>
 
@@ -151,8 +151,6 @@ export default async function AdminEtiquettes({
       <ListeTags
         tags={resumes}
         totalTags={parTag.size}
-        entreprisesTaguees={entreprises.filter((e) => e.etiquettes.length).length}
-        totalEntreprises={entreprises.length}
         q={recherche}
         tri={tri}
       />

@@ -273,7 +273,7 @@ export async function relancesDues(chambreId: string, maintenant = new Date()): 
       titre: "Facture de l’abonnement en retard",
       paragraphes: [
         `${chambre?.nom ?? chambreId} : la facture ${f.numero} (${fmtDollars(f.total)}) attend son paiement depuis ${jours} jour${jours > 1 ? "s" : ""}.`,
-        "Une relance vient d’être envoyée à ses super admins.",
+        "Une relance vient d’être envoyée à ses admins.",
       ],
       chambreId,
     });

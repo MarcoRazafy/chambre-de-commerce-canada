@@ -81,7 +81,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
   const actif = etat?.etat === "valide" && locale ? domaine : domaineDe(adresseServeur());
 
   const verrou = !gere ? (
-    <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux super admins.</p>
+    <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux admins.</p>
   ) : null;
   const enregistrer = gere ? (
     <div className="flex justify-end pt-1">

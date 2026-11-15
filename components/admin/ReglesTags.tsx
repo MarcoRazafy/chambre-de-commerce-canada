@@ -10,7 +10,7 @@ const libelle = (statut: string) => SITUATIONS_REGLE.find(([s]) => s === statut)
 // Tags automatiques : « quand une entreprise est [situation], elle porte le tag [X] » (et le perd sinon)
 export function ReglesTags({ regles, tousTags }: { regles: { id: string; statut: string; tag: string; actif: boolean }[]; tousTags: string[] }) {
   return (
-    <Panneau titre="Tags automatiques" sousTitre="Posés et retirés tout seuls selon la situation de l’entreprise" teinte="vert" className="mb-6">
+    <Panneau titre="Tags automatiques" teinte="vert" className="mb-6">
       {regles.length ? (
         <ul className="list-none m-0 p-0 mb-4">
           {regles.map((r) => (

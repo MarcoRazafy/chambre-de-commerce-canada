@@ -1601,6 +1601,26 @@ async function mettreAuPressePapier(
   );
 }
 
+// « Supprimer » (barre de sélection) : les ressources cochées et leurs fichiers, notées au journal
+export async function supprimerRessources(formData: FormData) {
+  await exigerEquipe();
+  const retour = retourBibliotheque(formData);
+  const ids = coches(formData);
+  if (!ids.length) redirectWithErreur(retour, "Cochez au moins une ressource.");
+  const liste = await prisma.resource.findMany({ where: { id: { in: ids } }, select: { id: true, titre: true } });
+  if (!liste.length) redirectWithErreur(retour, "Ressources introuvables.");
+  const acteur = await acteurEquipe();
+  for (const r of liste) {
+    await prisma.auditLog.create({
+      data: { action: "ressource_supprimee", entite: "Resource", entiteId: r.id, acteur, detail: `« ${r.titre} » et ses fichiers.` },
+    });
+    await prisma.resource.delete({ where: { id: r.id } });
+    await effacerRessource(r.id);
+  }
+  revalideTout();
+  redirectWithFlash(retour, `${liste.length} ressource${liste.length > 1 ? "s" : ""} supprimée${liste.length > 1 ? "s" : ""}`);
+}
+
 export async function couperRessources(formData: FormData) {
   await mettreAuPressePapier(formData, "couper");
 }

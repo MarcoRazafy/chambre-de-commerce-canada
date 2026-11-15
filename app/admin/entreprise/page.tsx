@@ -121,7 +121,7 @@ export default async function MonEntreprise() {
         <Panneau titre="Formules d’adhésion" sousTitre="Proposées à l’inscription ; elles fixent le montant des cotisations" teinte="vert">
           <div className="flex flex-col gap-4">
             {!gere ? (
-              <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux super admins.</p>
+              <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux admins.</p>
             ) : null}
             <ListeFormules gere={gere} formules={formules.map(({ _count, ...f }) => ({ ...f, membres: _count.membres }))} />
           </div>
