@@ -78,14 +78,22 @@ export function ComposeurOffre({
               onChange={() => basculer(x.cle)}
               className="sr-only"
             />
-            <span
-              aria-hidden
-              className={`grid place-items-center size-5 shrink-0 rounded-[6px] border-2 transition-colors group-has-checked:border-marque-vert group-has-checked:bg-marque-vert ${
-                sombre ? "border-white/40" : "border-[#c5cdd8] bg-white"
-              }`}
-            >
-              <Check size={13} strokeWidth={3.2} className="text-white opacity-0 group-has-checked:opacity-100" />
-            </span>
+            {sombre ? (
+              <span
+                aria-hidden
+                className="grid place-items-center size-5 shrink-0 rounded-[6px] border-2 border-white/40 transition-colors group-has-checked:border-marque-vert group-has-checked:bg-marque-vert"
+              >
+                <Check size={13} strokeWidth={3.2} className="text-white opacity-0 group-has-checked:opacity-100" />
+              </span>
+            ) : (
+              // Sur fond clair (Abonnement) : un rond, rempli au centre une fois coché
+              <span
+                aria-hidden
+                className="grid place-items-center size-5 shrink-0 rounded-full border-2 border-[#c5cdd8] bg-white transition-colors group-has-checked:border-marque-vert"
+              >
+                <span className="size-2.5 rounded-full bg-marque-vert scale-0 transition-transform group-has-checked:scale-100" />
+              </span>
+            )}
             <span className={`flex-1 min-w-0 text-[14.5px] font-medium ${sombre ? "text-white" : "text-ink"}`}>{x.libelle}</span>
             <span className={`text-[13.5px] font-semibold tabular-nums whitespace-nowrap ${sombre ? "text-white/70" : "text-muted"}`}>{prixOption(x.prix)}</span>
           </label>

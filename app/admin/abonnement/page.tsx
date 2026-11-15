@@ -160,10 +160,12 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
                     <h3 className="m-0 text-[18px]">{o.nom}</h3>
                     {actuelle ? <Pill tone="ok">Formule actuelle</Pill> : null}
                   </div>
-                  <p className="m-0 flex items-baseline gap-1.5">
-                    <b className="text-[26px] leading-none tabular-nums">{o.prix}</b>
-                    {o.periode ? <span className="text-[13px] text-muted">/ {o.periode}, avant taxes</span> : null}
-                  </p>
+                  {o.surMesure ? null : (
+                    <p className="m-0 flex items-baseline gap-1.5">
+                      <b className="text-[26px] leading-none tabular-nums">{o.prix}</b>
+                      {o.periode ? <span className="text-[13px] text-muted">/ {o.periode}, avant taxes</span> : null}
+                    </p>
+                  )}
                   {o.detail ? <p className="m-0 text-[13px] text-muted">{o.detail}</p> : null}
                   {o.surMesure && gere ? (
                     <form action={changerFormule} className="flex flex-col gap-4 flex-1">
