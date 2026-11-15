@@ -1,4 +1,5 @@
-// Paramètres > Formules d'adhésion : une ligne modifiable par formule, l'ajout, les formules archivées
+// Mon entreprise > Formules d'adhésion : une ligne modifiable par formule (type d'adhésion, montant, devise), l'ajout,
+// les formules archivées
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Save, X } from "lucide-react";
 import { INPUT } from "@/components/champ-style";
 import {
@@ -13,18 +14,15 @@ import { fmtCotisation, libelleFormule, type Formule } from "@/lib/membership";
 
 type Ligne = Formule & { active: boolean; membres: number };
 
-const GRILLE = "grid gap-2.5 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)_120px_96px_auto]";
+const GRILLE = "grid gap-2.5 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_120px_96px_auto]";
 const ICONE = "inline-flex items-center justify-center size-9 rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-default";
 const libelle = "block text-[12px] font-semibold text-muted mb-1";
 
 function Champs({ f }: { f?: Formule }) {
   return (
     <>
-      <label className="min-w-0"><span className={libelle}>Titre</span>
-        <input name="pays" required maxLength={60} defaultValue={f?.pays ?? ""} placeholder="Titre" className={INPUT} />
-      </label>
-      <label className="min-w-0"><span className={libelle}>Profil</span>
-        <input name="profil" required maxLength={120} defaultValue={f?.profil ?? ""} placeholder="À qui elle s’adresse" className={INPUT} />
+      <label className="min-w-0"><span className={libelle}>Type d’adhésion</span>
+        <input name="profil" required maxLength={120} defaultValue={f?.profil ?? ""} placeholder="Type d’adhésion" className={INPUT} />
       </label>
       <label className="min-w-0"><span className={libelle}>Montant par an</span>
         <input name="montant" required inputMode="numeric" pattern="[0-9 ]+" defaultValue={f ? String(f.montant) : ""} placeholder="0" className={INPUT} />
@@ -51,10 +49,10 @@ export function ListeFormules({ formules, gere }: { formules: Ligne[]; gere: boo
             <Champs f={f} />
             {gere ? (
               <div className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1">
-                <button type="submit" aria-label={`Enregistrer ${f.pays}`} title="Enregistrer" className={ICONE}><Save size={15} /></button>
+                <button type="submit" aria-label={`Enregistrer ${f.profil}`} title="Enregistrer" className={ICONE}><Save size={15} /></button>
                 <button type="submit" formAction={monterFormuleAdhesion} disabled={i === 0} aria-label="Monter" title="Monter" className={ICONE} formNoValidate><ArrowUp size={15} /></button>
                 <button type="submit" formAction={descendreFormuleAdhesion} disabled={i === actives.length - 1} aria-label="Descendre" title="Descendre" className={ICONE} formNoValidate><ArrowDown size={15} /></button>
-                <button type="submit" formAction={retirerFormuleAdhesion} aria-label={`Retirer ${f.pays}`} title={f.membres ? "Archiver (ses membres la gardent)" : "Supprimer"} className={`${ICONE} hover:!text-bad`} formNoValidate><X size={15} /></button>
+                <button type="submit" formAction={retirerFormuleAdhesion} aria-label={`Retirer ${f.profil}`} title={f.membres ? "Archiver (ses membres la gardent)" : "Supprimer"} className={`${ICONE} hover:!text-bad`} formNoValidate><X size={15} /></button>
               </div>
             ) : null}
           </div>

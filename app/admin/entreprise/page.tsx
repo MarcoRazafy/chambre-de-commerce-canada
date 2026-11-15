@@ -1,18 +1,31 @@
 import Image from "next/image";
-import { Globe, Mail, MapPin, Phone, Save } from "lucide-react";
+import { Globe, Lock, Mail, MapPin, Phone, Save } from "lucide-react";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
+import { ListeFormules } from "@/components/admin/ListeFormules";
 import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Card, Saillant } from "@/components/ui";
 import { enregistrerProfilChambre } from "@/lib/actions/profil-chambre";
+import { estAdministrateur } from "@/lib/autorisations";
+import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/session";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 
 // « Mon entreprise » : la Chambre elle-même. Sa présentation (logo, couverture, coordonnées)
-// et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ ; le logo est celui de l'entreprise)
+// et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ ; le logo est celui de l'entreprise),
+// puis ses formules d'adhésion (modifiables par les super admins)
 export default async function MonEntreprise() {
-  const brut = await getProfilChambreBrut();
+  const [brut, moi, formules] = await Promise.all([
+    getProfilChambreBrut(),
+    getCurrentUser("admin"),
+    prisma.formuleAdhesion.findMany({
+      orderBy: [{ ordre: "asc" }, { createdAt: "asc" }],
+      select: { id: true, pays: true, profil: true, montant: true, devise: true, active: true, _count: { select: { membres: true } } },
+    }),
+  ]);
+  const gere = estAdministrateur(moi);
   const p = completerProfil(brut);
   const v = (k: keyof NonNullable<typeof brut>) => (brut?.[k] as string | null | undefined) ?? "";
 
@@ -103,6 +116,17 @@ export default async function MonEntreprise() {
           <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer les modifications</SubmitButton>
         </div>
       </form>
+
+      <div id="formules" className="mt-5 scroll-mt-24">
+        <Panneau titre="Formules d’adhésion" sousTitre="Proposées à l’inscription ; elles fixent le montant des cotisations" teinte="vert">
+          <div className="flex flex-col gap-4">
+            {!gere ? (
+              <p className="m-0 flex items-center gap-2 text-[13px] text-muted"><Lock size={14} aria-hidden /> Réservé aux super admins.</p>
+            ) : null}
+            <ListeFormules gere={gere} formules={formules.map(({ _count, ...f }) => ({ ...f, membres: _count.membres }))} />
+          </div>
+        </Panneau>
+      </div>
     </>
   );
 }

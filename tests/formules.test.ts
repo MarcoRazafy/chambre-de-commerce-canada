@@ -7,7 +7,8 @@ const canada: Formule = { id: "f2", pays: "Canada", profil: "Entreprise canadien
 
 describe("formules d'adhésion de la Chambre", () => {
   it("s'affichent d'après la formule elle-même", () => {
-    expect(libelleFormule(entreprise)).toBe("Madagascar — Entreprise");
+    // Désignée par son type d'adhésion (le titre ne s'affiche plus)
+    expect(libelleFormule(entreprise)).toBe("Entreprise");
     expect(fmtCotisation(entreprise)).toMatch(/^500\s000 Ar$/);
     expect(fmtCotisation(canada)).toBe("300 $");
     expect(cotisationAnnuelle(canada)).toBe("300 $ / an");
@@ -19,8 +20,8 @@ describe("formules d'adhésion de la Chambre", () => {
   it("l'aide montre la grille de la Chambre", () => {
     const reponse = (formules: Formule[]) =>
       themesDeLaChambre(formules).flatMap((t) => t.questions).find((q) => q.id === "formules")!.reponse;
-    expect(reponse([entreprise, canada])).toContain("· Madagascar — Entreprise : ");
-    expect(reponse([entreprise, canada])).toContain("· Canada — Entreprise canadienne : 300 $ par an");
+    expect(reponse([entreprise, canada])).toContain("· Entreprise : ");
+    expect(reponse([entreprise, canada])).toContain("· Entreprise canadienne : 300 $ par an");
     expect(reponse([])).not.toContain("{{");
   });
 });

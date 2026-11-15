@@ -68,8 +68,7 @@ export function ChoixFormules({ formules, actuelle }: { formules: Formule[]; act
             value={f.id}
             requis
             defaultChecked={actuelle === f.id}
-            titre={f.pays}
-            detail={f.profil}
+            titre={f.profil}
             prix={fmtCotisation(f)}
           />
         ))}

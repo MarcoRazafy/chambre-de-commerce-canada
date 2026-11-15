@@ -23,7 +23,7 @@ export interface Formule {
 
 export function libelleFormule(f: Formule | null | undefined): string {
   if (!f) return "Formule à choisir";
-  return `${f.pays} — ${f.profil}`;
+  return f.profil;
 }
 
 // Tarifs en dollars canadiens ; « Ar » pour les montants en ariary

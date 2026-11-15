@@ -1,6 +1,6 @@
 "use server";
 
-// Paramètres > Formules d'adhésion (super admins) : les formules que la Chambre propose à ses membres
+// Mon entreprise > Formules d'adhésion (super admins) : les formules que la Chambre propose à ses membres
 // (inscription, fiche du membre, factures de cotisation). Une formule déjà choisie par des membres s'archive
 // au lieu de disparaître : ils la gardent, elle n'est plus proposée.
 import { revalidatePath } from "next/cache";
@@ -8,19 +8,18 @@ import { exigerAdministrateur } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 
-const PAGE = "/admin/parametres?onglet=formules";
+const PAGE = "/admin/entreprise#formules";
 const texte = (fd: FormData, k: string, max: number) => String(fd.get(k) ?? "").trim().replace(/\s+/g, " ").slice(0, max);
 
+// Une formule : son type d'adhésion (« profil »), son montant et sa devise ; l'ancien titre (« pays ») n'est plus saisi
 function lireFormule(fd: FormData) {
-  const pays = texte(fd, "pays", 60);
   const profil = texte(fd, "profil", 120);
   const montant = Number(texte(fd, "montant", 12).replace(/[\s ]/g, ""));
   const devise = texte(fd, "devise", 3);
-  if (!pays) redirectWithErreur(PAGE, "Indiquez le titre de la formule.");
-  if (!profil) redirectWithErreur(PAGE, "Indiquez à qui s’adresse la formule.");
+  if (!profil) redirectWithErreur(PAGE, "Indiquez le type d’adhésion.");
   if (!Number.isInteger(montant) || montant < 0 || montant > 100_000_000) redirectWithErreur(PAGE, "Le montant est un nombre entier (sans décimales).");
   if (devise !== "CAD" && devise !== "MGA") redirectWithErreur(PAGE, "Choisissez la devise.");
-  return { pays, profil, montant, devise: devise as "CAD" | "MGA" };
+  return { profil, montant, devise: devise as "CAD" | "MGA" };
 }
 
 async function formuleOuErreur(fd: FormData) {
@@ -41,8 +40,8 @@ export async function ajouterFormuleAdhesion(formData: FormData) {
   await exigerAdministrateur(PAGE);
   const f = lireFormule(formData);
   const derniere = await prisma.formuleAdhesion.aggregate({ _max: { ordre: true } });
-  await prisma.formuleAdhesion.create({ data: { ...f, ordre: (derniere._max.ordre ?? -1) + 1 } });
-  fini(`Formule ${f.pays} ajoutée`);
+  await prisma.formuleAdhesion.create({ data: { ...f, pays: "", ordre: (derniere._max.ordre ?? -1) + 1 } });
+  fini(`Formule ${f.profil} ajoutée`);
 }
 
 export async function enregistrerFormuleAdhesion(formData: FormData) {
@@ -50,7 +49,7 @@ export async function enregistrerFormuleAdhesion(formData: FormData) {
   const actuelle = await formuleOuErreur(formData);
   const f = lireFormule(formData);
   await prisma.formuleAdhesion.update({ where: { id: actuelle.id }, data: f });
-  fini(`Formule ${f.pays} enregistrée`);
+  fini(`Formule ${f.profil} enregistrée`);
 }
 
 // Monter ou descendre une formule dans la liste (l'ordre des cartes à l'inscription).
@@ -80,10 +79,10 @@ export async function retirerFormuleAdhesion(formData: FormData) {
   const f = await formuleOuErreur(formData);
   if (!f._count.membres) {
     await prisma.formuleAdhesion.delete({ where: { id: f.id } });
-    fini(`Formule ${f.pays} supprimée`);
+    fini(`Formule ${f.profil} supprimée`);
   }
   await prisma.formuleAdhesion.update({ where: { id: f.id }, data: { active: false } });
-  fini(`Formule ${f.pays} archivée : ${f._count.membres} membre${f._count.membres > 1 ? "s la gardent" : " la garde"}`);
+  fini(`Formule ${f.profil} archivée : ${f._count.membres} membre${f._count.membres > 1 ? "s la gardent" : " la garde"}`);
 }
 
 // Proposer de nouveau une formule archivée
@@ -92,5 +91,5 @@ export async function remettreFormuleAdhesion(formData: FormData) {
   const f = await formuleOuErreur(formData);
   const derniere = await prisma.formuleAdhesion.aggregate({ where: { active: true }, _max: { ordre: true } });
   await prisma.formuleAdhesion.update({ where: { id: f.id }, data: { active: true, ordre: (derniere._max.ordre ?? -1) + 1 } });
-  fini(`Formule ${f.pays} de nouveau proposée`);
+  fini(`Formule ${f.profil} de nouveau proposée`);
 }

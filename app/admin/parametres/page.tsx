@@ -28,13 +28,11 @@ import { redirectWithFlash } from "@/lib/flash";
 import { urlPublique } from "@/lib/courriel";
 import { stripeConfigure } from "@/lib/stripe";
 import { Pill } from "@/components/ui";
-import { ListeFormules } from "@/components/admin/ListeFormules";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
   { cle: "reseaux", libelle: "Réseaux sociaux" },
   { cle: "mentions", libelle: "Mentions légales" },
-  { cle: "formules", libelle: "Formules d’adhésion" },
   { cle: "paiements", libelle: "Paiements en ligne" },
   { cle: "developpeur", libelle: "Mode développeur" },
 ] as const;
@@ -51,6 +49,8 @@ const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
 // Mentions légales. Les super admins modifient ; les admins consultent.
 export default async function Parametres({ searchParams }: { searchParams: Promise<{ onglet?: string; stripe?: string }> }) {
   const sp = await searchParams;
+  // Les formules d'adhésion sont dans Mon entreprise
+  if (sp.onglet === "formules") redirect("/admin/entreprise#formules");
   // Paiements en ligne : seulement quand la plateforme a son compte Stripe
   const onglets = ONGLETS.filter((o) => o.cle !== "paiements" || stripeConfigure());
   const onglet = onglets.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
@@ -174,22 +174,6 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
         </form>
       ) : null}
 
-      {onglet === "formules" ? (
-        <Panneau titre="Formules d’adhésion" sousTitre="Proposées à l’inscription ; elles fixent le montant des cotisations" teinte="vert">
-          <div className="flex flex-col gap-4">
-            {verrou}
-            <ListeFormules
-              gere={gere}
-              formules={(
-                await prisma.formuleAdhesion.findMany({
-                  orderBy: [{ ordre: "asc" }, { createdAt: "asc" }],
-                  select: { id: true, pays: true, profil: true, montant: true, devise: true, active: true, _count: { select: { membres: true } } },
-                })
-              ).map(({ _count, ...f }) => ({ ...f, membres: _count.membres }))}
-            />
-          </div>
-        </Panneau>
-      ) : null}
 
       {onglet === "developpeur" ? await (async () => {
         const [chambre, visites] = await Promise.all([
