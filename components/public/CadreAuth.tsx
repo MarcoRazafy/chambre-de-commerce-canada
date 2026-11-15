@@ -53,7 +53,7 @@ export function CadreAuth({
       <div className={`min-h-dvh ${panneau ? "lg:grid lg:grid-cols-[minmax(0,52fr)_minmax(0,48fr)]" : ""}`}>
         {panneau ? (
           couverture ? (
-            // La couverture de la Chambre sur tout le panneau, voilée pour lire le texte ; le logo passe à droite
+            // La couverture de la Chambre sur tout le panneau, voilée pour lire le texte ; le logo passe au-dessus du formulaire
             <aside className="sur-couverture hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col overflow-hidden bg-marque-nuit text-white">
               <Image src={couverture} alt="" fill priority sizes="52vw" className="object-cover" />
               <span aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,29,44,0.12)_0%,rgba(15,29,44,0.4)_50%,rgba(15,29,44,0.9)_100%)]" />
@@ -83,7 +83,7 @@ export function CadreAuth({
 
         <div className="flex flex-col min-h-dvh px-5 py-8 sm:px-10 lg:px-14 xl:px-24">
           <div className="mb-10 flex items-center gap-4">
-            <div className={`min-w-0 ${panneau && !couverture ? "lg:hidden" : ""}`}>{logo}</div>
+            {couverture ? null : <div className={`min-w-0 ${panneau ? "lg:hidden" : ""}`}>{logo}</div>}
             <a
               href={site}
               className="ml-auto inline-flex shrink-0 items-center gap-2 min-h-[44px] px-4 rounded-full border border-line bg-white text-[14px] font-medium text-ink no-underline transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit"
@@ -91,7 +91,11 @@ export function CadreAuth({
               <ArrowLeft size={16} strokeWidth={1.75} aria-hidden /> Retour au site
             </a>
           </div>
-          <main className={`apparition flex-1 flex flex-col justify-center w-full mx-auto ${large ? "max-w-[640px]" : "max-w-[480px]"}`}>{children}</main>
+          <main className={`apparition flex-1 flex flex-col justify-center w-full mx-auto ${large ? "max-w-[640px]" : "max-w-[480px]"}`}>
+            {/* Avec la couverture : le logo de la Chambre, plus grand, au milieu au-dessus du formulaire */}
+            {couverture ? <div className="mb-8 flex justify-center [&_img]:h-32 [&_img]:max-w-[340px] [&_img]:object-center">{logo}</div> : null}
+            {children}
+          </main>
           <p className={`m-0 mt-10 text-[12px] text-faint text-center ${panneau ? "lg:hidden" : ""}`}>{mention}</p>
         </div>
       </div>

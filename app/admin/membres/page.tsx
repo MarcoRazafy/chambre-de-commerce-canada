@@ -5,6 +5,9 @@ import { EtatAcces } from "@/components/admin/EtatAcces";
 import { EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { LogoMark } from "@/components/domain";
 import { AddMemberButton } from "@/components/forms/MemberForms";
+import { LiensMembres } from "@/components/admin/LiensMembres";
+import { chambreCourante } from "@/lib/chambre-courante";
+import { liensMembres } from "@/lib/liens-membres";
 import { Card, Saillant, StatusPill } from "@/components/ui";
 import {
   STATUTS_FILTRE,
@@ -35,7 +38,7 @@ export default async function AdminMembres({
   const filtres = lireFiltres(await searchParams);
   const { statut, recherche, formule } = filtres;
 
-  const [membres, formules] = await Promise.all([getMembers(), getFormules()]);
+  const [membres, formules, liens] = await Promise.all([getMembers(), getFormules(), chambreCourante().then(liensMembres)]);
   const retenus = filtrerHorsStatut(membres, filtres);
   const liste = retenus.filter((m) => dansOnglet(m.statut, statut));
   const acces = await getAccesMembres(liste.map((m) => m.id));
@@ -63,6 +66,7 @@ export default async function AdminMembres({
               <Download size={14} /> Exporter
             </a>
             <AddMemberButton formules={formules} />
+            {liens ? <LiensMembres adhesion={liens.adhesion} connexion={liens.connexion} /> : null}
           </>
         }
       />
