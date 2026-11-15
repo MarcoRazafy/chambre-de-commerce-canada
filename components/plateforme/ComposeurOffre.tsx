@@ -28,12 +28,15 @@ export function ComposeurOffre({
   initiales,
   mode,
   equipe = 1,
+  compact = false,
 }: {
   offre: OffreComposable;
   initiales: readonly string[];
   mode: "site" | "champ";
   /** Mode « champ » : les comptes de l'équipe aujourd'hui */
   equipe?: number;
+  /** Mode « champ », page Abonnement : lignes serrées avec un rond, total sur une ligne (carte à la hauteur des autres) */
+  compact?: boolean;
 }) {
   const id = useId();
   const [choisies, setChoisies] = useState<string[]>(() => offre.options.map((x) => x.cle).filter((c) => initiales.includes(c)));
@@ -60,14 +63,16 @@ export function ComposeurOffre({
           {tout ? "Tout décocher" : "Tout cocher"}
         </button>
       </div>
-      <div className={`grid gap-2 ${sombre ? "sm:grid-cols-2" : ""}`}>
+      <div className={`grid ${compact ? "gap-0.5" : "gap-2"} ${sombre ? "sm:grid-cols-2" : ""}`}>
         {offre.options.map((x) => (
           <label
             key={x.cle}
-            className={`group flex items-center gap-3 min-h-[48px] rounded-[10px] border px-4 py-2 cursor-pointer select-none transition-colors has-focus-visible:ring-2 ${
-              sombre
+            className={`group flex items-center cursor-pointer select-none transition-colors has-focus-visible:ring-2 ${
+              compact
+                ? "gap-2.5 min-h-[34px] -mx-2 px-2 rounded-md hover:bg-surface-2 has-focus-visible:ring-marque-vert/30"
+                : `gap-3 min-h-[48px] rounded-[10px] border px-4 py-2 ${sombre
                 ? "border-white/12 bg-white/[0.04] hover:bg-white/[0.08] has-checked:border-white/35 has-checked:bg-white/[0.11] has-focus-visible:ring-white/60"
-                : "border-line bg-white hover:bg-surface-2 has-checked:border-marque-vert has-checked:bg-marque-vert/[0.05] has-focus-visible:ring-marque-vert/30"
+                : "border-line bg-white hover:bg-surface-2 has-checked:border-marque-vert has-checked:bg-marque-vert/[0.05] has-focus-visible:ring-marque-vert/30"}`
             }`}
           >
             <input
@@ -78,15 +83,17 @@ export function ComposeurOffre({
               onChange={() => basculer(x.cle)}
               className="sr-only"
             />
-            {sombre ? (
+            {!compact ? (
               <span
                 aria-hidden
-                className="grid place-items-center size-5 shrink-0 rounded-[6px] border-2 border-white/40 transition-colors group-has-checked:border-marque-vert group-has-checked:bg-marque-vert"
+                className={`grid place-items-center size-5 shrink-0 rounded-[6px] border-2 transition-colors group-has-checked:border-marque-vert group-has-checked:bg-marque-vert ${
+                  sombre ? "border-white/40" : "border-[#c5cdd8] bg-white"
+                }`}
               >
                 <Check size={13} strokeWidth={3.2} className="text-white opacity-0 group-has-checked:opacity-100" />
               </span>
             ) : (
-              // Sur fond clair (Abonnement) : un rond, rempli au centre une fois coché
+              // Abonnement : un rond, rempli au centre une fois coché
               <span
                 aria-hidden
                 className="grid place-items-center size-5 shrink-0 rounded-full border-2 border-[#c5cdd8] bg-white transition-colors group-has-checked:border-marque-vert"
@@ -94,8 +101,8 @@ export function ComposeurOffre({
                 <span className="size-2.5 rounded-full bg-marque-vert scale-0 transition-transform group-has-checked:scale-100" />
               </span>
             )}
-            <span className={`flex-1 min-w-0 text-[14.5px] font-medium ${sombre ? "text-white" : "text-ink"}`}>{x.libelle}</span>
-            <span className={`text-[13.5px] font-semibold tabular-nums whitespace-nowrap ${sombre ? "text-white/70" : "text-muted"}`}>{prixOption(x.prix)}</span>
+            <span className={`flex-1 min-w-0 ${compact ? "text-[13.5px]" : "text-[14.5px] font-medium"} ${sombre ? "text-white" : "text-ink"}`}>{x.libelle}</span>
+            <span className={`${compact ? "text-[12.5px] font-medium" : "text-[13.5px] font-semibold"} tabular-nums whitespace-nowrap ${sombre ? "text-white/70" : "text-muted"}`}>{prixOption(x.prix)}</span>
           </label>
         ))}
       </div>
@@ -125,6 +132,28 @@ export function ComposeurOffre({
       </div>
     </div>
   );
+
+  if (mode === "champ" && compact) {
+    const detail = [
+      `${fmtDollars(offre.base)} de base`,
+      `${fmtDollars(c.fonctions)} pour ${choisies.length} fonction${choisies.length > 1 ? "s" : ""}`,
+      offre.parUtilisateur > 0 && c.enPlus ? `${fmtDollars(c.equipe)} pour ${c.enPlus} compte${c.enPlus > 1 ? "s" : ""} en plus` : null,
+    ].filter(Boolean);
+    return (
+      <div className="flex flex-col gap-3">
+        {options}
+        <div className="pt-3 border-t border-line">
+          <p className="m-0 flex items-baseline justify-between gap-3">
+            <span className="text-[14px] font-semibold text-ink">Total</span>
+            <span aria-live="polite" className="text-[22px] leading-none font-semibold tabular-nums text-ink">
+              {fmtDollars(c.total)} <span className="text-[12.5px] font-normal text-muted">/ mois, avant taxes</span>
+            </span>
+          </p>
+          <p className="m-0 mt-1.5 text-[12px] text-muted tabular-nums">{detail.join(" · ")}</p>
+        </div>
+      </div>
+    );
+  }
 
   if (mode === "champ") {
     return (

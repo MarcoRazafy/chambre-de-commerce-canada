@@ -172,6 +172,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
                       <input type="hidden" name="offreId" value={o.id} />
                       <ComposeurOffre
                         mode="champ"
+                        compact
                         offre={{ id: o.id, nom: o.nom, base: o.base, parUtilisateur: o.parUtilisateur, offerts: o.offerts, options: o.options }}
                         initiales={actuelle && offre?.surMesure ? offre.choisies : (offre?.fonctions ?? [])}
                         equipe={n}
