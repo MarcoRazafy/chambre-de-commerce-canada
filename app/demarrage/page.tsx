@@ -1,3 +1,4 @@
+import Image from "next/image";
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Check, Globe, LogOut, MapPin, Phone } from "lucide-react";
@@ -39,7 +40,7 @@ function EnTete() {
     <header className="border-b border-line bg-white">
       <div className="max-w-[1200px] mx-auto px-5 sm:px-8 h-16 flex items-center justify-between gap-4">
         <span className="inline-flex items-center gap-2.5 text-ink">
-          <span aria-hidden className="block w-2 h-7 rounded-full" style={{ background: "linear-gradient(180deg, #ad0707, #007140)" }} />
+          <Image src="/marque/alliee-sigle.png" alt="" width={529} height={374} priority className="h-7 w-auto" />
           <span className="text-[18px] font-extrabold tracking-[-0.02em] whitespace-nowrap">L’Alliée Virtuelle</span>
         </span>
         <form action={deconnexion}>
