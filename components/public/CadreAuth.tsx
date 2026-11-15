@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { ArrowLeft } from "lucide-react";
 import { LienSite } from "@/components/Application";
 import { Illustration, type NomIllustration } from "@/components/plateforme/site/Illustration";
@@ -17,6 +18,7 @@ export function CadreAuth({
   pied,
   classe = "",
   illustration,
+  couverture,
   accroche,
   sous,
   children,
@@ -30,6 +32,8 @@ export function CadreAuth({
   pied?: React.ReactNode;
   classe?: string;
   illustration?: NomIllustration;
+  /** La couverture de la Chambre (Mon entreprise) : à la place de l'illustration */
+  couverture?: string | null;
   children: React.ReactNode;
 }) {
   const panneau = Boolean(illustration || accroche);
@@ -50,7 +54,13 @@ export function CadreAuth({
           <aside className="hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col bg-surface-2 overflow-hidden">
             <div className="px-10 xl:px-14 pt-9">{logo}</div>
             <div className="flex-1 flex flex-col items-center justify-center gap-8 px-12 xl:px-24 py-6">
-              {illustration ? <Illustration nom={illustration} priorite contenir className="w-full max-w-[540px]" /> : null}
+              {couverture ? (
+                <span className="relative block w-full max-w-[560px] aspect-[4/3] max-h-[48vh] rounded-2xl overflow-hidden shadow-[0_24px_60px_-28px_rgba(15,29,44,0.45)]">
+                  <Image src={couverture} alt="" fill priority sizes="560px" className="object-cover" />
+                </span>
+              ) : illustration ? (
+                <Illustration nom={illustration} priorite contenir className="w-full max-w-[540px]" />
+              ) : null}
               {accroche ? <h2 className="m-0 max-w-[520px] text-center text-[clamp(26px,2.6vw,36px)] leading-[1.15] text-ink">{accroche}</h2> : null}
               {sous ? <p className="m-0 max-w-[460px] text-center text-[16px] leading-[26px] text-muted">{sous}</p> : null}
             </div>

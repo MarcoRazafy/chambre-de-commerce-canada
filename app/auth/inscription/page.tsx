@@ -16,6 +16,8 @@ import { deposerCandidature } from "@/lib/actions/accueil";
 import { utilisateurConnecte } from "@/lib/session";
 import { getFormules } from "@/lib/formules";
 import { getProfilChambre } from "@/lib/profil-chambre";
+import Image from "next/image";
+import { BasculeAuth } from "@/components/public/BasculeAuth";
 
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();
@@ -27,6 +29,8 @@ export default async function InscriptionPage() {
     <CadreAuth
       large
       illustration="adhesion"
+      couverture={profil.couverture}
+      marque={<Image src={profil.logo} alt={profil.nom} width={400} height={160} priority sizes="200px" className="h-14 w-auto max-w-[220px] object-contain object-left" />}
       pied={
         // Les coordonnées de la Chambre choisie (Mon entreprise)
         <span className="flex flex-col gap-0.5">
@@ -44,6 +48,7 @@ export default async function InscriptionPage() {
       }
       sous="Déposez votre demande en quelques minutes : l’équipe de la Chambre l’examine, puis vous complétez votre fiche à votre rythme."
     >
+      <BasculeAuth actif="inscription" connexion="/auth" inscription="/auth/inscription" />
       <span className="surtitre text-marque-vert">Demande d’adhésion</span>
       <h1 className="titre text-[clamp(26px,3.4vw,34px)] m-0 mt-2.5 mb-2">
         Rejoindre {profil.nom}

@@ -11,6 +11,7 @@ import {
 } from "@/components/public/CadreAuth";
 import { BoutonEnvoi, EcranPassage } from "@/components/public/BoutonMarque";
 import { ConnexionGoogle } from "@/components/public/ConnexionGoogle";
+import { BasculeAuth } from "@/components/public/BasculeAuth";
 import { Saillant } from "@/components/ui";
 import { PIED_PLATEFORME } from "@/components/plateforme/site/MarqueSite";
 import { connexion } from "@/lib/actions/auth";
@@ -59,6 +60,9 @@ export default async function ConnexionPage({
       }
       sous={ici.partage ? undefined : "Retrouvez l’annuaire des membres, les rendez-vous de la chambre et vos échanges."}
     >
+      {equipe ? null : (
+        <BasculeAuth actif="connexion" connexion="/auth" inscription={ici.partage ? `${site}/devenir-membre` : "/auth/inscription"} />
+      )}
       <span className="surtitre text-marque-rouge">{equipe ? "Espace équipe" : "Espace membre"}</span>
       <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mt-2.5 mb-2">
         Connexion
