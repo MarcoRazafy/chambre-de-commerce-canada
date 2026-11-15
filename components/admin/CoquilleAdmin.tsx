@@ -64,7 +64,7 @@ export function CoquilleAdmin({
             className="no-underline block"
             aria-label="Tableau de bord"
           >
-            <LogoEspace logo={marque.logo} nom={marque.nom} />
+            <LogoEspace logo={marque.logo} nom={marque.nom} centre />
           </Link>
           <div className="mt-5 flex items-center gap-2.5">
             <span className="surtitre text-white/70">Back-office</span>

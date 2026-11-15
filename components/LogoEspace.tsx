@@ -2,7 +2,8 @@ import Image from "next/image";
 
 // Logo en tête de la barre latérale d'un espace (back-office, espace membre) : celui de la Chambre (Mon entreprise),
 // posé tel quel sur la barre ; sans logo, le logo IMPACT 261 en blanc
-export function LogoEspace({ logo, nom }: { logo: string | null; nom: string }) {
+// centre : plus grand et au milieu de la barre (back-office)
+export function LogoEspace({ logo, nom, centre = false }: { logo: string | null; nom: string; centre?: boolean }) {
   if (!logo) {
     return (
       <Image
@@ -16,5 +17,5 @@ export function LogoEspace({ logo, nom }: { logo: string | null; nom: string }) 
       />
     );
   }
-  return <Image src={logo} alt={nom} width={400} height={160} priority sizes="200px" className="block h-14 w-auto max-w-[200px] object-contain object-left" />;
+  return <Image src={logo} alt={nom} width={400} height={160} priority sizes="200px" className={centre ? "block mx-auto h-28 w-auto max-w-full object-contain object-center" : "block h-14 w-auto max-w-[200px] object-contain object-left"} />;
 }
