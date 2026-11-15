@@ -124,19 +124,6 @@ export function CoquilleAdmin({
         </nav>
 
         <Link
-          href="/admin/parametres"
-          onClick={() => setMenuOuvert(false)}
-          className={`entree-menu mx-3.5 mt-2 flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-[14px] no-underline transition-colors ${
-            pathname.startsWith("/admin/parametres")
-              ? "entree-menu-actif bg-accent text-white font-semibold"
-              : "text-white/70 hover:bg-white/[0.08] hover:text-white"
-          }`}
-        >
-          <Settings size={18} className="shrink-0 opacity-90" />
-          <span className="flex-1">Paramètres</span>
-        </Link>
-
-        <Link
           href="/admin/profil"
           onClick={() => setMenuOuvert(false)}
           title="Mon profil"
