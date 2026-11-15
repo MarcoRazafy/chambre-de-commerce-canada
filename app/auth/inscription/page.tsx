@@ -15,21 +15,27 @@ import { INDICATIFS, PAYS } from "@/lib/accueil";
 import { deposerCandidature } from "@/lib/actions/accueil";
 import { utilisateurConnecte } from "@/lib/session";
 import { getFormules } from "@/lib/formules";
-import { PIED_PLATEFORME } from "@/components/plateforme/site/MarqueSite";
-import { hoteActuel } from "@/lib/chambre-courante";
 import { getProfilChambre } from "@/lib/profil-chambre";
 
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();
   if (connecte) redirect(connecte.role === "admin" ? "/admin" : "/membre");
   // La Chambre : celle de l'adresse, ou (sur client.) celle choisie sur le site
-  const [formules, profil, ici] = await Promise.all([getFormules(), getProfilChambre(), hoteActuel()]);
+  const [formules, profil] = await Promise.all([getFormules(), getProfilChambre()]);
 
   return (
     <CadreAuth
       large
       illustration="adhesion"
-      pied={ici.partage ? PIED_PLATEFORME : undefined}
+      pied={
+        // Les coordonnées de la Chambre choisie (Mon entreprise)
+        <span className="flex flex-col gap-0.5">
+          <b className="text-[13px] font-semibold text-muted">{profil.nom}</b>
+          {[profil.adresse, profil.telephone, profil.email].filter(Boolean).map((x) => (
+            <span key={x} className="break-words">{x}</span>
+          ))}
+        </span>
+      }
       accroche={
         <>
           Votre prochain <Saillant>partenariat</Saillant> commence{" "}
