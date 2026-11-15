@@ -16,7 +16,9 @@ import { Saillant } from "@/components/ui";
 import { PIED_PLATEFORME } from "@/components/plateforme/site/MarqueSite";
 import { connexion } from "@/lib/actions/auth";
 import { adresseSitePlateforme } from "@/lib/adresse-chambre";
-import { hoteActuel } from "@/lib/chambre-courante";
+import { chambreCouranteOuRien, hoteActuel } from "@/lib/chambre-courante";
+import { getProfilChambre } from "@/lib/profil-chambre";
+import { CoordonneesChambre, LogoChambreAuth } from "@/components/public/CoordonneesChambre";
 import { lienGoogle } from "@/lib/google";
 import { utilisateurConnecte } from "@/lib/session";
 
@@ -44,11 +46,16 @@ export default async function ConnexionPage({
   const google = lienGoogle({ depuis: ici.partage ?? ici.chambreId, suite });
   const site = adresseSitePlateforme() ?? "";
   const equipe = ici.partage === "equipe";
+  // Espace membre d'une Chambre connue (son adresse, ou choisie avec ?chambre=…) : son logo, sa couverture, ses coordonnées
+  const profil = !equipe && (ici.chambreId || (await chambreCouranteOuRien())) ? await getProfilChambre() : null;
+  const adhesion = profil ? "/auth/inscription" : ici.partage ? `${site}/devenir-membre` : "/auth/inscription";
 
   return (
     <CadreAuth
       illustration="acces"
-      pied={ici.partage ? PIED_PLATEFORME : undefined}
+      couverture={profil?.couverture}
+      marque={profil ? <LogoChambreAuth profil={profil} /> : undefined}
+      pied={profil ? <CoordonneesChambre profil={profil} /> : ici.partage ? PIED_PLATEFORME : undefined}
       accroche={
         ici.partage ? undefined : (
           <>
@@ -61,7 +68,7 @@ export default async function ConnexionPage({
       sous={ici.partage ? undefined : "Retrouvez l’annuaire des membres, les rendez-vous de la chambre et vos échanges."}
     >
       {equipe ? null : (
-        <BasculeAuth actif="connexion" connexion="/auth" inscription={ici.partage ? `${site}/devenir-membre` : "/auth/inscription"} />
+        <BasculeAuth actif="connexion" connexion="/auth" inscription={adhesion} />
       )}
       <span className="surtitre text-marque-rouge">{equipe ? "Espace équipe" : "Espace membre"}</span>
       <h1 className="titre text-[clamp(25px,3vw,32px)] m-0 mt-2.5 mb-2">
@@ -152,7 +159,7 @@ export default async function ConnexionPage({
       <p className="text-[13.5px] text-muted mt-6 mb-0 pt-5 border-t border-line">
         {equipe ? "Pas encore de Chambre ?" : "Pas encore membre ?"}{" "}
         <Link
-          href={equipe ? `${site}/creer-une-chambre` : ici.partage ? `${site}/devenir-membre` : "/auth/inscription"}
+          href={equipe ? `${site}/creer-une-chambre` : adhesion}
           className="text-marque-vert font-semibold no-underline hover:underline inline-flex items-center gap-1"
         >
           {equipe ? "Créer ma Chambre" : "Demander une adhésion"} <ArrowRight size={14} />

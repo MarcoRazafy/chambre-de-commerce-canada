@@ -123,28 +123,36 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
   };
   const versSite = (chemin: string) => NextResponse.redirect(`${adresseSitePlateforme() ?? request.nextUrl.origin}${chemin}`);
 
-  // Demande d'adhésion : sur client., pour la Chambre choisie (?chambre=…), retenue dans un cookie signé limité à cette page
+  // Pages de connexion et d'adhésion sur client. : la Chambre choisie (?chambre=…) est retenue dans un cookie signé
+  // limité à /auth (son logo, sa couverture et ses coordonnées ; la demande d'adhésion lui revient)
+  const slug = pathname.startsWith("/auth") && espace === "client" ? (request.nextUrl.searchParams.get("chambre")?.trim().toLowerCase() ?? "") : "";
+  let choisie: string | null = null;
+  if (slug) {
+    choisie = /^[a-z0-9-]{1,63}$/.test(slug) ? await chambreDuSlug(slug) : null;
+    if (!choisie && pathname === "/auth/inscription") return versSite("/devenir-membre");
+  }
+  const avecChoix = () => {
+    if (!choisie) return NextResponse.next();
+    const valeur = scellerChambreChoisie(choisie);
+    request.cookies.set(NOM_COOKIE_CHAMBRE_CHOISIE, valeur);
+    const reponse = NextResponse.next({ request: { headers: new Headers(request.headers) } });
+    reponse.cookies.set(NOM_COOKIE_CHAMBRE_CHOISIE, valeur, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/auth",
+      maxAge: 2 * 60 * 60,
+    });
+    return reponse;
+  };
+
+  // Demande d'adhésion : sur client., pour une Chambre choisie
   if (pathname === "/auth/inscription") {
     if (espace !== "client") return versEspace("client");
-    const slug = request.nextUrl.searchParams.get("chambre")?.trim().toLowerCase() ?? "";
-    if (slug) {
-      const id = /^[a-z0-9-]{1,63}$/.test(slug) ? await chambreDuSlug(slug) : null;
-      if (!id) return versSite("/devenir-membre");
-      const valeur = scellerChambreChoisie(id);
-      request.cookies.set(NOM_COOKIE_CHAMBRE_CHOISIE, valeur);
-      const reponse = NextResponse.next({ request: { headers: new Headers(request.headers) } });
-      reponse.cookies.set(NOM_COOKIE_CHAMBRE_CHOISIE, valeur, {
-        httpOnly: true,
-        sameSite: "lax",
-        secure: process.env.NODE_ENV === "production",
-        path: "/auth/inscription",
-        maxAge: 2 * 60 * 60,
-      });
-      return reponse;
-    }
-    if (!lireChambreChoisie(request.cookies.get(NOM_COOKIE_CHAMBRE_CHOISIE)?.value)) return versSite("/devenir-membre");
-    return NextResponse.next();
+    if (!choisie && !lireChambreChoisie(request.cookies.get(NOM_COOKIE_CHAMBRE_CHOISIE)?.value)) return versSite("/devenir-membre");
+    return avecChoix();
   }
+  if (choisie) return avecChoix();
 
   if (!PROTEGE.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
 

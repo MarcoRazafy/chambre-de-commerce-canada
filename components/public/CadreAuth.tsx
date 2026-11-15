@@ -11,6 +11,7 @@ import { adresseSitePlateforme } from "@/lib/adresse-chambre";
 // formulaire, « Retour au site » mène au site de la plateforme.
 // marque, pied : à la place du logo IMPACT 261 et de la mention de la plateforme ;
 // classe : sur le cadre (« espace-admin », « site-plateforme » : leurs couleurs et leurs titres).
+// couverture : la photo de la Chambre sur tout le panneau de gauche (le logo passe alors au-dessus du formulaire) ;
 // photo, alt : gardés pour les pages qui les passent encore ; ils ne s'affichent plus.
 export function CadreAuth({
   large = false,
@@ -51,28 +52,38 @@ export function CadreAuth({
       <span aria-hidden className="fixed inset-x-0 top-0 z-10 h-[3px]" style={{ background: "var(--marque-degrade)" }} />
       <div className={`min-h-dvh ${panneau ? "lg:grid lg:grid-cols-[minmax(0,52fr)_minmax(0,48fr)]" : ""}`}>
         {panneau ? (
-          <aside className="hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col bg-surface-2 overflow-hidden">
-            <div className="px-10 xl:px-14 pt-9">{logo}</div>
-            <div className="flex-1 flex flex-col items-center justify-center gap-8 px-12 xl:px-24 py-6">
-              {couverture ? (
-                <span className="relative block w-full max-w-[560px] aspect-[4/3] max-h-[48vh] rounded-2xl overflow-hidden shadow-[0_24px_60px_-28px_rgba(15,29,44,0.45)]">
-                  <Image src={couverture} alt="" fill priority sizes="560px" className="object-cover" />
-                </span>
-              ) : illustration ? (
-                <Illustration nom={illustration} priorite contenir className="w-full max-w-[540px]" />
-              ) : null}
-              {accroche ? <h2 className="m-0 max-w-[520px] text-center text-[clamp(26px,2.6vw,36px)] leading-[1.15] text-ink">{accroche}</h2> : null}
-              {sous ? <p className="m-0 max-w-[460px] text-center text-[16px] leading-[26px] text-muted">{sous}</p> : null}
-            </div>
-            <p className="m-0 px-10 xl:px-14 pb-8 pr-24 text-[12.5px] text-faint">{mention}</p>
-            {/* Le bord en biais, du haut à droite vers le bas */}
-            <span aria-hidden className="absolute inset-y-0 right-0 w-14 bg-white" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
-          </aside>
+          couverture ? (
+            // La couverture de la Chambre sur tout le panneau, voilée pour lire le texte ; le logo passe à droite
+            <aside className="sur-couverture hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col overflow-hidden bg-marque-nuit text-white">
+              <Image src={couverture} alt="" fill priority sizes="52vw" className="object-cover" />
+              <span aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,29,44,0.12)_0%,rgba(15,29,44,0.4)_50%,rgba(15,29,44,0.9)_100%)]" />
+              <div className="relative z-10 mt-auto flex flex-col gap-5 px-10 xl:px-14 pb-10 pr-24">
+                {accroche ? <h2 className="m-0 max-w-[560px] text-[clamp(28px,2.8vw,40px)] leading-[1.12] text-white">{accroche}</h2> : null}
+                {sous ? <p className="m-0 max-w-[480px] text-[16px] leading-[26px] text-white/80">{sous}</p> : null}
+                <div className="mt-3 pt-5 border-t border-white/20 text-[13px] leading-[20px] text-white/75">{mention}</div>
+              </div>
+              <span aria-hidden className="absolute inset-y-0 right-0 z-10 w-14 bg-white" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+            </aside>
+          ) : (
+            <aside className="hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col bg-surface-2 overflow-hidden">
+              <div className="px-10 xl:px-14 pt-9">{logo}</div>
+              <div className="flex-1 flex flex-col items-center justify-center gap-8 px-12 xl:px-24 py-6">
+                {illustration ? (
+                  <Illustration nom={illustration} priorite contenir className="w-full max-w-[540px]" />
+                ) : null}
+                {accroche ? <h2 className="m-0 max-w-[520px] text-center text-[clamp(26px,2.6vw,36px)] leading-[1.15] text-ink">{accroche}</h2> : null}
+                {sous ? <p className="m-0 max-w-[460px] text-center text-[16px] leading-[26px] text-muted">{sous}</p> : null}
+              </div>
+              <p className="m-0 px-10 xl:px-14 pb-8 pr-24 text-[12.5px] text-faint">{mention}</p>
+              {/* Le bord en biais, du haut à droite vers le bas */}
+              <span aria-hidden className="absolute inset-y-0 right-0 w-14 bg-white" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+            </aside>
+          )
         ) : null}
 
         <div className="flex flex-col min-h-dvh px-5 py-8 sm:px-10 lg:px-14 xl:px-24">
           <div className="mb-10 flex items-center gap-4">
-            <div className={`min-w-0 ${panneau ? "lg:hidden" : ""}`}>{logo}</div>
+            <div className={`min-w-0 ${panneau && !couverture ? "lg:hidden" : ""}`}>{logo}</div>
             <a
               href={site}
               className="ml-auto inline-flex shrink-0 items-center gap-2 min-h-[44px] px-4 rounded-full border border-line bg-white text-[14px] font-medium text-ink no-underline transition-colors hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit"

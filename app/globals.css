@@ -1716,3 +1716,13 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
 .cadre-auth {
   background: #fff;
 }
+/* Sur la couverture de la Chambre (panneau gauche des pages de connexion) : mots en relief et nom éclaircis */
+.cadre-auth .sur-couverture .saillant {
+  color: #ff8a8a;
+}
+.cadre-auth .sur-couverture .saillant-vert {
+  color: #5fd39b;
+}
+.cadre-auth .sur-couverture b {
+  color: #fff;
+}
