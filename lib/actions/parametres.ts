@@ -17,6 +17,7 @@ import {
   verifierDomaine,
 } from "@/lib/brevo-domaines";
 import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur, urlPublique } from "@/lib/courriel";
+import { avecPreuve, domaineDeLaPlateforme, domaineDUneAutreChambre, oublierPreuve } from "@/lib/domaine-proprietaire";
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -73,14 +74,18 @@ export async function ajouterDomaineExpediteur(formData: FormData) {
   if (!domaine) redirectWithErreur(PAGE, "Indiquez votre nom de domaine.");
   if (!domaineValide(domaine)) redirectWithErreur(PAGE, `« ${domaine} » n’est pas un nom de domaine valide.`);
   if (estWebmail(domaine)) redirectWithErreur(PAGE, `${domaine} est une messagerie gratuite : indiquez le domaine de votre entreprise.`);
-  if (domaine === domaineDe(adresseServeur())) redirectWithErreur(PAGE, `${domaine} est déjà le domaine actif.`);
-  await prisma.profilChambre.update({ where: { chambreId: await chambreCourante() }, data: { expediteurDomaine: domaine, expediteurEmail: "" } });
+  // Le compte Brevo est commun à toutes les Chambres : ni le domaine de la plateforme, ni celui d'une autre Chambre
+  if (domaineDeLaPlateforme(domaine, domaineDe(adresseServeur()))) redirectWithErreur(PAGE, `${domaine} est le domaine de la plateforme : indiquez celui de votre entreprise.`);
+  const chambreId = await chambreCourante();
+  if (await domaineDUneAutreChambre(chambreId, domaine)) redirectWithErreur(PAGE, `${domaine} est déjà utilisé par une autre Chambre.`);
+  await prisma.profilChambre.update({ where: { chambreId }, data: { expediteurDomaine: domaine, expediteurEmail: "" } });
   oublierDomaine(domaine);
+  oublierPreuve(domaine);
   oublierExpediteur();
   revalidatePath(PAGE);
-  const etat = await declarerDomaine(domaine);
+  const etat = await avecPreuve(chambreId, await declarerDomaine(domaine));
   if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Domaine ajouté, mais Brevo n’a pas pu être joint : ${etat.raison}.`);
-  redirectWithFlash(PAGE, etat.etat === "valide" ? "Domaine ajouté et déjà validé" : "Domaine ajouté");
+  redirectWithFlash(PAGE, etat.etat === "valide" ? "Domaine ajouté et déjà validé" : "Domaine ajouté : ajoutez les enregistrements DNS ci-dessous");
 }
 
 // « Retirer » : on revient au domaine de la plateforme
@@ -100,7 +105,7 @@ export async function retirerDomaineExpediteur(formData: FormData) {
 export async function validerDomaineExpediteur(formData: FormData) {
   const { domaine } = await sauverExpediteur(formData);
   if (!domaine) redirectWithErreur(PAGE, "Ajoutez d’abord votre nom de domaine.");
-  const etat = await declarerDomaine(domaine);
+  const etat = await avecPreuve(await chambreCourante(), await declarerDomaine(domaine));
   if (etat.etat === "indisponible") redirectWithErreur(PAGE, `Brevo n’a pas pu être joint : ${etat.raison}.`);
   redirectWithFlash(PAGE, etat.etat === "valide" ? "Ce domaine est déjà validé" : "Domaine déclaré");
 }
@@ -109,7 +114,8 @@ export async function validerDomaineExpediteur(formData: FormData) {
 export async function verifierDomaineExpediteur(formData: FormData) {
   const { domaine, email, nom } = await sauverExpediteur(formData);
   if (!domaine) redirectWithErreur(PAGE, "Ajoutez d’abord votre nom de domaine.");
-  const etat = await verifierDomaine(domaine);
+  oublierPreuve(domaine);
+  const etat = await avecPreuve(await chambreCourante(), await verifierDomaine(domaine));
   oublierExpediteur();
   if (etat.etat === "valide") {
     if (email) await assurerExpediteur(email, nom);

@@ -9,6 +9,7 @@ import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import type { EspacePartage } from "@/lib/hote-chambre";
+import { domaineDeLaPlateforme, preuvePresente } from "@/lib/domaine-proprietaire";
 
 export interface Courriel {
   a: string;
@@ -79,12 +80,15 @@ async function expediteur(c?: Courriel): Promise<Expediteur> {
   }
   const nom = p?.expediteurNom.trim() || p?.nom.trim() || SERVEUR.name;
   const adresse = p?.expediteurEmail.trim() ?? "";
-  // L'adresse de l'entreprise ne sert d'expéditeur que si elle est sur son domaine et que ce domaine est validé
-  // chez Brevo ; sinon (domaine non validé, Brevo injoignable) : l'adresse du serveur, avec le nom de l'entreprise
+  // L'adresse de l'entreprise ne sert d'expéditeur que si elle est sur son domaine, que ce domaine est validé chez
+  // Brevo et que cette Chambre a prouvé en avoir la main (le compte Brevo est commun à toutes) ; sinon (domaine non
+  // validé, preuve absente, Brevo injoignable) : l'adresse du serveur, avec le nom de l'entreprise
   const autorisee =
     valide(adresse) &&
     domaineDe(adresse) === p?.expediteurDomaine.trim() &&
     !estWebmail(domaineDe(adresse)) &&
+    !domaineDeLaPlateforme(domaineDe(adresse), SERVEUR.address.split("@")[1] ?? "") &&
+    (await preuvePresente(chambreId, domaineDe(adresse))) &&
     (fournisseurCourriel() === "smtp" ? await adresseValidee(adresse) : true);
   const de = { name: nom, address: autorisee ? adresse : SERVEUR.address };
   const valeur = {

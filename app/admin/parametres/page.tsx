@@ -13,7 +13,8 @@ import {
   envoyerTestExpediteur,
 } from "@/lib/actions/parametres";
 import { estAdministrateur } from "@/lib/autorisations";
-import { domaineDe, etatDomaine } from "@/lib/brevo-domaines";
+import { domaineDe } from "@/lib/brevo-domaines";
+import { etatDomaineChambre } from "@/lib/domaine-proprietaire";
 import { adresseServeur } from "@/lib/courriel";
 import type { Reseau } from "@/lib/lettre-blocs";
 import { getParametres } from "@/lib/parametres";
@@ -74,7 +75,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
   // Expéditeur : le domaine de l'entreprise, puis l'adresse sur ce domaine. Le domaine actif reste celui de la
   // plateforme tant que le domaine n'est pas validé ou qu'aucune adresse n'y est indiquée
   const domaine = brut?.expediteurDomaine ?? "";
-  const etat = onglet === "courriels" && domaine ? await etatDomaine(domaine) : null;
+  const etat = onglet === "courriels" && domaine ? await etatDomaineChambre(await chambreCourante(), domaine) : null;
   const adresse = brut?.expediteurEmail ?? "";
   const locale = domaine && adresse.endsWith(`@${domaine}`) ? adresse.slice(0, -domaine.length - 1) : "";
   const actif = etat?.etat === "valide" && locale ? domaine : domaineDe(adresseServeur());
