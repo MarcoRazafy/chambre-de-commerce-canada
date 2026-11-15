@@ -28,6 +28,8 @@ export default async function MonEntreprise() {
   const gere = estAdministrateur(moi);
   const p = completerProfil(brut);
   const v = (k: keyof NonNullable<typeof brut>) => (brut?.[k] as string | null | undefined) ?? "";
+  // Sans aucune partie remplie, l'ancienne adresse d'un seul tenant se retrouve dans « Rue » (à répartir)
+  const rue = v("adresseRue") || (v("codePostal") || v("ville") || v("pays") ? "" : v("adresse"));
 
   return (
     <>
@@ -70,20 +72,24 @@ export default async function MonEntreprise() {
             <Field label="Présentation">
               <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait l’entreprise, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
             </Field>
-            <Field label="Adresse rue">
-              <input name="adresseRue" maxLength={300} defaultValue={v("adresseRue")} placeholder="Numéro et nom de la rue" autoComplete="street-address" className={INPUT} />
-            </Field>
-            <div className="grid gap-4 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)]">
-              <Field label="Code postal">
-                <input name="codePostal" maxLength={20} defaultValue={v("codePostal")} autoComplete="postal-code" className={INPUT} />
+            {/* Une seule adresse, en quatre parties */}
+            <fieldset className="m-0 p-0 border-0 min-w-0 flex flex-col gap-3">
+              <legend className="mb-2 p-0 text-[13px] font-semibold text-ink">Adresse</legend>
+              <Field label="Rue">
+                <input name="adresseRue" maxLength={300} defaultValue={rue} placeholder="Numéro et nom de la rue" autoComplete="street-address" className={INPUT} />
               </Field>
-              <Field label="Ville">
-                <input name="ville" maxLength={120} defaultValue={v("ville")} autoComplete="address-level2" className={INPUT} />
-              </Field>
-              <Field label="Pays">
-                <input name="pays" maxLength={120} defaultValue={v("pays")} autoComplete="country-name" className={INPUT} />
-              </Field>
-            </div>
+              <div className="grid gap-4 sm:grid-cols-[140px_minmax(0,1fr)_minmax(0,1fr)]">
+                <Field label="Code postal">
+                  <input name="codePostal" maxLength={20} defaultValue={v("codePostal")} autoComplete="postal-code" className={INPUT} />
+                </Field>
+                <Field label="Ville">
+                  <input name="ville" maxLength={120} defaultValue={v("ville")} autoComplete="address-level2" className={INPUT} />
+                </Field>
+                <Field label="Pays">
+                  <input name="pays" maxLength={120} defaultValue={v("pays")} autoComplete="country-name" className={INPUT} />
+                </Field>
+              </div>
+            </fieldset>
             <div className="grid gap-4 sm:grid-cols-2">
               <Field label="Courriel">
                 <input name="email" type="email" maxLength={200} defaultValue={v("email")} placeholder="contact@entreprise.com" className={INPUT} />
