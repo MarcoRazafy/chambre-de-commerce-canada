@@ -6,7 +6,7 @@ import { useState } from "react";
 import { RotateCcw, TriangleAlert } from "lucide-react";
 import { nuance, tropClaire } from "@/lib/couleurs";
 
-type Champ = "couleurPrincipale" | "couleurLaterale" | "couleurLaterale2" | "couleurHaut" | "couleurConnexion";
+type Champ = "couleurPrincipale" | "couleurLaterale" | "couleurLaterale2" | "couleurHaut" | "couleurConnexion" | "couleurFondConnexion" | "couleurTexteConnexion";
 export type ValeursCouleurs = Record<Champ, string>;
 
 // Ce que montre l'aperçu quand rien n'est réglé (les couleurs de la plateforme)
@@ -16,6 +16,8 @@ const DEFAUTS: Record<Champ, string> = {
   couleurLaterale2: "#007140",
   couleurHaut: "#0f1d2c",
   couleurConnexion: "#f1f4f7",
+  couleurFondConnexion: "#ffffff",
+  couleurTexteConnexion: "#16202b",
 };
 const LATERALE_DEFAUT = "linear-gradient(180deg,#a3122a 0%,#5c1220 32%,#2a1f26 50%,#123f2d 70%,#007140 100%)";
 
@@ -52,6 +54,10 @@ export function ReglageCouleurs({ initiales }: { initiales: ValeursCouleurs }) {
   const haut = v.couleurHaut || DEFAUTS.couleurHaut;
   const connexion = v.couleurConnexion || DEFAUTS.couleurConnexion;
   const texteConnexion = tropClaire(connexion) ? "#16202b" : "#ffffff";
+  const fond = v.couleurFondConnexion || DEFAUTS.couleurFondConnexion;
+  // Comme sur la page : le texte choisi, sinon blanc sur un fond foncé
+  const texte = v.couleurTexteConnexion || (tropClaire(fond) ? DEFAUTS.couleurTexteConnexion : "#ffffff");
+  const lisibilite = tropClaire(fond) === tropClaire(texte) ? "Le texte et le fond se ressemblent : le texte sera peu lisible." : null;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-start">
@@ -68,7 +74,12 @@ export function ReglageCouleurs({ initiales }: { initiales: ValeursCouleurs }) {
           <Couleur libelle="Barre latérale, en bas" nom="couleurLaterale2" valeur={v.couleurLaterale2} onChange={maj("couleurLaterale2")} alerte={clair(v.couleurLaterale2)} />
         ) : <input type="hidden" name="couleurLaterale2" value="" />}
         <Couleur libelle="Barre du haut" nom="couleurHaut" valeur={v.couleurHaut} onChange={maj("couleurHaut")} alerte={clair(v.couleurHaut)} />
-        <Couleur libelle="Page de connexion (sans couverture)" nom="couleurConnexion" valeur={v.couleurConnexion} onChange={maj("couleurConnexion")} />
+        <div className="pt-4 border-t border-line flex flex-col gap-5">
+          <span className="text-[13px] font-semibold text-ink">Page de connexion et d’adhésion</span>
+          <Couleur libelle="Fond du formulaire" nom="couleurFondConnexion" valeur={v.couleurFondConnexion} onChange={maj("couleurFondConnexion")} />
+          <Couleur libelle="Texte" nom="couleurTexteConnexion" valeur={v.couleurTexteConnexion} onChange={maj("couleurTexteConnexion")} alerte={lisibilite} />
+          <Couleur libelle="Panneau de gauche (sans couverture)" nom="couleurConnexion" valeur={v.couleurConnexion} onChange={maj("couleurConnexion")} />
+        </div>
       </div>
 
       {/* Aperçu */}
@@ -92,10 +103,13 @@ export function ReglageCouleurs({ initiales }: { initiales: ValeursCouleurs }) {
             </div>
           </div>
         </div>
-        <div className="rounded-[var(--radius-m)] border border-line overflow-hidden flex h-[90px]">
-          <div className="w-1/2 flex items-center justify-center text-[12px] font-semibold" style={{ background: connexion, color: texteConnexion }}>Page de connexion</div>
-          <div className="w-1/2 bg-white flex items-center justify-center">
-            <span className="rounded-[5px] px-3 py-1.5 text-[10px] font-bold tracking-[0.09em] uppercase text-white" style={{ background: p }}>Se connecter</span>
+        <div className="rounded-[var(--radius-m)] border border-line overflow-hidden flex h-[150px]">
+          <div className="w-[38%] flex items-center justify-center text-[11px] font-semibold text-center px-2" style={{ background: connexion, color: texteConnexion }}>Panneau de gauche</div>
+          <div className="flex-1 p-4 flex flex-col gap-2" style={{ background: fond, color: texte }}>
+            <span className="text-[15px] font-bold">Rejoindre la Chambre</span>
+            <span className="text-[11px] opacity-80">Une phrase sous le titre</span>
+            <span className="h-7 rounded-md border border-[#dfe5ec] bg-white text-[10.5px] text-[#16202b] flex items-center px-2">vous@entreprise.mg</span>
+            <span className="self-start rounded-[5px] px-3 py-1.5 text-[10px] font-bold tracking-[0.09em] uppercase text-white" style={{ background: p }}>Se connecter</span>
           </div>
         </div>
       </div>

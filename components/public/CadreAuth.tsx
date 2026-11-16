@@ -62,7 +62,7 @@ export function CadreAuth({
                 {sous ? <p className="m-0 max-w-[480px] text-[16px] leading-[26px] text-white/80">{sous}</p> : null}
                 <div className="mt-3 pt-5 border-t border-white/20 text-[13px] leading-[20px] text-white/75">{mention}</div>
               </div>
-              <span aria-hidden className="absolute inset-y-0 right-0 z-10 w-14 bg-white" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+              <span aria-hidden className="absolute inset-y-0 right-0 z-10 w-14 bg-[var(--fond-connexion,#fff)]" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
             </aside>
           ) : (
             <aside className="panneau-connexion hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col bg-[var(--connexion,var(--surface-2))] overflow-hidden">
@@ -76,12 +76,12 @@ export function CadreAuth({
               </div>
               <p className="m-0 px-10 xl:px-14 pb-8 pr-24 text-[12.5px] text-faint">{mention}</p>
               {/* Le bord en biais, du haut à droite vers le bas */}
-              <span aria-hidden className="absolute inset-y-0 right-0 w-14 bg-white" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
+              <span aria-hidden className="absolute inset-y-0 right-0 w-14 bg-[var(--fond-connexion,#fff)]" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
             </aside>
           )
         ) : null}
 
-        <div className="flex flex-col min-h-dvh px-5 py-8 sm:px-10 lg:px-14 xl:px-24">
+        <div className="colonne-connexion flex flex-col min-h-dvh px-5 py-8 sm:px-10 lg:px-14 xl:px-24">
           <div className="mb-10 flex items-center gap-4">
             {couverture ? null : <div className={`min-w-0 ${panneau ? "lg:hidden" : ""}`}>{logo}</div>}
             <a

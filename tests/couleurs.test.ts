@@ -40,6 +40,15 @@ describe("couleurs d'une Chambre", () => {
     expect(cssCouleurs({ ...VIDE, principale: "#000000}body{background:red" })).toBe("");
   });
 
+  it("page de connexion : fond, texte choisi, ou blanc sur un fond foncé ; les surfaces blanches gardent un texte foncé", () => {
+    const fonce = cssCouleurs({ ...VIDE, fondConnexion: "#0b2545" });
+    expect(fonce).toContain("html .cadre-auth{background:#0b2545;--fond-connexion:#0b2545}");
+    expect(fonce).toContain(".colonne-connexion{--text:#ffffff");
+    expect(fonce).toContain(".champ-auth,.champ-auth-cadre){--text:#16202b");
+    expect(cssCouleurs({ ...VIDE, fondConnexion: "#ffffff" })).not.toContain("--text:");
+    expect(cssCouleurs({ ...VIDE, texteConnexion: "#0b2545" })).toContain(".colonne-connexion{--text:#0b2545");
+  });
+
   it("barre latérale d'une seule couleur", () => {
     expect(cssCouleurs({ ...VIDE, laterale: "#123456" })).toContain("--laterale:#123456");
   });

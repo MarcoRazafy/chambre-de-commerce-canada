@@ -172,6 +172,8 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
                   couleurLaterale2: brut?.couleurLaterale2 ?? "",
                   couleurHaut: brut?.couleurHaut ?? "",
                   couleurConnexion: brut?.couleurConnexion ?? "",
+                  couleurFondConnexion: brut?.couleurFondConnexion ?? "",
+                  couleurTexteConnexion: brut?.couleurTexteConnexion ?? "",
                 }}
               />
               {enregistrer}

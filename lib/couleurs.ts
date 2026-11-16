@@ -9,6 +9,9 @@ export type CouleursChambre = {
   laterale2: string | null;
   haut: string | null;
   connexion: string | null;
+  /** Page de connexion et d'adhésion : le fond du formulaire et la couleur de son texte */
+  fondConnexion?: string | null;
+  texteConnexion?: string | null;
 };
 
 const HEX = /^#[0-9a-f]{6}$/i;
@@ -53,9 +56,20 @@ export function cssCouleurs(c: CouleursChambre): string {
   if (h) v.push(`--superieure:${h}`);
   const k = couleur(c.connexion);
   if (k) v.push(`--connexion:${k}`);
-  if (!v.length) return "";
+  const f = couleur(c.fondConnexion);
+  // Texte : celui choisi ; sur un fond foncé sans choix, blanc
+  const t = couleur(c.texteConnexion) ?? (f && !tropClaire(f) ? "#ffffff" : null);
+  if (!v.length && !f && !t) return "";
   // « html » devant : passe avant les valeurs de la plateforme (globals.css), à sélecteur égal
-  let css = `html :is(.espace-admin,.espace-membre,.cadre-auth){${v.join(";")}}`;
+  let css = v.length ? `html :is(.espace-admin,.espace-membre,.cadre-auth){${v.join(";")}}` : "";
+  if (f) css += `html .cadre-auth{background:${f};--fond-connexion:${f}}`;
+  if (t) {
+    // Le texte de la colonne du formulaire ; les champs, cartes et boutons blancs gardent un texte foncé
+    css += `html .cadre-auth .colonne-connexion{--text:${t};--text-muted:color-mix(in srgb,${t} 80%,transparent);--text-faint:color-mix(in srgb,${t} 65%,transparent);color:${t}}`;
+    css += "html .cadre-auth .colonne-connexion :is(.bg-white,.bg-surface,.bg-surface-2,.bg-surface-3,.champ-auth,.champ-auth-cadre){--text:#16202b;--text-muted:#5b6b7a;--text-faint:#8797a6}";
+    // Le petit titre au-dessus du grand : dans la couleur du texte (le rouge ou le vert se perdent sur un fond foncé)
+    css += `html .cadre-auth .colonne-connexion main .surtitre{color:color-mix(in srgb,${t} 80%,transparent)}`;
+  }
   // Fond de connexion foncé : le texte du panneau passe en clair
   if (k && !tropClaire(k)) css += "html .cadre-auth .panneau-connexion{--text:#ffffff;--text-muted:rgba(255,255,255,.82);--text-faint:rgba(255,255,255,.7)}";
   return css;

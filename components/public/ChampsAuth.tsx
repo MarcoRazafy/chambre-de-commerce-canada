@@ -22,7 +22,7 @@ export function ChampAuth({
       <span className="champ-auth-libelle block text-[13px] font-semibold text-ink mb-1.5">
         {label}
       </span>
-      <span className="relative block">
+      <span className="champ-auth-cadre relative block">
         {icone ? (
           <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-faint transition-colors group-focus-within:text-marque-vert pointer-events-none">
             {icone}

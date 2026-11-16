@@ -1408,6 +1408,8 @@ model ProfilChambre {
   couleurLaterale2  String?
   couleurHaut       String?
   couleurConnexion  String?
+  couleurFondConnexion  String?
+  couleurTexteConnexion String?
 
   raisonSociale      String  @default("")
   adresseFacturation String  @default("")

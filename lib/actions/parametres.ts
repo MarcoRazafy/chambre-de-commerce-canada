@@ -232,7 +232,7 @@ export async function desactiverModeDeveloppeur() {
 // Onglet Couleurs : les couleurs des espaces de la Chambre (vide : celle de la plateforme)
 export async function enregistrerCouleurs(formData: FormData) {
   const data: Record<string, string> = {};
-  for (const champ of ["couleurPrincipale", "couleurLaterale", "couleurLaterale2", "couleurHaut", "couleurConnexion"]) {
+  for (const champ of ["couleurPrincipale", "couleurLaterale", "couleurLaterale2", "couleurHaut", "couleurConnexion", "couleurFondConnexion", "couleurTexteConnexion"]) {
     const saisie = texte(formData, champ, 20);
     const valeur = couleur(saisie);
     if (saisie && !valeur) redirectWithErreur(`${PAGE}?onglet=couleurs`, "Couleur inconnue.");

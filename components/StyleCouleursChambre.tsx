@@ -14,8 +14,8 @@ export async function StyleCouleursChambre() {
   if (!id) return null;
   const p = await prismaSysteme.profilChambre.findUnique({
     where: { chambreId: id },
-    select: { couleurPrincipale: true, couleurLaterale: true, couleurLaterale2: true, couleurHaut: true, couleurConnexion: true },
+    select: { couleurPrincipale: true, couleurLaterale: true, couleurLaterale2: true, couleurHaut: true, couleurConnexion: true, couleurFondConnexion: true, couleurTexteConnexion: true },
   });
-  const css = p ? cssCouleurs({ principale: p.couleurPrincipale, laterale: p.couleurLaterale, laterale2: p.couleurLaterale2, haut: p.couleurHaut, connexion: p.couleurConnexion }) : "";
+  const css = p ? cssCouleurs({ principale: p.couleurPrincipale, laterale: p.couleurLaterale, laterale2: p.couleurLaterale2, haut: p.couleurHaut, connexion: p.couleurConnexion, fondConnexion: p.couleurFondConnexion, texteConnexion: p.couleurTexteConnexion }) : "";
   return css ? <style dangerouslySetInnerHTML={{ __html: css }} /> : null;
 }
