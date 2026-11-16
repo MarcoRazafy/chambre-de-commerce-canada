@@ -135,7 +135,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         </Panneau>
       ) : null}
 
-      <section id="onglets" className="scroll-mt-6 mt-10">
+      <section id="onglets" className="scroll-mt-6 mt-5">
         <Onglets
           actif={onglet}
           onglets={[
