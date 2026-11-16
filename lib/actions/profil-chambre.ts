@@ -5,7 +5,7 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { oublierExpediteur } from "@/lib/courriel";
-import { adresseSurUneLigne } from "@/lib/profil-chambre-defauts";
+import { adresseSurUneLigne, couleurValide } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { chambreCourante } from "@/lib/chambre-courante";
 
@@ -87,4 +87,15 @@ export async function changerImageChambre(formData: FormData) {
   revalidatePath("/", "layout");
   const quoi = champ === "logo" ? "Logo" : "Couverture";
   redirectWithFlash(PAGE, valeur ? `${quoi} mis${champ === "logo" ? "" : "e"} à jour` : `${quoi} retiré${champ === "logo" ? "" : "e"}`);
+}
+
+// Palette posée sur le logo de « Mon entreprise » : la couleur de fond de son cadre, enregistrée tout de suite
+export async function changerFondLogo(formData: FormData) {
+  await exigerEquipe();
+  const saisie = texte(formData, "logoFond");
+  const logoFond = couleurValide(saisie);
+  if (saisie && !logoFond) redirectWithErreur(PAGE, "Couleur inconnue.");
+  await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { logoFond }, update: { logoFond } });
+  revalidatePath("/", "layout");
+  redirectWithFlash(PAGE, logoFond ? "Fond du logo mis à jour" : "Fond du logo : blanc");
 }

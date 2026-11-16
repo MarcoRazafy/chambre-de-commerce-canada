@@ -46,7 +46,7 @@ export async function listeChambres() {
       select: {
         id: true, nom: true, slug: true, domaine: true, statut: true, createdAt: true,
         offre: { select: { id: true, nom: true } },
-        profil: { select: { logo: true } },
+        profil: { select: { logo: true, logoFond: true } },
         _count: { select: { membres: { where: MEMBRES }, utilisateurs: { where: { role: "admin" } } } },
       },
     }),
@@ -59,6 +59,7 @@ export async function listeChambres() {
     id: c.id, nom: c.nom, slug: c.slug, domaine: c.domaine, creeLe: c.createdAt, offre: c.offre,
     // Le logo réglé par la Chambre (Mon entreprise) ; sans logo : ses initiales
     logo: c.profil?.logo ?? null,
+    logoFond: c.profil?.logoFond ?? null,
     statut: (c.statut === "suspendue" ? "suspendue" : enRetard.has(c.id) ? "en_retard" : "active") as StatutAffiche,
     membres: c._count.membres,
     equipe: c._count.utilisateurs,

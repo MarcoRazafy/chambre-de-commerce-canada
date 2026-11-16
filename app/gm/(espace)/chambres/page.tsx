@@ -143,7 +143,7 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
                     <tr key={c.id} className="group hover:bg-surface-2">
                       <Td>
                         <Link href={fiche(c.id)} className="flex items-center gap-3 no-underline text-ink">
-                          <LogoChambre nom={c.nom} logo={c.logo} />
+                          <LogoChambre nom={c.nom} logo={c.logo} fond={c.logoFond} />
                           <span className="min-w-0">
                             <span className="block font-semibold group-hover:text-accent">{c.nom}</span>
                             <span className="block text-[12px] text-faint">{c.domaine ?? c.slug}</span>
@@ -174,7 +174,7 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
                 <Card className="carte-filet filet-degrade p-4">
                   <Link href={fiche(c.id)} className="block no-underline text-ink">
                     <div className="flex items-center gap-3">
-                      <LogoChambre nom={c.nom} logo={c.logo} />
+                      <LogoChambre nom={c.nom} logo={c.logo} fond={c.logoFond} />
                       <span className="min-w-0 flex-1">
                         <span className="block font-semibold text-[14.5px] truncate">{c.nom}</span>
                         <span className="block text-[12.5px] text-muted truncate">{c.domaine ?? c.slug}</span>

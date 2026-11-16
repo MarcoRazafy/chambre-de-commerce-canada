@@ -3,14 +3,14 @@ import Image from "next/image";
 // Le logo d'une Chambre (réglé dans « Mon entreprise »), comme celui des entreprises membres dans le back-office ;
 // sans logo : ses initiales, dans un cadre de même taille (les listes restent alignées). Le nom est toujours affiché
 // à côté : l'image est décorative
-export function LogoChambre({ nom, logo, taille = 40 }: { nom: string; logo: string | null; taille?: number }) {
+export function LogoChambre({ nom, logo, fond, taille = 40 }: { nom: string; logo: string | null; fond?: string | null; taille?: number }) {
   const largeur = Math.round(taille * 1.6);
   if (logo) {
     return (
       <span
         aria-hidden
         className="rounded-[var(--radius-s)] bg-white border border-line flex items-center justify-center shrink-0 px-1.5 py-1"
-        style={{ width: largeur, height: taille }}
+        style={{ width: largeur, height: taille, ...(fond ? { backgroundColor: fond } : {}) }}
       >
         <Image src={logo} alt="" width={largeur} height={taille} sizes={`${largeur}px`} className="w-full h-full object-contain" />
       </span>

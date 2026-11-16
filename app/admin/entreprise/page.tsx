@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { Globe, Lock, Mail, MapPin, Phone, Save } from "lucide-react";
+import { FondLogo } from "@/components/admin/FondLogo";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
 import { ListeFormules } from "@/components/admin/ListeFormules";
 import { EnTeteAdmin, Panneau } from "@/components/admin/ui";
@@ -47,9 +48,12 @@ export default async function MonEntreprise() {
         </div>
         <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
           {/* Le cadre prend la forme du logo : hauteur fixe, largeur selon ses proportions (bornée) */}
-          <span className="relative -mt-12 self-start h-[92px] min-w-[92px] max-w-[260px] shrink-0 inline-flex items-center justify-center p-1 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]">
+          <span className="relative -mt-12 self-start h-[92px] min-w-[92px] max-w-[260px] shrink-0 inline-flex items-center justify-center p-1 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]" style={p.logoFond ? { backgroundColor: p.logoFond } : undefined}>
             <Image src={p.logo} alt={p.nom} width={600} height={600} sizes="260px" className="h-full w-auto max-w-full object-contain" />
-            <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} className="absolute -bottom-4 left-1/2 -translate-x-1/2" />
+            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+              <IconesImageChambre champ="logo" personnalisee={Boolean(brut?.logo)} />
+              <FondLogo actuel={p.logoFond} />
+            </div>
           </span>
           <div className="min-w-0 flex-1 sm:pt-3">
             <h2 className="m-0 text-[21px] leading-tight text-balance">{p.nom}</h2>
@@ -63,7 +67,9 @@ export default async function MonEntreprise() {
         </div>
       </Card>
 
-      <form action={enregistrerProfilChambre} className="flex flex-col gap-4">
+      {/* La Chambre à gauche, ses formules d'adhésion à droite (l'une sous l'autre sur petit écran) */}
+      <div className="grid gap-5 items-start grid-cols-[minmax(0,1fr)] xl:grid-cols-2">
+      <form action={enregistrerProfilChambre} className="flex flex-col gap-4 min-w-0">
         <Panneau titre="La Chambre" sousTitre="Sa présentation, ses coordonnées et ce qui figure sur ses factures" teinte="rouge">
           <div className="flex flex-col gap-4">
             <Field label="Nom">
@@ -118,12 +124,12 @@ export default async function MonEntreprise() {
           </div>
         </Panneau>
 
-        <div className="sticky bottom-0 z-10 -mx-4 md:-mx-6 px-4 md:px-6 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-end gap-3 flex-wrap">
+        <div className="sticky bottom-0 z-10 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-end gap-3 flex-wrap">
           <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer les modifications</SubmitButton>
         </div>
       </form>
 
-      <div id="formules" className="mt-5 scroll-mt-24">
+      <div id="formules" className="scroll-mt-24 min-w-0">
         <Panneau titre="Formules d’adhésion" sousTitre="Proposées à l’inscription ; elles fixent le montant des cotisations" teinte="vert">
           <div className="flex flex-col gap-4">
             {!gere ? (
@@ -132,6 +138,7 @@ export default async function MonEntreprise() {
             <ListeFormules gere={gere} formules={formules.map(({ _count, ...f }) => ({ ...f, membres: _count.membres }))} />
           </div>
         </Panneau>
+      </div>
       </div>
     </>
   );

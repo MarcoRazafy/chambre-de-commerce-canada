@@ -1400,6 +1400,8 @@ model ProfilChambre {
   site        String  @default("")
   logo        String?
   couverture  String?
+  // Couleur de fond du cadre du logo (« #rrggbb ») : un logo clair reste lisible ; vide : blanc
+  logoFond    String?
 
   raisonSociale      String  @default("")
   adresseFacturation String  @default("")

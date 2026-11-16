@@ -7,7 +7,7 @@ import { useId, useMemo, useState, type ReactNode } from "react";
 import { ArrowRight, Building2, Search, X } from "lucide-react";
 import { LogoChambre } from "@/components/gm/LogoChambre";
 
-export type ChambrePublique = { id: string; nom: string; adresse: string; profil: { ville: string | null; pays: string | null; logo: string | null } | null };
+export type ChambrePublique = { id: string; nom: string; adresse: string; profil: { ville: string | null; pays: string | null; logo: string | null; logoFond?: string | null } | null };
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit";
 const FILETS = ["filet-vert", "filet-rouge", "filet-degrade"];
@@ -113,7 +113,7 @@ export function ChoixChambre({ chambres, initiale, avant, illustration }: { cham
                       href={c.adresse}
                       className={`group carte-filet ${FILETS[i % FILETS.length]} flex flex-col rounded-2xl border border-line bg-bg p-6 no-underline text-ink ${FOCUS}`}
                     >
-                      <LogoChambre nom={c.nom} logo={c.profil?.logo ?? null} taille={56} />
+                      <LogoChambre nom={c.nom} logo={c.profil?.logo ?? null} fond={c.profil?.logoFond} taille={56} />
                       <span className="block mt-5 text-[18px] font-semibold leading-snug">{c.nom}</span>
                       {lieu ? <span className="block mt-1 text-[14px] text-muted">{lieu}</span> : null}
                       <span className="mt-6 inline-flex items-center gap-2 text-[15px] font-medium text-marque-vert">

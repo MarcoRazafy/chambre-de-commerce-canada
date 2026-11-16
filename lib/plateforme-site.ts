@@ -13,7 +13,7 @@ export async function chambresPubliques(q: string) {
     where: { statut: "active", ...(q ? { nom: { contains: q, mode: "insensitive" as const } } : {}) },
     orderBy: { nom: "asc" },
     take: 100,
-    select: { id: true, nom: true, slug: true, profil: { select: { ville: true, pays: true, logo: true } } },
+    select: { id: true, nom: true, slug: true, profil: { select: { ville: true, pays: true, logo: true, logoFond: true } } },
   });
   // Le lien de la demande d'adhésion : l'espace des membres, la Chambre précisée par son identifiant
   const avecAdresse = await Promise.all(

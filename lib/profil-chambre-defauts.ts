@@ -13,6 +13,8 @@ export type ProfilChambre = {
   site: string;
   logo: string;
   couverture: string | null;
+  /** Fond du cadre du logo (« #rrggbb »), null : blanc */
+  logoFond: string | null;
   raisonSociale: string;
   adresseFacturation: string;
   neq: string;
@@ -27,6 +29,9 @@ function lignesAdresse(p: PartiesAdresse): string[] {
   return [t(p.adresseRue), [t(p.codePostal), t(p.ville)].filter(Boolean).join(" "), t(p.pays)].filter(Boolean);
 }
 export const adresseSurUneLigne = (p: PartiesAdresse) => lignesAdresse(p).join(", ");
+
+// Une couleur « #rrggbb », sinon null
+export const couleurValide = (v?: string | null) => (v && /^#[0-9a-f]{6}$/i.test(v.trim()) ? v.trim().toLowerCase() : null);
 
 export const NOM_CHAMBRE = "Chambre de Commerce et de Coopération Canada–Madagascar";
 
@@ -52,6 +57,7 @@ export function completerProfil(l: Ligne | null): ProfilChambre {
     site: v("site", COORDONNEES.site),
     logo,
     couverture: l?.couverture?.trim() || null,
+    logoFond: couleurValide(l?.logoFond),
     // Par défaut, le nom de la Chambre elle-même (pas une valeur d'une autre Chambre)
     raisonSociale: l?.raisonSociale?.trim() || nom,
     adresseFacturation: lignes.length ? lignes.join("\n") : adresse,
