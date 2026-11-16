@@ -51,7 +51,7 @@ const TEXTES: Record<EtapeAccueil, { titre: string; intro: string }> = {
   activite: {
     titre: "Présentez votre activité",
     intro:
-      "Ce que vous faites et ce que vous cherchez : c’est ce qui déclenche les mises en relation.",
+      "Ce que vous faites et ce que vous cherchez, pour les autres membres de l’annuaire.",
   },
   visuels: {
     titre: "Votre logo et votre couverture",

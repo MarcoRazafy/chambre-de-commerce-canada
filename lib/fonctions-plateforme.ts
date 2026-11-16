@@ -1,7 +1,6 @@
 // Fonctions qu'une offre de la plateforme peut inclure (réglées par l'Admin GM).
 // Membres, contacts, tags, factures et paramètres sont toujours inclus.
 export const FONCTIONS = [
-  { cle: "maillage", libelle: "Maillage" },
   { cle: "evenements", libelle: "Événements" },
   { cle: "rendezvous", libelle: "Rendez-vous" },
   { cle: "offres", libelle: "Offres & promotions" },
@@ -25,7 +24,6 @@ export function fonctionsOuvertes(offre: { fonctions: readonly string[]; surMesu
 // Les pages de chaque fonction (espace admin et espace membre) : masquées du menu et fermées si l'offre de la
 // Chambre ne l'inclut pas
 export const CHEMINS: Record<Fonction, string[]> = {
-  maillage: ["/admin/maillage", "/membre/maillage"],
   evenements: ["/admin/evenements", "/admin/agenda", "/membre/evenements", "/membre/agenda"],
   rendezvous: ["/admin/rendez-vous", "/membre/rendez-vous"],
   offres: ["/admin/offres"],

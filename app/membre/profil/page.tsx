@@ -23,8 +23,7 @@ import { CouvertureReglable } from "@/components/CouvertureReglable";
 import { VideoPresentation } from "@/components/VideoPresentation";
 import Link from "next/link";
 import { Onglets, Panneau, Vide } from "@/components/admin/ui";
-import { ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
-import { activiteMembre, suggestions } from "@/lib/maillage-donnees";
+import { activiteMembre } from "@/lib/maillage-donnees";
 import { TexteLie } from "@/components/TexteLie";
 import { CarrouselSection } from "@/components/CarrouselSection";
 import { CarteService } from "@/components/CarteService";
@@ -65,20 +64,18 @@ const ICONES_ACTIVITE = { evenement: CalendarDays, rendezvous: CalendarClock, pu
 export default async function ProfilPage({
   searchParams,
 }: {
-  searchParams: Promise<{ onglet?: string; repondre?: string }>;
+  searchParams: Promise<{ onglet?: string }>;
 }) {
-  const { onglet: demande, repondre } = await searchParams;
-  // Anciens onglets (liens déjà envoyés) : les factures et le maillage ont leur propre page
+  const { onglet: demande } = await searchParams;
+  // Ancien onglet (liens déjà envoyés) : les factures ont leur propre page
   if (demande === "factures") redirect("/membre/cotisations");
-  if (demande === "maillage") redirect(repondre === "1" ? "/membre/maillage?repondre=1" : "/membre/maillage");
   const onglet: Onglet = ONGLETS.includes(demande as Onglet) ? (demande as Onglet) : "profil";
   const user = await getCurrentUser("membre");
   const m = await getMember(user.memberId!);
   if (!m) notFound();
-  const [myInvoices, contacts, sugg, activite, chambre] = await Promise.all([
+  const [myInvoices, contacts, activite, chambre] = await Promise.all([
     getInvoices(m.id),
     getContacts(m.id),
-    suggestions(m.id),
     activiteMembre(m.id),
     getProfilChambre(),
   ]);
@@ -300,20 +297,12 @@ export default async function ProfilPage({
             <Panneau titre="Vidéo de l’entreprise" teinte="bleu">
               <VideoPresentation memberId={m.id} nom={m.nom} fichier={m.video} gestion={page} />
             </Panneau>
-            <Panneau
-              titre="Suggestions de maillage"
-              sousTitre="Les membres qui proposent ce que vous recherchez"
-              teinte="rouge"
-              lien={{ href: "/membre/maillage", libelle: "Tout voir" }}
-            >
-              <ListeSuggestions suggestions={sugg} memberId={m.id} espace="membre" limite={3} />
-            </Panneau>
           </div>
         </div>
       ) : null}
 
       {onglet === "activite" ? (
-        <Panneau titre="Mon activité" sousTitre="Vos inscriptions, rendez-vous et mises en relation" teinte="degrade" corpsClassName="px-6 pb-4">
+        <Panneau titre="Mon activité" sousTitre="Vos inscriptions et rendez-vous" teinte="degrade" corpsClassName="px-6 pb-4">
           {activite.length ? (
             <ul className="list-none m-0 p-0">
               {activite.map((a, i) => {

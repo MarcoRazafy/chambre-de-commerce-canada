@@ -120,7 +120,7 @@ export function AppelFinal() {
             <FormulaireEmail sombre />
           </div>
           <div className="mt-5">
-            <Rassurances sombre centre points={["Offre gratuite, sans carte bancaire"]} />
+            <Rassurances sombre centre points={["Toutes les fonctions incluses"]} />
           </div>
           <p className="mt-6 mb-0 text-[14px] text-white/70">
             Vous êtes une entreprise ?{" "}

@@ -29,8 +29,8 @@ export default async function Conditions() {
       <h2>3. Offres et prix</h2>
       <ul>
         <li>Les offres et leurs prix sont ceux affichés sur la page <Link href="/tarifs">Tarifs</Link> au moment du choix, en dollars canadiens, avant taxes. La TPS et la TVQ s’ajoutent sur la facture.</li>
-        <li>Une offre payante est facturée chaque mois : le forfait, plus chaque compte d’équipe actif au-delà des comptes offerts. Les membres d’une Chambre ne sont jamais facturés.</li>
-        <li>Avec l’offre à la carte, la Chambre choisit ses fonctions ; un changement s’applique à la facture suivante.</li>
+        <li>L’offre est facturée chaque mois : le forfait, plus chaque compte d’équipe actif au-delà des comptes offerts. Les membres d’une Chambre ne sont jamais facturés.</li>
+        <li>Un changement d’offre s’applique à la facture suivante.</li>
         <li>Un changement de prix est annoncé à la Chambre au moins trente jours avant de s’appliquer.</li>
       </ul>
 

@@ -11,8 +11,6 @@ import {
 import { EtatAcces } from "@/components/admin/EtatAcces";
 import { Jauge, Onglets, Panneau, Vide } from "@/components/admin/ui";
 import { EtiquettesMembre } from "@/components/maillage/EtiquettesMembre";
-import { EtatQuestionnaireAdmin, ListeRelations, ListeSuggestions } from "@/components/maillage/PanneauxMaillage";
-import { chargerMaillage, relations, suggestions } from "@/lib/maillage-donnees";
 import { prisma } from "@/lib/db";
 import { LigneJournal } from "@/components/admin/LigneJournal";
 import { Agrandir } from "@/components/Agrandir";
@@ -73,7 +71,7 @@ import { getHistoriqueMembre, getNotesMembre } from "@/lib/queries-admin";
 import { situation } from "@/lib/situation";
 import { getFormules } from "@/lib/formules";
 
-const ONGLETS = ["profil", "factures", "activite", "maillage"] as const;
+const ONGLETS = ["profil", "factures", "activite"] as const;
 type Onglet = (typeof ONGLETS)[number];
 
 export default async function AdminMembreDetail({
@@ -89,17 +87,14 @@ export default async function AdminMembreDetail({
   const m = await getMember(id);
   if (!m) notFound();
 
-  const [contacts, factures, historique, acces, commentaires, maillage, sugg, rels, etiquettes, formules] =
+  const [contacts, factures, historique, acces, commentaires, etiquettes, formules] =
     await Promise.all([
       getContacts(m.id),
       getInvoices(m.id),
       getHistoriqueMembre(m.id),
       getAccesMembre(m.id),
       getNotesMembre(m.id),
-      chargerMaillage(m.id),
-      suggestions(m.id),
-      relations(m.id),
-      prisma.member.findUnique({ where: { id: m.id }, select: { etiquettes: true, offresTags: true, besoinsTags: true, interetsTags: true } }),
+      prisma.member.findUnique({ where: { id: m.id }, select: { etiquettes: true } }),
       getFormules(),
     ]);
   const candidature = m.statut === "candidature";
@@ -215,7 +210,6 @@ export default async function AdminMembreDetail({
           { cle: "profil", libelle: "Profil", href: fiche },
           { cle: "factures", libelle: "Factures", href: `${fiche}?onglet=factures`, compte: factures.length },
           { cle: "activite", libelle: "Activité", href: `${fiche}?onglet=activite` },
-          { cle: "maillage", libelle: "Maillage", href: `${fiche}?onglet=maillage` },
         ]}
       />
 
@@ -630,30 +624,6 @@ export default async function AdminMembreDetail({
       </div>
       ) : null}
 
-      {onglet === "maillage" ? (
-      <div className="grid gap-4 items-start grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_380px]">
-        <div className="flex flex-col gap-4 min-w-0">
-          {maillage ? <EtatQuestionnaireAdmin d={maillage} /> : null}
-          <Panneau titre="Suggestions de mises en relation" sousTitre="Rapprochements entre ce que le membre recherche et ce que d’autres proposent" teinte="rouge">
-            <ListeSuggestions suggestions={sugg} memberId={m.id} espace="admin" retour={`${fiche}?onglet=maillage`} />
-          </Panneau>
-          <Panneau titre="Mises en relation" teinte="bleu">
-            <ListeRelations relations={rels} espace="admin" />
-          </Panneau>
-        </div>
-        <div className="flex flex-col gap-4">
-          <Panneau titre="Ce qu’il propose" teinte="degrade">
-            <EtiquettesMembre memberId={m.id} champ="offresTags" valeurs={etiquettes?.offresTags ?? []} ton="bleu" />
-          </Panneau>
-          <Panneau titre="Ce qu’il recherche" teinte="rouge">
-            <EtiquettesMembre memberId={m.id} champ="besoinsTags" valeurs={etiquettes?.besoinsTags ?? []} />
-          </Panneau>
-          <Panneau titre="Ses centres d’intérêt" teinte="vert">
-            <EtiquettesMembre memberId={m.id} champ="interetsTags" valeurs={etiquettes?.interetsTags ?? []} ton="vert" />
-          </Panneau>
-        </div>
-      </div>
-      ) : null}
     </>
   );
 }

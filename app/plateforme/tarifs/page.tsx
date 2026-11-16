@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: { absolute: "Tarifs · L’Alliée Virtuelle" },
-  description: "Les offres de L’Alliée Virtuelle : gratuite pour démarrer, tout inclus, ou à la carte avec seulement les fonctions dont votre Chambre a besoin.",
+  description: "Les offres de L’Alliée Virtuelle : Standard, Premium et VIP, avec toutes les fonctions incluses.",
 };
 
 const INCLUS = [
@@ -22,12 +22,8 @@ const INCLUS = [
 
 const QUESTIONS = [
   {
-    q: "Comment fonctionne l’offre à la carte ?",
-    r: "Vous payez un forfait de base, puis chaque fonction que vous cochez. Le total s’affiche en direct avant la création de votre Chambre.",
-  },
-  {
-    q: "Puis-je ajouter ou retirer des fonctions plus tard ?",
-    r: "Oui, depuis la page Abonnement de votre espace. Les menus de votre équipe et de vos membres suivent votre choix, et la facture suivante en tient compte.",
+    q: "Puis-je changer d’offre plus tard ?",
+    r: "Oui, depuis la page Abonnement de votre espace. La facture suivante en tient compte.",
   },
   {
     q: "Comment sont comptés les comptes d’équipe ?",
@@ -39,7 +35,7 @@ const QUESTIONS = [
   },
   {
     q: "Faut-il une carte bancaire pour commencer ?",
-    r: "Non. La carte n’est demandée que pour payer l’abonnement d’une offre payante.",
+    r: "Oui. Le premier mois se paie par carte à la création de votre Chambre, puis chaque mois.",
   },
 ];
 
@@ -56,8 +52,8 @@ export default async function TarifsPlateforme() {
               niveau={1}
               centre
               surtitre="Tarifs"
-              titre={<>Choisissez votre offre, <Saillant>ou composez-la</Saillant></>}
-              texte="Commencez gratuitement, prenez tout, ou gardez seulement les fonctions dont votre Chambre a besoin."
+              titre={<>Choisissez <Saillant>votre offre</Saillant></>}
+              texte="Toutes les fonctions dans chaque offre : elles se distinguent par le nombre de membres et de comptes d’équipe."
             />
           </div>
           <div className="entree entree-2 mt-12">

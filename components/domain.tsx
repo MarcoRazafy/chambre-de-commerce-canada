@@ -396,8 +396,8 @@ export function NeedsAndInterests({
       </div>
       {!lignes.length ? (
         <p className="m-0 text-[13.4px] text-muted">
-          Dites ce que vous recherchez — partenaires, distributeurs,
-          financement… : c’est ce qui déclenche les mises en relation.
+          Dites ce que vous recherchez : partenaires, distributeurs,
+          financement…
           {aRemplir
             ? " Ajoutez vos besoins depuis « Modifier ma fiche »."
             : null}

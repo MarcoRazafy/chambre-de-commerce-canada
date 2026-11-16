@@ -100,7 +100,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
               ? `Fonctions choisies : ${libellesFonctions(offre.fonctions) || "aucune"}.`
               : limites.length
               ? `Jusqu’à ${limites.join(" et ")}.`
-              : "Tout est inclus : membres et annuaire avec suggestions de mises en relation, événements, agenda, rendez-vous, ressources, messagerie, newsletter, factures et règlements. Membres et abonnés illimités."}
+              : "Tout est inclus : membres et annuaire, événements, agenda, rendez-vous, ressources, messagerie, newsletter, factures et règlements. Membres et abonnés illimités."}
           </p>
         </Card>
 

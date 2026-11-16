@@ -12,12 +12,12 @@ export const TOUJOURS_INCLUS = ["Membres, contacts et factures", "Espace membre"
 const DEPART = ["evenements", "newsletter"];
 
 // Ce qui distingue une offre, en deux mots
-const etiquette = (o: OffrePublique) =>
-  o.surMesure ? "À la carte" : o.gratuite ? "Pour démarrer" : o.cles.length === FONCTIONS.length ? "Tout inclus" : "Pour grandir";
+const etiquette = (o: OffrePublique, i: number) =>
+  o.surMesure ? "À la carte" : o.gratuite ? "Gratuite" : (["Pour démarrer", "Pour grandir", "Pour les grands réseaux"][i] ?? "");
 
 const COCHE = <Check size={16} strokeWidth={1.5} className="text-success shrink-0 mt-1" aria-hidden />;
 
-function CarteOffre({ o, miseEnAvant }: { o: OffrePublique; miseEnAvant: boolean }) {
+function CarteOffre({ o, rang, miseEnAvant }: { o: OffrePublique; rang: number; miseEnAvant: boolean }) {
   return (
     <article
       id={o.surMesure ? "sur-mesure" : undefined}
@@ -25,7 +25,7 @@ function CarteOffre({ o, miseEnAvant }: { o: OffrePublique; miseEnAvant: boolean
     >
       <p className="m-0 flex items-baseline justify-between gap-3">
         <span className="text-[18px] font-semibold text-ink">{o.nom}</span>
-        <span className="text-[13px] font-medium text-muted whitespace-nowrap">{etiquette(o)}</span>
+        <span className="text-[13px] font-medium text-muted whitespace-nowrap">{etiquette(o, rang)}</span>
       </p>
       {o.surMesure ? (
         <>
@@ -82,7 +82,7 @@ export function CartesTarifs({ offres, revele = false }: { offres: OffrePublique
     <div data-reveal-groupe={revele ? "" : undefined} className={`mx-auto grid gap-4 ${n >= 3 ? "max-w-[1200px] md:grid-cols-2 lg:grid-cols-3" : n === 2 ? "max-w-[920px] md:grid-cols-2" : "max-w-[500px]"}`}>
       {cartes.map((o, i) => (
         <div key={o.id} className={`grid ${n === 3 && i === 2 ? "md:col-span-2 lg:col-span-1" : ""}`}>
-          <CarteOffre o={o} miseEnAvant={!o.gratuite && !o.surMesure} />
+          <CarteOffre o={o} rang={i} miseEnAvant={n === 3 ? i === 1 : !o.gratuite && !o.surMesure} />
         </div>
       ))}
     </div>
@@ -142,10 +142,10 @@ export function TableauOffres({ offres }: { offres: OffrePublique[] }) {
         <thead>
           <tr>
             <th scope="col" className="sticky left-0 z-10 bg-surface text-left px-5 py-5 w-[34%]"><span className="sr-only">Offre</span></th>
-            {offres.map((o) => (
+            {offres.map((o, i) => (
               <th key={o.id} scope="col" className="px-4 py-5 text-center align-bottom">
                 <span className="block text-[16px] font-semibold text-ink">{o.nom}</span>
-                <span className="block mt-1 text-[13px] font-normal text-muted">{etiquette(o)}</span>
+                <span className="block mt-1 text-[13px] font-normal text-muted">{etiquette(o, i)}</span>
               </th>
             ))}
           </tr>

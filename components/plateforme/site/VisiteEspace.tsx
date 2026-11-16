@@ -493,7 +493,7 @@ const ECRANS: {
     libelle: "Espace membre",
     titre: "Bonjour, Boréal Conseil",
     texte:
-      "l’espace d’un membre : sa carte de membre, sa cotisation, ses inscriptions et des mises en relation",
+      "l’espace d’un membre : sa carte de membre, sa cotisation, ses inscriptions et ses rendez-vous",
     Ecran: EcranMembre,
     menu: -1,
   },

@@ -39,7 +39,7 @@ const lien =
 const ANNONCES_PAR_DEFAUT = [
   { texte: "Le réseau des entreprises du Canada et de Madagascar", href: null },
   { texte: "Adhésions ouvertes toute l’année", href: "/auth/inscription" },
-  { texte: "Événements, ressources et mises en relation", href: null },
+  { texte: "Événements et ressources", href: null },
 ];
 
 const ANNONCES_MIN = 8;

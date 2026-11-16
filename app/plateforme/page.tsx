@@ -11,7 +11,6 @@ import {
   Headset,
   LockKeyhole,
   Mail,
-  Network,
   ShieldCheck,
   Tag,
   Users,
@@ -37,7 +36,6 @@ const FONCTIONS = [
   { icone: Users, titre: "Membres et adhésions", texte: "Fiches des entreprises, formules, demandes à valider, statut à jour ou en retard" },
   { icone: CreditCard, titre: "Cotisations et factures", texte: "Factures, relances et paiement par carte, encaissé sur le compte Stripe de la Chambre" },
   { icone: CalendarDays, titre: "Événements", texte: "Programme, inscriptions, billets, présences et agenda partagé avec les membres" },
-  { icone: Network, titre: "Maillage", texte: "Mises en relation entre membres, selon ce qu’ils cherchent et ce qu’ils proposent" },
   { icone: CalendarClock, titre: "Rendez-vous", texte: "Les membres réservent un créneau avec l’équipe de la Chambre" },
   { icone: Tag, titre: "Offres et promotions", texte: "Les avantages que les membres proposent au reste du réseau" },
   { icone: FolderOpen, titre: "Ressources et services", texte: "Documents, vidéos et services réservés aux membres" },
@@ -62,7 +60,7 @@ const ESPACES = [
     titre: "L’espace des membres",
     encre: "bg-marque-vert",
     points: [
-      "Annuaire et maillage du réseau",
+      "Annuaire des membres du réseau",
       "Inscription aux événements",
       "Cotisation et factures, payées par carte",
       "Rendez-vous avec l’équipe",
@@ -106,8 +104,8 @@ const QUESTIONS = [
     r: "Oui. Votre espace peut aussi répondre à votre domaine : écrivez au Support IT depuis votre espace pour le relier. Vos courriels peuvent partir de votre domaine une fois celui-ci validé.",
   },
   {
-    q: "Puis-je ajouter ou retirer des fonctions plus tard ?",
-    r: "Oui. Depuis la page Abonnement de votre espace, cochez ou décochez des fonctions de l’offre à la carte ; la facture suivante en tient compte et vos données sont gardées.",
+    q: "Puis-je changer d’offre plus tard ?",
+    r: "Oui. Depuis la page Abonnement de votre espace ; la facture suivante en tient compte et vos données sont gardées.",
   },
   {
     q: "Qui contacter en cas de problème ?",
@@ -137,7 +135,7 @@ export default async function AccueilPlateforme() {
               <FormulaireEmail sombre />
             </div>
             <div className="entree entree-4 mt-5">
-              <Rassurances sombre points={["Offre gratuite, sans carte bancaire", "Fonctions au choix"]} />
+              <Rassurances sombre points={["Standard, Premium ou VIP", "Toutes les fonctions incluses"]} />
             </div>
             <p className="entree entree-4 mt-5 mb-0 text-[14px] text-white/70">
               Vous êtes une entreprise ?{" "}

@@ -28,7 +28,6 @@ export const NAV_MEMBRE: NavGroup[] = [
     label: "Réseau",
     items: [
       { href: "/membre/annuaire", label: "Annuaire des membres", icon: "annuaire" },
-      { href: "/membre/maillage", label: "Maillage", icon: "maillage" },
     ],
   },
   {
@@ -72,7 +71,6 @@ export const NAV_ADMIN: NavGroup[] = [
     label: "Membres",
     items: [
       { href: "/admin/membres", label: "Membres", icon: "users" },
-      { href: "/admin/maillage", label: "Maillage", icon: "maillage" },
     ],
   },
   {
@@ -154,7 +152,6 @@ export const TITLES: Record<string, [string, string]> = {
   "/admin/profil": ["Back-office", "Mon profil"],
   "/admin/membres": ["Back-office", "Membres"],
   "/admin/contacts": ["Back-office", "Contacts"],
-  "/admin/maillage": ["Back-office", "Maillage"],
   "/admin/newsletter": ["Back-office", "Newsletter"],
   "/admin/newsletter/nouvelle": ["Back-office", "Nouvelle lettre"],
   "/admin/abonnement": ["Back-office", "Abonnement & utilisateurs"],

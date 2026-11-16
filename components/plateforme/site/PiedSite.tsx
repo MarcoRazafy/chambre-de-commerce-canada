@@ -22,7 +22,6 @@ export function PiedSite() {
           <ul className={LISTE}>
             <li><Link href="/#fonctionnement" className={LIEN}>Fonctionnement</Link></li>
             <li><Link href="/tarifs" className={LIEN}>Tarifs</Link></li>
-            <li><Link href="/tarifs#sur-mesure" className={LIEN}>Offre à la carte</Link></li>
             <li><Link href="/tarifs#comparer" className={LIEN}>Comparer les offres</Link></li>
             <li><Link href="/#questions" className={LIEN}>Questions</Link></li>
           </ul>
