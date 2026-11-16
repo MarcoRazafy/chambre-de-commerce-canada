@@ -2,6 +2,7 @@ import { Wrench } from "lucide-react";
 import { BandeauRetard } from "@/components/admin/BandeauRetard";
 import { quitterVisite } from "@/lib/actions/visite";
 import { CoquilleAdmin } from "@/components/admin/CoquilleAdmin";
+import { StyleCouleursChambre } from "@/components/StyleCouleursChambre";
 import { etatPaiementChambre } from "@/lib/etat-paiement";
 import { BulleSupport } from "@/components/support/BulleSupport";
 import { getMemberStats, getUnreadTotal } from "@/lib/queries";
@@ -35,6 +36,8 @@ export default async function AdminLayout({
   const aTraiter = stats.total - stats.aJour;
 
   return (
+    <>
+    <StyleCouleursChambre />
     <CoquilleAdmin
       user={user}
       nav={filtrerNav(NAV_ADMIN, offre?.fonctions)}
@@ -56,5 +59,6 @@ export default async function AdminLayout({
       {/* Support IT : l'équipe de la Chambre écrit à l'Admin GM (pas pendant une visite de l'Admin GM) */}
       {user.visiteGM ? null : <BulleSupport espace="admin" prenom={user.nom.split(" ")[0]} />}
     </CoquilleAdmin>
+    </>
   );
 }

@@ -18,6 +18,7 @@ import {
 } from "@/lib/brevo-domaines";
 import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur, urlPublique } from "@/lib/courriel";
 import { avecPreuve, domaineDeLaPlateforme, domaineDUneAutreChambre, oublierPreuve } from "@/lib/domaine-proprietaire";
+import { couleur } from "@/lib/couleurs";
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -226,4 +227,18 @@ export async function desactiverModeDeveloppeur() {
   oublierAdresses();
   revalidatePath(PAGE);
   redirectWithFlash(DEV, "Mode développeur désactivé");
+}
+
+// Onglet Couleurs : les couleurs des espaces de la Chambre (vide : celle de la plateforme)
+export async function enregistrerCouleurs(formData: FormData) {
+  const data: Record<string, string> = {};
+  for (const champ of ["couleurPrincipale", "couleurLaterale", "couleurLaterale2", "couleurHaut", "couleurConnexion"]) {
+    const saisie = texte(formData, champ, 20);
+    const valeur = couleur(saisie);
+    if (saisie && !valeur) redirectWithErreur(`${PAGE}?onglet=couleurs`, "Couleur inconnue.");
+    data[champ] = valeur ?? "";
+  }
+  // Pas de dégradé sans première couleur
+  if (!data.couleurLaterale) data.couleurLaterale2 = "";
+  await enregistrerChamps("couleurs", data, "Couleurs enregistrées");
 }

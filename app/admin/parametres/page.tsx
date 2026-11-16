@@ -9,6 +9,7 @@ import {
   enregistrerAlertes,
   enregistrerExpediteur,
   enregistrerMentions,
+  enregistrerCouleurs,
   enregistrerReseaux,
   envoyerTestExpediteur,
 } from "@/lib/actions/parametres";
@@ -29,9 +30,11 @@ import { redirectWithFlash } from "@/lib/flash";
 import { urlPublique } from "@/lib/courriel";
 import { stripeConfigure } from "@/lib/stripe";
 import { Pill } from "@/components/ui";
+import { ReglageCouleurs } from "@/components/admin/ReglageCouleurs";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
+  { cle: "couleurs", libelle: "Couleurs" },
   { cle: "reseaux", libelle: "Réseaux sociaux" },
   { cle: "mentions", libelle: "Mentions légales" },
   { cle: "paiements", libelle: "Paiements en ligne" },
@@ -155,6 +158,26 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
             </Panneau>
           </form>
         </div>
+      ) : null}
+
+      {onglet === "couleurs" ? (
+        <form action={enregistrerCouleurs}>
+          <Panneau titre="Couleurs" sousTitre="La barre latérale, la barre du haut, les boutons et la page de connexion de vos espaces" teinte="degrade">
+            <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
+              {verrou}
+              <ReglageCouleurs
+                initiales={{
+                  couleurPrincipale: brut?.couleurPrincipale ?? "",
+                  couleurLaterale: brut?.couleurLaterale ?? "",
+                  couleurLaterale2: brut?.couleurLaterale2 ?? "",
+                  couleurHaut: brut?.couleurHaut ?? "",
+                  couleurConnexion: brut?.couleurConnexion ?? "",
+                }}
+              />
+              {enregistrer}
+            </fieldset>
+          </Panneau>
+        </form>
       ) : null}
 
       {onglet === "reseaux" ? (

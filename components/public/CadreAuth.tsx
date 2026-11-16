@@ -65,7 +65,7 @@ export function CadreAuth({
               <span aria-hidden className="absolute inset-y-0 right-0 z-10 w-14 bg-white" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
             </aside>
           ) : (
-            <aside className="hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col bg-surface-2 overflow-hidden">
+            <aside className="panneau-connexion hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col bg-[var(--connexion,var(--surface-2))] overflow-hidden">
               <div className="px-10 xl:px-14 pt-9">{logo}</div>
               <div className="flex-1 flex flex-col items-center justify-center gap-8 px-12 xl:px-24 py-6">
                 {illustration ? (

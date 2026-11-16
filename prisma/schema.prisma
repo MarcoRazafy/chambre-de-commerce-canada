@@ -1402,6 +1402,12 @@ model ProfilChambre {
   couverture  String?
   // Couleur de fond du cadre du logo (« #rrggbb ») : un logo clair reste lisible ; vide : blanc
   logoFond    String?
+  // Couleurs de ses espaces (Paramètres → Couleurs), « #rrggbb » ; vide : celles de la plateforme
+  couleurPrincipale String?
+  couleurLaterale   String?
+  couleurLaterale2  String?
+  couleurHaut       String?
+  couleurConnexion  String?
 
   raisonSociale      String  @default("")
   adresseFacturation String  @default("")

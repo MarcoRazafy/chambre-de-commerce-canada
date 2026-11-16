@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
 import { Coquille } from "@/components/membre/Coquille";
+import { StyleCouleursChambre } from "@/components/StyleCouleursChambre";
 import { BulleSupport } from "@/components/support/BulleSupport";
 import { getMember, getStatsPubliques, getUnreadTotal } from "@/lib/queries";
 import { getNotifications } from "@/lib/notifications";
@@ -42,6 +43,8 @@ export default async function MembreLayout({
   const toujoursOuvert = PAGES_TOUJOURS_OUVERTES;
 
   return (
+    <>
+    <StyleCouleursChambre />
     <Coquille
       user={user}
       membre={membre}
@@ -85,5 +88,6 @@ export default async function MembreLayout({
       {children}
       <BulleSupport espace="membre" prenom={user.nom.split(" ")[0]} />
     </Coquille>
+    </>
   );
 }
