@@ -72,7 +72,7 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
         actions={gere ? <AjouterUtilisateur /> : undefined}
       />
 
-      <div className={`grid gap-4 mb-4 items-start grid-cols-[minmax(0,1fr)] ${gratuite ? "" : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}`}>
+      <div className={`grid gap-4 mb-4 items-stretch grid-cols-[minmax(0,1fr)] ${gratuite ? "" : "lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)]"}`}>
         <Card className="p-6 flex flex-col gap-4">
           <div className="flex justify-between items-start gap-3 flex-wrap">
             <div>
