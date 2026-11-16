@@ -114,7 +114,6 @@ export default async function AdminEvenements({
           <h2 className="m-0 text-[18px]">Page publique des événements</h2>
           {lienPublic ? (
             <>
-              <code className="block rounded-[var(--radius-s)] border border-line bg-surface-2 px-3 py-2.5 text-[13px] break-all">{lienPublic}</code>
               <div className="flex flex-wrap gap-2">
                 <a href={lienPublic} target="_blank" rel="noopener noreferrer" className="btn-action btn-action-sm no-underline"><ExternalLink size={14} /> Ouvrir la page publique</a>
                 <BoutonCopierLien lien={lienPublic} libelle="Copier le lien" />
