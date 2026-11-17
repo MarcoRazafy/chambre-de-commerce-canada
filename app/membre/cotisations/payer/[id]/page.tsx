@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { compteStripeActif } from "@/lib/encaissement-stripe";
 import Link from "next/link";
 import { ArrowLeft, CheckCircle2, Clock } from "lucide-react";
 import { Banner, ViewHead } from "@/components/ui";
@@ -77,7 +78,7 @@ export default async function PageReglement({
           typeof detail.titulaire === "string" ? detail.titulaire : user.nom
         }
         statut={p.statut}
-        raccorde={vanillaPayActif()}
+        raccorde={vanillaPayActif() || Boolean(await compteStripeActif())}
         marchand={marchandAffiche()}
         retour={retour}
       />

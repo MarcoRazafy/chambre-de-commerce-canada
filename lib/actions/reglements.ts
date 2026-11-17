@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { compteStripeActif } from "@/lib/encaissement-stripe";
 import { redirect } from "next/navigation";
 import { delivrerBillets, delivrerBilletsPublics } from "@/lib/billets";
 import { inscriptionPublique } from "@/lib/paiements";
@@ -126,7 +127,8 @@ async function ouvrirTunnel(
     }));
   const page = `/membre/cotisations/payer/${p.id}`;
 
-  if (mode === "carte" && vanillaPayActif() && f.devise === "MGA") {
+  // Carte : tout de suite chez le prestataire (Stripe de la Chambre s'il est actif, sinon Vanilla Pay en Ariary)
+  if (mode === "carte" && ((await compteStripeActif()) || (vanillaPayActif() && f.devise === "MGA"))) {
     const ouverture = await ouvrirChezLePrestataire(
       { id: p.id, montant: p.montant, numeroFacture: f.numero },
       "international",

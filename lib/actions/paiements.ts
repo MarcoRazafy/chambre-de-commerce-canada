@@ -14,6 +14,7 @@ import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { minutes, origineAppelante, tentative } from "@/lib/limite";
 import { ouvrirChezLePrestataire } from "@/lib/paiement-en-ligne";
+import { compteStripeActif } from "@/lib/encaissement-stripe";
 import { estPortefeuilleConnu } from "@/lib/portefeuilles";
 import { fmtMontant } from "@/lib/membership";
 import { reglementPublicOuvert } from "@/lib/paiements";
@@ -76,14 +77,18 @@ export async function payerParCarte(formData: FormData) {
     data: { detail },
   });
 
-  if (!vanillaPayActif()) {
-    redirectWithErreur(
-      page,
-      "Le paiement par carte n’est pas encore raccordé : la chambre attend ses accès au prestataire. En attendant, choisissez un autre moyen.",
-    );
-  }
-  if (p.devise !== "MGA") {
-    redirectWithErreur(page, "Le paiement par carte n’accepte que l’Ariary.");
+  // Compte Stripe de la Chambre actif : la carte passe par Stripe, quelle que soit la devise ; sinon Vanilla Pay,
+  // qui doit être raccordé et ne prend que l'Ariary
+  if (!(await compteStripeActif())) {
+    if (!vanillaPayActif()) {
+      redirectWithErreur(
+        page,
+        "Le paiement par carte n’est pas encore raccordé : la chambre attend ses accès au prestataire. En attendant, choisissez un autre moyen.",
+      );
+    }
+    if (p.devise !== "MGA") {
+      redirectWithErreur(page, "Le paiement par carte n’accepte que l’Ariary.");
+    }
   }
 
   const ouverture = await ouvrirChezLePrestataire(
@@ -321,15 +326,18 @@ export async function payerInscriptionPublique(
     await inscriptionAPayer(formData);
 
   const canal = canalVanillaPay(mode);
+  // Carte avec le compte Stripe de la Chambre : toujours possible ; sinon les conditions de Vanilla Pay
+  const parStripe = mode === "carte" && Boolean(await compteStripeActif());
   if (
-    !canal ||
-    !vanillaPayActif() ||
-    montant < MONTANT_MINIMUM_EN_LIGNE ||
-    (canal === "mobile_money" && !mobileMoneyEnLigne())
+    !parStripe &&
+    (!canal ||
+      !vanillaPayActif() ||
+      montant < MONTANT_MINIMUM_EN_LIGNE ||
+      (canal === "mobile_money" && !mobileMoneyEnLigne()))
   ) {
     redirectWithErreur(
       page,
-      "Le paiement en ligne n’est pas disponible pour cette inscription : réglez-la auprès de l’équipe CanCham.",
+      "Le paiement en ligne n’est pas disponible pour cette inscription : réglez-la auprès de l’équipe de la Chambre.",
     );
   }
 
@@ -343,7 +351,7 @@ export async function payerInscriptionPublique(
 
   const ouverture = await ouvrirChezLePrestataire(
     { id: p.id, montant, numeroFacture: null, portefeuille: mode },
-    canal,
+    canal ?? "international",
     {
       inscription: code,
       eventId,
