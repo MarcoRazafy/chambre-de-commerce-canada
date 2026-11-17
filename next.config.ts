@@ -20,6 +20,8 @@ function politiqueContenu(dev: boolean): string {
 
 const nextConfig: NextConfig = {
   agentRules: false,
+  // Image Docker légère : le serveur autonome et seulement les fichiers qu'il utilise.
+  output: "standalone",
   async headers() {
     const dev = process.env.NODE_ENV !== "production";
     const entetes = [
