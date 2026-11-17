@@ -41,11 +41,13 @@ async function sauverProfil(formData: FormData) {
     adresseRue: texte(formData, "adresseRue", 300),
     codePostal: texte(formData, "codePostal", 20),
     ville: texte(formData, "ville", 120),
+    province: texte(formData, "province", 120),
     pays: texte(formData, "pays", 120),
     adresse: adresseSurUneLigne({
       adresseRue: texte(formData, "adresseRue", 300),
       codePostal: texte(formData, "codePostal", 20),
       ville: texte(formData, "ville", 120),
+      province: texte(formData, "province", 120),
       pays: texte(formData, "pays", 120),
     }),
     telephone: texte(formData, "telephone", 60),

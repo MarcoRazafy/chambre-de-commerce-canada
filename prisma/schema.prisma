@@ -1396,6 +1396,7 @@ model ProfilChambre {
   adresseRue  String  @default("")
   codePostal  String  @default("")
   ville       String  @default("")
+  province    String  @default("")
   pays        String  @default("")
   telephone   String  @default("")
   email       String  @default("")

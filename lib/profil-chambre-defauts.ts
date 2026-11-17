@@ -22,11 +22,13 @@ export type ProfilChambre = {
   tvq: string;
 };
 
-// L'adresse en parties (rue, code postal, ville, pays) : sur une ligne, ou une ligne par partie (factures)
-export type PartiesAdresse = { adresseRue?: string | null; codePostal?: string | null; ville?: string | null; pays?: string | null };
+// L'adresse en parties (rue, ville, province, code postal, pays) : sur une ligne, ou une ligne par partie (factures) ;
+// « Ville, Province Code postal » comme au Canada
+export type PartiesAdresse = { adresseRue?: string | null; codePostal?: string | null; ville?: string | null; province?: string | null; pays?: string | null };
 function lignesAdresse(p: PartiesAdresse): string[] {
   const t = (x?: string | null) => x?.trim() ?? "";
-  return [t(p.adresseRue), [t(p.codePostal), t(p.ville)].filter(Boolean).join(" "), t(p.pays)].filter(Boolean);
+  const provinceCp = [t(p.province), t(p.codePostal)].filter(Boolean).join(" ");
+  return [t(p.adresseRue), [t(p.ville), provinceCp].filter(Boolean).join(", "), t(p.pays)].filter(Boolean);
 }
 export const adresseSurUneLigne = (p: PartiesAdresse) => lignesAdresse(p).join(", ");
 
