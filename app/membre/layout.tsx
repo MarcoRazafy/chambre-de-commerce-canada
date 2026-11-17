@@ -86,7 +86,7 @@ export default async function MembreLayout({
         </p>
       ) : null}
       {children}
-      <BulleSupport espace="membre" prenom={user.nom.split(" ")[0]} />
+      <BulleSupport espace="membre" prenom={user.nom.split(" ")[0]} chambre={{ nom: marque.nom, logo: marque.logo }} />
     </Coquille>
     </>
   );

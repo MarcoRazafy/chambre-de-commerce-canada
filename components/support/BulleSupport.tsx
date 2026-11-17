@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -45,7 +46,7 @@ const RELECTURE_FERMEE = 30_000;
 const SUGGESTIONS = [
   "Je souhaite régler ma cotisation.",
   "J’ai une question sur un événement.",
-  "Je voudrais réserver un service CanCham.",
+  "Je voudrais réserver un service.",
   "Je rencontre un problème sur la plateforme.",
 ];
 
@@ -145,10 +146,14 @@ interface Donnees {
 export function BulleSupport({
   espace,
   prenom,
+  chambre,
 }: {
   espace: Espace;
   prenom: string;
+  /** Espace membre : la Chambre (Mon entreprise) qui répond, son nom et son logo */
+  chambre?: { nom: string; logo: string | null };
 }) {
+  const nomEquipe = chambre?.nom || "L’équipe";
   const pathname = usePathname();
 
   const brut = useSyncExternalStore(sAbonner, lirePosition, () => "");
@@ -448,7 +453,7 @@ export function BulleSupport({
   const fermer = () => setOuvert(false);
   const Icone = espace === "admin" ? Headset : MessageCircle;
   const libelle =
-    espace === "admin" ? "Support IT" : "Écrire à l’équipe CanCham";
+    espace === "admin" ? "Support IT" : `Écrire à ${nomEquipe}`;
 
   const versMessagerie = `/membre/messagerie${
     conversation ? `?t=${conversation.id}` : ""
@@ -518,6 +523,12 @@ export function BulleSupport({
               </span>
             ) : (
               <span className="relative shrink-0">
+                {chambre?.logo ? (
+                  // Le logo de la Chambre, entier, sur un rond blanc
+                  <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden p-1">
+                    <Image src={chambre.logo} alt="" width={40} height={40} sizes="40px" className="w-full h-full object-contain" />
+                  </span>
+                ) : (
                 <Pastille
                   src={LOGO_EQUIPE}
                   alt=""
@@ -525,6 +536,7 @@ export function BulleSupport({
                   taille={40}
                   className="bg-white/15 text-white"
                 />
+                )}
                 <span
                   aria-hidden
                   className="absolute bottom-0 right-0 w-3 h-3 rounded-full bg-[#2fbf71] border-2 border-[#12243a]"
@@ -536,7 +548,7 @@ export function BulleSupport({
               <div className="text-[15px] font-semibold leading-tight truncate">
                 {espace === "admin"
                   ? "Support IT"
-                  : (conversation?.nom ?? "Équipe CanCham")}
+                  : chambre?.nom || (conversation?.nom ?? nomEquipe)}
               </div>
               <div className="text-[12px] text-white/65 truncate">
                 {espace === "admin"
@@ -583,11 +595,13 @@ export function BulleSupport({
                   <FilMessages
                     messages={conversation.messages}
                     espace={espace}
+                    nomEquipe={nomEquipe}
                   />
                 ) : (
                   <Accueil
                     espace={espace}
                     prenom={prenom}
+                    nomEquipe={nomEquipe}
                     choisir={(texte) => {
                       setBrouillon(texte);
                       saisie.current?.focus();
@@ -681,9 +695,11 @@ export function BulleSupport({
 function FilMessages({
   messages,
   espace,
+  nomEquipe,
 }: {
   messages: MessageSupport[];
   espace: Espace;
+  nomEquipe: string;
 }) {
   return (
     <>
@@ -712,7 +728,7 @@ function FilMessages({
                 className={`${aDroite ? "self-end mr-1" : "self-start ml-1"} mt-1 -mb-0.5 text-[11px] font-semibold text-muted`}
               >
                 {espace === "membre"
-                  ? "Équipe CanCham"
+                  ? nomEquipe
                   : m.equipe
                     ? `${m.de} · Support IT`
                     : m.de}
@@ -769,10 +785,12 @@ function FilMessages({
 function Accueil({
   espace,
   prenom,
+  nomEquipe,
   choisir,
 }: {
   espace: Espace;
   prenom: string;
+  nomEquipe: string;
   choisir: (texte: string) => void;
 }) {
   return (
@@ -781,7 +799,7 @@ function Accueil({
         <strong className="block mb-1">Bonjour {prenom},</strong>
         {espace === "admin"
           ? "Un problème, une question sur la plateforme ? Écrivez au Support IT, avec une capture ou une vidéo si besoin."
-          : "Une question sur votre adhésion, un paiement, un événement ou un service ? Écrivez-nous : l’équipe CanCham vous répond ici même, et la conversation reste dans votre messagerie."}
+          : `Une question sur votre adhésion, un paiement, un événement ou un service ? Écrivez-nous : l’équipe de ${nomEquipe} vous répond ici même, et la conversation reste dans votre messagerie.`}
       </div>
       <div className="flex flex-wrap gap-1.5">
         {(espace === "admin" ? SUGGESTIONS_IT : SUGGESTIONS).map((s) => (
