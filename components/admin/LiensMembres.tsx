@@ -23,7 +23,6 @@ export function LiensMembres({ adhesion, connexion }: { adhesion: string; connex
           ].map((l) => (
             <section key={l.titre} className="flex flex-col gap-2.5">
               <h3 className="m-0 text-[15px] text-ink">{l.titre}</h3>
-              <code className="block rounded-[var(--radius-s)] border border-line bg-surface-2 px-3 py-2.5 text-[13px] break-all">{l.lien}</code>
               <div className="flex flex-wrap gap-2">
                 <a href={l.lien} target="_blank" rel="noopener noreferrer" className="btn-action btn-action-sm no-underline"><ExternalLink size={14} /> Ouvrir</a>
                 <BoutonCopierLien lien={l.lien} libelle="Copier le lien" />

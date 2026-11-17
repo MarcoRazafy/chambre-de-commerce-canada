@@ -69,7 +69,7 @@ export function Coquille({
             className="no-underline block"
             aria-label={`${marque.nom}, accueil`}
           >
-            <LogoEspace logo={marque.logo} nom={marque.nom} />
+            <LogoEspace logo={marque.logo} nom={marque.nom} centre />
           </Link>
         </div>
 

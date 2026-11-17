@@ -267,7 +267,8 @@ export async function relancesDues(chambreId: string, maintenant = new Date()): 
         ],
         bouton: { libelle: "Payer la facture", url: lien },
       });
-      await envoyerCourriel({ a: u.email, sujet: `Facture ${f.numero} en attente`, html, texte });
+      // Au nom de la plateforme (les tâches tournent dans la Chambre : sans cela, son propre expéditeur)
+      await envoyerCourriel({ a: u.email, sujet: `Facture ${f.numero} en attente`, html, texte, dePlateforme: true });
     }
     // Toutes les relances passées comptent comme faites : une seule par passage
     const faites = [...new Set([...f.relances, ...r.relances.filter((d) => d <= jours)])];
