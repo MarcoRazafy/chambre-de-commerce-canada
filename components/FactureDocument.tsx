@@ -12,29 +12,30 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
 
   return (
     <article className="bg-white text-[#16202b] border border-line rounded-[var(--radius-m)] shadow-[var(--shadow)] max-w-[820px] mx-auto print:border-0 print:shadow-none print:max-w-none print:rounded-none print:min-h-[296mm] print:flex print:flex-col">
+      {/* En-tête sur le dégradé de la barre latérale (celui de la Chambre s'il est réglé dans Paramètres → Couleurs) */}
       <div
-        className="h-1.5 rounded-t-[var(--radius-m)] print:rounded-none"
-        style={{ background: "var(--marque-degrade)" }}
-      />
-
-      <div className="px-8 sm:px-12 py-10 print:px-[16mm] print:py-[14mm] print:flex-1 print:flex print:flex-col">
-        <header className="flex justify-between items-start gap-8 flex-wrap">
+        className="rounded-t-[var(--radius-m)] print:rounded-none text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+        style={{ background: "var(--laterale, linear-gradient(180deg, #a3122a 0%, #5c1220 32%, #2a1f26 50%, #123f2d 70%, #007140 100%))" }}
+      >
+        <header className="px-8 sm:px-12 py-9 print:px-[16mm] print:py-[12mm] flex justify-between items-center gap-8 flex-wrap">
           {/* Large, carré ou en hauteur : le logo tient entier dans ce cadre, calé à gauche */}
           <span className="relative block w-[220px] h-[90px] shrink-0">
             <Image src={e.logo} alt={e.raisonSociale} fill sizes="220px" className="object-contain object-left" priority />
           </span>
           <div className="text-right">
-            <div className="surtitre text-[#ad0707]">Facture</div>
+            <div className="surtitre text-white/80">Facture</div>
             <div className="font-[family-name:var(--font-mono)] text-[22px] font-bold mt-1">
               {f.numero}
             </div>
-            <div className="text-[13px] text-[#5b6b7a] mt-1">
+            <div className="text-[13px] text-white/75 mt-1">
               Émise le {fmtDate(f.date)}
             </div>
           </div>
         </header>
+      </div>
 
-        <div className="grid gap-8 sm:grid-cols-2 mt-10">
+      <div className="px-8 sm:px-12 py-10 print:px-[16mm] print:py-[14mm] print:flex-1 print:flex print:flex-col">
+        <div className="grid gap-8 sm:grid-cols-2">
           <div>
             <div className="surtitre text-[#8797a6] mb-2">Émetteur</div>
             <div className="font-bold text-[14.5px]">{e.raisonSociale}</div>
