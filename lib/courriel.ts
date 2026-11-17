@@ -124,6 +124,7 @@ export async function envoyerCourrielSuivi(
   c: Courriel,
   { suivi }: { suivi?: string } = {},
 ): Promise<string | null> {
+  c = { ...c, html: await marquerEnTete(c) };
   const fournisseur = fournisseurCourriel();
   if (!fournisseur) {
     const jointes = c.pieces?.length
@@ -260,7 +261,10 @@ const LIMITES_TOLEREES = 20;
 
 const ESSAIS_ENVOI = 2;
 
-export const ADRESSE_PLATEFORME = "https://app.cancham.mg";
+// Adresse de secours des liens et images des courriels (sans APP_URL en ligne) : le site de la plateforme
+export const ADRESSE_PLATEFORME = process.env.DOMAINE_PLATEFORME?.trim()
+  ? `https://${process.env.DOMAINE_PLATEFORME.trim().toLowerCase()}`
+  : "https://lalliee-virtuelle.com";
 
 export function estAdresseLocale(url: string): boolean {
   return /^https?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1\])(:\d+)?(\/|$)/i.test(
@@ -292,10 +296,42 @@ export async function urlPublique(chemin: string): Promise<string> {
   return `${protocole}://${hote}${chemin}`;
 }
 
-export function enTete(): string {
+// D'où les images des courriels sont servies (une adresse publique, jamais localhost)
+function baseImages(): string {
   const base = baseLiens();
-  const site = base && !estAdresseLocale(base) ? base : ADRESSE_PLATEFORME;
-  return `<img src="${echapper(`${site}/marque/logo-courriel.png`)}" width="220" height="89" alt="IMPACT 261" style="display:block;border:0;outline:none;text-decoration:none;width:220px;height:auto;color:#ffffff;font-size:16px;font-weight:bold">`;
+  return base && !estAdresseLocale(base) ? base : ADRESSE_PLATEFORME;
+}
+
+// En-tête des courriels : une marque provisoire, remplacée à l'envoi par celle de l'expéditeur (marquerEnTete)
+const MARQUE_PROVISOIRE = "/marque/logo-courriel.png";
+export function enTete(): string {
+  return `<img src="${echapper(`${baseImages()}${MARQUE_PROVISOIRE}`)}" width="220" height="89" alt="" style="display:block;border:0;outline:none;text-decoration:none;width:220px;height:auto;color:#ffffff;font-size:16px;font-weight:bold">`;
+}
+
+// La marque de l'en-tête selon l'expéditeur : la Chambre (son logo de Mon entreprise sur une pastille de sa couleur de
+// fond, blanche par défaut ; sans logo, son nom) ou la plateforme (logo de L'Alliée Virtuelle)
+const IMG_PROVISOIRE = /<img src="[^"]*\/marque\/logo-courriel\.png"[^>]*>/;
+async function marquerEnTete(c: Courriel): Promise<string> {
+  if (!IMG_PROVISOIRE.test(c.html)) return c.html;
+  const plateforme = `<img src="${echapper(`${baseImages()}/marque/alliee-courriel.png`)}" width="92" height="80" alt="L’Alliée Virtuelle" style="display:block;border:0;outline:none;height:80px;width:auto">`;
+  let marque = plateforme;
+  if (!c.dePlateforme) {
+    try {
+      await chambreCourante();
+      const p = await prisma.profilChambre.findFirst({ select: { logo: true, logoFond: true, nom: true } });
+      const logo = p?.logo?.trim();
+      const fond = p?.logoFond && /^#[0-9a-f]{6}$/i.test(p.logoFond) ? p.logoFond : "#ffffff";
+      if (logo) {
+        const src = /^https?:\/\//.test(logo) ? logo : `${baseImages()}${logo.startsWith("/") ? "" : "/"}${logo}`;
+        marque = `<table role="presentation" cellspacing="0" cellpadding="0"><tr><td style="background:${fond};border-radius:8px;padding:8px 14px"><img src="${echapper(src)}" height="56" alt="${echapper(p?.nom ?? "")}" style="display:block;border:0;outline:none;height:56px;width:auto;max-width:220px"></td></tr></table>`;
+      } else if (p?.nom?.trim()) {
+        marque = `<span style="font-size:20px;font-weight:bold;color:#ffffff">${echapper(p.nom.trim())}</span>`;
+      }
+    } catch {
+      // Hors d'une Chambre : la marque de la plateforme
+    }
+  }
+  return c.html.replace(IMG_PROVISOIRE, marque);
 }
 
 export function echapper(texte: string): string {

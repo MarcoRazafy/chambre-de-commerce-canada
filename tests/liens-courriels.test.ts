@@ -36,14 +36,14 @@ describe("liens des e-mails", () => {
       "http://0.0.0.0:8080",
     ]) {
       vi.stubEnv("APP_URL", locale);
-      expect(await urlPublique(LIEN)).toBe(`https://app.cancham.mg${LIEN}`);
+      expect(await urlPublique(LIEN)).toBe(`https://lalliee-virtuelle.com${LIEN}`);
     }
   });
 
-  it("prennent app.cancham.mg quand APP_URL manque en production", async () => {
+  it("prennent le site de la plateforme quand APP_URL manque en production", async () => {
     vi.stubEnv("NODE_ENV", "production");
     vi.stubEnv("APP_URL", "");
-    expect(await urlPublique(LIEN)).toBe(`https://app.cancham.mg${LIEN}`);
+    expect(await urlPublique(LIEN)).toBe(`https://lalliee-virtuelle.com${LIEN}`);
   });
 
   it("restent sur la machine en local, où vivent les jetons de test", async () => {
