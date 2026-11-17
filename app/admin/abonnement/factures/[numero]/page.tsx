@@ -10,7 +10,6 @@ import { fmtDate } from "@/lib/format";
 import { identitePlateforme, numerosPlateforme } from "@/lib/identite-plateforme";
 import { fmtDollars, fmtPourcent, payantsFacture } from "@/lib/plateforme";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
-import { couleur, nuance, tropClaire } from "@/lib/couleurs";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 
 // Une facture de l'abonnement à la plateforme, prête à imprimer ou à enregistrer en PDF (?pdf=1).
@@ -31,10 +30,8 @@ export default async function FactureAbonnement({
   const numeros = numerosPlateforme(plateforme);
   const ligne = "flex justify-between gap-4 py-1.5 tabular-nums";
   const gris = "text-[#5b6b7a]";
-  // Le fond de l'en-tête suit la couleur de fond du logo (Mon entreprise), sinon bleu nuit ; texte foncé sur une couleur claire
-  const fond = couleur(brut?.logoFond) ?? "#0f1d2c";
-  const clair = tropClaire(fond);
-  const doux = clair ? "text-[#5b6b7a]" : "text-white/70";
+  // L'en-tête a le dégradé de la barre latérale (celui de la Chambre s'il est réglé dans Paramètres → Couleurs)
+  const doux = "text-white/75";
 
   return (
     <>
@@ -47,12 +44,11 @@ export default async function FactureAbonnement({
       </div>
 
       <article className="bg-white text-[#16202b] border border-line rounded-[var(--radius-m)] shadow-[var(--shadow)] max-w-[820px] mx-auto print:border-0 print:shadow-none print:max-w-none print:rounded-none">
-        {/* En-tête sur un fond dégradé, jusque sous le logo de la Chambre (un logo clair y reste lisible) */}
+        {/* En-tête sur le dégradé de la barre latérale, jusque sous le logo de la Chambre */}
         <div
-          className={`rounded-t-[var(--radius-m)] print:rounded-none [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${clair ? "text-[#16202b]" : "text-white"}`}
-          style={{ background: `linear-gradient(160deg, ${nuance(fond, clair ? -0.06 : 0)} 0%, ${fond} 55%, ${nuance(fond, clair ? 0.4 : 0.12)} 100%)` }}
+          className="rounded-t-[var(--radius-m)] print:rounded-none text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
+          style={{ background: "var(--laterale)" }}
         >
-          <div className="h-1.5 rounded-t-[var(--radius-m)] print:rounded-none" style={{ background: "var(--marque-degrade)" }} />
           <div className="px-8 sm:px-12 pt-10 pb-8 print:px-[16mm] print:pt-[14mm] flex flex-col gap-8">
             <header className="flex justify-between items-start gap-8 flex-wrap">
               <div>
