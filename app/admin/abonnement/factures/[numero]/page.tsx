@@ -10,6 +10,7 @@ import { fmtDate } from "@/lib/format";
 import { identitePlateforme, numerosPlateforme } from "@/lib/identite-plateforme";
 import { fmtDollars, fmtPourcent, payantsFacture } from "@/lib/plateforme";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
+import { couleur, nuance, tropClaire } from "@/lib/couleurs";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 
 // Une facture de l'abonnement à la plateforme, prête à imprimer ou à enregistrer en PDF (?pdf=1).
@@ -30,6 +31,10 @@ export default async function FactureAbonnement({
   const numeros = numerosPlateforme(plateforme);
   const ligne = "flex justify-between gap-4 py-1.5 tabular-nums";
   const gris = "text-[#5b6b7a]";
+  // Le fond de l'en-tête suit la couleur de fond du logo (Mon entreprise), sinon bleu nuit ; texte foncé sur une couleur claire
+  const fond = couleur(brut?.logoFond) ?? "#0f1d2c";
+  const clair = tropClaire(fond);
+  const doux = clair ? "text-[#5b6b7a]" : "text-white/70";
 
   return (
     <>
@@ -42,28 +47,38 @@ export default async function FactureAbonnement({
       </div>
 
       <article className="bg-white text-[#16202b] border border-line rounded-[var(--radius-m)] shadow-[var(--shadow)] max-w-[820px] mx-auto print:border-0 print:shadow-none print:max-w-none print:rounded-none">
-        <div className="h-1.5 rounded-t-[var(--radius-m)] print:rounded-none" style={{ background: "var(--marque-degrade)" }} />
-        <div className="px-8 sm:px-12 py-10 print:px-[16mm] print:py-[14mm] flex flex-col gap-8">
-          <header className="flex justify-between items-start gap-8 flex-wrap">
+        {/* En-tête sur un fond dégradé, jusque sous le logo de la Chambre (un logo clair y reste lisible) */}
+        <div
+          className={`rounded-t-[var(--radius-m)] print:rounded-none [print-color-adjust:exact] [-webkit-print-color-adjust:exact] ${clair ? "text-[#16202b]" : "text-white"}`}
+          style={{ background: `linear-gradient(160deg, ${nuance(fond, clair ? -0.06 : 0)} 0%, ${fond} 55%, ${nuance(fond, clair ? 0.4 : 0.12)} 100%)` }}
+        >
+          <div className="h-1.5 rounded-t-[var(--radius-m)] print:rounded-none" style={{ background: "var(--marque-degrade)" }} />
+          <div className="px-8 sm:px-12 pt-10 pb-8 print:px-[16mm] print:pt-[14mm] flex flex-col gap-8">
+            <header className="flex justify-between items-start gap-8 flex-wrap">
+              <div>
+                <div className={`text-[13px] uppercase tracking-[0.12em] font-semibold ${doux}`}>Facture</div>
+                <div className="text-[26px] font-bold tabular-nums">{f.numero}</div>
+                <div className={`text-[13.5px] ${doux}`}>Émise le {fmtDate(date)}</div>
+                <div className="mt-2">{f.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</div>
+              </div>
+              <div className="text-right text-[13.5px] leading-relaxed">
+                <div className="font-bold text-[15px]">{plateforme.nom}</div>
+                {plateforme.raisonSociale && plateforme.raisonSociale !== plateforme.nom ? <div className={doux}>{plateforme.raisonSociale}</div> : null}
+                {plateforme.adresse.split("\n").filter(Boolean).map((l, i) => <div key={i} className={doux}>{l}</div>)}
+                {plateforme.courriel ? <div className={doux}>{plateforme.courriel}</div> : null}
+                {plateforme.telephone ? <div className={doux}>{plateforme.telephone}</div> : null}
+              </div>
+            </header>
             <div>
-              <div className={`text-[13px] uppercase tracking-[0.12em] font-semibold ${gris}`}>Facture</div>
-              <div className="text-[26px] font-bold tabular-nums">{f.numero}</div>
-              <div className={`text-[13.5px] ${gris}`}>Émise le {fmtDate(date)}</div>
-              <div className="mt-2">{f.payeeLe ? <Pill tone="ok">✓ Payée</Pill> : <Pill tone="warn">À régler</Pill>}</div>
+              <div className={`text-[11.5px] uppercase tracking-[0.12em] font-semibold ${doux} mb-2`}>Facturé à</div>
+              {brut?.logo ? <Image src={brut.logo} alt="" width={600} height={600} className="w-auto h-[48px] max-w-[180px] object-contain" unoptimized /> : null}
             </div>
-            <div className="text-right text-[13.5px] leading-relaxed">
-              <div className="font-bold text-[15px]">{plateforme.nom}</div>
-              {plateforme.raisonSociale && plateforme.raisonSociale !== plateforme.nom ? <div className={gris}>{plateforme.raisonSociale}</div> : null}
-              {plateforme.adresse.split("\n").filter(Boolean).map((l, i) => <div key={i} className={gris}>{l}</div>)}
-              {plateforme.courriel ? <div className={gris}>{plateforme.courriel}</div> : null}
-              {plateforme.telephone ? <div className={gris}>{plateforme.telephone}</div> : null}
-            </div>
-          </header>
+          </div>
+        </div>
 
+        <div className="px-8 sm:px-12 pt-6 pb-10 print:px-[16mm] print:pb-[14mm] flex flex-col gap-8">
           <section className="grid gap-6 sm:grid-cols-2 text-[13.5px] leading-relaxed">
             <div>
-              <div className={`text-[11.5px] uppercase tracking-[0.12em] font-semibold ${gris} mb-1`}>Facturé à</div>
-              {brut?.logo ? <Image src={brut.logo} alt="" width={600} height={600} className="w-auto h-[48px] max-w-[180px] object-contain mb-2" unoptimized /> : null}
               <div className="font-semibold">{chambre.nom}</div>
               {chambre.adresse ? <div className={gris}>{chambre.adresse}</div> : null}
               {chambre.email ? <div className={gris}>{chambre.email}</div> : null}
