@@ -19,20 +19,23 @@ const GRILLE = "flex flex-col gap-2.5";
 const ICONE = "inline-flex items-center justify-center size-9 rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-default";
 const libelle = "block text-[12px] font-semibold text-muted mb-1";
 
-function Champs({ f }: { f?: Formule }) {
+// Le type d'adhésion sur sa ligne, puis le montant et les boutons sur la même ligne
+function Champs({ f, children }: { f?: Formule; children?: React.ReactNode }) {
   return (
-    // Type d'adhésion et montant sur la même ligne (l'un sous l'autre sur téléphone)
-    <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px]">
+    <>
       <label className="min-w-0"><span className={libelle}>Type d’adhésion</span>
         <input name="profil" required maxLength={120} defaultValue={f?.profil ?? ""} placeholder="Type d’adhésion" className={INPUT} />
       </label>
-      <label className="min-w-0"><span className={libelle}>Montant par an</span>
-        <span className="relative block">
-          <input name="montant" required inputMode="numeric" pattern="[0-9 ]+" defaultValue={f ? String(f.montant) : ""} placeholder="0" className={`${INPUT} pr-9`} />
-          <span aria-hidden className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-muted pointer-events-none">$</span>
-        </span>
-      </label>
-    </div>
+      <div className="flex items-end gap-2.5 flex-wrap">
+        <label className="w-[150px] shrink-0"><span className={libelle}>Montant par an</span>
+          <span className="relative block">
+            <input name="montant" required inputMode="numeric" pattern="[0-9 ]+" defaultValue={f ? String(f.montant) : ""} placeholder="0" className={`${INPUT} pr-9`} />
+            <span aria-hidden className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-muted pointer-events-none">$</span>
+          </span>
+        </label>
+        {children}
+      </div>
+    </>
   );
 }
 
@@ -45,15 +48,16 @@ export function ListeFormules({ formules, gere }: { formules: Ligne[]; gere: boo
         <form key={f.id} action={enregistrerFormuleAdhesion} className="rounded-[var(--radius-m)] border border-line bg-surface p-3.5">
           <input type="hidden" name="formuleId" value={f.id} />
           <div className={GRILLE}>
-            <Champs f={f} />
+            <Champs f={f}>
             {gere ? (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 pb-0.5">
                 <button type="submit" aria-label={`Enregistrer ${f.profil}`} title="Enregistrer" className={ICONE}><Save size={15} /></button>
                 <button type="submit" formAction={monterFormuleAdhesion} disabled={i === 0} aria-label="Monter" title="Monter" className={ICONE} formNoValidate><ArrowUp size={15} /></button>
                 <button type="submit" formAction={descendreFormuleAdhesion} disabled={i === actives.length - 1} aria-label="Descendre" title="Descendre" className={ICONE} formNoValidate><ArrowDown size={15} /></button>
                 <button type="submit" formAction={retirerFormuleAdhesion} aria-label={`Retirer ${f.profil}`} title={f.membres ? "Archiver (ses membres la gardent)" : "Supprimer"} className={`${ICONE} hover:!text-bad`} formNoValidate><X size={15} /></button>
               </div>
             ) : null}
+            </Champs>
           </div>
           {f.membres ? <p className="m-0 mt-2 text-[12px] text-faint">{f.membres} membre{f.membres > 1 ? "s" : ""}</p> : null}
         </form>
@@ -62,10 +66,9 @@ export function ListeFormules({ formules, gere }: { formules: Ligne[]; gere: boo
       {gere ? (
         <form action={ajouterFormuleAdhesion} className="rounded-[var(--radius-m)] border border-dashed border-line-champ bg-surface-2 p-3.5">
           <div className={GRILLE}>
-            <Champs />
-            <div>
+            <Champs>
               <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface"><Plus size={14} /> Ajouter</button>
-            </div>
+            </Champs>
           </div>
         </form>
       ) : null}
