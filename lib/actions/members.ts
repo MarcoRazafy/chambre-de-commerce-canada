@@ -197,7 +197,7 @@ export async function donnerAcces(formData: FormData) {
           entreprise: m.nom,
           formule: m.formule ? libelleFormule(m.formule) : null,
           montant: m.formule ? fmtCotisation(m.formule) : null,
-          enLigne: cotisationEnLigne(m.formule),
+          enLigne: await cotisationEnLigne(m.formule),
           lien,
           creerMotDePasse: !contact.motDePasse,
         })
@@ -543,7 +543,7 @@ export async function sendReminder(formData: FormData) {
       formule: m.formule ? libelleFormule(m.formule) : null,
       montant: m.formule ? fmtCotisation(m.formule) : null,
       retardJours: retardJours || null,
-      enLigne: cotisationEnLigne(m.formule),
+      enLigne: await cotisationEnLigne(m.formule),
       lien: await urlPublique("/membre/cotisations"),
     }),
   );

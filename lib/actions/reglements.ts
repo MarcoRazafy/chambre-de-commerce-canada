@@ -9,7 +9,7 @@ import { envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { courrielReglementEcarte } from "@/lib/modeles-courriels";
 import { ouvrirChezLePrestataire } from "@/lib/paiement-en-ligne";
 import { vanillaPayActif } from "@/lib/vanillapay";
-import { ouvrirFactureCotisation, payableEnLigne } from "@/lib/cotisation";
+import { enLigneDansLaChambre, ouvrirFactureCotisation } from "@/lib/cotisation";
 import { detailAchat, estTypeAchat, pageAchat } from "@/lib/achat";
 import { examinerAchat } from "@/lib/achats-en-ligne";
 import { prisma } from "@/lib/db";
@@ -231,10 +231,10 @@ export async function reglerCotisation(formData: FormData) {
       "Aucune cotisation à régler en ligne pour le moment : écrivez à l’équipe.",
     );
   }
-  if (!payableEnLigne(facture.montant, facture.devise)) {
+  if (!(await enLigneDansLaChambre(facture.montant, facture.devise))) {
     redirectWithErreur(
       retour,
-      "Cette cotisation ne se règle pas en ligne : réglez-la auprès de l’équipe CanCham.",
+      "Cette cotisation ne se règle pas en ligne : réglez-la auprès de l’équipe de la Chambre.",
     );
   }
   await ouvrirTunnel(user, facture.id, mode);

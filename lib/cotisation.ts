@@ -11,6 +11,7 @@ import {
   type Formule,
 } from "@/lib/membership";
 import { MONTANT_MINIMUM_EN_LIGNE, vanillaPayActif } from "@/lib/vanillapay";
+import { compteStripeActif } from "@/lib/encaissement-stripe";
 
 export const OBJET_ADHESION = "Cotisation annuelle — adhésion";
 export const OBJET_RENOUVELLEMENT = "Cotisation annuelle";
@@ -35,9 +36,15 @@ export function payableEnLigne(montant: number, devise: Devise): boolean {
   );
 }
 
-export function cotisationEnLigne(formule: Formule | null): boolean {
+// Payable en ligne par la Chambre en cours : par carte sur son compte Stripe s'il est actif (toute devise), sinon par
+// Vanilla Pay (Ariary, au-dessus du minimum)
+export async function enLigneDansLaChambre(montant: number, devise: Devise): Promise<boolean> {
+  return Boolean(await compteStripeActif()) || payableEnLigne(montant, devise);
+}
+
+export async function cotisationEnLigne(formule: Formule | null): Promise<boolean> {
   if (!formule) return false;
-  return payableEnLigne(formule.montant, formule.devise);
+  return enLigneDansLaChambre(formule.montant, formule.devise);
 }
 
 export function factureCotisationOuverte(memberId: string) {
@@ -65,7 +72,7 @@ export async function cotisationDue(m: {
     montant,
     devise,
     somme: montant === null ? null : fmtMontant(montant, devise),
-    enLigne: montant !== null && payableEnLigne(montant, devise),
+    enLigne: montant !== null && (await enLigneDansLaChambre(montant, devise)),
   };
 }
 
