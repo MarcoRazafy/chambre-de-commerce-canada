@@ -190,7 +190,15 @@ export async function connecterStripe() {
   const onglet = `${PAGE}?onglet=paiements`;
   await exigerAdministrateur(onglet);
   if (!stripeConfigure()) redirectWithErreur(onglet, "Le paiement par carte n’est pas encore disponible.");
-  redirect(await lienInscriptionStripe(await chambreCourante(), await urlPublique(onglet)));
+  let lien: string;
+  try {
+    lien = await lienInscriptionStripe(await chambreCourante(), await urlPublique(onglet));
+  } catch (e) {
+    // Stripe refuse (Connect pas encore activé sur le compte de la plateforme, réseau…) : un message, pas une page d'erreur
+    console.error("[stripe] connexion du compte de la Chambre", e);
+    redirectWithErreur(onglet, "Stripe n’a pas pu ouvrir la connexion pour le moment. Réessayez plus tard ; si cela continue, écrivez au Support IT.");
+  }
+  redirect(lien);
 }
 
 // Onglet Mode développeur : autoriser l'Admin GM à entrer dans l'espace (24 h, 7 jours ou 30 jours), ou retirer
