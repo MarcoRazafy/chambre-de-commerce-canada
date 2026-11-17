@@ -7,7 +7,6 @@ import { courrielsActifs, envoyerCourriel, envoyerCourrielSuivi, gabarit, urlPub
 import { COORDONNEES } from "@/lib/coordonnees";
 import { logoPourCourriel } from "@/lib/profil-chambre";
 import { lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
-import { appliquerReglesTags } from "@/lib/tags-auto";
 
 // Audience d'une lettre : les contacts des membres (selon le statut et les tags de l'entreprise, principal ou tous)
 // et, si coché, les abonnés à la lettre d'information. Avec « evenement », seulement les inscrits de cet événement.
@@ -45,8 +44,6 @@ export type Destinataire = { email: string; nom: string; abonne: boolean; motif?
 
 // Une adresse n'apparaît qu'une fois, même si elle est à la fois contact et abonnée
 export async function destinataires(a: Audience): Promise<Destinataire[]> {
-  // Les tags automatiques suivent la situation du moment : la lettre part aux bonnes entreprises
-  await appliquerReglesTags();
   const parAdresse = new Map<string, Destinataire>();
   if (a.evenement) {
     // Les inscrits de l'événement (pas ceux notés absents), un courriel par adresse

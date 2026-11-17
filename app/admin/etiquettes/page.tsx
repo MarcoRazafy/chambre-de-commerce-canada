@@ -8,8 +8,6 @@ import { retirerTagContactSeul } from "@/lib/actions/contacts";
 import { getEntreprisesContacts, getTousLesTags, type EntrepriseContact } from "@/lib/contacts-admin";
 import { LigneEntrepriseTag } from "@/components/admin/LigneEntreprise";
 import { prisma } from "@/lib/db";
-import { appliquerReglesTags, getReglesTags } from "@/lib/tags-auto";
-import { ReglesTags } from "@/components/admin/ReglesTags";
 import { plat } from "@/lib/texte";
 
 const CHAMP =
@@ -35,13 +33,10 @@ export default async function AdminEtiquettes({
 }) {
   const sp = await searchParams;
   const choisi = sp.e ?? null;
-  // Tags automatiques d'abord : la page montre la situation du moment
-  await appliquerReglesTags();
-  const [entreprises, crees, tousTags, regles, seuls] = await Promise.all([
+  const [entreprises, crees, tousTags, seuls] = await Promise.all([
     getEntreprisesContacts(),
     prisma.tag.findMany({ select: { nom: true } }),
     getTousLesTags(),
-    getReglesTags(),
     // Les contacts sans entreprise qui portent des tags
     prisma.abonne.findMany({ where: { desabonneLe: null, NOT: { etiquettes: { isEmpty: true } } }, orderBy: { prenom: "asc" }, select: { id: true, prenom: true, email: true, etiquettes: true } }),
   ]);
@@ -147,7 +142,6 @@ export default async function AdminEtiquettes({
   return (
     <>
       <EnTeteAdmin surtitre="Communication" titre={<>Les <Saillant>tags</Saillant></>} actions={<NouveauTag />} />
-      <ReglesTags regles={regles} tousTags={tousTags} />
       <ListeTags
         tags={resumes}
         totalTags={parTag.size}

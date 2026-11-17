@@ -1,5 +1,9 @@
 import "server-only";
 
+// Tags automatiques (règles « statut → tag ») : retirés de l'interface et plus appliqués nulle part, en attendant
+// d'être repris dans un workflow. Les règles enregistrées restent en base ; les tags déjà posés restent sur les
+// entreprises.
+
 import { prisma } from "@/lib/db";
 import { tagsSelonRegles } from "@/lib/tags";
 
