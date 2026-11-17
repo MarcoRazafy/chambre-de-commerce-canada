@@ -14,14 +14,15 @@ import { fmtCotisation, libelleFormule, type Formule } from "@/lib/membership";
 
 type Ligne = Formule & { active: boolean; membres: number };
 
-// Un champ par ligne, les boutons en dessous
+// Les champs, puis les boutons en dessous
 const GRILLE = "flex flex-col gap-2.5";
 const ICONE = "inline-flex items-center justify-center size-9 rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-default";
 const libelle = "block text-[12px] font-semibold text-muted mb-1";
 
 function Champs({ f }: { f?: Formule }) {
   return (
-    <>
+    // Type d'adhésion et montant sur la même ligne (l'un sous l'autre sur téléphone)
+    <div className="grid gap-2.5 grid-cols-1 sm:grid-cols-[minmax(0,1fr)_150px]">
       <label className="min-w-0"><span className={libelle}>Type d’adhésion</span>
         <input name="profil" required maxLength={120} defaultValue={f?.profil ?? ""} placeholder="Type d’adhésion" className={INPUT} />
       </label>
@@ -31,7 +32,7 @@ function Champs({ f }: { f?: Formule }) {
           <span aria-hidden className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-muted pointer-events-none">$</span>
         </span>
       </label>
-    </>
+    </div>
   );
 }
 
