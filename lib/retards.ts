@@ -26,7 +26,7 @@ export function etatRetard(factures: Facture[], r: ReglagesRetard, maintenant = 
 }
 
 // La relance à envoyer pour une facture impayée (la plus récente due, une seule fois), ou null
-export function relanceDue(f: { date: Date; relances: number[] }, r: ReglagesRetard, maintenant = new Date()): number | null {
+export function relanceDue(f: { date: Date; relances: number[] }, r: Pick<ReglagesRetard, "relances">, maintenant = new Date()): number | null {
   const jours = joursDepuis(f.date, maintenant);
   const dues = r.relances.filter((d) => d <= jours && !f.relances.includes(d));
   return dues.length ? Math.max(...dues) : null;

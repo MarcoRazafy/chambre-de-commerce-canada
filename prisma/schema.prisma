@@ -910,6 +910,8 @@ model Invoice {
   devise    Devise        @default(CAD)
   statut    InvoiceStatus @default(envoyee)
   payeeLe   DateTime?     @db.Date
+  // Relances automatiques déjà envoyées au membre (jours après la date de la facture)
+  relances  Int[]         @default([])
 
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
@@ -1410,6 +1412,8 @@ model ProfilChambre {
   couleurConnexion  String?
   couleurFondConnexion  String?
   couleurTexteConnexion String?
+  // Relances automatiques des factures impayées des membres : les jours après la date de la facture ; vide : aucune
+  relancesMembres   Int[]   @default([])
 
   raisonSociale      String  @default("")
   adresseFacturation String  @default("")
