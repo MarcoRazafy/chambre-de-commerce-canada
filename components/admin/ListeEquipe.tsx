@@ -18,14 +18,25 @@ export function ListeEquipe({
   comptes,
   moiId,
   gere,
+  offerts,
+  parUtilisateur,
 }: {
   comptes: CompteEquipe[];
   moiId: string;
   gere: boolean;
+  /** Comptes offerts par l'offre de la Chambre */
+  offerts: number;
+  /** Prix d'un compte au-delà des offerts (0 : aucun compte n'est facturé) */
+  parUtilisateur: number;
 }) {
   const [q, setQ] = useState("");
-  // Le compte offert de l'abonnement : le plus ancien super admin (la liste va du plus ancien au plus récent)
-  const offertId = comptes.find((c) => c.niveau === "administrateur")?.id;
+  // Comptes facturés dans l'abonnement : tous sauf les offerts, pris d'abord parmi les admins, du plus ancien au plus
+  // récent (la liste va du plus ancien au plus récent)
+  const payants = useMemo(() => {
+    if (parUtilisateur <= 0) return new Set<string>();
+    const ordre = [...comptes.filter((c) => c.niveau === "administrateur"), ...comptes.filter((c) => c.niveau !== "administrateur")];
+    return new Set(ordre.slice(Math.max(0, offerts)).map((c) => c.id));
+  }, [comptes, offerts, parUtilisateur]);
 
   const visibles = useMemo(() => {
     const mots = sansAccents(q.trim()).split(/\s+/).filter(Boolean);
@@ -65,7 +76,7 @@ export function ListeEquipe({
                 <ul className="list-none m-0 p-0">
                   {groupe.map((a) => (
                     <li key={a.id} className="border-b border-line last:border-b-0">
-                      <CarteEquipier compte={a} cestMoi={a.id === moiId} gere={gere} offert={a.id === offertId} />
+                      <CarteEquipier compte={a} cestMoi={a.id === moiId} gere={gere} payant={payants.has(a.id)} />
                     </li>
                   ))}
                 </ul>

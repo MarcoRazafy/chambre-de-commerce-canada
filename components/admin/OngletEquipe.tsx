@@ -5,9 +5,10 @@ import { Panneau } from "@/components/admin/ui";
 import { estAdministrateur } from "@/lib/autorisations";
 import { getAdministrateurs } from "@/lib/queries-admin";
 import { getCurrentUser } from "@/lib/session";
+import { configDeLaChambre } from "@/lib/offre-chambre";
 
 export async function OngletEquipe() {
-  const [moi, admins] = await Promise.all([getCurrentUser("admin"), getAdministrateurs()]);
+  const [moi, admins, { config, offerts }] = await Promise.all([getCurrentUser("admin"), getAdministrateurs(), configDeLaChambre()]);
   const gere = estAdministrateur(moi);
 
   return (
@@ -32,7 +33,7 @@ export async function OngletEquipe() {
         teinte="degrade"
         corpsClassName="px-6 pb-3"
       >
-        <ListeEquipe comptes={admins} moiId={moi.id} gere={gere} />
+        <ListeEquipe comptes={admins} moiId={moi.id} gere={gere} offerts={offerts} parUtilisateur={config.parUtilisateur} />
         <p className="m-0 mt-4 mb-3 text-[12px] text-faint">
           Un admin ne peut ni retirer son propre accès ni changer son
           propre rôle : la plateforme en garde toujours au moins un.
