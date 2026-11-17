@@ -6,7 +6,7 @@ import { BoutonImprimer } from "@/components/paiement/tunnels/BoutonImprimer";
 import { FormulaireRemise } from "@/components/paiement/tunnels/FormulaireRemise";
 import {
   chiffre,
-  PastilleCanCham,
+  PastilleChambre,
   sigle,
   type PropsReglement,
 } from "@/components/paiement/tunnels/commun";
@@ -54,7 +54,7 @@ export function TunnelEspeces(
         <h1 className="m-0 min-w-0 flex-1 text-[17px] font-bold">
           Règlement en espèces
         </h1>
-        <PastilleCanCham />
+        <PastilleChambre logo={p.logo} />
       </header>
 
       <section className="mx-auto mt-6 max-w-[580px] rounded-[22px] bg-white p-6 sm:p-8 print:mt-0 print:p-0">
@@ -87,6 +87,7 @@ function BonDeRemise({
   coordonnees: c,
   statut,
   reglementId,
+  logo,
 }: PropsReglement & {
   d: {
     lieu?: string;
@@ -121,11 +122,11 @@ function BonDeRemise({
         >
           <div className="flex items-start justify-between gap-3">
             <Image
-              src="/marque/logo-couleur.png"
-              alt="IMPACT 261"
-              width={1600}
-              height={647}
-              className="h-9 w-auto object-contain"
+              src={logo}
+              alt=""
+              width={400}
+              height={160}
+              className="h-9 w-auto max-w-[140px] object-contain"
             />
             <span className="font-[family-name:var(--font-mono)] text-[12.5px] font-semibold text-[#3b3520]">
               {reference}

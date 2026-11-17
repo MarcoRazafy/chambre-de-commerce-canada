@@ -22,6 +22,7 @@ import {
 } from "@/lib/reglements";
 import { aujourdhuiISO } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import {
   marchandAffiche,
   mobileMoneyEnLigne,
@@ -39,6 +40,8 @@ export default async function PageReglement({
   const { id } = await params;
   const { etape, modifier } = await searchParams;
   const user = await getCurrentUser("membre");
+  // Le logo de la Chambre sur les écrans de règlement
+  const { logo } = await getProfilChambre();
 
   const p = await prisma.paiement.findUnique({
     where: { id },
@@ -101,6 +104,7 @@ export default async function PageReglement({
       personne: user.nom,
       detail,
       aujourdhui: aujourdhuiISO(),
+      logo,
     };
     if (p.mode === "virement") return <TunnelVirement {...commun} />;
     if (p.mode === "depot") return <TunnelDepot {...commun} />;
@@ -126,6 +130,7 @@ export default async function PageReglement({
           p.montant >= MONTANT_MINIMUM_EN_LIGNE
         }
         marchand={marchandAffiche()}
+        logo={logo}
       />
     );
   }

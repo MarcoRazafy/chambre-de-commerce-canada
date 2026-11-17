@@ -17,6 +17,8 @@ export interface PropsReglement {
   personne: string;
   detail: Record<string, unknown>;
   aujourdhui: string;
+  /** Le logo de la Chambre (Mon entreprise) */
+  logo: string;
 }
 
 export function chiffre(montant: number): string {
@@ -31,17 +33,18 @@ export function conclu(statut: string): boolean {
   return statut === "annonce" || statut === "reussie";
 }
 
-export function PastilleCanCham({ className = "" }: { className?: string }) {
+// Le logo de la Chambre, sur une pastille blanche
+export function PastilleChambre({ logo, className = "" }: { logo: string; className?: string }) {
   return (
     <span
       className={`flex h-12 shrink-0 items-center rounded-[10px] bg-white px-3 ${className}`}
     >
       <Image
-        src="/marque/logo-vertical.png"
-        alt="IMPACT 261"
-        width={900}
-        height={859}
-        className="h-9 w-auto object-contain"
+        src={logo}
+        alt=""
+        width={400}
+        height={160}
+        className="h-9 w-auto max-w-[140px] object-contain"
       />
     </span>
   );

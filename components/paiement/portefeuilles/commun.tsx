@@ -21,6 +21,8 @@ export interface PropsTunnel {
   plusTard: string;
   raccorde: boolean;
   marchand?: string | null;
+  /** Le logo de la Chambre (Mon entreprise) */
+  logo?: string;
 }
 
 export function PaiementDirect({

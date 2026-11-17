@@ -72,7 +72,7 @@ async function commission(): Promise<number> {
 
 // Ouvre la page de paiement de Stripe pour un règlement, au nom de la Chambre ; « base » : son adresse
 export async function ouvrirChezStripe(
-  r: { reference: string; montant: number; devise: string; libelle: string; chambreId: string },
+  r: { reference: string; montant: number; devise: string; libelle: string; chambreId: string; email?: string | null },
   compte: string,
   base: string,
   cheminRetour: string,
@@ -84,6 +84,10 @@ export async function ouvrirChezStripe(
     {
       mode: "payment",
       line_items: [{ quantity: 1, price_data: { currency: devise, unit_amount: unites, product_data: { name: r.libelle } } }],
+      // Le montant dans la devise de la facture, sans conversion proposée par Stripe (pas d'Ariary)
+      adaptive_pricing: { enabled: false },
+      // Le courriel du payeur, déjà connu : il n'a pas à le saisir
+      ...(r.email ? { customer_email: r.email } : {}),
       client_reference_id: r.reference,
       metadata: { reference: r.reference, chambreId: r.chambreId },
       payment_intent_data: { metadata: { reference: r.reference, chambreId: r.chambreId }, ...(part > 0 ? { application_fee_amount: part } : {}) },

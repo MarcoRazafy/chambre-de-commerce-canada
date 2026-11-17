@@ -6,6 +6,7 @@ import type { Prisma } from "@/lib/generated/prisma/client";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { CHAMBRE_PRINCIPALE, chambreCourante } from "@/lib/chambre-courante";
 import { compteStripeActif, ouvrirChezStripe } from "@/lib/encaissement-stripe";
+import { utilisateurConnecte } from "@/lib/session";
 import { prisma } from "@/lib/db";
 import { referenceReglement } from "@/lib/reglements";
 import { marqueLocale, versRelais } from "@/lib/retour-paiement";
@@ -97,7 +98,7 @@ export async function ouvrirChezLePrestataire(
   if (compte) {
     const { devise } = await prisma.paiement.findUniqueOrThrow({ where: { id: p.id }, select: { devise: true } });
     const ouvert = await ouvrirChezStripe(
-      { reference, montant: p.montant, devise, libelle: p.numeroFacture ? `Facture ${p.numeroFacture}` : "Règlement", chambreId },
+      { reference, montant: p.montant, devise, libelle: p.numeroFacture ? `Facture ${p.numeroFacture}` : "Règlement", chambreId, email: await courrielDuPayeur(detail) },
       compte,
       await baseRetour(),
       cheminRetour(reference),
@@ -127,4 +128,18 @@ export async function ouvrirChezLePrestataire(
       ? lienDirectPortefeuille(ouverture.url, p.portefeuille)
       : ouverture.url,
   };
+}
+
+// Le courriel du payeur pour la page de Stripe : celui de l'inscription publique (détail du règlement), sinon celui du
+// membre connecté ; null s'il n'est pas connu (Stripe le demandera)
+async function courrielDuPayeur(detail?: Prisma.InputJsonValue): Promise<string | null> {
+  const d = detail && typeof detail === "object" && !Array.isArray(detail) ? (detail as Record<string, unknown>) : {};
+  if (typeof d.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return d.email;
+  try {
+    const u = await utilisateurConnecte();
+    if (!u) return null;
+    return (await prisma.user.findUnique({ where: { id: u.id }, select: { email: true } }))?.email ?? null;
+  } catch {
+    return null;
+  }
 }

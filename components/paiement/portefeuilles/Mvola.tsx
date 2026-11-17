@@ -39,13 +39,15 @@ export function TunnelMvola(p: PropsTunnel) {
     >
       <aside className="bg-[var(--pf-fond)] p-7 text-[var(--pf-encre)]">
         <div className="flex items-center gap-4">
-          <Image
-            src="/marque/logo-vertical.png"
-            alt="IMPACT 261"
-            width={900}
-            height={859}
-            className="h-16 w-auto object-contain"
-          />
+          <span className="flex h-16 items-center rounded-[10px] bg-white px-3">
+            <Image
+              src={p.logo ?? "/marque/logo-couleur.png"}
+              alt=""
+              width={400}
+              height={160}
+              className="h-12 w-auto max-w-[150px] object-contain"
+            />
+          </span>
           <span aria-hidden className="text-[15px] font-semibold opacity-60">
             ×
           </span>

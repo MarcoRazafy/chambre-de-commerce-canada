@@ -8,7 +8,7 @@ import { BoutonImprimer } from "@/components/paiement/tunnels/BoutonImprimer";
 import {
   chiffre,
   conclu,
-  PastilleCanCham,
+  PastilleChambre,
   type PropsReglement,
 } from "@/components/paiement/tunnels/commun";
 import { fmtMontant } from "@/lib/membership";
@@ -64,7 +64,7 @@ export function TunnelDepot(p: PropsReglement) {
             {sousTitre} · {etape}/3
           </p>
         </div>
-        <PastilleCanCham />
+        <PastilleChambre logo={p.logo} />
       </header>
 
       <div className="mx-auto mt-7 max-w-[640px]">

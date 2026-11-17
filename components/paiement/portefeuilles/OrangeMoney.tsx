@@ -43,11 +43,11 @@ export function TunnelOrangeMoney(p: PropsTunnel) {
           <span className="text-white/75"> · Règlement CanCham</span>
         </p>
         <Image
-          src="/marque/logo-blanc.png"
-          alt="IMPACT 261"
-          width={1600}
-          height={647}
-          className="hidden h-10 w-auto shrink-0 object-contain sm:block"
+          src={p.logo ?? "/marque/logo-couleur.png"}
+          alt=""
+          width={400}
+          height={160}
+          className="hidden h-10 w-auto max-w-[140px] shrink-0 rounded-[8px] bg-white px-2 py-1 object-contain sm:block"
         />
       </header>
 

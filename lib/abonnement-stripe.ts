@@ -61,6 +61,8 @@ export async function sessionPaiement(chambreId: string, factureId: string, reto
     mode: "payment",
     customer: await clientStripe(chambreId),
     line_items: [{ quantity: 1, price_data: { currency: "cad", unit_amount: enCents(f.total), product_data: { name: `Abonnement à la plateforme — ${f.numero}` } } }],
+    // En dollars canadiens, sans conversion proposée par Stripe
+    adaptive_pricing: { enabled: false },
     payment_intent_data: { setup_future_usage: "off_session", metadata: { chambreId, factureId: f.id } },
     metadata: { chambreId, factureId: f.id },
     success_url: avecSession(retour),

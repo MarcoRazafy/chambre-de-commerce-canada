@@ -6,7 +6,7 @@ import { AnnonceAdaptative } from "@/components/paiement/tunnels/AnnonceAdaptati
 import {
   chiffre,
   conclu,
-  PastilleCanCham,
+  PastilleChambre,
   sigle,
   type PropsReglement,
 } from "@/components/paiement/tunnels/commun";
@@ -47,7 +47,7 @@ export function TunnelVirement(p: PropsReglement) {
         <h1 className="m-0 min-w-0 flex-1 text-[17px] font-bold">
           Virement bancaire
         </h1>
-        <PastilleCanCham />
+        <PastilleChambre logo={p.logo} />
       </header>
 
       <div className="mx-auto max-w-[620px] px-5 pb-10 pt-6">
