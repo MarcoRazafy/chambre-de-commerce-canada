@@ -37,7 +37,9 @@ export async function lienInscriptionStripe(chambreId: string, retour: string): 
         business_profile: { name: c.nom },
         metadata: { chambreId },
       },
-      { idempotencyKey: `compte-${chambreId}` },
+      // Contre un double clic (un seul compte), mais pas plus d'une minute : Stripe garde aussi les refus 24 h sous la
+      // même clé, et la Chambre doit pouvoir réessayer (par exemple une fois Connect activé sur la plateforme)
+      { idempotencyKey: `compte-${chambreId}-${Math.floor(Date.now() / 60_000)}` },
     );
     compte = a.id;
     await db.chambre.update({ where: { id: chambreId }, data: { stripeCompteId: compte } });
