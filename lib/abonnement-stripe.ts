@@ -9,7 +9,9 @@ import "server-only";
 import type Stripe from "stripe";
 import { alerterGM } from "@/lib/alertes-gm";
 import { oublierAdresses } from "@/lib/chambre-courante";
+import { adresseOuSite } from "@/lib/adresse-chambre";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
+import { courrielAbonnementPaye } from "@/lib/modeles-courriels";
 import { prismaSysteme as db, reglagesRetard } from "@/lib/db";
 import { fmtDollars } from "@/lib/plateforme";
 import { joursDepuis, relanceDue } from "@/lib/retards";
@@ -106,7 +108,8 @@ export async function marquerPayee(factureId: string, paiementId: string | null,
   if (!r.count) return false;
   oublierAdresses(); // un espace en retard se rouvre tout de suite
   await noter(f.chambreId, "facture_payee", `Facture ${f.numero} payée.`, acteur);
-  // Paiement par carte (pas une facture marquée payée par l'Admin GM) : l'Admin GM est prévenu
+  // Paiement par carte (pas une facture marquée payée par l'Admin GM) : l'Admin GM est prévenu, et les admins de la
+  // Chambre reçoivent leur reçu
   if (!acteur) {
     await alerterGM({
       sujet: `Paiement reçu : ${f.chambre.nom}`,
@@ -114,6 +117,7 @@ export async function marquerPayee(factureId: string, paiementId: string | null,
       paragraphes: [`${f.chambre.nom} a payé par carte la facture ${f.numero} (${fmtDollars(f.total)}).`],
       chambreId: f.chambreId,
     });
+    await recuAbonnement(f.chambreId, f.numero, f.total);
   }
   return true;
 }
@@ -293,5 +297,21 @@ export async function traiterEvenement(ev: Stripe.Event): Promise<void> {
       if (pi.metadata?.factureId) await marquerPayee(pi.metadata.factureId, pi.id);
       break;
     }
+  }
+}
+
+// Reçu de l'abonnement aux admins de la Chambre (paiement par carte) ; jamais bloquant
+async function recuAbonnement(chambreId: string, numero: string, total: number) {
+  try {
+    const [admins, base] = await Promise.all([
+      db.user.findMany({ where: { chambreId, role: "admin", niveauEquipe: "administrateur" }, select: { email: true, nom: true } }),
+      adresseOuSite(chambreId, "equipe"),
+    ]);
+    const lien = `${base ?? ""}/admin/abonnement/factures/${encodeURIComponent(numero)}`;
+    for (const u of admins) {
+      await envoyerCourriel(courrielAbonnementPaye(u.email, { nom: u.nom, numero, montant: fmtDollars(total), lien }));
+    }
+  } catch (e) {
+    console.error("[abonnement] reçu du paiement", e);
   }
 }

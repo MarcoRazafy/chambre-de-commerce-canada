@@ -496,3 +496,59 @@ export function courrielRelanceMaillage(
     }),
   };
 }
+
+// Reçu au membre après un paiement en ligne réussi (carte, mobile money) : montant, objet, facture
+export function courrielPaiementRecu(
+  a: string,
+  d: { nom: string; chambre: string; objet: string; numero: string; montant: string; moyen: string; lien: string },
+): Courriel {
+  return {
+    a,
+    sujet: `Paiement reçu — facture ${d.numero}`,
+    ...gabarit({
+      titre: "Paiement reçu",
+      paragraphes: [
+        `Bonjour ${prenom(d.nom)},`,
+        `${d.chambre} a bien reçu votre paiement de ${d.montant} (${d.moyen.toLowerCase()}) pour « ${d.objet} ».`,
+        `La facture ${d.numero} est réglée. Merci.`,
+      ],
+      bouton: { libelle: "Voir la facture", url: d.lien },
+    }),
+  };
+}
+
+// À l'équipe de la Chambre : un membre (ou un participant) vient de payer en ligne
+export function courrielPaiementEquipe(
+  a: string,
+  d: { qui: string; objet: string; numero: string | null; montant: string; moyen: string; lien: string },
+): Courriel {
+  return {
+    a,
+    sujet: `Paiement en ligne : ${d.qui}`,
+    ...gabarit({
+      titre: "Paiement en ligne reçu",
+      paragraphes: [
+        `${d.qui} a payé ${d.montant} (${d.moyen.toLowerCase()}) pour « ${d.objet} »${d.numero ? `, facture ${d.numero}` : ""}.`,
+        "Le règlement est déjà enregistré : rien à faire de votre côté.",
+      ],
+      bouton: { libelle: d.numero ? "Voir la facture" : "Voir les règlements", url: d.lien },
+    }),
+  };
+}
+
+// Aux admins d'une Chambre : la facture de l'abonnement a été payée par carte
+export function courrielAbonnementPaye(a: string, d: { nom: string; numero: string; montant: string; lien: string }): Courriel {
+  return {
+    a,
+    sujet: `Paiement reçu — facture ${d.numero}`,
+    dePlateforme: true,
+    ...gabarit({
+      titre: "Abonnement : paiement reçu",
+      paragraphes: [
+        `Bonjour ${prenom(d.nom)},`,
+        `Votre carte a été débitée de ${d.montant} pour la facture ${d.numero} de l’abonnement à L’Alliée Virtuelle. Elle est réglée. Merci.`,
+      ],
+      bouton: { libelle: "Voir la facture", url: d.lien },
+    }),
+  };
+}
