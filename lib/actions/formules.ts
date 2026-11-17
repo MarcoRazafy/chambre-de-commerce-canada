@@ -11,15 +11,13 @@ import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 const PAGE = "/admin/entreprise#formules";
 const texte = (fd: FormData, k: string, max: number) => String(fd.get(k) ?? "").trim().replace(/\s+/g, " ").slice(0, max);
 
-// Une formule : son type d'adhésion (« profil »), son montant et sa devise ; l'ancien titre (« pays ») n'est plus saisi
+// Une formule : son type d'adhésion (« profil ») et son montant, toujours en dollars ; l'ancien titre (« pays ») n'est plus saisi
 function lireFormule(fd: FormData) {
   const profil = texte(fd, "profil", 120);
   const montant = Number(texte(fd, "montant", 12).replace(/[\s ]/g, ""));
-  const devise = texte(fd, "devise", 3);
   if (!profil) redirectWithErreur(PAGE, "Indiquez le type d’adhésion.");
   if (!Number.isInteger(montant) || montant < 0 || montant > 100_000_000) redirectWithErreur(PAGE, "Le montant est un nombre entier (sans décimales).");
-  if (devise !== "CAD" && devise !== "MGA") redirectWithErreur(PAGE, "Choisissez la devise.");
-  return { profil, montant, devise: devise as "CAD" | "MGA" };
+  return { profil, montant, devise: "CAD" as const };
 }
 
 async function formuleOuErreur(fd: FormData) {

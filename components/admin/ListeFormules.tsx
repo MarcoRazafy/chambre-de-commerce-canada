@@ -1,4 +1,4 @@
-// Mon entreprise > Formules d'adhésion : une ligne modifiable par formule (type d'adhésion, montant, devise), l'ajout,
+// Mon entreprise > Formules d'adhésion : une carte modifiable par formule (type d'adhésion, puis montant en $), l'ajout,
 // les formules archivées
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Save, X } from "lucide-react";
 import { INPUT } from "@/components/champ-style";
@@ -14,7 +14,8 @@ import { fmtCotisation, libelleFormule, type Formule } from "@/lib/membership";
 
 type Ligne = Formule & { active: boolean; membres: number };
 
-const GRILLE = "grid gap-2.5 items-end grid-cols-1 sm:grid-cols-2 lg:grid-cols-[minmax(0,1fr)_120px_96px_auto]";
+// Un champ par ligne, les boutons en dessous
+const GRILLE = "flex flex-col gap-2.5";
 const ICONE = "inline-flex items-center justify-center size-9 rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-default";
 const libelle = "block text-[12px] font-semibold text-muted mb-1";
 
@@ -25,13 +26,10 @@ function Champs({ f }: { f?: Formule }) {
         <input name="profil" required maxLength={120} defaultValue={f?.profil ?? ""} placeholder="Type d’adhésion" className={INPUT} />
       </label>
       <label className="min-w-0"><span className={libelle}>Montant par an</span>
-        <input name="montant" required inputMode="numeric" pattern="[0-9 ]+" defaultValue={f ? String(f.montant) : ""} placeholder="0" className={INPUT} />
-      </label>
-      <label className="min-w-0"><span className={libelle}>Devise</span>
-        <select name="devise" defaultValue={f?.devise ?? "CAD"} className={INPUT}>
-          <option value="CAD">$ CAD</option>
-          <option value="MGA">Ar</option>
-        </select>
+        <span className="relative block">
+          <input name="montant" required inputMode="numeric" pattern="[0-9 ]+" defaultValue={f ? String(f.montant) : ""} placeholder="0" className={`${INPUT} pr-9`} />
+          <span aria-hidden className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[14px] font-semibold text-muted pointer-events-none">$</span>
+        </span>
       </label>
     </>
   );
@@ -48,7 +46,7 @@ export function ListeFormules({ formules, gere }: { formules: Ligne[]; gere: boo
           <div className={GRILLE}>
             <Champs f={f} />
             {gere ? (
-              <div className="flex items-center gap-1.5 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-1.5">
                 <button type="submit" aria-label={`Enregistrer ${f.profil}`} title="Enregistrer" className={ICONE}><Save size={15} /></button>
                 <button type="submit" formAction={monterFormuleAdhesion} disabled={i === 0} aria-label="Monter" title="Monter" className={ICONE} formNoValidate><ArrowUp size={15} /></button>
                 <button type="submit" formAction={descendreFormuleAdhesion} disabled={i === actives.length - 1} aria-label="Descendre" title="Descendre" className={ICONE} formNoValidate><ArrowDown size={15} /></button>
@@ -64,7 +62,7 @@ export function ListeFormules({ formules, gere }: { formules: Ligne[]; gere: boo
         <form action={ajouterFormuleAdhesion} className="rounded-[var(--radius-m)] border border-dashed border-line-champ bg-surface-2 p-3.5">
           <div className={GRILLE}>
             <Champs />
-            <div className="sm:col-span-2 lg:col-span-1">
+            <div>
               <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface"><Plus size={14} /> Ajouter</button>
             </div>
           </div>
