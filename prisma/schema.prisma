@@ -264,17 +264,19 @@ model Chambre {
   reglesTags          RegleTag[]
   profil              ProfilChambre?
   formulesAdhesion    FormuleAdhesion[]
-  filSupportIT        FilSupportIT?
+  filsSupportIT       FilSupportIT[]
 
   @@map("chambres")
 }
 
-// Support IT : la conversation de l'équipe d'une Chambre avec l'Admin GM (une par Chambre).
-// Lu par chaque côté jusqu'à une date (équipe de la Chambre, Admin GM) : les messages d'après sont non lus.
+// Support IT : une conversation avec l'Admin GM pour l'équipe d'une Chambre (membreId vide), et une pour chaque
+// membre qui écrit (membreId : son compte). Lu par chaque côté jusqu'à une date (la Chambre ou le membre, l'Admin
+// GM) : les messages d'après sont non lus.
 model FilSupportIT {
   id          String    @id @default(cuid())
-  chambreId   String    @unique
+  chambreId   String
   chambre     Chambre   @relation(fields: [chambreId], references: [id])
+  membreId    String    @default("")
   luChambreLe DateTime?
   luGMLe      DateTime?
   dernierLe   DateTime  @default(now())
@@ -282,6 +284,7 @@ model FilSupportIT {
 
   messages MessageSupportIT[]
 
+  @@unique([chambreId, membreId])
   @@map("fils_support_it")
 }
 

@@ -46,6 +46,8 @@ export const PAGES_TOUJOURS_OUVERTES = [
   "/membre/cotisations",
   "/membre/contact",
   "/membre/aide",
+  // Le Support IT reste joignable même quand l'accès est restreint (problème de connexion ou de paiement)
+  "/membre/support-it",
 ];
 
 export const ADHESION_PENDING: MemberStatus[] = ["candidature", "en_attente"];

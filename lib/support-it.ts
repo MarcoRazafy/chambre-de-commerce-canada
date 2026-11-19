@@ -1,8 +1,9 @@
 import "server-only";
 
-// Support IT : la conversation de l'équipe d'une Chambre avec l'Admin GM (une par Chambre), avec photos, vidéos
-// et PDF. Côté Chambre (bulle de l'espace admin) : lectures limitées à la Chambre (prisma) ; côté Admin GM
-// (page Messages) : toutes les Chambres (prismaSysteme).
+// Support IT : les conversations avec l'Admin GM, avec photos, vidéos et PDF. Une pour l'équipe de chaque Chambre
+// (bulle de l'espace admin, membreId vide) et une pour chaque membre qui écrit (page Support IT de l'espace membre,
+// membreId : son compte). Côté Chambre et membre : lectures limitées à la Chambre (prisma) et au fil de celui qui
+// lit ; côté Admin GM (page Messages) : toutes les Chambres (prismaSysteme).
 import { after } from "next/server";
 import { avecChambre } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
@@ -111,10 +112,14 @@ async function lireEnvoi(
   return { texte, pieces };
 }
 
-// ——— Côté Chambre (espace admin) ———
+// ——— Côté Chambre (équipe : membreId vide) et côté membre (membreId : son compte) ———
 
-export async function supportITChambre(userId: string) {
+// Le fil de l'équipe d'une Chambre, ou celui d'un membre
+const EQUIPE = "";
+
+async function conversationCote(userId: string, membreId: string) {
   const fil = await prisma.filSupportIT.findFirst({
+    where: { membreId },
     select: {
       id: true,
       luChambreLe: true,
@@ -150,12 +155,18 @@ export async function supportITChambre(userId: string) {
   };
 }
 
-export async function lireSupportITChambre(): Promise<void> {
-  await prisma.filSupportIT.updateMany({ data: { luChambreLe: new Date() } });
-}
+export const supportITChambre = (userId: string) => conversationCote(userId, EQUIPE);
+export const supportITMembre = (userId: string) => conversationCote(userId, userId);
 
-export async function ecrireSupportITChambre(
+async function lireCote(membreId: string): Promise<void> {
+  await prisma.filSupportIT.updateMany({ where: { membreId }, data: { luChambreLe: new Date() } });
+}
+export const lireSupportITChambre = () => lireCote(EQUIPE);
+export const lireSupportITMembre = (userId: string) => lireCote(userId);
+
+async function ecrireCote(
   user: { id: string; nom: string },
+  membreId: string,
   formData: FormData,
 ): Promise<ResultatEnvoi> {
   const envoi = await lireEnvoi(formData);
@@ -166,8 +177,8 @@ export async function ecrireSupportITChambre(
 
   const maintenant = new Date();
   const fil = await prisma.filSupportIT.upsert({
-    where: { chambreId: chambre.id },
-    create: { chambreId: chambre.id },
+    where: { chambreId_membreId: { chambreId: chambre.id, membreId } },
+    create: { chambreId: chambre.id, membreId },
     update: {},
     select: { id: true, luGMLe: true },
   });
@@ -196,13 +207,23 @@ export async function ecrireSupportITChambre(
 
   if (!dejaEnAttente)
     after(() =>
-      prevenirGM(chambre, user.nom, envoi.texte, envoi.pieces.length),
+      prevenirGM(chambre, membreId, user.nom, envoi.texte, envoi.pieces.length),
     );
   return { ok: true };
 }
 
+export const ecrireSupportITChambre = (user: { id: string; nom: string }, formData: FormData) =>
+  ecrireCote(user, EQUIPE, formData);
+export const ecrireSupportITMembre = (user: { id: string; nom: string }, formData: FormData) =>
+  ecrireCote(user, user.id, formData);
+
+// Le lien de l'Admin GM vers une conversation (celle de l'équipe, ou celle d'un membre)
+const lienConversationGM = (chambreId: string, membreId: string) =>
+  `/gm/messages?${new URLSearchParams({ c: chambreId, ...(membreId ? { m: membreId } : {}) })}`;
+
 async function prevenirGM(
   chambre: { id: string; nom: string },
+  membreId: string,
   auteur: string,
   texteMessage: string,
   pieces: number,
@@ -211,38 +232,56 @@ async function prevenirGM(
     ? apercu(texteMessage, 300)
     : resumePieces(pieces);
   const comptes = await db.compteGM.findMany({ select: { email: true } });
-  const lien = `${adresseGM()}/gm/messages?c=${encodeURIComponent(chambre.id)}`;
+  const lien = `${adresseGM()}${lienConversationGM(chambre.id, membreId)}`;
+  const qui = membreId ? `${auteur} (membre de ${chambre.nom})` : `${auteur} (${chambre.nom})`;
   for (const c of comptes) {
     const { html, texte } = gabarit({
-      titre: `Support IT : ${chambre.nom}`,
-      paragraphes: [`${auteur} (${chambre.nom}) a écrit :`, extrait],
+      titre: membreId ? `Support IT : un membre de ${chambre.nom}` : `Support IT : ${chambre.nom}`,
+      paragraphes: [`${qui} a écrit :`, extrait],
       bouton: { libelle: "Répondre", url: lien },
     });
     await envoyerCourriel({
       a: c.email,
-      sujet: `Support IT : message de ${chambre.nom}`,
+      sujet: membreId ? `Support IT : message d’un membre de ${chambre.nom}` : `Support IT : message de ${chambre.nom}`,
       html,
       texte,
+      dePlateforme: true,
     }).catch(() => false);
   }
 }
 
-// La pièce jointe d'un message, si elle est de cette Chambre
+// La pièce jointe d'un message, si elle est du fil de l'équipe de cette Chambre, ou de celui de ce membre
 export const pieceSupportITChambre = (id: string) =>
   prisma.pieceSupportIT.findFirst({
-    where: { id },
+    where: { id, message: { fil: { membreId: EQUIPE } } },
+    select: { nom: true, fichier: true },
+  });
+export const pieceSupportITMembre = (id: string, userId: string) =>
+  prisma.pieceSupportIT.findFirst({
+    where: { id, message: { fil: { membreId: userId } } },
     select: { nom: true, fichier: true },
   });
 
 // ——— Côté Admin GM ———
 
-// Les conversations, la plus récente d'abord, avec leurs messages non lus (écrits par la Chambre après la lecture)
+// Le nom et l'entreprise des membres qui ont écrit
+async function membresDesFils(ids: string[]) {
+  if (!ids.length) return new Map<string, { nom: string; entreprise: string | null }>();
+  const u = await db.user.findMany({ where: { id: { in: ids } }, select: { id: true, nom: true, member: { select: { nom: true } } } });
+  return new Map(u.map((x) => [x.id, { nom: x.nom, entreprise: x.member?.nom ?? null }]));
+}
+
+const cleFil = (chambreId: string, membreId: string) => `${chambreId}|${membreId}`;
+
+// Les conversations, la plus récente d'abord, avec leurs messages non lus (écrits par la Chambre ou le membre après
+// la lecture)
 export async function filsSupportGM() {
   const [fils, nonLus] = await Promise.all([
     db.filSupportIT.findMany({
       orderBy: { dernierLe: "desc" },
       select: {
         chambreId: true,
+        membreId: true,
         dernierLe: true,
         chambre: { select: { nom: true, slug: true, profil: { select: { logo: true } } } },
         messages: {
@@ -256,81 +295,86 @@ export async function filsSupportGM() {
         },
       },
     }),
-    nonLusParChambre(),
+    nonLusParFil(),
   ]);
+  const membres = await membresDesFils(fils.map((f) => f.membreId).filter(Boolean));
   return fils.map((f) => {
     const dernier = f.messages[0];
+    const membre = f.membreId ? membres.get(f.membreId) : null;
     return {
       chambreId: f.chambreId,
-      nom: f.chambre.nom,
+      membreId: f.membreId,
+      nom: membre ? membre.nom : f.chambre.nom,
+      sousTitre: membre ? `Membre${membre.entreprise ? ` · ${membre.entreprise}` : ""} · ${f.chambre.nom}` : f.chambre.slug,
       slug: f.chambre.slug,
-      logo: f.chambre.profil?.logo ?? null,
+      logo: membre ? null : (f.chambre.profil?.logo ?? null),
       le: f.dernierLe.toISOString(),
       apercu: dernier
         ? `${dernier.deGM ? "Vous : " : ""}${dernier.texte ? apercu(dernier.texte, 90) : resumePieces(dernier._count.pieces)}`
         : "",
-      nonLus: nonLus.get(f.chambreId) ?? 0,
+      nonLus: nonLus.get(cleFil(f.chambreId, f.membreId)) ?? 0,
     };
   });
 }
 
-async function nonLusParChambre(): Promise<Map<string, number>> {
-  const lignes = await db.$queryRaw<{ chambre: string; n: number }[]>`
-    SELECT f."chambreId" AS chambre, count(*)::int AS n
+async function nonLusParFil(): Promise<Map<string, number>> {
+  const lignes = await db.$queryRaw<{ chambre: string; membre: string; n: number }[]>`
+    SELECT f."chambreId" AS chambre, f."membreId" AS membre, count(*)::int AS n
     FROM messages_support_it m
     JOIN fils_support_it f ON f.id = m."filId"
     WHERE NOT m."deGM" AND (f."luGMLe" IS NULL OR m."envoyeLe" > f."luGMLe")
-    GROUP BY f."chambreId"`;
-  return new Map(lignes.map((l) => [l.chambre, l.n]));
+    GROUP BY f."chambreId", f."membreId"`;
+  return new Map(lignes.map((l) => [cleFil(l.chambre, l.membre), l.n]));
 }
 
-// Pour le menu de l'espace GM : messages des Chambres non lus
+// Pour le menu de l'espace GM : messages des Chambres et des membres non lus
 export async function nonLusSupportGM(): Promise<number> {
   let total = 0;
-  for (const n of (await nonLusParChambre()).values()) total += n;
+  for (const n of (await nonLusParFil()).values()) total += n;
   return total;
 }
 
-// La conversation avec une Chambre (vide si elle n'a pas encore commencé)
-export async function conversationGM(chambreId: string) {
-  const chambre = await db.chambre.findUnique({
-    where: { id: chambreId },
-    select: {
-      id: true,
-      nom: true,
-      slug: true,
-      profil: { select: { logo: true } },
-      filSupportIT: {
-        select: {
-          luGMLe: true,
-          messages: {
-            orderBy: { envoyeLe: "desc" },
-            take: DERNIERS,
-            select: MESSAGE,
-          },
+// La conversation avec l'équipe d'une Chambre, ou avec un de ses membres (vide si elle n'a pas encore commencé)
+export async function conversationGM(chambreId: string, membreId = EQUIPE) {
+  const [chambre, fil] = await Promise.all([
+    db.chambre.findUnique({
+      where: { id: chambreId },
+      select: { id: true, nom: true, slug: true, profil: { select: { logo: true } } },
+    }),
+    db.filSupportIT.findUnique({
+      where: { chambreId_membreId: { chambreId, membreId } },
+      select: {
+        luGMLe: true,
+        messages: {
+          orderBy: { envoyeLe: "desc" },
+          take: DERNIERS,
+          select: MESSAGE,
         },
       },
-    },
-  });
+    }),
+  ]);
   if (!chambre) return null;
-  const fil = chambre.filSupportIT;
+  const membre = membreId ? (await membresDesFils([membreId])).get(membreId) : null;
+  if (membreId && !membre) return null;
   const messages = (fil?.messages ?? []).reverse();
   const nonLus = messages.filter(
     (m) => !m.deGM && (!fil?.luGMLe || m.envoyeLe > fil.luGMLe),
   ).length;
   return {
     id: chambre.id,
-    nom: chambre.nom,
+    membreId,
+    nom: membre ? membre.nom : chambre.nom,
+    sousTitre: membre ? `Membre${membre.entreprise ? ` · ${membre.entreprise}` : ""} · ${chambre.nom}` : chambre.slug,
     slug: chambre.slug,
-    logo: chambre.profil?.logo ?? null,
+    logo: membre ? null : (chambre.profil?.logo ?? null),
     nonLus,
     messages: messages.map((m) => versMessage(m, "gm", null)),
   };
 }
 
-export async function lireSupportGM(chambreId: string): Promise<void> {
+export async function lireSupportGM(chambreId: string, membreId = EQUIPE): Promise<void> {
   await db.filSupportIT.updateMany({
-    where: { chambreId },
+    where: { chambreId, membreId },
     data: { luGMLe: new Date() },
   });
 }
@@ -338,6 +382,7 @@ export async function lireSupportGM(chambreId: string): Promise<void> {
 export async function ecrireSupportGM(
   gm: { nom: string },
   chambreId: string,
+  membreId: string,
   formData: FormData,
 ): Promise<ResultatEnvoi> {
   const chambre = await db.chambre.findUnique({
@@ -345,13 +390,16 @@ export async function ecrireSupportGM(
     select: { id: true },
   });
   if (!chambre) return { ok: false, erreur: "Cette Chambre n’existe plus." };
+  if (membreId && !(await db.user.findFirst({ where: { id: membreId, chambreId }, select: { id: true } }))) {
+    return { ok: false, erreur: "Ce membre n’existe plus." };
+  }
   const envoi = await lireEnvoi(formData);
   if ("erreur" in envoi) return { ok: false, erreur: envoi.erreur };
 
   const maintenant = new Date();
   const fil = await db.filSupportIT.upsert({
-    where: { chambreId },
-    create: { chambreId },
+    where: { chambreId_membreId: { chambreId, membreId } },
+    create: { chambreId, membreId },
     update: {},
     select: { id: true, luChambreLe: true },
   });
@@ -382,8 +430,8 @@ export async function ecrireSupportGM(
     data: { dernierLe: maintenant, luGMLe: maintenant },
   });
 
-  // L'équipe de la Chambre : notification sur ses appareils à chaque réponse ; courriel au premier message non lu,
-  // à ceux qui ont écrit (sinon aux administrateurs)
+  // Ceux qui lisent ce fil : notification sur leurs appareils à chaque réponse ; courriel au premier message non lu.
+  // Fil d'un membre : ce membre ; fil de l'équipe : ceux qui ont écrit (sinon les administrateurs de la Chambre)
   const extrait = envoi.texte
     ? apercu(envoi.texte, 300)
     : resumePieces(envoi.pieces.length);
@@ -391,22 +439,25 @@ export async function ecrireSupportGM(
     avecChambre(chambreId, async () => {
       const auteurs = ecrits.map((e) => e.userId!).filter(Boolean);
       const destinataires = await prisma.user.findMany({
-        where: auteurs.length
-          ? { id: { in: auteurs }, role: "admin" }
-          : { role: "admin", niveauEquipe: "administrateur" },
+        where: membreId
+          ? { id: membreId }
+          : auteurs.length
+            ? { id: { in: auteurs }, role: "admin" }
+            : { role: "admin", niveauEquipe: "administrateur" },
         select: { id: true, email: true, nom: true },
       });
+      const page = membreId ? "/membre/support-it" : "/admin";
       await notifier(
         destinataires.map((u) => u.id),
         {
           titre: "Support IT",
           corps: extrait,
-          url: "/admin",
+          url: page,
           etiquette: "support-it",
         },
       ).catch(() => {});
       if (dejaEnAttente) return;
-      const lien = await urlPublique("/admin?support=it");
+      const lien = await urlPublique(membreId ? page : "/admin?support=it");
       for (const u of destinataires) {
         const { html, texte } = gabarit({
           titre: "Réponse du Support IT",
@@ -422,6 +473,7 @@ export async function ecrireSupportGM(
           sujet: "Réponse du Support IT",
           html,
           texte,
+          dePlateforme: true,
         }).catch(() => false);
       }
     }),

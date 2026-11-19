@@ -18,15 +18,20 @@ const quand = (iso: string) => {
     : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 };
 
-// Support IT : les conversations avec les Chambres (leurs équipes écrivent depuis la bulle de l'espace admin).
+// Support IT : les conversations avec les équipes des Chambres (bulle de l'espace admin) et avec leurs membres (page
+// Support IT de l'espace membre).
 // Sans choix : la plus récente est ouverte sur écran large ; sur téléphone, la liste reste affichée.
-export default async function MessagesGM({ searchParams }: { searchParams: Promise<{ c?: string }> }) {
-  const { c } = await searchParams;
+export default async function MessagesGM({ searchParams }: { searchParams: Promise<{ c?: string; m?: string }> }) {
+  const { c, m } = await searchParams;
   const [fils, chambres] = await Promise.all([filsSupportGM(), chambresSupportGM()]);
   const choisie = Boolean(c);
   const cible = c ?? fils[0]?.chambreId;
-  const conversation = cible ? await conversationGM(cible) : null;
-  const sansConversation = chambres.filter((ch) => !fils.some((f) => f.chambreId === ch.id));
+  const membreCible = c ? (m ?? "") : (fils[0]?.membreId ?? "");
+  const conversation = cible ? await conversationGM(cible, membreCible) : null;
+  // Une nouvelle conversation ne s'ouvre qu'avec l'équipe d'une Chambre (un membre écrit le premier)
+  const sansConversation = chambres.filter((ch) => !fils.some((f) => f.chambreId === ch.id && !f.membreId));
+  const lien = (chambreId: string, membreId: string) =>
+    `/gm/messages?${new URLSearchParams({ c: chambreId, ...(membreId ? { m: membreId } : {}) })}`;
 
   return (
     <>
@@ -59,11 +64,11 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
           {fils.length ? (
             <ul className="m-0 p-0 list-none max-h-[calc(100vh-300px)] overflow-y-auto">
               {fils.map((f) => {
-                const actif = f.chambreId === conversation?.id;
+                const actif = f.chambreId === conversation?.id && f.membreId === conversation?.membreId;
                 return (
-                  <li key={f.chambreId} className="border-b border-line last:border-b-0">
+                  <li key={`${f.chambreId}|${f.membreId}`} className="border-b border-line last:border-b-0">
                     <Link
-                      href={`/gm/messages?c=${encodeURIComponent(f.chambreId)}`}
+                      href={lien(f.chambreId, f.membreId)}
                       aria-current={actif ? "page" : undefined}
                       className={`flex gap-3 px-4 py-3 no-underline text-ink transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-navy ${
                         actif ? "bg-accent-soft" : "hover:bg-surface-2"
@@ -75,6 +80,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
                           <span className={`flex-1 min-w-0 truncate text-[14px] ${f.nonLus ? "font-bold" : "font-semibold"}`}>{f.nom}</span>
                           <span className="text-[11px] text-faint shrink-0 tabular-nums">{quand(f.le)}</span>
                         </span>
+                        {f.membreId ? <span className="block truncate text-[11.5px] text-faint">{f.sousTitre}</span> : null}
                         <span className="flex items-center gap-2 mt-0.5">
                           <span className={`flex-1 min-w-0 truncate text-[12.5px] ${f.nonLus ? "text-ink font-medium" : "text-muted"}`}>
                             {f.apercu}
@@ -112,7 +118,7 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
               <LogoChambre nom={conversation.nom} logo={conversation.logo} />
               <div className="min-w-0 flex-1">
                 <div className="text-[15px] font-semibold truncate">{conversation.nom}</div>
-                <div className="text-[12px] text-muted truncate">{conversation.slug}</div>
+                <div className="text-[12px] text-muted truncate">{conversation.sousTitre}</div>
               </div>
               <Link
                 href={`/gm/chambres/${encodeURIComponent(conversation.id)}`}
@@ -129,8 +135,8 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
                 <Vide icone={<MessageSquare size={26} />}>Aucun message avec cette Chambre.</Vide>
               </div>
             )}
-            <RedactionSupportGM key={conversation.id} chambreId={conversation.id} />
-            {conversation.nonLus ? <MarquerLu chambreId={conversation.id} repere={conversation.messages.at(-1)?.id ?? ""} seulementLarge={!choisie} /> : null}
+            <RedactionSupportGM key={`${conversation.id}|${conversation.membreId}`} chambreId={conversation.id} membreId={conversation.membreId} />
+            {conversation.nonLus ? <MarquerLu chambreId={conversation.id} membreId={conversation.membreId} repere={conversation.messages.at(-1)?.id ?? ""} seulementLarge={!choisie} /> : null}
           </Card>
         ) : (
           <Card className="hidden lg:flex items-center justify-center h-[calc(100vh-200px)] min-h-[480px]">

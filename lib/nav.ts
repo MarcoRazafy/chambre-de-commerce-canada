@@ -60,6 +60,7 @@ export const NAV_MEMBRE: NavGroup[] = [
     items: [
       // « Contacter l'équipe » s'ouvre depuis « Besoin d'aide ? » (aussi : messagerie, bulle d'aide)
       { href: "/membre/contact", label: "Besoin d’aide ?", icon: "help" },
+      { href: "/membre/support-it", label: "Support IT", icon: "support" },
     ],
   },
 ];
@@ -145,6 +146,7 @@ export const TITLES: Record<string, [string, string]> = {
   "/membre/messagerie": ["Espace membre", "Messagerie"],
   "/membre/ressources": ["Espace membre", "Ressources"],
   "/membre/contact": ["Espace membre", "Contacter l’équipe"],
+  "/membre/support-it": ["Espace membre", "Support IT"],
   "/membre/aide": ["Espace membre", "Besoin d’aide ?"],
   "/admin": ["Back-office", "Tableau de bord"],
   "/admin/recherche": ["Back-office", "Recherche"],

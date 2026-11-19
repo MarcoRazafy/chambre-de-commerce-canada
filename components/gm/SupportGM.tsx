@@ -1,7 +1,8 @@
 "use client";
 
-// Page Messages de l'Admin GM (Support IT) : la conversation avec une Chambre, la réponse (texte, photos, vidéos,
-// PDF), la relecture régulière et la lecture des messages reçus.
+// Support IT : la conversation (avec l'équipe d'une Chambre ou un membre), la rédaction (texte, photos, vidéos, PDF),
+// la relecture régulière et la lecture des messages reçus. Côté Admin GM (page Messages) et côté membre (page
+// Support IT de son espace).
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SendHorizontal } from "lucide-react";
@@ -10,12 +11,15 @@ import { ajouterPieces, BoutonJoindre, PiecesChoisies } from "@/components/suppo
 import { TexteLie } from "@/components/TexteLie";
 import { marquerLuSupportIT, repondreSupportIT } from "@/lib/actions/gm-support";
 import { heureExacte, jourLisible } from "@/lib/enums";
+import type { ResultatEnvoi } from "@/lib/support-it";
 import type { MessageSupport } from "@/lib/support";
 
-const urlPiece = (id: string, telecharger = false) => `/gm/pieces/${id}${telecharger ? "?telecharger=1" : ""}`;
+type Cote = "gm" | "membre";
+const urlPiece = (cote: Cote) => (id: string, telecharger = false) =>
+  `${cote === "gm" ? "/gm/pieces" : "/membre/support-it/pieces"}/${id}${telecharger ? "?telecharger=1" : ""}`;
 
-// Les messages : à droite ceux de l'Admin GM, à gauche ceux de l'équipe de la Chambre (signés)
-export function FilSupportGM({ messages }: { messages: MessageSupport[] }) {
+// Les messages : à droite ceux de celui qui lit (l'Admin GM, ou le membre), à gauche ceux de l'autre côté (signés)
+export function FilSupportGM({ messages, cote = "gm" }: { messages: MessageSupport[]; cote?: Cote }) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto flex flex-col-reverse bg-[#f7f9fc] px-4 py-4" aria-live="polite">
       <div className="flex flex-col gap-1.5">
@@ -34,7 +38,7 @@ export function FilSupportGM({ messages }: { messages: MessageSupport[] }) {
               ) : null}
               {signe ? (
                 <div className={`${aDroite ? "self-end mr-1" : "self-start ml-1"} mt-1 -mb-0.5 text-[11px] font-semibold text-muted`}>
-                  {aDroite ? `${m.de} · Support IT` : m.de}
+                  {cote === "gm" ? (aDroite ? `${m.de} · Support IT` : m.de) : aDroite ? "Vous" : `${m.de} · Support IT`}
                 </div>
               ) : null}
               <div
@@ -42,7 +46,7 @@ export function FilSupportGM({ messages }: { messages: MessageSupport[] }) {
                   m.pieces.length ? "min-w-[220px]" : ""
                 }`}
               >
-                <PiecesJointes pieces={m.pieces} moi={aDroite} space="admin" url={urlPiece} />
+                <PiecesJointes pieces={m.pieces} moi={aDroite} space="admin" url={urlPiece(cote)} />
                 <TexteLie
                   texte={m.texte}
                   classeLien={aDroite ? "text-white underline underline-offset-2 decoration-white/60 hover:decoration-white [overflow-wrap:anywhere]" : undefined}
@@ -59,7 +63,17 @@ export function FilSupportGM({ messages }: { messages: MessageSupport[] }) {
   );
 }
 
-export function RedactionSupportGM({ chambreId }: { chambreId: string }) {
+export function RedactionSupportGM({
+  chambreId = "",
+  membreId = "",
+  action = repondreSupportIT,
+  placeholder = "Écrire une réponse…",
+}: {
+  chambreId?: string;
+  membreId?: string;
+  action?: (avant: ResultatEnvoi | null, formData: FormData) => Promise<ResultatEnvoi>;
+  placeholder?: string;
+}) {
   const [texte, setTexte] = useState("");
   const [pieces, setPieces] = useState<File[]>([]);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -71,12 +85,13 @@ export function RedactionSupportGM({ chambreId }: { chambreId: string }) {
     if ((!contenu && !pieces.length) || enCours) return;
     const corps = new FormData();
     corps.set("chambreId", chambreId);
+    corps.set("membreId", membreId);
     corps.set("texte", contenu);
     for (const f of pieces) corps.append("pieces", f);
     setErreur(null);
     demarrer(async () => {
       try {
-        const r = await repondreSupportIT(null, corps);
+        const r = await action(null, corps);
         if (r.ok) {
           setTexte("");
           setPieces([]);
@@ -127,8 +142,8 @@ export function RedactionSupportGM({ chambreId }: { chambreId: string }) {
             }
           }}
           rows={1}
-          aria-label="Votre réponse"
-          placeholder="Écrire une réponse…"
+          aria-label="Votre message"
+          placeholder={placeholder}
           className="flex-1 min-w-0 resize-none rounded-[20px] border border-line bg-surface-2 text-ink px-3.5 py-2.5 text-[13.5px] leading-[1.4] outline-none focus:border-navy focus:bg-surface max-h-[160px]"
         />
         <button
@@ -159,10 +174,23 @@ export function RelectureAuto({ intervalle = 8_000 }: { intervalle?: number }) {
 
 // Conversation ouverte avec des messages non lus : lue. « seulementLarge » : la conversation ouverte d'office n'est
 // affichée que sur écran large ; sur téléphone, elle reste non lue
-export function MarquerLu({ chambreId, repere, seulementLarge = false }: { chambreId: string; repere: string; seulementLarge?: boolean }) {
+export function MarquerLu({
+  chambreId = "",
+  membreId = "",
+  repere,
+  seulementLarge = false,
+  marquer,
+}: {
+  chambreId?: string;
+  membreId?: string;
+  repere: string;
+  seulementLarge?: boolean;
+  /** Côté membre : son action ; sinon celle de l'Admin GM */
+  marquer?: () => Promise<void>;
+}) {
   useEffect(() => {
     if (seulementLarge && !window.matchMedia("(min-width: 1024px)").matches) return;
-    marquerLuSupportIT(chambreId).catch(() => {});
-  }, [chambreId, repere, seulementLarge]);
+    (marquer ? marquer() : marquerLuSupportIT(chambreId, membreId)).catch(() => {});
+  }, [chambreId, membreId, repere, seulementLarge, marquer]);
   return null;
 }

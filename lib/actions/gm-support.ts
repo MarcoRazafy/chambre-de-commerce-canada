@@ -1,6 +1,7 @@
 "use server";
 
-// Support IT, côté Admin GM : répondre à une Chambre (texte, photos, vidéos, PDF), marquer sa conversation lue
+// Support IT, côté Admin GM : répondre à l'équipe d'une Chambre ou à un de ses membres (texte, photos, vidéos, PDF),
+// marquer la conversation lue
 import { revalidatePath } from "next/cache";
 import { compteGM } from "@/lib/gm";
 import { ecrireSupportGM, lireSupportGM, type ResultatEnvoi } from "@/lib/support-it";
@@ -9,13 +10,14 @@ export async function repondreSupportIT(_avant: ResultatEnvoi | null, formData: 
   const gm = await compteGM();
   if (!gm) return { ok: false, erreur: "Session expirée : reconnectez-vous." };
   const chambreId = String(formData.get("chambreId") ?? "");
-  const r = await ecrireSupportGM(gm, chambreId, formData);
+  const membreId = String(formData.get("membreId") ?? "");
+  const r = await ecrireSupportGM(gm, chambreId, membreId, formData);
   if (r.ok) revalidatePath("/gm", "layout");
   return r;
 }
 
-export async function marquerLuSupportIT(chambreId: string): Promise<void> {
+export async function marquerLuSupportIT(chambreId: string, membreId = ""): Promise<void> {
   if (!(await compteGM())) return;
-  await lireSupportGM(String(chambreId));
+  await lireSupportGM(String(chambreId), String(membreId));
   revalidatePath("/gm", "layout");
 }
