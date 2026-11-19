@@ -384,7 +384,7 @@ model User {
   niveauEquipe NiveauEquipe?
   nom          String
   fonction     String
-  email        String        @unique
+  email        String
   tel          String?
   photo        String?
 
@@ -417,6 +417,11 @@ model User {
   typesRdv   TypeRendezvous[]
   lectures   LectureRessource[]
 
+  personne String?
+
+  @@unique([chambreId, email])
+  @@index([email])
+  @@index([personne])
   @@index([memberId])
   @@index([chambreId])
   @@map("users")

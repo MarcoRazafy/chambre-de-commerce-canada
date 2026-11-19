@@ -2,9 +2,9 @@
 
 import { after } from "next/server";
 import { redirect } from "next/navigation";
-import { adresseOuSite } from "@/lib/adresse-chambre";
+import { adresseEspace, adresseOuSite } from "@/lib/adresse-chambre";
 import { alerterGM } from "@/lib/alertes-gm";
-import { verifier } from "@/lib/auth";
+import { comptesDeLAdresse, comptesDuMotDePasse, comptesOuverts, lierComptes, scellerChoix } from "@/lib/comptes-lies";
 import { avecChambre, oublierAdresses } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
 import { estFonction } from "@/lib/fonctions-plateforme";
@@ -60,7 +60,7 @@ export async function creerChambre(formData: FormData) {
   if (!nom) erreur("Indiquez votre nom.");
   if (!ADRESSE.test(email)) erreur("Indiquez une adresse e-mail valide.");
   if (motDePasse.length < MOT_DE_PASSE_MIN) erreur(`Le mot de passe fait au moins ${MOT_DE_PASSE_MIN} caractères.`);
-  if (await db.user.findUnique({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
+  if (await db.user.findFirst({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
   const slug = await identifiantLibre(nomChambre);
 
   let creee: { chambreId: string; userId: string };
@@ -122,11 +122,16 @@ export async function connexionPlateforme(formData: FormData) {
   );
   if (attente) echec(`Trop de tentatives de connexion. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`);
 
-  const u = await db.user.findUnique({
-    where: { email },
-    select: { id: true, role: true, motDePasse: true, chambreId: true, member: { select: { statut: true } } },
-  });
-  if (!u || u.role === "visiteur" || !verifier(motDePasse, u.motDePasse)) echec("Adresse ou mot de passe incorrect.");
+  const valides = comptesDuMotDePasse(await comptesDeLAdresse(email), motDePasse).filter((c) => c.role !== "visiteur");
+  if (!valides.length) echec("Adresse ou mot de passe incorrect.");
+  await lierComptes(valides.map((c) => c.id));
+  const ouverts = comptesOuverts(valides);
+  if (ouverts.length > 1) {
+    oublier(`connexion:${origine}:${email}`);
+    const base = adresseEspace("client");
+    if (base) redirect(`${base}/auth/choisir?${new URLSearchParams({ j: scellerChoix(ouverts.map((c) => c.id)) })}`);
+  }
+  const u = ouverts[0] ?? valides[0];
   if (u.member?.statut === "candidature") echec("Votre demande d’adhésion est en cours d’examen.");
   if (u.member?.statut === "refusee") echec("Votre demande d’adhésion n’a pas été retenue.");
 
@@ -148,13 +153,14 @@ export async function demanderReinitialisationPlateforme(formData: FormData) {
   if (attente) vers({ erreur: `Trop de demandes. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`, email });
 
   after(async () => {
-    const u = await db.user.findUnique({ where: { email }, select: { id: true, nom: true, role: true, chambreId: true } });
-    if (!u || u.role === "visiteur") return;
-    await avecChambre(u.chambreId, async () => {
-      const base = await urlPublique("/auth/nouveau-mot-de-passe");
-      const jeton = await creerJeton(u.id, "reinitialisation");
-      await envoyerCourriel(courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`)).catch((e) => console.error("[plateforme] courriel de réinitialisation", e));
-    });
+    const comptes = await db.user.findMany({ where: { email, role: { not: "visiteur" } }, select: { id: true, nom: true, role: true, chambreId: true } });
+    for (const u of comptes) {
+      await avecChambre(u.chambreId, async () => {
+        const base = await urlPublique("/auth/nouveau-mot-de-passe");
+        const jeton = await creerJeton(u.id, "reinitialisation");
+        await envoyerCourriel(courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`)).catch((e) => console.error("[plateforme] courriel de réinitialisation", e));
+      });
+    }
   });
   vers({ envoye: email });
 }

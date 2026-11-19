@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { adresseEspace, adresseOuSite, adresseSitePlateforme } from "@/lib/adresse-chambre";
-import { prismaSysteme as db } from "@/lib/db";
+import { comptesDeLAdresse, comptesOuverts, scellerChoix } from "@/lib/comptes-lies";
 import { lienEntree } from "@/lib/entree-chambre";
 import { espaceDuRole, type EspacePartage } from "@/lib/hote-chambre";
 import {
@@ -52,10 +52,18 @@ export async function GET(req: NextRequest) {
   const email = idToken ? emailDuJeton(idToken, c.id) : null;
   if (!email) return erreur("Google n’a pas confirmé votre adresse e-mail.");
 
-  const u = await db.user.findUnique({
-    where: { email },
-    select: { id: true, role: true, chambreId: true, member: { select: { statut: true } } },
-  });
+  const comptes = (await comptesDeLAdresse(email)).filter((c) => c.role !== "visiteur");
+  const dIci = estEspace(depuis) ? null : comptes.find((c) => c.chambreId === depuis);
+  const ouverts = comptesOuverts(comptes);
+  if (!dIci && ouverts.length > 1) {
+    const base = (estEspace(depuis) ? adresseEspace(depuis) : depuis ? await adresseOuSite(depuis) : null) ?? adresseEspace("client");
+    if (base) {
+      const q = new URLSearchParams({ j: scellerChoix(ouverts.map((c) => c.id)) });
+      if (etat.suite) q.set("suite", etat.suite);
+      return vers(`${base}/auth/choisir?${q}`);
+    }
+  }
+  const u = dIci ?? ouverts[0] ?? comptes[0];
   if (!u || u.role === "visiteur") {
     return erreur(`Aucun compte n’utilise l’adresse ${email}. Connectez-vous avec votre mot de passe, ou demandez une adhésion.`, { email });
   }

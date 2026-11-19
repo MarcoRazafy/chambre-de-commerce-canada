@@ -5,6 +5,7 @@ import { redirect } from "next/navigation";
 import { avecChambre, hoteActuel } from "@/lib/chambre-courante";
 import { prisma, prismaSysteme } from "@/lib/db";
 import { hacher, MOT_DE_PASSE_MIN, ouvrirSession, verifier } from "@/lib/auth";
+import { lierParMotDePasse } from "@/lib/comptes-lies";
 import { envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { lienEntree } from "@/lib/entree-chambre";
@@ -47,19 +48,22 @@ export async function demanderReinitialisation(formData: FormData) {
     });
   }
 
+  const ici = await hoteActuel();
   after(async () => {
-    const u = await prismaSysteme.user.findUnique({
-      where: { email },
+    const comptes = await prismaSysteme.user.findMany({
+      where: { email, role: { not: "visiteur" } },
       select: { id: true, nom: true, role: true, chambreId: true },
     });
-    if (!u || u.role === "visiteur") return;
-    await avecChambre(u.chambreId, async () => {
-      const base = await urlPublique(NOUVEAU);
-      const jeton = await creerJeton(u.id, "reinitialisation");
-      await envoyerCourriel(
-        courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`),
-      );
-    });
+    const dIci = comptes.filter((u) => u.chambreId === ici.chambreId);
+    for (const u of dIci.length ? dIci : comptes) {
+      await avecChambre(u.chambreId, async () => {
+        const base = await urlPublique(NOUVEAU);
+        const jeton = await creerJeton(u.id, "reinitialisation");
+        await envoyerCourriel(
+          courrielReinitialisation(email, u.nom, `${base}?jeton=${jeton}`),
+        );
+      });
+    }
   });
 
   vers(OUBLI, { envoye: email });
@@ -95,7 +99,7 @@ export async function definirMotDePasse(formData: FormData) {
   await avecChambre(user.chambreId, () => prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
-      data: { motDePasse: hacher(motDePasse), motDePasseModifieLe: new Date() },
+      data: { motDePasse: hacher(motDePasse), motDePasseModifieLe: new Date(), personne: null },
     }),
     prisma.jetonCompte.update({
       where: { id: jeton.id },
@@ -116,6 +120,7 @@ export async function definirMotDePasse(formData: FormData) {
       },
     }),
   ]));
+  await lierParMotDePasse(user.email, motDePasse);
 
   const ici = await hoteActuel();
   if (ici.partage && ici.partage !== espaceDuRole(user.role)) {
@@ -172,7 +177,7 @@ export async function changerMonMotDePasse(formData: FormData) {
   await prisma.$transaction([
     prisma.user.update({
       where: { id: user.id },
-      data: { motDePasse: hacher(nouveau), motDePasseModifieLe: new Date() },
+      data: { motDePasse: hacher(nouveau), motDePasseModifieLe: new Date(), personne: null },
     }),
     prisma.auditLog.create({
       data: {
@@ -184,6 +189,7 @@ export async function changerMonMotDePasse(formData: FormData) {
       },
     }),
   ]);
+  await lierParMotDePasse(compte.email, nouveau);
   await ouvrirSession(user.id);
   redirectWithFlash(
     retour,

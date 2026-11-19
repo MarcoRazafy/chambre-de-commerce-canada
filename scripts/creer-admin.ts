@@ -62,7 +62,7 @@ async function main() {
     );
   }
 
-  const existant = await prisma.user.findUnique({
+  const existant = await prisma.user.findFirst({
     where: { email },
     select: { id: true, nom: true, role: true },
   });
@@ -82,7 +82,7 @@ async function main() {
   if (existant) {
     await prisma.user.update({
       where: { id: existant.id },
-      data: { motDePasse: hacher(secret), motDePasseModifieLe: new Date() },
+      data: { motDePasse: hacher(secret), motDePasseModifieLe: new Date(), personne: null },
     });
     await prisma.auditLog.create({
       data: {

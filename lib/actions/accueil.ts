@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
-import { prisma, prismaSysteme } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import {
   ETAPES_ACCUEIL,
   NOMBRE_ETAPES,
@@ -87,7 +87,7 @@ export async function deposerCandidature(formData: FormData) {
     );
   }
   if (
-    await prismaSysteme.user.findUnique({ where: { email }, select: { id: true } })
+    await prisma.user.findFirst({ where: { email }, select: { id: true } })
   ) {
     erreur("Cette adresse a déjà un compte : connectez-vous.");
   }

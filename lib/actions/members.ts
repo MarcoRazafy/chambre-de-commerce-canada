@@ -1,8 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { chambreCourante } from "@/lib/chambre-courante";
-import { prisma, prismaSysteme } from "@/lib/db";
+import { prisma } from "@/lib/db";
 import { courrielsActifs, envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import {
@@ -592,13 +591,10 @@ export async function createMember(formData: FormData) {
       `« ${email} » n’est pas une adresse e-mail valide.`,
     );
   }
-  const occupe = await prismaSysteme.user.findUnique({
+  const occupe = await prisma.user.findFirst({
     where: { email },
-    select: { role: true, chambreId: true, member: { select: { nom: true } } },
+    select: { role: true, member: { select: { nom: true } } },
   });
-  if (occupe && occupe.chambreId !== (await chambreCourante())) {
-    redirectWithErreur("/admin/membres", `${email} est déjà utilisée sur un autre espace.`);
-  }
   if (occupe) {
     redirectWithErreur(
       "/admin/membres",
@@ -991,7 +987,7 @@ export async function addContact(formData: FormData) {
     redirectWithErreur(retour, "Nom et courriel sont obligatoires.");
   }
 
-  const occupe = await prismaSysteme.user.findUnique({ where: { email }, select: { id: true } });
+  const occupe = await prisma.user.findFirst({ where: { email }, select: { id: true } });
   if (occupe) {
     redirectWithErreur(
       retour,
@@ -1154,7 +1150,7 @@ export async function updateContact(formData: FormData) {
     redirectWithErreur(retour, "Nom et courriel sont obligatoires.");
   }
 
-  const occupe = await prismaSysteme.user.findFirst({
+  const occupe = await prisma.user.findFirst({
     where: { email, id: { not: id } },
     select: { id: true },
   });

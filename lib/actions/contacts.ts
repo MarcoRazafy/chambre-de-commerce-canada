@@ -66,8 +66,7 @@ export async function ajouterContact(formData: FormData) {
     revalidatePath("/admin/contacts");
     redirectWithFlash(retour, `${nom} a été ajouté (sans entreprise)`);
   }
-  const occupe = await prismaSysteme.user.findUnique({ where: { email }, select: { chambreId: true, member: { select: { nom: true } } } });
-  if (occupe && occupe.chambreId !== (await chambreCourante())) redirectWithErreur(retour, `${email} est déjà utilisée sur un autre espace.`);
+  const occupe = await prisma.user.findFirst({ where: { email }, select: { member: { select: { nom: true } } } });
   if (occupe) redirectWithErreur(retour, `${email} a déjà un compte${occupe.member ? ` (${occupe.member.nom})` : ""}.`);
 
   let memberId = memberIdChoisi;
@@ -134,11 +133,7 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
       continue;
     }
 
-    const existant = await prismaSysteme.user.findUnique({ where: { email: l.email }, select: { id: true, role: true, memberId: true, chambreId: true } });
-    if (existant && existant.chambreId !== ici) {
-      bilan.ignores.push({ email: l.email, raison: "adresse déjà utilisée sur un autre espace" });
-      continue;
-    }
+    const existant = await prismaSysteme.user.findUnique({ where: { chambreId_email: { chambreId: ici, email: l.email } }, select: { id: true, role: true, memberId: true, chambreId: true } });
     const nom = nomComplet(l);
 
     if (!l.entreprise) {

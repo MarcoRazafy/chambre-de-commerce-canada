@@ -15,6 +15,7 @@ import { BandeauCotisation } from "@/components/paiement/Cotisation";
 import { cotisationDue } from "@/lib/cotisation";
 import { modesProposes } from "@/lib/reglements";
 import { etatPaiementChambre } from "@/lib/etat-paiement";
+import { comptesLies } from "@/lib/comptes-lies";
 
 export default async function MembreLayout({
   children,
@@ -25,7 +26,7 @@ export default async function MembreLayout({
   const membre = user.memberId ? await getMember(user.memberId) : null;
   if (!membre) notFound();
 
-  const [unread, stats, notifications, cotisation, modes, paiement, offre, marque] = await Promise.all([
+  const [unread, stats, notifications, cotisation, modes, paiement, offre, marque, chambres] = await Promise.all([
     getUnreadTotal(user.id),
     getStatsPubliques(),
     getNotifications("membre", membre.id, user.id),
@@ -34,6 +35,7 @@ export default async function MembreLayout({
     etatPaiementChambre(),
     offreDeLaChambre(),
     marqueDeLaChambre(),
+    comptesLies(user.id),
   ]);
   const nav = filtrerNav(NAV_MEMBRE, offre?.fonctions);
 
@@ -54,6 +56,7 @@ export default async function MembreLayout({
       }}
       notifications={notifications}
       marque={marque}
+      chambres={chambres}
       bandeau={
         cotisation ? (
           <BandeauCotisation

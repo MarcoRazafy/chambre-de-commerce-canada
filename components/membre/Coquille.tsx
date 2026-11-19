@@ -9,6 +9,7 @@ import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
 import { BoutonInstaller } from "@/components/Application";
 import { LogoEspace } from "@/components/LogoEspace";
 import { MenuNotifications } from "@/components/MenuNotifications";
+import { MenuChambres, type ChambreDuCompte } from "@/components/membre/MenuChambres";
 import { EnCoursLien, TirerPourRafraichir } from "@/components/Mouvement";
 import { FilAriane } from "@/components/FilAriane";
 import { NAV_ICONS } from "@/components/nav-icons";
@@ -25,6 +26,7 @@ interface CoquilleProps {
   notifications?: Notification[];
   bandeau?: ReactNode;
   marque: { logo: string | null; nom: string };
+  chambres?: { actuelle: ChambreDuCompte; autres: ChambreDuCompte[] } | null;
   children: ReactNode;
 }
 
@@ -37,6 +39,7 @@ export function Coquille({
   notifications = [],
   bandeau,
   marque,
+  chambres,
   children,
 }: CoquilleProps) {
   const pathname = usePathname();
@@ -180,13 +183,17 @@ export function Coquille({
             <BoutonInstaller />
             <MenuNotifications notifications={notifications} />
 
-            <Link
-              href="/membre/profil"
-              className="no-underline block"
-              aria-label="Mon profil"
-            >
-              <Avatar user={user} taille={36} neutre />
-            </Link>
+            {chambres?.autres.length ? (
+              <MenuChambres nom={user.nom} avatar={<Avatar user={user} taille={36} neutre />} actuelle={chambres.actuelle} autres={chambres.autres} />
+            ) : (
+              <Link
+                href="/membre/profil"
+                className="no-underline block"
+                aria-label="Mon profil"
+              >
+                <Avatar user={user} taille={36} neutre />
+              </Link>
+            )}
           </div>
         </header>
 

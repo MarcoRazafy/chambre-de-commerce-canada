@@ -59,7 +59,7 @@ const estGM = (chemin: string) => chemin === "/gm" || chemin.startsWith("/gm/");
 const estSitePlateforme = (chemin: string) => chemin === "/plateforme" || chemin.startsWith("/plateforme/");
 
 const OUVERT_SI_SUSPENDUE = (chemin: string) =>
-  ["/auth", "/auth/entree", "/auth/entree-gm", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
+  ["/auth", "/auth/choisir", "/auth/entree", "/auth/entree-gm", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
   chemin === "/admin/abonnement" ||
   chemin.startsWith("/admin/abonnement/");
 
