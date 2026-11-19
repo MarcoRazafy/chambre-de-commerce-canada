@@ -4,12 +4,18 @@ import {
   FormulaireMotDePasse,
   FormulaireProfilEquipe,
 } from "@/components/forms/ProfilEquipe";
+import { ExternalLink, LogIn } from "lucide-react";
+import { BoutonCopierLien } from "@/components/rendezvous/Reglages";
 import { Card, Saillant } from "@/components/ui";
+import { adresseOuSite } from "@/lib/adresse-chambre";
+import { chambreCourante } from "@/lib/chambre-courante";
 import { MOT_DE_PASSE_MIN } from "@/lib/auth";
 import { getCurrentUser } from "@/lib/session";
 
 export default async function MonProfil() {
   const user = await getCurrentUser("admin");
+  const base = await adresseOuSite(await chambreCourante(), "equipe");
+  const connexion = base ? `${base}/auth` : null;
 
   return (
     <>
@@ -38,6 +44,22 @@ export default async function MonProfil() {
           </Card>
         </div>
 
+        <div className="flex flex-col gap-4">
+        {connexion ? (
+          <Card className="p-6">
+            <div className="flex items-center gap-2.5 mb-3">
+              <LogIn size={17} className="text-muted" aria-hidden />
+              <h2 className="m-0 text-[15px]">Lien de connexion</h2>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <BoutonCopierLien lien={connexion} libelle="Copier le lien" />
+              <a href={connexion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
+                <ExternalLink size={14} aria-hidden /> Ouvrir
+              </a>
+            </div>
+          </Card>
+        ) : null}
+
         <Card className="carte-filet filet-fixe filet-degrade p-6">
           <div className="surtitre text-faint mb-3">Où ce profil apparaît</div>
           <ul className="list-none m-0 p-0 flex flex-col gap-3 text-[13.4px] text-muted">
@@ -55,6 +77,7 @@ export default async function MonProfil() {
             </li>
           </ul>
         </Card>
+        </div>
       </div>
     </>
   );
