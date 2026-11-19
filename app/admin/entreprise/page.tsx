@@ -66,6 +66,7 @@ export default async function MonEntreprise() {
             {connexion ? (
               <div className="flex flex-wrap items-center gap-2 mt-4">
                 <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink mr-1"><LogIn size={14} className="shrink-0" aria-hidden />Lien de connexion</span>
+                <a href={connexion} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted break-all mr-1 hover:text-ink">{connexion}</a>
                 <BoutonCopierLien lien={connexion} libelle="Copier le lien" />
                 <a href={connexion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
                   <ExternalLink size={14} aria-hidden /> Ouvrir
