@@ -1,5 +1,8 @@
 import Image from "next/image";
-import { Globe, Lock, Mail, MapPin, Phone, Save } from "lucide-react";
+import { ExternalLink, Globe, LogIn, Lock, Mail, MapPin, Phone, Save } from "lucide-react";
+import { BoutonCopierLien } from "@/components/rendezvous/Reglages";
+import { adresseOuSite } from "@/lib/adresse-chambre";
+import { chambreCourante } from "@/lib/chambre-courante";
 import { FondLogo } from "@/components/admin/FondLogo";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
 import { ListeFormules } from "@/components/admin/ListeFormules";
@@ -25,6 +28,8 @@ export default async function MonEntreprise() {
   ]);
   const gere = estAdministrateur(moi);
   const p = completerProfil(brut);
+  const base = await adresseOuSite(await chambreCourante(), "equipe");
+  const connexion = base ? `${base}/auth` : null;
   const v = (k: keyof NonNullable<typeof brut>) => (brut?.[k] as string | null | undefined) ?? "";
   const rue = v("adresseRue") || (v("codePostal") || v("ville") || v("province") || v("pays") ? "" : v("adresse"));
 
@@ -58,6 +63,15 @@ export default async function MonEntreprise() {
               <span className="inline-flex items-center gap-1.5"><Phone size={14} className="shrink-0" aria-hidden />{p.telephone}</span>
               {p.site ? <span className="inline-flex items-center gap-1.5 break-all"><Globe size={14} className="shrink-0" aria-hidden />{p.site.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span> : null}
             </div>
+            {connexion ? (
+              <div className="flex flex-wrap items-center gap-2 mt-4">
+                <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink mr-1"><LogIn size={14} className="shrink-0" aria-hidden />Lien de connexion</span>
+                <BoutonCopierLien lien={connexion} libelle="Copier le lien" />
+                <a href={connexion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
+                  <ExternalLink size={14} aria-hidden /> Ouvrir
+                </a>
+              </div>
+            ) : null}
           </div>
         </div>
       </Card>
