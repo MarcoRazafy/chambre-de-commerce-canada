@@ -2,8 +2,6 @@ import { chambreCouranteOuRien } from "@/lib/chambre-courante";
 import { cssCouleurs } from "@/lib/couleurs";
 import { prismaSysteme } from "@/lib/db";
 
-// Les couleurs réglées par la Chambre (Paramètres → Couleurs), posées sur ses espaces ; rien hors d'une Chambre
-// (site, page de connexion d'un espace partagé sans Chambre choisie). Les valeurs sont vérifiées (« #rrggbb »).
 export async function StyleCouleursChambre() {
   let id: string | null = null;
   try {

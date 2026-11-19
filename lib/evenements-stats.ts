@@ -1,13 +1,9 @@
-// Événements du back-office : sélection (période + recherche) et statistiques d'inscription et de présence.
-// Sans dépendance au serveur : la page et l'export CSV s'en servent tous les deux.
-
 import { isPast } from "@/lib/format";
 
 export type Periode = "a_venir" | "passes";
 
 export const lirePeriode = (v?: string): Periode => (v === "passes" ? "passes" : "a_venir");
 
-// Recherche insensible aux accents et à la casse, sur le titre, le lieu et le format
 const sansAccents = (s: string) => s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase();
 export function correspond(e: { titre: string; lieu: string; format: string }, q: string): boolean {
   const mots = sansAccents(q).split(/\s+/).filter(Boolean);
@@ -15,7 +11,6 @@ export function correspond(e: { titre: string; lieu: string; format: string }, q
   return mots.every((m) => texte.includes(m));
 }
 
-// À venir : du plus proche au plus lointain ; passés : du plus récent au plus ancien
 export function selection<T extends { date: string; titre: string; lieu: string; format: string }>(
   events: T[],
   periode: Periode,
@@ -40,7 +35,6 @@ export function statistiques(cap: number, c: ComptesPresence) {
     absents: c.absent,
     aValider: c.a_valider,
     nonPointes: c.confirme,
-    // Taux de présence : parmi les inscrits dont la venue est connue (présents ou absents)
     tauxPresence: pourcent(c.present, pointes),
   };
 }

@@ -18,9 +18,6 @@ const quand = (iso: string) => {
     : d.toLocaleDateString("fr-FR", { day: "numeric", month: "short" });
 };
 
-// Support IT : les conversations avec les équipes des Chambres (bulle de l'espace admin) et avec leurs membres (page
-// Support IT de l'espace membre).
-// Sans choix : la plus récente est ouverte sur écran large ; sur téléphone, la liste reste affichée.
 export default async function MessagesGM({ searchParams }: { searchParams: Promise<{ c?: string; m?: string }> }) {
   const { c, m } = await searchParams;
   const [fils, chambres] = await Promise.all([filsSupportGM(), chambresSupportGM()]);
@@ -28,7 +25,6 @@ export default async function MessagesGM({ searchParams }: { searchParams: Promi
   const cible = c ?? fils[0]?.chambreId;
   const membreCible = c ? (m ?? "") : (fils[0]?.membreId ?? "");
   const conversation = cible ? await conversationGM(cible, membreCible) : null;
-  // Une nouvelle conversation ne s'ouvre qu'avec l'équipe d'une Chambre (un membre écrit le premier)
   const sansConversation = chambres.filter((ch) => !fils.some((f) => f.chambreId === ch.id && !f.membreId));
   const lien = (chambreId: string, membreId: string) =>
     `/gm/messages?${new URLSearchParams({ c: chambreId, ...(membreId ? { m: membreId } : {}) })}`;

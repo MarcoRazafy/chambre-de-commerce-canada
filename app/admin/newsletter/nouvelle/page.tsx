@@ -7,7 +7,6 @@ import { urlPublique } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { AUDIENCE_DEFAUT, destinataires } from "@/lib/newsletter";
 
-// Nouvelle lettre. Depuis un événement : « ?evenement= » écrit à ses inscrits, « ?annonce= » l'annonce à tous
 export default async function NouvelleLettre({ searchParams }: { searchParams: Promise<{ evenement?: string; annonce?: string }> }) {
   const p = await searchParams;
   const idEvenement = p.evenement || p.annonce;

@@ -1,13 +1,10 @@
 "use client";
 
-// Révélation au défilement (site de la plateforme) : les blocs marqués data-reveal (un bloc) ou data-reveal-groupe
-// (ses enfants, l'un après l'autre) apparaissent quand ils entrent dans l'écran. Sans script, tout est visible ;
-// ce qui est déjà à l'écran au chargement reste tel quel ; si l'appareil demande moins de mouvements, rien ne bouge.
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 
-const PAS = 70; // ms entre deux enfants d'un groupe
-const MAX = 7; // au-delà, les enfants partent ensemble
+const PAS = 70;
+const MAX = 7;
 
 export function Revelateur() {
   const chemin = usePathname();
@@ -47,7 +44,6 @@ export function Revelateur() {
     for (const el of cibles) {
       if (el.classList.contains("est-visible")) continue;
       const r = el.getBoundingClientRect();
-      // Déjà à l'écran : tel quel au premier chargement (rien ne clignote), en mouvement après une navigation
       if (r.top < h && r.bottom > 0) montrer(el, !premierChargement);
       else obs.observe(el);
     }

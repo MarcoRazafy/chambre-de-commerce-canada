@@ -24,7 +24,6 @@ type Inscrit = { nom: string; entreprise: string; email: string; code: string | 
 type EvenementRappel = EvenementCourriel;
 type Rappel = { sujet: string | null; message: string | null };
 
-// Le courriel d'un rappel : le message de l'équipe (variables remplacées), puis les QR codes des inscrits confirmés
 export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: string, participants: Inscrit[]): Promise<Courriel> {
   const premier = participants[0];
   const valeurs = {
@@ -41,7 +40,6 @@ export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: 
   const pieces = await Promise.all(
     avecCode.map(async (p) => ({ nom: `billet-${p.code}.png`, contenu: await pngQr(p.code!), type: "image/png", cid: `qr-${p.code}` })),
   );
-  // Le message : la lettre composée dans l'éditeur, un ancien texte simple, ou le rappel par défaut
   const { reseaux, mentions } = await parametresPourCourriel();
   const doc =
     (rappel.message && lireDoc(rappel.message, reseaux)) ||
@@ -66,8 +64,6 @@ export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: 
 
 const evenementRappel = { id: true, titre: true, date: true, debut: true, fin: true, lieu: true } as const;
 
-// Envoie les rappels dont l'heure est venue ; chaque adresse ne reçoit chaque rappel qu'une fois,
-// même si deux serveurs passent en même temps (la ligne « envoyé » est réservée avant l'envoi)
 export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envoyes: number; echecs: number }> {
   if (!courrielsActifs()) return { envoyes: 0, echecs: 0 };
   const jour = (decalage: number) => new Date(`${new Date(maintenant + decalage * 86_400_000).toISOString().slice(0, 10)}T00:00:00Z`);
@@ -95,7 +91,6 @@ export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envo
         if (await envoyerCourriel(await courrielRappel(e, r, g.email, g.participants))) {
           envoyes++;
         } else {
-          // Raté : la réservation est levée, le prochain passage réessaiera (tant que la date est due)
           await prisma.rappelEnvoye.deleteMany({ where: { eventId: e.id, type, email: g.email } });
           echecs++;
         }
@@ -106,7 +101,6 @@ export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envo
   return { envoyes, echecs };
 }
 
-// Test : le rappel tel qu'il partira, envoyé à un membre de l'équipe avec un participant d'exemple
 export async function envoyerTestRappel(rappelId: string, a: { email: string; nom: string }) {
   const r = await prisma.rappelEvenement.findUnique({
     where: { id: rappelId },

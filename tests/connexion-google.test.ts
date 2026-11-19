@@ -29,7 +29,6 @@ afterEach(() => {
   }
 });
 
-// Un jeton d'identité comme Google le renvoie (la signature n'est pas relue : il arrive directement de Google)
 const jeton = (charge: Record<string, unknown>) =>
   ["e30", Buffer.from(JSON.stringify(charge)).toString("base64url"), "signature"].join(".");
 const MAINTENANT = Date.UTC(2026, 10, 13, 12);

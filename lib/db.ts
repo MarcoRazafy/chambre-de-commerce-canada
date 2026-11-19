@@ -20,7 +20,6 @@ function schemaDe(adresse: string | undefined): string | undefined {
 
 function createClient() {
   const schema = schemaDe(process.env.DATABASE_URL);
-  // Schéma dédié (?schema=) : les requêtes SQL brutes ($queryRaw) le cherchent aussi en premier
   const adapter = new PrismaPg(
     { connectionString: process.env.DATABASE_URL, options: schema ? `-c search_path="${schema}",public` : undefined },
     { schema },
@@ -33,8 +32,6 @@ const enCache =
     ? globalForPrisma.prisma
     : undefined;
 
-// Accès à toute la base, sans limite de Chambre : sessions, connexion, webhooks, tâches régulières, Admin GM.
-// À n'utiliser que là où la Chambre ne peut pas venir de la requête.
 export const prismaSysteme = enCache ?? createClient();
 
 if (process.env.NODE_ENV !== "production") {
@@ -44,7 +41,6 @@ if (process.env.NODE_ENV !== "production") {
   globalForPrisma.prismaClasse = PrismaClient;
 }
 
-// Réglages de retard (Admin GM), gardés 10 secondes (même raison que les adresses, lib/chambre-courante.ts)
 let reglages: { jusqua: number; valeur: ReglagesRetard } | null = null;
 export function oublierReglages() {
   reglages = null;
@@ -57,7 +53,6 @@ export async function reglagesRetard(): Promise<ReglagesRetard> {
   return valeur;
 }
 
-// La Chambre d'un compte connecté sur un espace partagé (dev., client.)
 brancherRechercheCompte(async (id) => (await prismaSysteme.user.findUnique({ where: { id }, select: { chambreId: true } }))?.chambreId ?? null);
 
 brancherRechercheChambre(async (r) => {
@@ -69,7 +64,6 @@ brancherRechercheChambre(async (r) => {
       accesDevJusqua: true,
       offre: { select: { fonctions: true, surMesure: true } },
       fonctionsChoisies: true,
-      // La plus ancienne facture suivie impayée de l'abonnement : elle décide du retard
       facturesPlateforme: { where: { payeeLe: null, suivie: true }, orderBy: { date: "asc" }, take: 1, select: { date: true, payeeLe: true, suivie: true } },
     },
   });
@@ -83,7 +77,6 @@ brancherRechercheChambre(async (r) => {
   };
 });
 
-// L'accès habituel : chaque requête est limitée à la Chambre en cours (lib/chambre-courante.ts, lib/portee-chambre.ts)
 export const prisma = prismaSysteme.$extends({
   name: "chambre",
   query: {

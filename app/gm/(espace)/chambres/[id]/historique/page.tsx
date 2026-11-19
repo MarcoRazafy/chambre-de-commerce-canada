@@ -11,7 +11,6 @@ export const metadata: Metadata = { title: "Historique" };
 
 const quand = (d: Date) => `${fmtDateShort(d.toISOString().slice(0, 10))} · ${d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`;
 
-// Tout l'historique d'une Chambre (la fiche n'en montre que les 20 derniers)
 export default async function HistoriqueChambreGM({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ page?: string }> }) {
   const [{ id }, { page }] = await Promise.all([params, searchParams]);
   const n = Math.max(1, Number.parseInt(page ?? "1", 10) || 1);

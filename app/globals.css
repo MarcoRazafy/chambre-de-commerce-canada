@@ -1145,8 +1145,6 @@ html:has(.espace-admin) {
   outline: none;
 }
 
-/* Site public de la plateforme (app/plateforme) : une gamme de neutres chauds (papier et encre), les titres en Inter
-   gras, les chiffres en Plex Mono, les boutons en bas de casse ; mouvements coupés si l'appareil le demande */
 .site-plateforme {
   --bg: #faf9f6;
   --surface: #ffffff;
@@ -1191,18 +1189,15 @@ html:has(.espace-admin) {
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
 }
-/* Accroche de l'accueil : un fond sombre, du rouge de l'équipe au vert des membres en passant par le bleu nuit */
 .site-plateforme .accroche-site {
   background:
     radial-gradient(ellipse 60% 50% at 50% 100%, rgb(255 255 255 / 0.05), transparent 70%),
     linear-gradient(100deg, #8c0a0a 0%, #4a0b14 22%, #0f1d2c 50%, #0b2f27 76%, #006b3c 100%);
 }
-/* Barre du site sur l'accueil : transparente sur l'accroche tant que la page n'a pas défilé, puis bleu nuit avec son ombre */
 .site-plateforme .entete-transparent:not([data-defile]) {
   background-color: transparent;
   border-bottom-color: transparent;
 }
-/* Mots en couleur dans les titres : rouge et vert (.saillant), ou le dégradé de la marque */
 .site-plateforme .texte-degrade {
   background-image: linear-gradient(90deg, #ad0707 0%, #8a3a1c 45%, #007140 100%);
   -webkit-background-clip: text;
@@ -1224,11 +1219,9 @@ html:has(.espace-admin) {
 html:has(.site-plateforme) {
   scroll-behavior: smooth;
 }
-/* Fenêtre de l'offre à la carte ouverte : la page derrière ne défile plus */
 html:has(.fenetre-composeur[open]) {
   overflow: hidden;
 }
-/* Boutons du site : bas de casse, 48 px, rayon 10 ; la couleur reste celle de la marque */
 .site-plateforme .btn-action,
 .site-plateforme .btn-contour {
   min-height: 48px;
@@ -1293,7 +1286,6 @@ html:has(.fenetre-composeur[open]) {
 .site-plateforme .entree-4 {
   animation-delay: 150ms;
 }
-/* L'aperçu de l'espace, dans l'accroche : arrive d'un peu plus bas, légèrement agrandi */
 @keyframes site-entree-apercu {
   from {
     opacity: 0;
@@ -1307,9 +1299,6 @@ html:has(.fenetre-composeur[open]) {
 .site-plateforme .entree-apercu {
   animation: site-entree-apercu 0.8s var(--site-ease) 0.25s both;
 }
-/* Révélation au défilement (Revelateur) : un bloc (data-reveal) ou les enfants d'un groupe l'un après l'autre
-   (data-reveal-groupe, --delai posé par le script). Caché seulement quand le script tourne (html.js-pret) ; une fois
-   l'animation finie, l'élément retrouve ses styles (le survol des cartes reste possible) */
 html.js-pret .site-plateforme [data-reveal]:not(.est-visible),
 html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
   opacity: 0;
@@ -1333,7 +1322,6 @@ html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
 .site-plateforme [data-reveal-groupe].est-visible.sans-mouvement > * {
   animation: none;
 }
-/* Cartes : se soulèvent sous le curseur (appareils qui en ont un) */
 .site-plateforme .carte-filet {
   transition:
     transform 0.3s var(--site-ease),
@@ -1348,23 +1336,18 @@ html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
     box-shadow: 0 14px 30px -14px rgb(0 0 0 / 0.55);
   }
 }
-/* Icônes sur carré pastel : l'icône s'anime sous le curseur (la carte se soulève déjà) */
 .site-plateforme .icone-pastel svg {
   transition: transform 0.35s var(--site-ease);
 }
 .site-plateforme .tuile-hote:hover .icone-pastel svg {
   transform: scale(1.08) rotate(-4deg);
 }
-/* La flèche d'un bouton avance d'un pas au survol */
 .site-plateforme .btn-action svg {
   transition: transform 0.2s var(--site-ease);
 }
 .site-plateforme .btn-action:hover svg {
   transform: translateX(3px);
 }
-/* Aperçu de l'espace : un écran s'efface avant que le suivant n'apparaisse ; dedans, les cartes et les listes sont en
-   perspective (chacune la sienne), arrivent de la profondeur l'une après l'autre et flottent à des rythmes décalés ;
-   les barres montent (ou s'étirent) quand l'aperçu est à l'écran, et à chaque écran */
 @keyframes site-carte-entree {
   from {
     opacity: 0;
@@ -1403,7 +1386,6 @@ html.js-pret .site-plateforme [data-reveal-groupe]:not(.est-visible) > * {
 .site-plateforme .visite .c3d:nth-child(4) {
   --c-delai: 330ms;
 }
-/* Les points sous la fenêtre : gris sur fond clair, blancs sur fond sombre */
 .site-plateforme .visite-point {
   background: var(--border-champ);
 }
@@ -1459,7 +1441,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   animation: site-pousse-x 0.8s var(--site-ease) both;
   animation-delay: var(--delai, 0ms);
 }
-/* Fenêtre de l'offre à la carte : arrive en fondu, le voile aussi */
 @keyframes site-fenetre {
   from {
     opacity: 0;
@@ -1477,7 +1458,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
 .fenetre-composeur[open]::backdrop {
   animation: site-voile 0.3s ease-out both;
 }
-/* Questions : la réponse se déplie (navigateurs qui savent animer la hauteur d'un details) */
 .site-plateforme details::details-content {
   height: 0;
   overflow: clip;
@@ -1488,7 +1468,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
 .site-plateforme details[open]::details-content {
   height: auto;
 }
-/* Illustrations des sections : glissent lentement avec le défilement (navigateurs qui le permettent) */
 @keyframes site-parallaxe {
   from {
     transform: translateY(28px);
@@ -1504,8 +1483,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
     animation-range: entry 0% exit 100%;
   }
 }
-/* Ornements autour des illustrations (site et pages d'authentification) : arrivent l'un après l'autre une fois le
-   dessin visible, puis flottent (va-et-vient), oscillent (balance), tournent (anneau pointillé) ou pulsent */
 @keyframes site-ornement {
   from {
     opacity: 0;
@@ -1577,7 +1554,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   background: currentColor;
   animation: site-pulsation 2.4s ease-out infinite;
 }
-/* Pages de texte (mentions légales, confidentialité, conditions) */
 .site-plateforme .texte-long h2 {
   margin: 40px 0 12px;
   font-size: 22px;
@@ -1605,7 +1581,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   text-decoration: underline;
   text-underline-offset: 3px;
 }
-/* Illustrations : fondu et légère montée à l'entrée dans l'écran ; dans l'accroche, un lent va-et-vient */
 .site-plateforme .illustration {
   opacity: 0;
   transform: translateY(12px);
@@ -1626,7 +1601,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
     transform: translateY(-10px);
   }
 }
-/* Dans l'accroche : entre avec le texte, puis un lent va-et-vient */
 @keyframes site-entree-illustration {
   from {
     opacity: 0;
@@ -1691,8 +1665,6 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   }
 }
 
-/* Cadre des pages d'authentification (components/public/CadreAuth) : le formulaire à nu à droite ; titre plus grand,
-   champs plus hauts, bouton de 56 px avec une ombre de sa couleur */
 .cadre-auth main h1 {
   font-size: clamp(30px, 3.2vw, 40px);
   line-height: 1.1;
@@ -1712,11 +1684,9 @@ html.js-pret .site-plateforme .visite:not(.est-visible) .pousse-x {
   border-radius: 10px;
   box-shadow: 0 14px 28px -14px rgb(173 7 7 / 0.6);
 }
-/* Le cadre reste blanc, même dans l'espace GM (dont la classe pose son propre fond) */
 .cadre-auth {
   background: #fff;
 }
-/* Sur la couverture de la Chambre (panneau gauche des pages de connexion) : mots en relief et nom éclaircis */
 .cadre-auth .sur-couverture .saillant {
   color: #ff8a8a;
 }

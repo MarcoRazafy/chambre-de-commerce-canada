@@ -12,7 +12,6 @@ import { getProfilChambre } from "@/lib/profil-chambre";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 
-// Rédaction d'une lettre : objet, éditeur visuel en blocs, audience ; brouillon, test, envoi
 export async function EditeurLettre({
   lettre,
   audience,
@@ -21,14 +20,11 @@ export async function EditeurLettre({
   evenement = null,
   retour,
 }: {
-  /** Sans « id » : une nouvelle lettre préremplie */
   lettre: { id?: string; sujet: string; contenu: string } | null;
   audience: Audience;
   etiquettes: string[];
   nbDestinataires: number | null;
-  /** Lettre aux inscrits de cet événement : l'audience est fixée */
   evenement?: { id: string; titre: string } | null;
-  /** Écrite depuis l'onglet Courriel d'un événement : on y revient après l'envoi */
   retour?: string;
 }) {
   const contenu = lettre?.contenu ?? "";

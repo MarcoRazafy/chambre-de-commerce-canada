@@ -6,7 +6,6 @@ import { CalendarClock, Plus, X } from "lucide-react";
 const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 let cle = 0;
 
-// Dates et heures d'envoi d'un rappel (heure de Madagascar) : une ou plusieurs, avant le début de l'événement
 export function DatesRappel({ initiales, suggestion, max, limite }: { initiales: string[]; suggestion: string; max: number; limite: string }) {
   const [dates, setDates] = useState(() => (initiales.length ? initiales : [suggestion]).map((v) => ({ cle: cle++, v })));
   return (

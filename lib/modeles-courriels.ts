@@ -362,13 +362,10 @@ interface RendezvousCourriel {
   entreprise: string | null;
   motif: string | null;
   lien: string;
-  /** Qui reçoit (sinon : l'équipe CanCham) */
   avec?: string | null;
-  /** Où : « Bureau de la CanCham », « Téléphone », « Visio » */
   lieu?: string;
   lienVisio?: string | null;
   aConfirmer?: boolean;
-  /** Invitation de calendrier (.ics) jointe */
   ics?: string | null;
 }
 
@@ -408,7 +405,6 @@ export function courrielRendezvousPris(
   };
 }
 
-// L'équipe confirme une demande de rendez-vous
 export function courrielRendezvousConfirme(
   a: string,
   d: RendezvousCourriel,
@@ -475,7 +471,6 @@ export function courrielRendezvousAnnule(
   };
 }
 
-// Relance du questionnaire de maillage : le membre n'a pas encore répondu (ou pas tout)
 export function courrielRelanceMaillage(
   a: string,
   d: { nom: string; entreprise: string; faites: number; total: number; lien: string },
@@ -497,7 +492,6 @@ export function courrielRelanceMaillage(
   };
 }
 
-// Reçu au membre après un paiement en ligne réussi (carte, mobile money) : montant, objet, facture
 export function courrielPaiementRecu(
   a: string,
   d: { nom: string; chambre: string; objet: string; numero: string; montant: string; moyen: string; lien: string },
@@ -517,7 +511,6 @@ export function courrielPaiementRecu(
   };
 }
 
-// À l'équipe de la Chambre : un membre (ou un participant) vient de payer en ligne
 export function courrielPaiementEquipe(
   a: string,
   d: { qui: string; objet: string; numero: string | null; montant: string; moyen: string; lien: string },
@@ -536,7 +529,6 @@ export function courrielPaiementEquipe(
   };
 }
 
-// Aux admins d'une Chambre : la facture de l'abonnement a été payée par carte
 export function courrielAbonnementPaye(a: string, d: { nom: string; numero: string; montant: string; lien: string }): Courriel {
   return {
     a,
@@ -553,7 +545,6 @@ export function courrielAbonnementPaye(a: string, d: { nom: string; numero: stri
   };
 }
 
-// Relance automatique d'une facture impayée (jours réglés par la Chambre, Paramètres → Courriels)
 export function courrielRelanceFacture(
   a: string,
   d: { nom: string; chambre: string; numero: string; objet: string; montant: string; jours: number; enLigne: boolean; lien: string },

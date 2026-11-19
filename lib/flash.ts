@@ -1,7 +1,6 @@
 import { redirect } from "next/navigation";
 
 function rediriger(path: string, message: string, erreur: boolean): never {
-  // Le message va avant l'ancre éventuelle (« /page#bloc »)
   const [chemin, ancre] = path.split("#");
   const sep = chemin.includes("?") ? "&" : "?";
   redirect(

@@ -17,7 +17,6 @@ import {
 
 const NOUVELLE = "__nouvelle__";
 
-// « Ajouter un contact » : à une entreprise existante, ou avec une nouvelle entreprise
 export function AjouterContact({ entreprises, retour }: { entreprises: { id: string; nom: string }[]; retour: string }) {
   const [choix, setChoix] = useState("");
   const nouvelle = choix === NOUVELLE;
@@ -99,7 +98,6 @@ export function AjouterContact({ entreprises, retour }: { entreprises: { id: str
   );
 }
 
-// Logo facultatif de la nouvelle entreprise, avec aperçu ; sans logo, l'icône de personne
 function ChoixLogo() {
   const [apercu, setApercu] = useState<string | null>(null);
   const [cle, setCle] = useState(0);
@@ -107,7 +105,7 @@ function ChoixLogo() {
   return (
     <div className="flex items-center gap-3.5">
       <span className="w-[84px] h-[48px] shrink-0 rounded-[var(--radius-s)] border border-line bg-surface grid place-items-center overflow-hidden text-muted">
-        {/* eslint-disable-next-line @next/next/no-img-element -- aperçu local (blob:) avant l'envoi */}
+        {/* eslint-disable-next-line @next/next/no-img-element */}
         {apercu ? <img src={apercu} alt="Aperçu du logo" className="w-full h-full object-contain p-1" /> : <User size={22} aria-hidden />}
       </span>
       <div className="flex flex-col gap-1">
@@ -138,7 +136,6 @@ function ChoixLogo() {
   );
 }
 
-// « Importer un CSV » : choisir le fichier, dire quelle colonne correspond à quoi, vérifier, importer
 export function ImporterContacts() {
   return (
     <Modal

@@ -3,7 +3,6 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 vi.mock("next/headers", () => ({
   headers: async () => new Headers({ host: "localhost:3000" }),
 }));
-// La Chambre en cours et son adresse : la Chambre n° 1 n'en a pas (adresse habituelle du site)
 let chambre = "principale";
 vi.mock("@/lib/chambre-courante", async (original) => ({
   ...(await original<typeof import("@/lib/chambre-courante")>()),

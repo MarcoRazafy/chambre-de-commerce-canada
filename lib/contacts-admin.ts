@@ -7,7 +7,6 @@ import { conditionsContacts, type FiltresContacts } from "@/lib/filtres-contacts
 
 export { lireFiltresContacts, parametresContacts, type FiltresContacts } from "@/lib/filtres-contacts";
 
-// Une entreprise membre, représentée par son contact principal (à défaut, son premier contact)
 export interface EntrepriseContact {
   id: string;
   nom: string;
@@ -51,7 +50,6 @@ function versEntreprise({ users, ...m }: Ligne): EntrepriseContact {
   };
 }
 
-// Les entreprises (sauf les demandes refusées), filtrées, dans l'ordre alphabétique
 export async function getEntreprisesContacts(f?: FiltresContacts): Promise<EntrepriseContact[]> {
   const lignes = await prisma.member.findMany({
     where: { statut: { not: "refusee" }, ...(f ? { AND: conditionsContacts(f) as Prisma.MemberWhereInput[] } : {}) },
@@ -61,13 +59,11 @@ export async function getEntreprisesContacts(f?: FiltresContacts): Promise<Entre
   return lignes.map(versEntreprise);
 }
 
-// Tous les tags posés sur des entreprises, dans l'ordre alphabétique
 export async function getTagsEntreprises(): Promise<string[]> {
   const ms = await prisma.member.findMany({ where: { etiquettes: { isEmpty: false } }, select: { etiquettes: true } });
   return [...new Set(ms.flatMap((m) => m.etiquettes))].sort((a, b) => a.localeCompare(b, "fr"));
 }
 
-// Tous les tags qui existent : créés par l'équipe (même sans entreprise) ou posés sur une entreprise
 export async function getTousLesTags(): Promise<string[]> {
   const [crees, poses] = await Promise.all([prisma.tag.findMany({ select: { nom: true } }), getTagsEntreprises()]);
   return [...new Set([...crees.map((t) => t.nom), ...poses])].sort((a, b) => a.localeCompare(b, "fr"));

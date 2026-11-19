@@ -37,8 +37,6 @@ export async function getCoordonneesPaiement(): Promise<Coordonnees> {
   };
 }
 
-// Moyens en ligne proposés aux membres : la carte par le compte Stripe de la Chambre s'il est connecté ;
-// VanillaPay (carte, mobile money), dont le compte marchand est celui du serveur, pour la Chambre n° 1 seulement
 export async function modesProposes(): Promise<ModeReglement[]> {
   const [stripe, chambreId] = await Promise.all([compteStripeActif(), chambreCourante()]);
   const vanillaPay = chambreId === CHAMBRE_PRINCIPALE;
@@ -47,7 +45,6 @@ export async function modesProposes(): Promise<ModeReglement[]> {
   );
 }
 
-// Le minimum en ligne est celui de VanillaPay : la carte par Stripe reste proposée en dessous
 export async function modesPublics(montant: number): Promise<ModeReglement[]> {
   const modes = await modesProposes();
   if (montant >= MONTANT_MINIMUM_EN_LIGNE) return modes;

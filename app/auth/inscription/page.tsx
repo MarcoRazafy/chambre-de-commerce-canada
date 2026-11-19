@@ -22,7 +22,6 @@ import { BasculeAuth } from "@/components/public/BasculeAuth";
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();
   if (connecte) redirect(connecte.role === "admin" ? "/admin" : "/membre");
-  // La Chambre : celle de l'adresse, ou (sur client.) celle choisie sur le site
   const [formules, profil] = await Promise.all([getFormules(), getProfilChambre()]);
 
   return (

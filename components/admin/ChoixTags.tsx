@@ -8,7 +8,6 @@ import { plat } from "@/lib/texte";
 
 const LIMITE = 5;
 
-// Tags à cocher, avec la création d'un nouveau tag (« Ajouter des tags »)
 export function ChoixTags({
   options,
   creation,
@@ -25,11 +24,9 @@ export function ChoixTags({
   const [tout, setTout] = useState(false);
   const proposes = [...new Set([...options, ...choisis])].filter((t) => !saisie || plat(t).includes(plat(saisie)));
   const nouveau = creation && saisie.trim() && ![...options, ...choisis].some((t) => plat(t) === plat(saisie.trim()));
-  // Au-delà de LIMITE, seuls les premiers (et ceux déjà choisis) s'affichent, sauf pendant une recherche
   const replie = !tout && !saisie && proposes.length > LIMITE;
   const visibles = replie ? proposes.filter((t, i) => i < LIMITE || choisis.includes(t)) : proposes;
   const basculer = (t: string) => setChoisis((c) => (c.includes(t) ? c.filter((x) => x !== t) : [...c, t]));
-  // Nouveau tag : choisi tout de suite et enregistré dans la liste des tags (sinon il le sera avec le formulaire)
   const creer = (t: string) => {
     basculer(t);
     setSaisie("");

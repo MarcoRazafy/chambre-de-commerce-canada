@@ -30,7 +30,6 @@ const PERIODES: [PeriodeRendezvous, string][] = [
 ];
 const CHAMP = "border border-line bg-surface text-ink rounded-[var(--radius-s)] px-3 py-[9px] text-[13.6px]";
 
-// Rendez-vous (équipe) : les membres réservent en ligne un créneau avec la bonne personne, selon sa spécialité
 export default async function RendezvousEquipePage({
   searchParams,
 }: {

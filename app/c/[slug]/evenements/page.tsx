@@ -13,7 +13,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: { absolute: p ? `Nos évènements · ${p.profil.nom}` : "Nos évènements" } };
 }
 
-// Page publique des événements d'une Chambre, générée automatiquement : à venir, puis passés
 export default async function EvenementsPublics({ params }: Params) {
   const p = await pagePublique((await params).slug);
   if (!p) notFound();

@@ -12,14 +12,12 @@ import { chambreCourante } from "@/lib/chambre-courante";
 const PAGE = "/admin/entreprise";
 const texte = (fd: FormData, k: string, max = 300) => String(fd.get(k) ?? "").trim().slice(0, max);
 
-// Une image du profil : la nouvelle si elle est envoyée, rien si elle est retirée, sinon l'actuelle
 async function image(fd: FormData, champ: string, actuelle: string | null | undefined, options: { largeur: number; transparence?: boolean }) {
   if (texte(fd, `retirer-${champ}`) === "1") return null;
   const nouvelle = await enregistrerImage(fd.get(champ), { prefixe: `chambre-${champ}`, ...options });
   return nouvelle ?? actuelle ?? null;
 }
 
-// Enregistre toute la fiche « Mon entreprise » (sans rediriger, sauf erreur de saisie)
 async function sauverProfil(formData: FormData) {
   await exigerEquipe();
   const actuel = await prisma.profilChambre.findFirst();
@@ -65,14 +63,11 @@ async function sauverProfil(formData: FormData) {
   revalidatePath("/", "layout");
 }
 
-// « Mon entreprise » : la présentation de la Chambre et ce qui figure sur ses factures
 export async function enregistrerProfilChambre(formData: FormData) {
   await sauverProfil(formData);
   redirectWithFlash(PAGE, "Mon entreprise est à jour");
 }
 
-
-// Icônes posées sur le logo et la couverture de « Mon entreprise » : change ou retire l'image tout de suite, sans toucher au reste
 export async function changerImageChambre(formData: FormData) {
   await exigerEquipe();
   const champ = texte(formData, "champ");
@@ -91,7 +86,6 @@ export async function changerImageChambre(formData: FormData) {
   redirectWithFlash(PAGE, valeur ? `${quoi} mis${champ === "logo" ? "" : "e"} à jour` : `${quoi} retiré${champ === "logo" ? "" : "e"}`);
 }
 
-// Palette posée sur le logo de « Mon entreprise » : la couleur de fond de son cadre, enregistrée tout de suite
 export async function changerFondLogo(formData: FormData) {
   await exigerEquipe();
   const saisie = texte(formData, "logoFond");

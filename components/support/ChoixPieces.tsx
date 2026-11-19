@@ -1,6 +1,5 @@
 "use client";
 
-// Pièces jointes d'un message (Support IT) : photos, vidéos (MP4, WebM, MOV), PDF ; 5 au plus
 import { useRef } from "react";
 import { FileText, Film, Image as ImageIcon, Paperclip, X } from "lucide-react";
 import { PLAFOND_FICHIER, PLAFOND_FICHIER_MO } from "@/lib/plafonds";
@@ -11,7 +10,6 @@ const ACCEPTE = "image/*,video/mp4,video/webm,video/quicktime,application/pdf";
 const VIDEOS = ["video/mp4", "video/webm", "video/quicktime"];
 const accepte = (f: File) => f.type.startsWith("image/") || VIDEOS.includes(f.type) || f.type === "application/pdf";
 
-// Ajoute des fichiers à ceux déjà choisis ; l'erreur dit ce qui a été écarté
 export function ajouterPieces(actuels: File[], nouveaux: File[]): { fichiers: File[]; erreur: string | null } {
   const fichiers = [...actuels];
   let erreur: string | null = null;

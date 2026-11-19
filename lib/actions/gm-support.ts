@@ -1,7 +1,5 @@
 "use server";
 
-// Support IT, côté Admin GM : répondre à l'équipe d'une Chambre ou à un de ses membres (texte, photos, vidéos, PDF),
-// marquer la conversation lue
 import { revalidatePath } from "next/cache";
 import { compteGM } from "@/lib/gm";
 import { ecrireSupportGM, lireSupportGM, type ResultatEnvoi } from "@/lib/support-it";

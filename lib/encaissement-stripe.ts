@@ -1,30 +1,21 @@
 import "server-only";
 
-// Encaissement des règlements des membres (cotisations, factures, billets) par carte, sur le compte Stripe de
-// la Chambre (Stripe Connect) : l'argent va directement à la Chambre ; la plateforme peut en garder une part
-// (réglée par l'Admin GM, 0 % par défaut). Le paiement se conclut comme ceux des autres prestataires
-// (lib/paiements.ts, conclurePaiement), à partir de l'état lu ici.
 import type Stripe from "stripe";
 import { prisma, prismaSysteme as db } from "@/lib/db";
 import { stripe, stripeConfigure } from "@/lib/stripe";
 import type { EtatPaiement } from "@/lib/vanillapay";
 
-// Devises sans décimales chez Stripe (l'ariary)
 const SANS_DECIMALES = new Set(["mga"]);
 export const montantStripe = (montant: number, devise: string) =>
   SANS_DECIMALES.has(devise.toLowerCase()) ? Math.round(montant) : Math.round(montant * 100);
-// Part de la plateforme, dans l'unité de Stripe
 export const partPlateforme = (unites: number, pourcent: number) => (pourcent > 0 ? Math.round((unites * pourcent) / 100) : 0);
 
-// Le compte Stripe de la Chambre en cours, s'il peut encaisser
 export async function compteStripeActif(): Promise<string | null> {
   if (!stripeConfigure()) return null;
   const c = await prisma.chambre.findFirst({ select: { stripeCompteId: true, stripeCompteActif: true } });
   return c?.stripeCompteId && c.stripeCompteActif ? c.stripeCompteId : null;
 }
 
-// Inscription chez Stripe : le compte de la Chambre (créé au besoin, la Chambre a son propre tableau de bord
-// Stripe), puis le lien vers les formulaires de Stripe ; « retour » : la page où revenir (adresse complète)
 export async function lienInscriptionStripe(chambreId: string, retour: string): Promise<string> {
   const c = await db.chambre.findUnique({ where: { id: chambreId }, select: { stripeCompteId: true, nom: true, profil: { select: { email: true } } } });
   if (!c) throw new Error(`Chambre ${chambreId} introuvable`);
@@ -37,8 +28,6 @@ export async function lienInscriptionStripe(chambreId: string, retour: string): 
         business_profile: { name: c.nom },
         metadata: { chambreId },
       },
-      // Contre un double clic (un seul compte), mais pas plus d'une minute : Stripe garde aussi les refus 24 h sous la
-      // même clé, et la Chambre doit pouvoir réessayer (par exemple une fois Connect activé sur la plateforme)
       { idempotencyKey: `compte-${chambreId}-${Math.floor(Date.now() / 60_000)}` },
     );
     compte = a.id;
@@ -54,7 +43,6 @@ export async function lienInscriptionStripe(chambreId: string, retour: string): 
   return lien.url;
 }
 
-// L'état du compte chez Stripe, reporté sur la Chambre ; renvoie s'il peut encaisser
 export async function majCompteStripe(compteId: string, a?: Stripe.Account): Promise<boolean> {
   const compte = a ?? (await stripe().accounts.retrieve(compteId));
   await db.chambre.updateMany({
@@ -64,13 +52,11 @@ export async function majCompteStripe(compteId: string, a?: Stripe.Account): Pro
   return Boolean(compte.charges_enabled);
 }
 
-// Part de la plateforme sur les cotisations (réglages de l'Admin GM)
 async function commission(): Promise<number> {
   const r = await db.reglagesPlateforme.findUnique({ where: { id: "plateforme" }, select: { commissionCotisations: true } });
   return r?.commissionCotisations ?? 0;
 }
 
-// Ouvre la page de paiement de Stripe pour un règlement, au nom de la Chambre ; « base » : son adresse
 export async function ouvrirChezStripe(
   r: { reference: string; montant: number; devise: string; libelle: string; chambreId: string; email?: string | null },
   compte: string,
@@ -84,9 +70,7 @@ export async function ouvrirChezStripe(
     {
       mode: "payment",
       line_items: [{ quantity: 1, price_data: { currency: devise, unit_amount: unites, product_data: { name: r.libelle } } }],
-      // Le montant dans la devise de la facture, sans conversion proposée par Stripe (pas d'Ariary)
       adaptive_pricing: { enabled: false },
-      // Le courriel du payeur, déjà connu : il n'a pas à le saisir
       ...(r.email ? { customer_email: r.email } : {}),
       client_reference_id: r.reference,
       metadata: { reference: r.reference, chambreId: r.chambreId },
@@ -100,8 +84,6 @@ export async function ouvrirChezStripe(
   return { url: s.url, session: s.id };
 }
 
-// L'état d'une session de paiement (sur le compte de la Chambre en cours, ou celui donné), comme celui d'un
-// prestataire : payée, expirée (échec), sinon null (en cours)
 export async function etatSessionStripe(sessionId: string, compte?: string): Promise<EtatPaiement | null> {
   if (!stripeConfigure()) return null;
   const compteId = compte ?? (await prisma.chambre.findFirst({ select: { stripeCompteId: true } }))?.stripeCompteId;
@@ -115,5 +97,4 @@ export async function etatSessionStripe(sessionId: string, compte?: string): Pro
   return null;
 }
 
-// Une session de paiement Stripe se reconnaît à son identifiant
 export const estSessionStripe = (transaction: string | null | undefined) => Boolean(transaction?.startsWith("cs_"));

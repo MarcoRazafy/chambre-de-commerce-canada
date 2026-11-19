@@ -1,5 +1,3 @@
-// Mon entreprise > Formules d'adhésion : une carte modifiable par formule (type d'adhésion, puis montant en $), l'ajout,
-// les formules archivées
 import { ArrowDown, ArrowUp, Plus, RotateCcw, Save, X } from "lucide-react";
 import { INPUT } from "@/components/champ-style";
 import {
@@ -14,12 +12,10 @@ import { fmtCotisation, libelleFormule, type Formule } from "@/lib/membership";
 
 type Ligne = Formule & { active: boolean; membres: number };
 
-// Les champs, puis les boutons en dessous
 const GRILLE = "flex flex-col gap-2.5";
 const ICONE = "inline-flex items-center justify-center size-9 rounded-[var(--radius-s)] border border-line bg-surface text-muted cursor-pointer hover:text-ink hover:bg-surface-2 disabled:opacity-40 disabled:cursor-default";
 const libelle = "block text-[12px] font-semibold text-muted mb-1";
 
-// Le type d'adhésion sur sa ligne, puis le montant et les boutons sur la même ligne
 function Champs({ f, children }: { f?: Formule; children?: React.ReactNode }) {
   return (
     <>

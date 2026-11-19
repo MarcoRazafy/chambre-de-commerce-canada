@@ -30,9 +30,7 @@ export function CoquilleAdmin({
   nav: NavGroup[];
   badges?: Record<string, number>;
   notifications?: Notification[];
-  /** Icône Messagerie de la barre du haut : seulement si l'offre de la Chambre ouvre la fonction */
   messagerie?: boolean;
-  /** Le logo de la Chambre (Mon entreprise) et son nom ; sans logo, IMPACT 261 */
   marque: { logo: string | null; nom: string };
   children: ReactNode;
 }) {

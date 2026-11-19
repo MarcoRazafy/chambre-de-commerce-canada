@@ -1,9 +1,5 @@
 import "server-only";
 
-// Support IT : les conversations avec l'Admin GM, avec photos, vidéos et PDF. Une pour l'équipe de chaque Chambre
-// (bulle de l'espace admin, membreId vide) et une pour chaque membre qui écrit (page Support IT de l'espace membre,
-// membreId : son compte). Côté Chambre et membre : lectures limitées à la Chambre (prisma) et au fil de celui qui
-// lit ; côté Admin GM (page Messages) : toutes les Chambres (prismaSysteme).
 import { after } from "next/server";
 import { avecChambre } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
@@ -49,8 +45,6 @@ type Ligne = {
   }[];
 };
 
-// « moi » : écrit par ce compte ; « equipe » : écrit par l'autre côté (l'Admin GM pour la Chambre, la Chambre
-// pour l'Admin GM)
 const versMessage = (
   m: Ligne,
   cote: "chambre" | "gm",
@@ -69,7 +63,6 @@ const versMessage = (
 const resumePieces = (n: number) =>
   `${n} pièce${n > 1 ? "s" : ""} jointe${n > 1 ? "s" : ""}`;
 
-// Pièces reçues d'un formulaire : 5 au plus, images, vidéos ou PDF (PieceRefusee sinon, rien n'est gardé)
 async function recevoirPieces(
   entrees: FormDataEntryValue[],
 ): Promise<PieceRecue[]> {
@@ -112,9 +105,6 @@ async function lireEnvoi(
   return { texte, pieces };
 }
 
-// ——— Côté Chambre (équipe : membreId vide) et côté membre (membreId : son compte) ———
-
-// Le fil de l'équipe d'une Chambre, ou celui d'un membre
 const EQUIPE = "";
 
 async function conversationCote(userId: string, membreId: string) {
@@ -182,7 +172,6 @@ async function ecrireCote(
     update: {},
     select: { id: true, luGMLe: true },
   });
-  // Courriel à l'Admin GM au premier message non lu seulement (pas à chaque message d'une même conversation)
   const dejaEnAttente = await prisma.messageSupportIT.count({
     where: {
       filId: fil.id,
@@ -217,7 +206,6 @@ export const ecrireSupportITChambre = (user: { id: string; nom: string }, formDa
 export const ecrireSupportITMembre = (user: { id: string; nom: string }, formData: FormData) =>
   ecrireCote(user, user.id, formData);
 
-// Le lien de l'Admin GM vers une conversation (celle de l'équipe, ou celle d'un membre)
 const lienConversationGM = (chambreId: string, membreId: string) =>
   `/gm/messages?${new URLSearchParams({ c: chambreId, ...(membreId ? { m: membreId } : {}) })}`;
 
@@ -250,7 +238,6 @@ async function prevenirGM(
   }
 }
 
-// La pièce jointe d'un message, si elle est du fil de l'équipe de cette Chambre, ou de celui de ce membre
 export const pieceSupportITChambre = (id: string) =>
   prisma.pieceSupportIT.findFirst({
     where: { id, message: { fil: { membreId: EQUIPE } } },
@@ -262,9 +249,6 @@ export const pieceSupportITMembre = (id: string, userId: string) =>
     select: { nom: true, fichier: true },
   });
 
-// ——— Côté Admin GM ———
-
-// Le nom et l'entreprise des membres qui ont écrit
 async function membresDesFils(ids: string[]) {
   if (!ids.length) return new Map<string, { nom: string; entreprise: string | null }>();
   const u = await db.user.findMany({ where: { id: { in: ids } }, select: { id: true, nom: true, member: { select: { nom: true } } } });
@@ -273,8 +257,6 @@ async function membresDesFils(ids: string[]) {
 
 const cleFil = (chambreId: string, membreId: string) => `${chambreId}|${membreId}`;
 
-// Les conversations, la plus récente d'abord, avec leurs messages non lus (écrits par la Chambre ou le membre après
-// la lecture)
 export async function filsSupportGM() {
   const [fils, nonLus] = await Promise.all([
     db.filSupportIT.findMany({
@@ -327,14 +309,12 @@ async function nonLusParFil(): Promise<Map<string, number>> {
   return new Map(lignes.map((l) => [cleFil(l.chambre, l.membre), l.n]));
 }
 
-// Pour le menu de l'espace GM : messages des Chambres et des membres non lus
 export async function nonLusSupportGM(): Promise<number> {
   let total = 0;
   for (const n of (await nonLusParFil()).values()) total += n;
   return total;
 }
 
-// La conversation avec l'équipe d'une Chambre, ou avec un de ses membres (vide si elle n'a pas encore commencé)
 export async function conversationGM(chambreId: string, membreId = EQUIPE) {
   const [chambre, fil] = await Promise.all([
     db.chambre.findUnique({
@@ -430,8 +410,6 @@ export async function ecrireSupportGM(
     data: { dernierLe: maintenant, luGMLe: maintenant },
   });
 
-  // Ceux qui lisent ce fil : notification sur leurs appareils à chaque réponse ; courriel au premier message non lu.
-  // Fil d'un membre : ce membre ; fil de l'équipe : ceux qui ont écrit (sinon les administrateurs de la Chambre)
   const extrait = envoi.texte
     ? apercu(envoi.texte, 300)
     : resumePieces(envoi.pieces.length);
@@ -487,6 +465,5 @@ export const pieceSupportITGM = (id: string) =>
     select: { nom: true, fichier: true },
   });
 
-// Les Chambres, pour ouvrir une conversation avec l'une d'elles
 export const chambresSupportGM = () =>
   db.chambre.findMany({ orderBy: { nom: "asc" }, select: { id: true, nom: true } });

@@ -25,7 +25,6 @@ const pourChoix = (liste: EntrepriseContact[]): EntrepriseTag[] =>
     email: e.contact?.email ?? null,
   }));
 
-// Tags : repères internes posés sur les entreprises (cibler une newsletter, suivre un groupe)
 export default async function AdminEtiquettes({
   searchParams,
 }: {
@@ -37,11 +36,9 @@ export default async function AdminEtiquettes({
     getEntreprisesContacts(),
     prisma.tag.findMany({ select: { nom: true } }),
     getTousLesTags(),
-    // Les contacts sans entreprise qui portent des tags
     prisma.abonne.findMany({ where: { desabonneLe: null, NOT: { etiquettes: { isEmpty: true } } }, orderBy: { prenom: "asc" }, select: { id: true, prenom: true, email: true, etiquettes: true } }),
   ]);
 
-  // Les tags créés (même sans entreprise) et ceux posés sur des entreprises
   const parTag = new Map<string, EntrepriseContact[]>();
   for (const t of crees) parTag.set(t.nom, []);
   for (const e of entreprises) for (const t of e.etiquettes) parTag.set(t, [...(parTag.get(t) ?? []), e]);

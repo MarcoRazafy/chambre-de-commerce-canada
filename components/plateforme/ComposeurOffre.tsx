@@ -1,8 +1,5 @@
 "use client";
 
-// Offre à la carte : la Chambre coche ses fonctions, le prix se calcule en direct.
-//  - « site » : tarifs du site (fond sombre), avec le nombre de comptes d'équipe et le lien de création ;
-//  - « champ » : dans un formulaire (création d'une Chambre, abonnement), cases « fonctions » envoyées avec lui.
 import Link from "next/link";
 import { useId, useState } from "react";
 import { ArrowRight, Check, Minus, Plus } from "lucide-react";
@@ -33,9 +30,7 @@ export function ComposeurOffre({
   offre: OffreComposable;
   initiales: readonly string[];
   mode: "site" | "champ";
-  /** Mode « champ » : les comptes de l'équipe aujourd'hui */
   equipe?: number;
-  /** Mode « champ », page Abonnement : lignes serrées avec un rond, total sur une ligne (carte à la hauteur des autres) */
   compact?: boolean;
 }) {
   const id = useId();
@@ -93,7 +88,6 @@ export function ComposeurOffre({
                 <Check size={13} strokeWidth={3.2} className="text-white opacity-0 group-has-checked:opacity-100" />
               </span>
             ) : (
-              // Abonnement : un rond, rempli au centre une fois coché
               <span
                 aria-hidden
                 className="grid place-items-center size-5 shrink-0 rounded-full border-2 border-[#c5cdd8] bg-white transition-colors group-has-checked:border-marque-vert"

@@ -1,8 +1,5 @@
 "use server";
 
-// Site public de la plateforme : créer une Chambre (son espace, son super admin), se connecter.
-// Hors de toute Chambre : écritures sans limite de Chambre (prismaSysteme) ; la suite se fait dans la Chambre
-// (avecChambre), puis un lien à usage unique ouvre la session à l'adresse de la Chambre (/auth/entree).
 import { after } from "next/server";
 import { redirect } from "next/navigation";
 import { adresseOuSite } from "@/lib/adresse-chambre";
@@ -23,15 +20,8 @@ const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").tr
 const ADRESSE = /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/;
 const HEURE = 60 * 60 * 1000;
 
-// Le lien qui ouvre la session dans la Chambre du compte (lib/entree-chambre.ts)
 const entree = lienEntree;
 
-// --- Créer une Chambre ---
-// L'inscription seule (la Chambre, son super admin) ; l'offre, le paiement et les informations se font ensuite,
-// dans l'espace de la Chambre (/demarrage)
-
-// L'identifiant court d'une Chambre, tiré de son nom (« Chambre de la Vallée » → « chambre-de-la-vallee ») ; il sert au
-// lien de la demande d'adhésion (client.…/auth/inscription?chambre=…), l'administrateur peut le changer
 const versIdentifiant = (nom: string) =>
   nom
     .normalize("NFD")
@@ -42,7 +32,6 @@ const versIdentifiant = (nom: string) =>
     .slice(0, 50)
     .replace(/-+$/, "");
 
-// Un identifiant libre : celui du nom, sinon suivi de -2, -3…
 async function identifiantLibre(nom: string): Promise<string> {
   const base = slugValide(versIdentifiant(nom)) ? versIdentifiant(nom) : `chambre-${versIdentifiant(nom) || "nouvelle"}`.slice(0, 50).replace(/-+$/, "");
   for (let i = 1; i < 50; i++) {
@@ -57,11 +46,9 @@ export async function creerChambre(formData: FormData) {
   const nom = texte(formData, "nom", 100);
   const email = texte(formData, "email").toLowerCase();
   const motDePasse = String(formData.get("motDePasse") ?? "");
-  // L'offre choisie sur le site, s'il y en a une : présélectionnée au démarrage
   const offreId = texte(formData, "offre", 50);
   const fonctions = texte(formData, "fonctions", 300).split(",").filter(estFonction).join(",");
 
-  // Erreur : retour au formulaire, saisie gardée (sauf le mot de passe)
   const erreur: (message: string) => never = (message) =>
     redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, nom, email, offre: offreId, fonctions })}`);
 
@@ -73,7 +60,6 @@ export async function creerChambre(formData: FormData) {
   if (!nom) erreur("Indiquez votre nom.");
   if (!ADRESSE.test(email)) erreur("Indiquez une adresse e-mail valide.");
   if (motDePasse.length < MOT_DE_PASSE_MIN) erreur(`Le mot de passe fait au moins ${MOT_DE_PASSE_MIN} caractères.`);
-  // Une adresse e-mail = un seul espace
   if (await db.user.findUnique({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
   const slug = await identifiantLibre(nomChambre);
 
@@ -92,7 +78,6 @@ export async function creerChambre(formData: FormData) {
       return { chambreId: c.id, userId: u.id };
     });
   } catch (e) {
-    // Prise entre-temps (même adresse ou même courriel au même moment)
     if ((e as { code?: string }).code === "P2002") erreur("Ce nom ou cet e-mail vient d’être pris : réessayez.");
     throw e;
   }
@@ -100,7 +85,6 @@ export async function creerChambre(formData: FormData) {
 
   const lien = await entree(creee.chambreId, creee.userId, { offre: offreId, fonctions });
   const adresse = await adresseOuSite(creee.chambreId, "equipe");
-  // Le courriel de bienvenue : l'adresse de l'espace, à garder
   after(() =>
     avecChambre(creee.chambreId, async () => {
       if (!adresse) return;
@@ -120,8 +104,6 @@ export async function creerChambre(formData: FormData) {
   );
   redirect(lien ?? "/connexion");
 }
-
-// --- Se connecter depuis le site de la plateforme ---
 
 const ESSAIS_PAR_COMPTE = 8;
 const ESSAIS_PAR_ORIGINE = 30;
@@ -154,10 +136,6 @@ export async function connexionPlateforme(formData: FormData) {
   redirect(lien);
 }
 
-// --- Mot de passe oublié depuis le site de la plateforme ---
-// Le compte est cherché dans toutes les Chambres ; le lien part de la sienne et mène à son adresse.
-// La réponse ne dit pas si l'adresse a un compte.
-
 const OUBLI = "/mot-de-passe-oublie";
 
 export async function demanderReinitialisationPlateforme(formData: FormData) {
@@ -181,15 +159,12 @@ export async function demanderReinitialisationPlateforme(formData: FormData) {
   vers({ envoye: email });
 }
 
-// --- Contact depuis le site (sans compte) : le message arrive à l'Admin GM ---
-
 export async function envoyerContact(formData: FormData) {
   const nom = texte(formData, "nom", 100);
   const email = texte(formData, "email").toLowerCase();
   const message = String(formData.get("message") ?? "").replace(/\r\n/g, "\n").trim().slice(0, 3000);
   const vers = (params: Record<string, string>): never => redirect(`/contact?${new URLSearchParams(params)}`);
   const saisies = { nom, email, message: message.slice(0, 1000) };
-  // Champ piège rempli : un robot ; on répond comme si c'était envoyé
   if (texte(formData, "site", 50)) vers({ envoye: "1" });
   if (!nom) vers({ erreur: "Indiquez votre nom.", ...saisies });
   if (!ADRESSE.test(email)) vers({ erreur: "Indiquez une adresse e-mail valide.", ...saisies });

@@ -15,7 +15,6 @@ export default async function ModifierEvenement({
   const [e, tousTags, tags] = await Promise.all([
     getEvent(id),
     getTousLesTags(),
-    // Lus à part : ces repères internes ne passent pas par la fiche partagée avec les membres
     prisma.event.findUnique({ where: { id }, select: { etiquettes: true } }),
   ]);
   if (!e) notFound();

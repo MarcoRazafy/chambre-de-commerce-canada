@@ -1,11 +1,5 @@
 import "server-only";
 
-// Les adresses web, pour les liens envoyés (courriels, retour de paiement, connexion, adhésion) :
-//  - un espace partagé : dev.DOMAINE_PLATEFORME (les équipes) ou client.DOMAINE_PLATEFORME (les membres) ; en
-//    développement, http://dev.localhost:port et http://client.localhost:port ;
-//  - une Chambre : son domaine propre s'il y en a un, la Chambre n° 1 : DOMAINE_PRINCIPAL s'il est réglé, sinon
-//    l'espace partagé demandé (la Chambre y est celle du compte connecté).
-// Le domaine nu (et localhost en développement) affiche le site de la plateforme.
 import { CHAMBRE_PRINCIPALE } from "@/lib/chambre-courante";
 import { prismaSysteme } from "@/lib/db";
 import { SOUS_DOMAINE_ESPACE, type EspacePartage } from "@/lib/hote-chambre";
@@ -23,7 +17,6 @@ function portLocal(): string {
   return process.env.PORT || "3000";
 }
 
-// L'adresse d'un espace partagé (dev. : les équipes, client. : les membres)
 export function adresseEspace(espace: EspacePartage): string | null {
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   const sous = SOUS_DOMAINE_ESPACE[espace];
@@ -32,7 +25,6 @@ export function adresseEspace(espace: EspacePartage): string | null {
   return null;
 }
 
-// L'adresse propre d'une Chambre (domaine propre, ou DOMAINE_PRINCIPAL pour la Chambre n° 1) ; null sinon
 async function adressePropre(chambreId: string): Promise<string | null> {
   const m = memoire.get(chambreId);
   if (m && m.jusqua > Date.now()) return m.propre;
@@ -43,13 +35,10 @@ async function adressePropre(chambreId: string): Promise<string | null> {
   return propre;
 }
 
-// L'adresse où aller pour une Chambre : son adresse propre, sinon l'espace partagé (les membres par défaut)
 export async function adresseDeLaChambre(chambreId: string, espace: EspacePartage = "client"): Promise<string | null> {
   return (await adressePropre(chambreId)) ?? adresseEspace(espace);
 }
 
-// Comme adresseDeLaChambre ; sans espace partagé réglé (ni DOMAINE_PLATEFORME, ni développement), la Chambre n° 1
-// garde l'adresse du site (APP_URL)
 export async function adresseOuSite(chambreId: string, espace: EspacePartage = "client"): Promise<string | null> {
   const adresse = await adresseDeLaChambre(chambreId, espace);
   if (adresse) return adresse;
@@ -57,7 +46,6 @@ export async function adresseOuSite(chambreId: string, espace: EspacePartage = "
   return process.env.APP_URL?.trim().replace(/\/+$/, "") || null;
 }
 
-// L'adresse du site public de la plateforme (DOMAINE_PLATEFORME) ; en développement, http://www.localhost:port
 export function adresseSitePlateforme(): string | null {
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   if (plateforme) return `https://${plateforme}`;

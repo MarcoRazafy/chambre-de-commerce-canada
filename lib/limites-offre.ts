@@ -1,11 +1,8 @@
 import "server-only";
 
-// Limites de l'offre de la Chambre en cours (réglées par l'Admin GM) : nombre de membres, comptes d'équipe.
-// Limite atteinte : le message à afficher (avec la piste de l'offre Payante), sinon null.
 import { prisma } from "@/lib/db";
 import { offreDeLaChambre } from "@/lib/offre-chambre";
 
-// « membres » : les entreprises (sauf les adhésions refusées) ; « equipe » : les comptes de l'équipe
 export async function limiteAtteinte(quoi: "membres" | "equipe", enPlus = 1): Promise<string | null> {
   const offre = await offreDeLaChambre();
   if (!offre) return null;

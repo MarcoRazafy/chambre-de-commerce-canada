@@ -5,7 +5,6 @@ import { CartesTarifs, TableauOffres } from "@/components/plateforme/site/Tarifs
 import { Saillant } from "@/components/ui";
 import { offresPubliques } from "@/lib/plateforme-site";
 
-// Lu à chaque visite : les offres de l'Admin GM changent sans redéploiement (et la base n'est pas joignable à la construction)
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -39,7 +38,6 @@ const QUESTIONS = [
   },
 ];
 
-// Tarifs de la plateforme : les offres de l'Admin GM, l'offre à la carte, le tableau comparatif
 export default async function TarifsPlateforme() {
   const offres = await offresPubliques();
 

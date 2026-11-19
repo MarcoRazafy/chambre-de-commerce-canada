@@ -1,6 +1,3 @@
-// Génère les icônes des réseaux sociaux de la newsletter (PNG : Gmail n'affiche pas le SVG),
-// une par couleur de la palette : public/marque/reseaux/<reseau>-<couleur>.png
-// Lancer : node scripts/icones-reseaux.mjs
 import sharp from "sharp";
 
 const PALETTE = {

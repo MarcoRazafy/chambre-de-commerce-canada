@@ -20,7 +20,6 @@ function politiqueContenu(dev: boolean): string {
 
 const nextConfig: NextConfig = {
   agentRules: false,
-  // Image Docker légère : le serveur autonome et seulement les fichiers qu'il utilise.
   output: "standalone",
   async headers() {
     const dev = process.env.NODE_ENV !== "production";
@@ -91,7 +90,6 @@ const nextConfig: NextConfig = {
     "100.*.*.*",
     "172.16.*.*",
     "*.trycloudflare.com",
-    // Espaces des Chambres en local : « slug ».localhost
     "*.localhost",
   ],
 

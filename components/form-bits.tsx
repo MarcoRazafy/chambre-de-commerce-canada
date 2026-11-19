@@ -189,9 +189,7 @@ export function ChampPhoto({
   aide?: string;
   ratio?: string;
   rond?: boolean;
-  /** Montrer l'image en entier (un logo), sans la recadrer */
   entier?: boolean;
-  /** Aperçu sur toute la largeur (une couverture), bouton en dessous */
   large?: boolean;
 }) {
   const [choisie, setChoisie] = useState<string | null>(null);

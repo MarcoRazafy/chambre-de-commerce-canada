@@ -1,7 +1,5 @@
 "use client";
 
-// En-tête du site de la plateforme : reste en haut en défilant (une ombre apparaît dès que la page a bougé) ; sur
-// l'accueil, le lien de la section à l'écran est souligné ; sur téléphone, le menu s'ouvre sous l'en-tête
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -15,21 +13,18 @@ export const LIENS_SITE = [
   { href: "/#questions", libelle: "Questions" },
 ];
 
-// Sections de l'accueil suivies par l'en-tête
 const SECTIONS = ["fonctions", "fonctionnement", "tarifs", "questions"];
 
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white";
 const SOULIGNE =
   "after:absolute after:left-3 after:right-3 after:bottom-1.5 after:h-0.5 after:rounded-full after:bg-[#ff8a8a] after:origin-left after:scale-x-0 after:transition-transform after:duration-300 after:ease-[var(--site-ease)]";
 
-// transparent : en haut de page, la barre se fond dans l'accroche (l'accueil) ; elle redevient bleu nuit dès que la page a défilé
 export function EnTeteSite({ transparent = false }: { transparent?: boolean }) {
   const chemin = usePathname();
   const [ouvert, setOuvert] = useState(false);
   const [section, setSection] = useState("");
   const entete = useRef<HTMLElement>(null);
 
-  // Une ombre sous l'en-tête dès que la page a défilé
   useEffect(() => {
     const el = entete.current;
     if (!el) return;
@@ -39,7 +34,6 @@ export function EnTeteSite({ transparent = false }: { transparent?: boolean }) {
     return () => window.removeEventListener("scroll", maj);
   }, []);
 
-  // Sur l'accueil : la section qui passe au milieu de l'écran donne le lien souligné
   useEffect(() => {
     if (chemin !== "/" || !("IntersectionObserver" in window)) return;
     const cibles = SECTIONS.map((id) => document.getElementById(id)).filter((e): e is HTMLElement => !!e);
@@ -69,7 +63,6 @@ export function EnTeteSite({ transparent = false }: { transparent?: boolean }) {
     };
   }, [ouvert]);
 
-  // Le lien actif : la page ouverte, ou la section à l'écran sur l'accueil
   const actif = (href: string) => {
     if (chemin !== "/") return href === chemin;
     return href === "/tarifs" ? section === "tarifs" : href === `/#${section}`;

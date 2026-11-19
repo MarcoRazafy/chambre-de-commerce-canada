@@ -1,9 +1,5 @@
 import "server-only";
 
-// Tags automatiques (règles « statut → tag ») : retirés de l'interface et plus appliqués nulle part, en attendant
-// d'être repris dans un workflow. Les règles enregistrées restent en base ; les tags déjà posés restent sur les
-// entreprises.
-
 import { prisma } from "@/lib/db";
 import { tagsSelonRegles } from "@/lib/tags";
 
@@ -11,7 +7,6 @@ export function getReglesTags() {
   return prisma.regleTag.findMany({ orderBy: { createdAt: "asc" } });
 }
 
-// Applique les règles à toutes les entreprises ; renvoie le nombre d'entreprises modifiées
 export async function appliquerReglesTags(): Promise<number> {
   const regles = await prisma.regleTag.findMany({ select: { statut: true, tag: true, actif: true } });
   if (!regles.some((r) => r.actif)) return 0;

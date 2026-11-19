@@ -24,7 +24,6 @@ interface CoquilleProps {
   lockedHrefs?: string[];
   notifications?: Notification[];
   bandeau?: ReactNode;
-  /** Le logo de la Chambre (Mon entreprise) et son nom ; sans logo, IMPACT 261 */
   marque: { logo: string | null; nom: string };
   children: ReactNode;
 }
@@ -42,7 +41,6 @@ export function Coquille({
 }: CoquilleProps) {
   const pathname = usePathname();
   const [menuOuvert, setMenuOuvert] = useState(false);
-
 
   return (
     <div className="espace-membre flex min-h-screen">

@@ -19,7 +19,6 @@ describe("retards de paiement de l'abonnement", () => {
     expect(etatRetard([{ date: j("2026-11-01"), payeeLe: j("2026-11-02"), suivie: true }], R, m).enRetard).toBe(false);
     expect(etatRetard([{ date: j("2026-01-01"), payeeLe: null, suivie: false }], R, m).enRetard).toBe(false);
     expect(etatRetard([{ date: j("2026-11-01"), payeeLe: null, suivie: true }], { ...R, actionRetard: "blocage" }, m).restriction).toBe("blocage");
-    // Délai 0 : jamais de restriction
     expect(etatRetard([{ date: j("2026-01-01"), payeeLe: null, suivie: true }], { ...R, delaiRetard: 0 }, m).restriction).toBeNull();
   });
 
@@ -27,7 +26,6 @@ describe("retards de paiement de l'abonnement", () => {
     expect(relanceDue({ date: j("2026-11-01"), relances: [] }, R, j("2026-11-01"))).toBeNull();
     expect(relanceDue({ date: j("2026-11-01"), relances: [] }, R, j("2026-11-02"))).toBe(1);
     expect(relanceDue({ date: j("2026-11-01"), relances: [1] }, R, j("2026-11-05"))).toBeNull();
-    // Tâches arrêtées une semaine : une seule relance, la plus récente
     expect(relanceDue({ date: j("2026-11-01"), relances: [] }, R, j("2026-11-16"))).toBe(14);
   });
 

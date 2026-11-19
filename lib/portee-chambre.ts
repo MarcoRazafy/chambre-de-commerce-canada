@@ -1,14 +1,3 @@
-// Séparation des Chambres : chaque requête à la base est limitée à la Chambre en cours (voir lib/db.ts).
-// Fonction pure : elle reçoit la requête Prisma (modèle, opération, arguments) et renvoie les arguments limités.
-//
-// - Tables principales (champ chambreId) : filtre « chambreId = la Chambre » ; à la création, chambreId est posé,
-//   y compris dans les créations imbriquées (une entreprise créée avec ses comptes, par exemple).
-// - Tables enfants (sans chambreId) : filtre par leur parent (une inscription → son événement → sa Chambre).
-// - Chambre : seulement la Chambre en cours ; on n'en crée pas ici (Admin GM : prismaSysteme).
-// - Tables communes (offres de la plateforme) : lues telles quelles, modifiées seulement par l'Admin GM.
-// - Comptes de l'Admin GM : jamais par ici (prismaSysteme).
-
-// Tables qui portent chambreId
 export const DIRECTES = new Set([
   "Member", "User", "Event", "News", "Resource", "DossierRessource", "Offer", "CanchamService", "Invoice",
   "Paiement", "CoordonneesPaiement", "MessageThread", "AuditLog", "Abonne", "TypeRendezvous", "Rendezvous",
@@ -16,15 +5,12 @@ export const DIRECTES = new Set([
   "FilSupportIT",
 ]);
 
-// Tables communes à toute la plateforme : lecture sans filtre, écriture refusée (Admin GM : prismaSysteme)
 export const COMMUNES = new Set(["Offre", "ReglagesPlateforme"]);
-// Tables de l'Admin GM : refusées ici
 export const SYSTEME_SEULEMENT = new Set(["CompteGM"]);
 
 const dans = (c: string) => ({ is: { chambreId: c } });
 const commentaire = (c: string) => ({ OR: [{ news: dans(c) }, { resource: dans(c) }] });
 
-// Tables enfants : le chemin jusqu'à une table principale
 export const PAR_PARENT: Record<string, (c: string) => object> = {
   Registration: (c) => ({ event: dans(c) }),
   EventAgenda: (c) => ({ event: dans(c) }),
@@ -53,8 +39,6 @@ export const PAR_PARENT: Record<string, (c: string) => object> = {
   PieceSupportIT: (c) => ({ message: { is: { fil: dans(c) } } }),
 };
 
-// Relations entre tables (sauf « chambre »), pour suivre les créations imbriquées.
-// Tenu à jour avec prisma/schema.prisma : un test compare les deux.
 export const RELATIONS: Record<string, Record<string, string>> = {
   AbonnementPush: { user: "User" },
   AccesDossier: { dossier: "DossierRessource", member: "Member" },
@@ -99,9 +83,6 @@ export const RELATIONS: Record<string, Record<string, string>> = {
   User: { member: "Member", jaimes: "NewsLike", participations: "ParticipantFil", commentaires: "Comment", jaimesCommentaires: "CommentLike", rappels: "Rappel", jetons: "JetonCompte", notesMembres: "NoteMembre", abonnementsPush: "AbonnementPush", rendezvous: "Rendezvous", rdvRecus: "Rendezvous", typesRdv: "TypeRendezvous", lectures: "LectureRessource" },
 };
 
-// Relations « possédées » par une table principale (elle porte la clé, ex. memberId) : si la création les donne
-// sous forme reliée (member: { connect }), la Chambre doit l'être aussi (Prisma refuse le mélange).
-// Tenu à jour avec prisma/schema.prisma : un test compare les deux.
 export const POSSEDEES: Record<string, string[]> = {
   Member: ["formule"],
   User: ["member"],
@@ -116,7 +97,6 @@ export const POSSEDEES: Record<string, string[]> = {
   MiseEnRelation: ["memberA", "memberB"],
 };
 
-// Opérations qui portent un « where » à limiter
 const FILTREES = new Set([
   "findUnique", "findUniqueOrThrow", "findFirst", "findFirstOrThrow", "findMany", "count", "aggregate", "groupBy",
   "update", "updateMany", "updateManyAndReturn", "delete", "deleteMany", "upsert",
@@ -131,7 +111,6 @@ const surChaque = (v: unknown, f: (o: Objet) => Objet): unknown => (Array.isArra
 
 export class ChambreHorsPortee extends Error {}
 
-// Le filtre de la Chambre pour un modèle (null : table commune, sans filtre)
 export function filtreChambre(modele: string, chambreId: string): object | null {
   if (COMMUNES.has(modele)) return null;
   if (modele === "Chambre") return { id: chambreId };
@@ -141,17 +120,14 @@ export function filtreChambre(modele: string, chambreId: string): object | null 
   return parent(chambreId);
 }
 
-// « where » + filtre, sans toucher aux champs uniques (findUnique, update, delete restent valides)
 function limiter(where: unknown, filtre: object): Objet {
   const w = estObjet(where) ? where : {};
   return { ...w, AND: [...(w.AND === undefined ? [] : liste(w.AND as object | object[])), filtre] };
 }
 
-// Données d'une création : la Chambre posée sur la table principale, puis dans les créations imbriquées
 function poser(modele: string, data: Objet, chambreId: string, seulementScalaires = false): Objet {
   const sortie: Objet = DIRECTES.has(modele) ? { ...data } : imbriquees(modele, data, chambreId);
   if (!DIRECTES.has(modele)) return sortie;
-  // Données « reliées » (member: { connect }) : la Chambre aussi par relation ; sinon par son identifiant
   const reliees = !seulementScalaires && ((POSSEDEES[modele] ?? []).some((k) => estObjet(data[k])) || "chambre" in data);
   delete sortie.chambreId;
   delete sortie.chambre;
@@ -160,7 +136,6 @@ function poser(modele: string, data: Objet, chambreId: string, seulementScalaire
   return seulementScalaires ? sortie : imbriquees(modele, sortie, chambreId);
 }
 
-// Suit les relations d'un objet de données et pose la Chambre dans ce qui y est créé
 function imbriquees(modele: string, data: Objet, chambreId: string): Objet {
   const relations = RELATIONS[modele];
   if (!relations) return data;
@@ -191,7 +166,6 @@ function imbriquees(modele: string, data: Objet, chambreId: string): Objet {
   return sortie;
 }
 
-// Les arguments d'une requête, limités à la Chambre
 export function restreindre(modele: string, operation: string, args: unknown, chambreId: string): Objet {
   if (!chambreId) throw new ChambreHorsPortee("Chambre inconnue");
   const a: Objet = estObjet(args) ? { ...args } : {};
@@ -202,7 +176,7 @@ export function restreindre(modele: string, operation: string, args: unknown, ch
     if (!LECTURES.has(operation)) throw new ChambreHorsPortee(`« ${modele} » ne se modifie que dans l'espace administrateur de la plateforme`);
     return a;
   }
-  const filtre = filtreChambre(modele, chambreId); // modèle inconnu : erreur
+  const filtre = filtreChambre(modele, chambreId);
   if (FILTREES.has(operation) && filtre) a.where = limiter(a.where, filtre);
 
   switch (operation) {

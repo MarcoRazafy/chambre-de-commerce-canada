@@ -6,8 +6,6 @@ import { courrielPaiementEquipe, courrielPaiementRecu } from "@/lib/modeles-cour
 import { courrielEquipe } from "@/lib/parametres";
 import { getProfilChambre } from "@/lib/profil-chambre";
 
-// Après un paiement en ligne réussi : un reçu au contact du membre (facture réglée), une alerte à l'équipe de la
-// Chambre (« Courriel de l'équipe » des Paramètres). Jamais bloquant : le paiement est déjà enregistré.
 export async function avertirPaiement(d: {
   facture: { id: string; numero: string; objet: string } | null;
   membreId: string | null;

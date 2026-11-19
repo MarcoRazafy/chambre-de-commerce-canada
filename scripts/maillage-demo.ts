@@ -3,10 +3,6 @@ import { prisma } from "../lib/db";
 import type { Prisma } from "../lib/generated/prisma/client";
 import type { Reponses } from "../lib/maillage";
 
-// Données de démonstration du maillage : étiquettes (propose / recherche / intérêts) des membres de démo,
-// quelques réponses au questionnaire, deux mises en relation et une suggestion écartée.
-// Ne remplace rien : un membre qui a déjà des étiquettes ou un questionnaire est laissé tel quel.
-
 type Profil = { offres: string[]; besoins: string[]; interets: string[]; reponses?: Reponses };
 
 const PROFILS: Record<string, Profil> = {
@@ -63,7 +59,6 @@ const PROFILS: Record<string, Profil> = {
   },
 };
 
-// m7 a répondu à tout le questionnaire : il apparaît « Complété » dans le suivi
 const COMPLET: Reponses = {
   A1: { nom: "Fandresena Finance", annee: "2012", site: "https://fandresena.mg" },
   A2: { noms: ["Services financiers"] },

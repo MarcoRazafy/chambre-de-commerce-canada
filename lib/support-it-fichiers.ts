@@ -4,7 +4,6 @@ import { servirFichier } from "@/lib/flux";
 import { cheminPiece, mimePiece } from "@/lib/stockage-messagerie";
 import { existe } from "@/lib/stockage-ressources";
 
-// Envoie une pièce jointe du Support IT (affichée, ou enregistrée avec ?telecharger)
 export async function servirPieceSupportIT(requete: Request, piece: { nom: string; fichier: string } | null): Promise<Response> {
   if (!piece) return new Response("Pièce jointe introuvable.", { status: 404 });
   const chemin = cheminPiece(piece.fichier);

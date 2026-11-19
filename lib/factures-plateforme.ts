@@ -6,7 +6,6 @@ import { configDeLaChambre } from "@/lib/offre-chambre";
 import { dateFactureDuMois, facturePlateforme, numeroFacturePlateforme, offreGratuite } from "@/lib/plateforme";
 import { getAdministrateurs } from "@/lib/queries-admin";
 
-// La facture d'une date (« AAAA-MM-JJ »), aux prix de l'offre de la Chambre, avec les comptes de l'équipe ce jour-là
 async function creerFacture(date: string, suivie: boolean) {
   const { config: c, offerts } = await configDeLaChambre();
   const n = (await getAdministrateurs()).length;
@@ -20,8 +19,6 @@ async function creerFacture(date: string, suivie: boolean) {
   });
 }
 
-// Crée la facture du mois une fois son jour arrivé, aux prix de l'offre de la Chambre, avec les comptes de
-// l'équipe ce jour-là (sans doublon). Offre gratuite : pas de facture.
 export async function assurerFactureDuMois(aujourdhui = aujourdhuiISO()): Promise<void> {
   const { config: c, offre } = await configDeLaChambre();
   if (offre && offreGratuite(offre)) return;
@@ -31,9 +28,6 @@ export async function assurerFactureDuMois(aujourdhui = aujourdhuiISO()): Promis
   await creerFacture(date, true);
 }
 
-// Démarrage d'une Chambre (offre payante) : la facture du mois en cours, à payer tout de suite, même avant son
-// jour de facturation (celle du mois ne sera pas refaite). Pas encore suivie : ni relance ni retard tant que le
-// démarrage n'est pas fini.
 export async function factureDeDemarrage(aujourdhui = aujourdhuiISO()) {
   const { config: c } = await configDeLaChambre();
   const date = dateFactureDuMois(aujourdhui, c.jourFacturation) ?? `${aujourdhui.slice(0, 8)}${String(c.jourFacturation).padStart(2, "0")}`;

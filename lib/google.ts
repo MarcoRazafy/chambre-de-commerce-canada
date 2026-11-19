@@ -1,10 +1,5 @@
 import "server-only";
 
-// Connexion avec Google (OpenID Connect : code d'autorisation et PKCE). Une seule adresse de retour, déclarée chez
-// Google (GOOGLE_URL_RETOUR) : le départ (/api/google/connexion) et le retour (/api/google/retour) se font à cette
-// adresse, qui pose et relit l'état dans un cookie signé. Le compte est trouvé par son adresse e-mail, vérifiée par
-// Google ; la session s'ouvre ensuite à l'adresse de sa Chambre (jeton d'entrée à usage unique). Google ne crée
-// jamais de compte. Sans les trois variables, le bouton n'apparaît pas.
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { signer } from "@/lib/auth";
 
@@ -29,13 +24,11 @@ export function configGoogle(): ConfigGoogle | null {
   return { id, secret, retour };
 }
 
-// Un chemin de l'espace (après la connexion), jamais une autre adresse
 export const suiteSure = (s: string | null | undefined): string =>
   s && s.startsWith("/") && !s.startsWith("//") && !s.includes("\\") && s.length <= 300 ? s : "";
 
 export const identifiantSur = (s: string | null | undefined): string => (s && IDENTIFIANT.test(s) ? s : "");
 
-// Le lien du bouton « Continuer avec Google » ; depuis : la Chambre de la page de connexion (vide : le site)
 export function lienGoogle(o: { depuis?: string | null; suite?: string | null } = {}): string | null {
   const c = configGoogle();
   if (!c) return null;
@@ -70,7 +63,6 @@ const egaux = (a: string, b: string) => {
   return x.length === y.length && timingSafeEqual(x, y);
 };
 
-// L'état relu dans le cookie : signé par la plateforme et pas expiré, sinon null
 export function lireEtat(brut: string | undefined, maintenant = Date.now()): EtatGoogle | null {
   if (!brut || brut.length > 2000) return null;
   const [charge, signature] = brut.split(".");
@@ -85,7 +77,6 @@ export function lireEtat(brut: string | undefined, maintenant = Date.now()): Eta
   }
 }
 
-// L'état renvoyé par Google est-il celui du cookie ?
 export const memeEtat = (e: EtatGoogle, recu: string | null | undefined) => !!recu && recu.length <= 200 && egaux(e.etat, recu);
 
 export const defi = (verificateur: string) => createHash("sha256").update(verificateur).digest("base64url");
@@ -105,9 +96,6 @@ export function urlAutorisation(c: ConfigGoogle, e: EtatGoogle): string {
   return u.toString();
 }
 
-// L'adresse e-mail du jeton d'identité, reçu directement de Google (en HTTPS, contre le secret du client : sa
-// signature n'a pas à être revérifiée). Null si le jeton n'est pas pour cette application, a expiré, ou si Google
-// n'a pas vérifié l'adresse.
 export function emailDuJeton(idToken: string, clientId: string, maintenant = Date.now()): string | null {
   const parties = idToken.split(".");
   if (parties.length !== 3) return null;
@@ -124,7 +112,6 @@ export function emailDuJeton(idToken: string, clientId: string, maintenant = Dat
   }
 }
 
-// Le code reçu au retour contre le jeton d'identité
 export async function echangerCode(c: ConfigGoogle, code: string, verificateur: string): Promise<string | null> {
   const r = await fetch("https://oauth2.googleapis.com/token", {
     method: "POST",

@@ -3,7 +3,6 @@ import { describe, expect, it } from "vitest";
 import { avecChambre, chambreCourante } from "@/lib/chambre-courante";
 import { ChambreHorsPortee, COMMUNES, DIRECTES, PAR_PARENT, POSSEDEES, RELATIONS, restreindre, SYSTEME_SEULEMENT } from "@/lib/portee-chambre";
 
-// Le schéma, lu tel quel : chaque table doit avoir sa règle de Chambre
 const schema = readFileSync("prisma/schema.prisma", "utf8");
 const modeles = new Map([...schema.matchAll(/\nmodel (\w+) \{\n([\s\S]*?)\n\}/g)].map((m) => [m[1], m[2]]));
 const champs = (corps: string) =>
@@ -48,7 +47,6 @@ describe("restreindre : chaque requête limitée à la Chambre", () => {
       where: { statut: "a_jour", AND: [{ chambreId: C }] },
     });
     expect(restreindre("Member", "count", undefined, C)).toEqual({ where: { AND: [{ chambreId: C }] } });
-    // AND déjà présent (objet ou liste) : conservé
     expect(restreindre("Tag", "findMany", { where: { AND: { nom: "x" } } }, C).where).toEqual({ AND: [{ nom: "x" }, { chambreId: C }] });
   });
 
@@ -87,7 +85,6 @@ describe("restreindre : chaque requête limitée à la Chambre", () => {
       member: { connect: { id: "m" } },
       chambre: { connect: { id: C } },
     });
-    // Par identifiant (memberId) : la Chambre par identifiant
     expect(restreindre("Invoice", "create", { data: { numero: "1", memberId: "m" } }, C).data).toEqual({ numero: "1", memberId: "m", chambreId: C });
   });
 
@@ -100,7 +97,6 @@ describe("restreindre : chaque requête limitée à la Chambre", () => {
     });
     const f = restreindre("Invoice", "update", { where: { id: "f" }, data: { paiements: { createMany: { data: [{ montant: 1 }] } } } }, C);
     expect(f.data).toEqual({ paiements: { createMany: { data: [{ montant: 1, chambreId: C }] } } });
-    // Un événement créé avec sa facture
     const e =restreindre("Event", "create", { data: { titre: "T", factures: { create: { numero: "9" } } } }, C);
     expect(e.data).toEqual({ titre: "T", chambreId: C, factures: { create: { numero: "9", chambreId: C } } });
   });

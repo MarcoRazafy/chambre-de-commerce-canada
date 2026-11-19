@@ -24,7 +24,6 @@ describe("fonctions incluses dans l'offre de la Chambre", () => {
     const membre = hrefs(filtrerNav(NAV_MEMBRE, []));
     expect(membre).toContain("/membre/cotisations");
     expect(membre).not.toContain("/membre/messagerie");
-    // Aucune rubrique vide
     expect(filtrerNav(NAV_MEMBRE, []).every((g) => g.items.length)).toBe(true);
   });
 });

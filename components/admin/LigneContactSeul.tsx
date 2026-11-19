@@ -18,7 +18,6 @@ export interface ContactSeul {
   etiquettes: string[];
 }
 
-// Un contact sans entreprise (page Contacts) : un clic ouvre sa fiche
 export function LigneContactSeul({
   contact: a,
   retour,

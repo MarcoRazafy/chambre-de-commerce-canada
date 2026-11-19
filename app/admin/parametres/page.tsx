@@ -50,19 +50,14 @@ const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
   { cle: "tiktok", libelle: "TikTok", exemple: "tiktok.com/@votre-compte" },
 ];
 
-// Paramètres de la plateforme, en onglets : Courriels (expéditeur, alertes de l'équipe), Réseaux sociaux,
-// Mentions légales. Les super admins modifient ; les admins consultent.
 export default async function Parametres({ searchParams }: { searchParams: Promise<{ onglet?: string; stripe?: string }> }) {
   const sp = await searchParams;
-  // Les formules d'adhésion sont dans Mon entreprise
   if (sp.onglet === "formules") redirect("/admin/entreprise#formules");
-  // Paiements en ligne : seulement quand la plateforme a son compte Stripe
   const onglets = ONGLETS.filter((o) => o.cle !== "paiements" || stripeConfigure());
   const onglet = onglets.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
   const [moi, brut, reglages] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut(), getParametres()]);
   const gere = estAdministrateur(moi);
 
-  // Retour des formulaires de Stripe : l'état du compte se met à jour ; lien périmé : un nouveau
   const compte = onglet === "paiements"
     ? await prisma.chambre.findFirst({ select: { stripeCompteId: true, stripeCompteActif: true, stripeComptePays: true } })
     : null;
@@ -76,8 +71,6 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
   }
   const nomEntreprise = completerProfil(brut).nom;
 
-  // Expéditeur : le domaine de l'entreprise, puis l'adresse sur ce domaine. Le domaine actif reste celui de la
-  // plateforme tant que le domaine n'est pas validé ou qu'aucune adresse n'y est indiquée
   const domaine = brut?.expediteurDomaine ?? "";
   const etat = onglet === "courriels" && domaine ? await etatDomaineChambre(await chambreCourante(), domaine) : null;
   const adresse = brut?.expediteurEmail ?? "";
@@ -219,7 +212,6 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
           </Panneau>
         </form>
       ) : null}
-
 
       {onglet === "developpeur" ? await (async () => {
         const [chambre, visites] = await Promise.all([

@@ -1,6 +1,3 @@
-// Notifications de Stripe (webhook), signées : STRIPE_WEBHOOK_SECRET pour le compte de la plateforme (abonnement
-// des Chambres), STRIPE_CONNECT_WEBHOOK_SECRET pour les comptes des Chambres (cotisations de leurs membres).
-// Sans signature valide : refusées.
 import type Stripe from "stripe";
 import { traiterEvenement } from "@/lib/abonnement-stripe";
 import { traiterEvenementCompte } from "@/lib/encaissement-webhook";
@@ -22,11 +19,9 @@ export async function POST(req: Request) {
   }
   if (!evenement) return new Response("Signature invalide", { status: 400 });
   try {
-    // Événement d'un compte de Chambre, ou du compte de la plateforme
     if (evenement.account) await traiterEvenementCompte(evenement);
     else await traiterEvenement(evenement);
   } catch (e) {
-    // Stripe renverra la notification plus tard
     console.error(`[stripe] ${evenement.type} non traité`, e);
     return new Response("Erreur", { status: 500 });
   }

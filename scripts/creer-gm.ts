@@ -1,5 +1,3 @@
-// Crée (ou remet le mot de passe d') un compte Admin GM : npm run gm:creer -- --email … --nom …
-// Le mot de passe est demandé sans s'afficher (ou lu dans GM_MOT_DE_PASSE, sans terminal).
 import "dotenv/config";
 import { createInterface } from "node:readline";
 import { parseArgs } from "node:util";

@@ -2,7 +2,6 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { cleEnvoi, debutEvenement, echeance, estDuA, lireDateEnvoi, MESSAGE_DEFAUT, momentsEnvoi, regrouperParAdresse, remplir, versSaisie } from "@/lib/rappels";
 
 const H = 3_600_000;
-// Le 20 novembre 2026 à 14 h, heure de Madagascar (11 h UTC)
 const DEBUT = Date.parse("2026-11-20T11:00:00Z");
 
 describe("calendrier des rappels", () => {
@@ -61,7 +60,6 @@ describe("texte du rappel", () => {
   });
 });
 
-// L'envoi, avec une base et des courriels simulés
 const envoyes: { a: string; sujet: string; pieces?: unknown[]; html?: string }[] = [];
 const reserves = new Set<string>();
 let rappels: Record<string, unknown>[] = [];
@@ -122,7 +120,6 @@ describe("envoi des rappels", () => {
     expect(haja.sujet).toBe("Rappel : Gala");
     expect(haja.pieces).toHaveLength(2);
     expect(envoyes.find((c) => c.a === "toky@s.mg")!.pieces).toHaveLength(0);
-    // Le rappel par défaut, en lettre : bandeau de l'événement, prénom, QR codes avant le pied de page
     expect(haja.html).toContain("Bonjour Haja");
     expect(haja.html).toContain(">Gala<");
     expect(haja.html).toContain("cid:qr-");

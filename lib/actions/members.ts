@@ -397,7 +397,6 @@ export async function modifierFormule(formData: FormData) {
   await exigerEquipe();
   const id = texte(formData, "memberId");
   const retour = `/admin/membres/${id}`;
-  // Une formule proposée par la Chambre (Paramètres > Formules d'adhésion)
   const formule = await formuleProposee(texte(formData, "formule"));
   if (!formule) {
     redirectWithErreur(retour, "Choisissez une formule de la grille.");
@@ -593,7 +592,6 @@ export async function createMember(formData: FormData) {
       `« ${email} » n’est pas une adresse e-mail valide.`,
     );
   }
-  // Une adresse = un seul espace : cherchée dans toutes les Chambres (sans rien montrer d'une autre)
   const occupe = await prismaSysteme.user.findUnique({
     where: { email },
     select: { role: true, chambreId: true, member: { select: { nom: true } } },
@@ -993,7 +991,6 @@ export async function addContact(formData: FormData) {
     redirectWithErreur(retour, "Nom et courriel sont obligatoires.");
   }
 
-  // Une adresse = un seul espace : cherchée dans toutes les Chambres
   const occupe = await prismaSysteme.user.findUnique({ where: { email }, select: { id: true } });
   if (occupe) {
     redirectWithErreur(
@@ -1157,7 +1154,6 @@ export async function updateContact(formData: FormData) {
     redirectWithErreur(retour, "Nom et courriel sont obligatoires.");
   }
 
-  // Une adresse = un seul espace : cherchée dans toutes les Chambres
   const occupe = await prismaSysteme.user.findFirst({
     where: { email, id: { not: id } },
     select: { id: true },

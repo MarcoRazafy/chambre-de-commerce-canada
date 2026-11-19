@@ -9,8 +9,6 @@ import { filPour } from "@/lib/nav";
 const LIEN =
   "inline-flex items-center gap-1.5 min-h-[36px] rounded-md px-2 no-underline text-white/65 transition-colors duration-150 hover:text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60";
 
-// Barre du haut (fixée en haut de l'écran) : le bouton « Retour », toujours visible hors de l'accueil,
-// puis le fil d'Ariane : chaque niveau jusqu'à la page sur grand écran, le titre de la page sur téléphone.
 export function FilAriane({ racine }: { racine: string }) {
   return (
     <Suspense fallback={<Fil racine={racine} params={null} />}>
@@ -62,7 +60,6 @@ function Fil({ racine, params }: { racine: string; params: URLSearchParams | nul
   );
 }
 
-// « Retour » : la page d'avant ; sans historique (lien ouvert dans un nouvel onglet), le niveau parent du fil
 function BoutonRetour({ parent }: { parent: string }) {
   const router = useRouter();
   return (

@@ -1,6 +1,5 @@
 "use server";
 
-// Fin d'une visite de l'Admin GM (mode développeur) : retour à la fiche de la Chambre dans l'espace GM
 import { redirect } from "next/navigation";
 import { fermerSession } from "@/lib/auth";
 import { chambreCourante } from "@/lib/chambre-courante";

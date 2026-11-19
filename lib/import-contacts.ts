@@ -1,13 +1,8 @@
-// Import de contacts depuis un fichier CSV : lecture du fichier, correspondance entre les colonnes
-// du fichier et les informations attendues, puis contrôle de chaque ligne avant l'envoi.
-
 export const LIGNES_IMPORT_MAX = 2000;
 const ADRESSE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export const CHAMPS_IMPORT = [
-  // Sans entreprise, le contact va dans « Sans entreprise » (il reçoit la newsletter envoyée à tous)
   { cle: "entreprise", libelle: "Entreprise", requis: false, synonymes: ["entreprise", "societe", "company", "organisation", "organization", "raison sociale", "membre"] },
-  // Le prénom avant le nom : « prénom » contient « nom », il doit être reconnu en premier
   { cle: "prenom", libelle: "Prénom", requis: false, synonymes: ["prenom", "first name", "firstname", "given name"] },
   { cle: "nom", libelle: "Nom", requis: false, synonymes: ["nom", "contact", "name", "nom complet", "full name", "prenom nom", "representant", "last name", "lastname"] },
   { cle: "email", libelle: "Courriel", requis: true, synonymes: ["email", "e-mail", "courriel", "mail", "adresse"] },
@@ -19,7 +14,6 @@ export const CHAMPS_IMPORT = [
 ] as const;
 
 export type CleImport = (typeof CHAMPS_IMPORT)[number]["cle"];
-// Pour chaque information, l'index de la colonne du fichier (-1 : ne pas importer)
 export type Correspondance = Record<CleImport, number>;
 
 export type LigneImport = {
@@ -37,7 +31,6 @@ export type LigneImport = {
 const simple = (s: string) =>
   s.normalize("NFD").replace(/\p{Diacritic}/gu, "").toLowerCase().replace(/[_\-.]+/g, " ").replace(/\s+/g, " ").trim();
 
-// Lit un CSV (séparateur « ; », « , » ou tabulation, guillemets doublés) : en-têtes puis lignes
 export function lireCsv(brut: string): { entetes: string[]; lignes: string[][] } {
   const texte = brut.replace(/^﻿/, "");
   const premiere = texte.split(/\r?\n/, 1)[0] ?? "";
@@ -69,7 +62,6 @@ export function lireCsv(brut: string): { entetes: string[]; lignes: string[][] }
   return { entetes, lignes: reste.slice(0, LIGNES_IMPORT_MAX) };
 }
 
-// Devine la colonne de chaque information d'après les en-têtes du fichier (une colonne ne sert qu'une fois)
 export function devinerCorrespondance(entetes: string[]): Correspondance {
   const prises = new Set<number>();
   const sortie = {} as Correspondance;
@@ -92,11 +84,9 @@ export type LignePreparee = {
   numero: number;
   ligne: LigneImport | null;
   erreur: string | null;
-  // Lignes du fichier réunies dans celle-ci (même courriel), et les valeurs écartées
   fusion: { numeros: number[]; ecarts: string[] } | null;
 };
 
-// « Mailto:Noro@Bio.mg », « <noro@bio.mg> », « noro @bio.mg » : une seule et même adresse
 export function normaliserEmail(brut: string): string {
   return brut.trim().replace(/^mailto:/i, "").replace(/^<(.*)>$/, "$1").replace(/\s+/g, "").toLowerCase();
 }
@@ -112,8 +102,6 @@ const LIBELLES: Record<(typeof CHAMPS_TEXTE)[number], string> = {
   ville: "ville",
 };
 
-// Construit chaque ligne selon la correspondance. Les lignes au même courriel sont réunies en une seule :
-// la première valeur trouvée l'emporte, les champs vides se complètent, les tags s'additionnent.
 export function preparerLignes(lignes: string[][], c: Correspondance): LignePreparee[] {
   const brutes = lignes.map((cellules, i) => {
     const val = (cle: CleImport) => (c[cle] >= 0 ? (cellules[c[cle]] ?? "").trim().replace(/\s+/g, " ") : "");
@@ -128,10 +116,9 @@ export function preparerLignes(lignes: string[][], c: Correspondance): LignePrep
       ville: val("ville").slice(0, 80),
       tags: [...new Set(val("tags").split(/[,;|]/).map((t) => t.trim().slice(0, 60)).filter(Boolean))].slice(0, 20),
     };
-    return { numero: i + 2, ligne }; // la ligne 1 du fichier : les en-têtes
+    return { numero: i + 2, ligne };
   });
 
-  // Regroupe par courriel, dans l'ordre de première apparition
   const groupes: (typeof brutes)[] = [];
   const parEmail = new Map<string, (typeof brutes)>();
   for (const b of brutes) {
@@ -168,7 +155,6 @@ export function preparerLignes(lignes: string[][], c: Correspondance): LignePrep
   });
 }
 
-// Contrôle côté serveur d'une ligne reçue (on ne fait pas confiance au navigateur)
 export function ligneValide(l: unknown): LigneImport | null {
   if (!l || typeof l !== "object") return null;
   const o = l as Record<string, unknown>;
@@ -190,6 +176,5 @@ export function ligneValide(l: unknown): LigneImport | null {
   return ADRESSE.test(email) ? ligne : null;
 }
 
-// Le nom affiché : prénom et nom, sinon le début du courriel
 export const nomComplet = (l: Pick<LigneImport, "prenom" | "nom" | "email">) =>
   [l.prenom, l.nom].filter(Boolean).join(" ").trim() || l.email.split("@")[0];

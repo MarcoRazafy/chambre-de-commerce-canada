@@ -25,8 +25,6 @@ const ETAPES = [
 
 const FILETS = ["filet-vert", "filet-rouge", "filet-degrade"];
 
-// Les Chambres actives : on choisit la sienne (la recherche filtre pendant la saisie), puis on dépose sa demande sur
-// l'espace des membres, pour cette Chambre
 export default async function DevenirMembre({ searchParams }: { searchParams: Promise<{ q?: string }> }) {
   const q = ((await searchParams).q ?? "").trim().slice(0, 100);
   const chambres = (await chambresPubliques("")).filter((c): c is typeof c & { adresse: string } => !!c.adresse);
@@ -47,7 +45,6 @@ export default async function DevenirMembre({ searchParams }: { searchParams: Pr
         illustration={<Illustration nom="membres" priorite className="hidden lg:block w-full max-w-[480px] justify-self-end" />}
       />
 
-      {/* Confiance */}
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 py-14 lg:py-20">
         <ul data-reveal-groupe="" className="m-0 p-0 list-none grid gap-x-8 gap-y-8 md:grid-cols-2 max-w-[880px]">
           {CONFIANCE.map(({ icone: Icone, ton, titre, texte }) => (
@@ -64,7 +61,6 @@ export default async function DevenirMembre({ searchParams }: { searchParams: Pr
         </ul>
       </section>
 
-      {/* Les trois étapes */}
       <section className="bg-surface border-y border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-14 lg:py-20">
           <EnTeteSection titre={<>Comment <Saillant>adhérer</Saillant></>} />
@@ -80,7 +76,6 @@ export default async function DevenirMembre({ searchParams }: { searchParams: Pr
         </div>
       </section>
 
-      {/* Pour les Chambres */}
       <section className="px-5 sm:px-8 py-14 lg:py-20">
         <div data-reveal="" className="sur-sombre max-w-[1200px] mx-auto rounded-[20px] bg-marque-nuit px-6 py-10 sm:px-12 flex flex-col sm:flex-row sm:items-center gap-6 text-white">
           <div className="flex-1">

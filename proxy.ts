@@ -7,7 +7,6 @@ import { chambreDuSlug, etatChambre, resoudreHote } from "@/lib/chambre-courante
 import { fonctionDuChemin } from "@/lib/fonctions-plateforme";
 import { estHoteGM, estHotePlateforme, SOUS_DOMAINE_ESPACE, type EspacePartage } from "@/lib/hote-chambre";
 import { lireChambreChoisie, NOM_COOKIE_CHAMBRE_CHOISIE, scellerChambreChoisie } from "@/lib/signature";
-// Avant la page, la Chambre n'est pas encore établie : lectures par identifiant (session signée), sans limite
 import { prismaSysteme as prisma } from "@/lib/db";
 import { isAccessLocked, PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
 
@@ -17,8 +16,6 @@ const CONNEXION = "/auth";
 
 const DOMAINE = process.env.DOMAINE_PRINCIPAL?.trim().toLowerCase() || null;
 
-// DOMAINE_PRINCIPAL : l'adresse de la Chambre n° 1 ; les autres adresses générales y sont renvoyées.
-// L'adresse propre d'une Chambre (sous-domaine de la plateforme, domaine propre) n'est jamais renvoyée.
 function versDomainePrincipal(request: NextRequest): NextResponse | null {
   if (!DOMAINE) return null;
   const hote = (
@@ -51,7 +48,6 @@ const ACCUEIL: Record<string, string> = {
   visiteur: CONNEXION,
 };
 
-// Page courte, sans la coquille de l'application (sous-domaine sans Chambre, espace suspendu)
 const pageCourte = (titre: string, status: number, lien?: { href: string; libelle: string }) =>
   new NextResponse(
     `<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${titre}</title></head><body style="margin:0;min-height:100vh;display:grid;place-items:center;font-family:system-ui,sans-serif;background:#f5f7fa;color:#13243a"><div style="text-align:center"><h1 style="font-size:22px;font-weight:700;margin:0 0 14px">${titre}</h1>${lien ? `<a href="${lien.href}" style="color:#c8102e;font-weight:600">${lien.libelle}</a>` : ""}</div></body></html>`,
@@ -62,14 +58,11 @@ const introuvable = () => pageCourte("Espace introuvable", 404);
 const estGM = (chemin: string) => chemin === "/gm" || chemin.startsWith("/gm/");
 const estSitePlateforme = (chemin: string) => chemin === "/plateforme" || chemin.startsWith("/plateforme/");
 
-// Espace suspendu par l'Admin GM : la connexion et l'abonnement restent ouverts (pour régulariser)
 const OUVERT_SI_SUSPENDUE = (chemin: string) =>
   ["/auth", "/auth/entree", "/auth/entree-gm", "/auth/mot-de-passe-oublie", "/auth/nouveau-mot-de-passe"].includes(chemin) ||
   chemin === "/admin/abonnement" ||
   chemin.startsWith("/admin/abonnement/");
 
-// Espace administrateur de la plateforme (manage.DOMAINE_PLATEFORME) : seulement ses pages, avec sa propre session
-// Pages de l'espace GM ouvertes sans session : connexion, mot de passe oublié
 const GM_SANS_SESSION = new Set(["/gm/connexion", "/gm/mot-de-passe-oublie", "/gm/nouveau-mot-de-passe"]);
 
 function proxyGM(request: NextRequest): NextResponse {
@@ -81,7 +74,6 @@ function proxyGM(request: NextRequest): NextResponse {
     return u;
   };
   if (pathname === "/") return NextResponse.redirect(url("/gm"));
-  // Les fichiers publics (illustrations, icônes…) passent tels quels
   if (/\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
   if (!estGM(pathname)) return introuvable();
   if (GM_SANS_SESSION.has(pathname)) return NextResponse.next();
@@ -91,8 +83,6 @@ function proxyGM(request: NextRequest): NextResponse {
   return NextResponse.next();
 }
 
-// Site public de la plateforme (DOMAINE_PLATEFORME, www.) : ses pages (app/plateforme), sous des adresses courtes
-// (« / », « /creer-une-chambre »…) ; les fichiers publics (images…) passent tels quels
 function proxyPlateforme(request: NextRequest): NextResponse {
   const { pathname } = request.nextUrl;
   if (estSitePlateforme(pathname) || /\.[a-z0-9]+$/i.test(pathname)) return NextResponse.next();
@@ -101,9 +91,6 @@ function proxyPlateforme(request: NextRequest): NextResponse {
   return NextResponse.rewrite(url);
 }
 
-// Espaces partagés (dev. : les équipes, client. : les membres) : la Chambre est celle du compte connecté. Sans compte,
-// seules la connexion, le mot de passe, l'entrée par jeton et (sur client.) la demande d'adhésion pour la Chambre
-// choisie s'ouvrent. Chaque espace garde son public : le back-office sur dev., l'espace membre sur client.
 const PROTEGE = ["/admin", "/membre", "/demarrage", "/bienvenue"];
 const DE_L_EQUIPE = (chemin: string) => ["/admin", "/demarrage"].some((p) => chemin === p || chemin.startsWith(`${p}/`));
 
@@ -115,7 +102,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
     url.search = new URLSearchParams(params).toString();
     return NextResponse.redirect(url);
   };
-  // Le même chemin sur l'autre espace partagé (dev. ↔ client.)
   const versEspace = (autre: EspacePartage) => {
     const hote = (request.headers.get("x-forwarded-host") ?? request.headers.get("host") ?? "").split(",")[0].trim();
     const proto = request.headers.get("x-forwarded-proto")?.split(",")[0].trim() || request.nextUrl.protocol.replace(":", "");
@@ -123,8 +109,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
   };
   const versSite = (chemin: string) => NextResponse.redirect(`${adresseSitePlateforme() ?? request.nextUrl.origin}${chemin}`);
 
-  // Pages de connexion et d'adhésion sur client. : la Chambre choisie (?chambre=…) est retenue dans un cookie signé
-  // limité à /auth (son logo, sa couverture et ses coordonnées ; la demande d'adhésion lui revient)
   const slug = pathname.startsWith("/auth") && espace === "client" ? (request.nextUrl.searchParams.get("chambre")?.trim().toLowerCase() ?? "") : "";
   let choisie: string | null = null;
   if (slug) {
@@ -146,7 +130,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
     return reponse;
   };
 
-  // Demande d'adhésion : sur client., pour une Chambre choisie
   if (pathname === "/auth/inscription") {
     if (espace !== "client") return versEspace("client");
     if (!choisie && !lireChambreChoisie(request.cookies.get(NOM_COOKIE_CHAMBRE_CHOISIE)?.value)) return versSite("/devenir-membre");
@@ -156,7 +139,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
 
   if (!PROTEGE.some((p) => pathname === p || pathname.startsWith(`${p}/`))) return NextResponse.next();
 
-  // Le back-office sur dev., l'espace membre sur client.
   const attendu: EspacePartage = DE_L_EQUIPE(pathname) ? "equipe" : "client";
   if (attendu !== espace) return versEspace(attendu);
 
@@ -170,7 +152,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
     return reponse;
   }
 
-  // La Chambre du compte : suspendue, en retard de paiement, fonctions de son offre
   const ici = await etatChambre(user.chambreId);
   if (!ici) return introuvable();
   const versAbonnement = pathname.startsWith("/admin") ? { href: "/admin/abonnement?onglet=factures", libelle: "Abonnement" } : undefined;
@@ -188,8 +169,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
     return vers(`/${espaceDuChemin}`, { msg: "Cette fonction n’est pas incluse dans l’offre de la Chambre.", ton: "erreur" });
   }
 
-  // Visite de l'administrateur de la plateforme : une session de visite ne vaut qu'avec son cookie, et tant que la
-  // Chambre l'autorise
   const cookieVisite = request.cookies.get(NOM_COOKIE_VISITE)?.value;
   if (session.visite || cookieVisite) {
     const visite = lireVisite(cookieVisite);
@@ -201,7 +180,6 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
     }
   }
 
-  // /demarrage, /bienvenue : la page contrôle elle-même le rôle
   if (!espaceDuChemin) return NextResponse.next();
   if (user.role === "admin" && pathname === "/membre/rendez-vous") {
     return vers("/admin/rendez-vous", { msg: "Ce lien ouvre la prise de rendez-vous des membres : il fonctionne pour un membre connecté." });
@@ -223,10 +201,8 @@ export default async function proxy(request: NextRequest) {
   const hote = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
   if (estHoteGM(hote)) return proxyGM(request);
   if (estHotePlateforme(hote)) return proxyPlateforme(request);
-  // Les pages de l'Admin GM et du site de la plateforme n'existent qu'à leur adresse
   if (estGM(request.nextUrl.pathname) || estSitePlateforme(request.nextUrl.pathname)) return introuvable();
 
-  // La Chambre de l'adresse du site ; sur dev. et client., celle du compte connecté
   const ici = await resoudreHote(hote);
   if (ici.partage) return proxyPartage(request, ici.partage);
   if (!ici.id) return introuvable();
@@ -237,9 +213,7 @@ export default async function proxy(request: NextRequest) {
   const chemin = request.nextUrl.pathname;
   const versAbonnement = chemin.startsWith("/admin") ? { href: "/admin/abonnement?onglet=factures", libelle: "Abonnement" } : undefined;
   if (ici.suspendue && !OUVERT_SI_SUSPENDUE(chemin)) return pageCourte("Espace suspendu", 403, versAbonnement);
-  // Retard de paiement de l'abonnement au-delà du délai (réglages de l'Admin GM)
   if (ici.restriction === "blocage" && !OUVERT_SI_SUSPENDUE(chemin)) return pageCourte("Paiement en retard", 403, versAbonnement);
-  // Lecture seule : les pages s'affichent, les envois de formulaire (actions serveur) sont refusés
   if (ici.restriction === "lecture" && request.method === "POST" && request.headers.has("next-action") && !OUVERT_SI_SUSPENDUE(chemin)) {
     return new NextResponse("Espace en lecture seule : une facture de l’abonnement attend son paiement.", {
       status: 403,
@@ -255,7 +229,6 @@ export default async function proxy(request: NextRequest) {
       : null;
   if (!espace) return NextResponse.next();
 
-  // Fonction que l'offre de la Chambre n'inclut pas (réglée par l'Admin GM)
   const fonction = fonctionDuChemin(pathname);
   if (fonction && ici.fonctions && !ici.fonctions.includes(fonction)) {
     const accueil = request.nextUrl.clone();
@@ -286,14 +259,11 @@ export default async function proxy(request: NextRequest) {
   if (!user || sessionPerimee(session, user.motDePasseModifieLe)) {
     return vers(CONNEXION);
   }
-  // Un compte n'est reconnu que sur l'adresse de sa Chambre : ailleurs, on se connecte comme un visiteur
   if (user.chambreId !== ici.id) {
     const reponse = vers(CONNEXION, { suite: `${pathname}${request.nextUrl.search}` });
     reponse.cookies.delete(NOM_COOKIE);
     return reponse;
   }
-  // Visite de l'Admin GM (mode développeur) : une session de visite ne vaut qu'avec son cookie, et cesse dès que
-  // la Chambre retire l'autorisation ; un cookie de visite avec une session ordinaire ne vaut rien non plus
   const cookieVisite = request.cookies.get(NOM_COOKIE_VISITE)?.value;
   if (session.visite || cookieVisite) {
     const visite = lireVisite(cookieVisite);

@@ -19,7 +19,6 @@ export function ChoixCarte({
   titre: string;
   detail?: string;
   prix?: string;
-  /** Après le prix : « / an » (cotisations), « / mois » (offres de la plateforme) ; vide : rien */
   periode?: string;
   icone?: ReactNode;
 }) {
@@ -56,7 +55,6 @@ export function ChoixCarte({
   );
 }
 
-// Les formules d'adhésion de la Chambre, en cartes à choisir
 export function ChoixFormules({ formules, actuelle }: { formules: Formule[]; actuelle?: string | null }) {
   return (
     <div className="@container">

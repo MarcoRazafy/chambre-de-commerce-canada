@@ -61,7 +61,6 @@ const PILL_TONES: Record<PillTone, string> = {
   bad: "bg-bad-soft text-bad",
   muted: "bg-surface-3 text-muted",
   info: "bg-navy-soft text-navy",
-  // En évidence : la couleur principale de la Chambre
   accent: "bg-accent text-white",
 };
 

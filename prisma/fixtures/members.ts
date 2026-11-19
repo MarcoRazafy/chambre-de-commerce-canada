@@ -1,7 +1,6 @@
 import type { FormuleId } from "../../lib/membership";
 import type { Member, Produit } from "../../lib/types";
 
-// Membres de démonstration : leur formule est l'identifiant d'une formule de la Chambre n° 1
 export type MembreDemo = Omit<Member, "formule"> & { formule: FormuleId | null };
 
 const DETAILS: Record<

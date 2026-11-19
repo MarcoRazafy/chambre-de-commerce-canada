@@ -6,7 +6,6 @@ const LIEN = "inline-flex items-center min-h-[44px] md:min-h-[32px] text-[14px] 
 const TITRE = "sans m-0 text-[13px] font-medium text-ink";
 const LISTE = "mt-2 m-0 p-0 list-none grid";
 
-// Pied du site de la plateforme
 export function PiedSite() {
   return (
     <footer className="border-t border-line bg-surface">

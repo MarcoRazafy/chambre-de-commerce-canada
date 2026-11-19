@@ -5,14 +5,6 @@ import { Illustration, type NomIllustration } from "@/components/plateforme/site
 import { LogoOfficiel } from "@/components/public/Marque";
 import { adresseSitePlateforme } from "@/lib/adresse-chambre";
 
-// Cadre des pages d'authentification (connexion, adhésion, mot de passe, Admin GM, site de la plateforme) :
-// sur grand écran, l'illustration et ses ornements animés à gauche (avec le logo en haut et la mention en bas, le
-// bord en biais), le formulaire posé à nu à droite ; sur téléphone, le logo, le formulaire, la mention. En haut du
-// formulaire, « Retour au site » mène au site de la plateforme.
-// marque, pied : à la place du logo IMPACT 261 et de la mention de la plateforme ;
-// classe : sur le cadre (« espace-admin », « site-plateforme » : leurs couleurs et leurs titres).
-// couverture : la photo de la Chambre sur tout le panneau de gauche (le logo passe alors au-dessus du formulaire) ;
-// photo, alt : gardés pour les pages qui les passent encore ; ils ne s'affichent plus.
 export function CadreAuth({
   large = false,
   marque,
@@ -33,7 +25,6 @@ export function CadreAuth({
   pied?: React.ReactNode;
   classe?: string;
   illustration?: NomIllustration;
-  /** La couverture de la Chambre (Mon entreprise) : à la place de l'illustration */
   couverture?: string | null;
   children: React.ReactNode;
 }) {
@@ -43,7 +34,6 @@ export function CadreAuth({
       <LogoOfficiel className="w-[170px] h-auto" priority />
     </LienSite>
   );
-  // Les pages de connexion servent à toutes les Chambres (espaces partagés dev. et client.) : la mention de la plateforme
   const mention = pied ?? <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;
   const site = adresseSitePlateforme() ?? "/";
 
@@ -53,7 +43,6 @@ export function CadreAuth({
       <div className={`min-h-dvh ${panneau ? "lg:grid lg:grid-cols-[minmax(0,52fr)_minmax(0,48fr)]" : ""}`}>
         {panneau ? (
           couverture ? (
-            // La couverture de la Chambre sur tout le panneau, voilée pour lire le texte ; le logo passe au-dessus du formulaire
             <aside className="sur-couverture hidden lg:flex relative lg:sticky lg:top-0 lg:h-dvh flex-col overflow-hidden bg-marque-nuit text-white">
               <Image src={couverture} alt="" fill priority sizes="52vw" className="object-cover" />
               <span aria-hidden className="absolute inset-0 bg-[linear-gradient(180deg,rgba(15,29,44,0.12)_0%,rgba(15,29,44,0.4)_50%,rgba(15,29,44,0.9)_100%)]" />
@@ -75,7 +64,6 @@ export function CadreAuth({
                 {sous ? <p className="m-0 max-w-[460px] text-center text-[16px] leading-[26px] text-muted">{sous}</p> : null}
               </div>
               <p className="m-0 px-10 xl:px-14 pb-8 pr-24 text-[12.5px] text-faint">{mention}</p>
-              {/* Le bord en biais, du haut à droite vers le bas */}
               <span aria-hidden className="absolute inset-y-0 right-0 w-14 bg-[var(--fond-connexion,#fff)]" style={{ clipPath: "polygon(100% 0, 100% 100%, 0 100%)" }} />
             </aside>
           )
@@ -92,7 +80,6 @@ export function CadreAuth({
             </a>
           </div>
           <main className={`apparition flex-1 flex flex-col justify-center w-full mx-auto ${large ? "max-w-[640px]" : "max-w-[480px]"}`}>
-            {/* Avec la couverture : le logo de la Chambre, plus grand, au milieu au-dessus du formulaire */}
             {couverture ? <div className="mb-8 flex justify-center [&_img]:h-32 [&_img]:max-w-[340px] [&_img]:object-center">{logo}</div> : null}
             {children}
           </main>

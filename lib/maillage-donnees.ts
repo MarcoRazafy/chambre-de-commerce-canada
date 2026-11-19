@@ -4,8 +4,6 @@ import { prisma } from "@/lib/db";
 import { SECTEURS } from "@/lib/secteurs";
 import { prerempli, progression, texteDemande, type Reponses } from "@/lib/maillage";
 
-// Maillage : le questionnaire des membres et les suggestions de mises en relation (besoin ↔ offre),
-// repris de la plateforme L'Alliée Virtuelle.
 const ACTIFS = ["a_jour", "en_attente", "en_retard"] as const;
 
 export type Suggestion = {
@@ -18,7 +16,6 @@ export type Suggestion = {
   bridge: boolean;
 };
 
-// Le questionnaire d'un membre : ses réponses (ou celles tirées de sa fiche), l'avancement, la dernière relance
 export async function chargerMaillage(memberId: string) {
   const m = await prisma.member.findUnique({
     where: { id: memberId },
@@ -42,7 +39,6 @@ export async function chargerMaillage(memberId: string) {
 }
 export type DonneesMaillage = NonNullable<Awaited<ReturnType<typeof chargerMaillage>>>;
 
-// Suivi pour l'équipe : chaque membre actif et l'avancement de son questionnaire
 export async function suiviMaillage() {
   const ms = await prisma.member.findMany({
     where: { statut: { in: [...ACTIFS] } },
@@ -63,10 +59,7 @@ export async function suiviMaillage() {
   });
 }
 
-// Étiquettes trop générales pour justifier, seules, une mise en relation
 const GENERIQUES = new Set(["Réseau d’affaires au Canada"]);
-// Pour les étiquettes de l'annuaire, le besoin doit se retrouver dans ce que le membre a écrit
-// (ce qu'il recherche, motivation, questionnaire) ; une étiquette sans motif compte toujours.
 const MOTS_BESOIN: Record<string, RegExp> = {
   "Site web & applications": /(site web|e-commerce|en ligne|digital|numérique|application)/i,
   "Marketing digital & réseaux sociaux": /(visibilit|promo|faire (découvrir|connaître)|marketing|image de marque|communication)/i,
@@ -103,7 +96,6 @@ function rapprocher(a: Profil, b: Profil): Suggestion | null {
   return { a: { id: a.id, nom: a.nom, pays: a.pays }, b: { id: b.id, nom: b.nom, pays: b.pays }, score, why, flows, shared, bridge };
 }
 
-// Suggestions de mises en relation ; pour un membre (memberId), toutes les siennes, les meilleures d'abord
 export async function suggestions(memberId?: string): Promise<Suggestion[]> {
   const ms = await prisma.member.findMany({
     where: { statut: { in: [...ACTIFS] } },
@@ -146,7 +138,6 @@ export async function suggestions(memberId?: string): Promise<Suggestion[]> {
   });
 }
 
-// Mises en relation faites par la Chambre (d'un membre, ou toutes)
 export async function relations(memberId?: string) {
   const rs = await prisma.miseEnRelation.findMany({
     where: {
@@ -169,9 +160,8 @@ export async function relations(memberId?: string) {
   }));
 }
 
-// Activité d'un membre, vue depuis son espace : ses inscriptions, ses rendez-vous, ses publications, ses mises en relation
 export async function activiteMembre(memberId: string) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const [inscriptions, rdv, publications, rels] = await Promise.all([
     prisma.registration.findMany({ where: { memberId }, include: { event: { select: { id: true, titre: true, date: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.rendezvous.findMany({ where: { memberId }, include: { type: { select: { titre: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
@@ -182,8 +172,6 @@ export async function activiteMembre(memberId: string) {
   const l: Ligne[] = [
     ...inscriptions.map((i) => ({ quand: i.createdAt.toISOString(), icone: "evenement" as const, texte: `Inscription à « ${i.event.titre} »`, lien: `/membre/evenements/${i.event.id}` })),
     ...rdv.map((r) => ({ quand: r.createdAt.toISOString(), icone: "rendezvous" as const, texte: `${r.annuleLe ? "Rendez-vous annulé" : "Rendez-vous pris"} : ${r.type.titre}, le ${r.jour.toISOString().slice(0, 10).split("-").reverse().join("/")} à ${r.debut}`, lien: "/membre/rendez-vous" })),
-    // Actualités retirées pour l'instant : à décommenter pour le remettre
-    // ...publications.map((n) => ({ quand: n.createdAt.toISOString(), icone: "publication" as const, texte: `Publication : ${n.titre}`, lien: `/membre/actualites/${n.id}` })),
     ...rels.map((r) => ({ quand: r.createdAt, icone: "relation" as const, texte: `Mise en relation avec ${r.autre?.nom ?? ""}`, lien: `/membre/annuaire/${r.autre?.id ?? ""}` })),
   ];
   return l.sort((a, b) => b.quand.localeCompare(a.quand));

@@ -1,8 +1,5 @@
 import Image from "next/image";
 
-// Logo en tête de la barre latérale d'un espace (back-office, espace membre) : celui de la Chambre (Mon entreprise),
-// posé tel quel sur la barre ; sans logo, le logo IMPACT 261 en blanc
-// centre : plus grand et au milieu de la barre (back-office)
 export function LogoEspace({ logo, nom, centre = false }: { logo: string | null; nom: string; centre?: boolean }) {
   if (!logo) {
     return (

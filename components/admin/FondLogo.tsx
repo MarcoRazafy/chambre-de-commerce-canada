@@ -1,7 +1,5 @@
 "use client";
 
-// Palette posée sur le logo de « Mon entreprise » : la couleur de fond du cadre du logo (un logo clair sur fond
-// blanc devient lisible), quelques teintes et une couleur au choix ; enregistrée dès qu'on clique
 import { useEffect, useRef } from "react";
 import { Palette } from "lucide-react";
 import { changerFondLogo } from "@/lib/actions/profil-chambre";
@@ -26,7 +24,6 @@ export function FondLogo({ actuel }: { actuel: string | null }) {
     champ.current.value = v;
     form.current?.requestSubmit();
   };
-  // Couleur au choix : enregistrée quand le sélecteur se ferme (« change »), pas à chaque mouvement
   useEffect(() => {
     const el = libre.current;
     if (!el) return;

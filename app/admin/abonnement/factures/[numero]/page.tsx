@@ -12,8 +12,6 @@ import { fmtDollars, fmtPourcent, payantsFacture } from "@/lib/plateforme";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 
-// Une facture de l'abonnement à la plateforme, prête à imprimer ou à enregistrer en PDF (?pdf=1).
-// Émetteur : la plateforme (Paramètres de l'Admin GM) ; facturé à : la Chambre (Mon entreprise).
 export default async function FactureAbonnement({
   params,
   searchParams,
@@ -30,7 +28,6 @@ export default async function FactureAbonnement({
   const numeros = numerosPlateforme(plateforme);
   const ligne = "flex justify-between gap-4 py-1.5 tabular-nums";
   const gris = "text-[#5b6b7a]";
-  // L'en-tête a le dégradé de la barre latérale (celui de la Chambre s'il est réglé dans Paramètres → Couleurs)
   const doux = "text-white/75";
 
   return (
@@ -44,7 +41,6 @@ export default async function FactureAbonnement({
       </div>
 
       <article className="bg-white text-[#16202b] border border-line rounded-[var(--radius-m)] shadow-[var(--shadow)] max-w-[820px] mx-auto print:border-0 print:shadow-none print:max-w-none print:rounded-none">
-        {/* En-tête sur le dégradé de la barre latérale, jusque sous le logo de la Chambre */}
         <div
           className="rounded-t-[var(--radius-m)] print:rounded-none text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
           style={{ background: "var(--laterale)" }}

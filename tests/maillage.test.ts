@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Une base en mémoire : les membres et les mises en relation (faites ou écartées)
 type MembreTest = {
   id: string;
   nom: string;

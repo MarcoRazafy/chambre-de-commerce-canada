@@ -1,6 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-// La Chambre en cours, son compte Stripe, VanillaPay : réglés par chaque test
 const etat = { chambre: "principale", stripe: null as string | null, vanilla: true, mobile: true };
 vi.mock("@/lib/chambre-courante", async (original) => ({
   ...(await original<typeof import("@/lib/chambre-courante")>()),

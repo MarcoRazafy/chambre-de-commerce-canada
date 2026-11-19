@@ -2,8 +2,6 @@ import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 import { configPlateforme, facturePlateforme, numeroFacturePlateforme } from "../lib/plateforme";
 
-// Données de démonstration : les factures de l'abonnement des six derniers mois, réglées.
-// Ne remplace rien : une facture déjà présente (même numéro) est laissée telle quelle.
 async function main() {
   const c = configPlateforme();
   const jour = String(c.jourFacturation).padStart(2, "0");

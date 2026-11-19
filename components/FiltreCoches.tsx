@@ -5,8 +5,6 @@ import { Check, ChevronDown } from "lucide-react";
 
 export type GroupeCoches = { famille?: string; options: { valeur: string; libelle: string }[] };
 
-// Menu déroulant à cases à cocher, à placer dans un <FiltresAuto> : chaque case cochée part
-// sous le même nom (« situation=a_jour&situation=en_retard »), et le filtre s'applique aussitôt.
 export function FiltreCoches({
   name,
   libelle,
@@ -26,7 +24,6 @@ export function FiltreCoches({
   const resume =
     retenus.length === 0 ? tous : retenus.length === 1 ? retenus[0].libelle : `${libelle} · ${retenus.length}`;
 
-  // Se ferme au clic à côté ou avec Échap
   useEffect(() => {
     const fermer = (e: Event) => {
       const d = ref.current;

@@ -1,7 +1,5 @@
 "use server";
 
-// Espace Admin GM : connexion, offre et accès des Chambres, leur adresse, les offres de la plateforme.
-// Hors de toute Chambre : écritures sans limite de Chambre (prismaSysteme), notées dans l'historique de la Chambre.
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { adresseOuSite, oublierAdressesChambres } from "@/lib/adresse-chambre";
@@ -36,8 +34,6 @@ async function chambreOuErreur(fd: FormData) {
   if (!c) redirectWithErreur("/gm/chambres", "Chambre introuvable.");
   return c;
 }
-
-// --- Connexion ---
 
 const ESSAIS_PAR_COMPTE = 6;
 const ESSAIS_PAR_ORIGINE = 20;
@@ -76,15 +72,12 @@ export async function deconnexionGM() {
   redirect("/gm/connexion");
 }
 
-// --- Chambres ---
-
 export async function changerOffreChambre(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
   const offre = await db.offre.findUnique({ where: { id: texte(formData, "offreId", 50) }, select: { id: true, nom: true, surMesure: true } });
   if (!offre) redirectWithErreur(fiche(c.id), "Offre inconnue.");
   if (offre.id === c.offreId) redirectWithFlash(fiche(c.id), "Offre inchangée");
-  // Vers l'offre à la carte : la Chambre garde les fonctions qu'elle avait
   const avant = offre.surMesure ? await db.offre.findUnique({ where: { id: c.offreId }, select: { fonctions: true } }) : null;
   await db.chambre.update({ where: { id: c.id }, data: { offreId: offre.id, ...(avant ? { fonctionsChoisies: avant.fonctions } : {}) } });
   await noter(c.id, gm.nom, "offre_changee", `Offre ${offre.nom}.`);
@@ -114,7 +107,6 @@ export async function reactiverChambre(formData: FormData) {
   redirectWithFlash(fiche(c.id), "Espace réactivé");
 }
 
-// Adresse : l'identifiant (« slug », dans le lien de la demande d'adhésion) et, s'il y en a un, le domaine propre
 export async function modifierAdresseChambre(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
@@ -143,13 +135,10 @@ export async function modifierAdresseChambre(formData: FormData) {
   redirectWithFlash(fiche(c.id), "Adresse enregistrée");
 }
 
-// --- Offres ---
-
 const montant = (fd: FormData, k: string) => {
   const n = Number(texte(fd, k, 20).replace(/\s/g, "").replace(",", "."));
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
 };
-// Vide : sans limite
 const limite = (fd: FormData, k: string): number | null | undefined => {
   const v = texte(fd, k, 10);
   if (!v) return null;
@@ -174,7 +163,6 @@ export async function enregistrerOffre(formData: FormData) {
     redirectWithErreur("/gm/offres", "Les limites sont des nombres entiers (vide : sans limite).");
   }
   const fonctions = [...new Set(formData.getAll("fonctions").map(String).filter(estFonction))];
-  // À la carte : le prix de chaque fonction (vide : 0)
   const prixFonctions: Record<string, number> = {};
   if (offre.surMesure) {
     for (const f of FONCTIONS) {
@@ -194,9 +182,6 @@ export async function enregistrerOffre(formData: FormData) {
   redirectWithFlash("/gm/offres", `Offre ${nom} enregistrée`);
 }
 
-// --- Paiements ---
-
-// Une facture de l'abonnement réglée autrement (virement…) : notée payée par l'Admin GM
 export async function marquerFacturePayee(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
@@ -208,8 +193,6 @@ export async function marquerFacturePayee(formData: FormData) {
   revalidatePath("/gm", "layout");
   redirectWithFlash(fiche(c.id), `Facture ${f.numero} payée`);
 }
-
-// --- Paramètres : retards de paiement de l'abonnement ---
 
 export async function enregistrerReglages(formData: FormData) {
   await exigerGM();
@@ -233,7 +216,6 @@ export async function enregistrerReglages(formData: FormData) {
   redirectWithFlash("/gm/parametres", "Paramètres enregistrés");
 }
 
-// Identité de la plateforme sur les factures de l'abonnement (Paramètres › Plateforme)
 export async function enregistrerIdentitePlateforme(formData: FormData) {
   await exigerGM();
   const retour = "/gm/parametres?onglet=plateforme";
@@ -255,9 +237,6 @@ export async function enregistrerIdentitePlateforme(formData: FormData) {
   redirectWithFlash(retour, "Identité de la plateforme enregistrée");
 }
 
-// --- Lien de connexion à un compte de l'équipe ---
-// Un lien pour choisir un nouveau mot de passe (une heure, un seul usage), envoyé à l'adresse du compte depuis
-// la Chambre (son expéditeur, son adresse) ; noté dans l'historique
 export async function envoyerLienConnexion(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
@@ -276,10 +255,6 @@ export async function envoyerLienConnexion(formData: FormData) {
   redirectWithFlash(fiche(c.id), `Lien envoyé à ${u.email}`);
 }
 
-// --- Mode développeur ---
-
-// « Entrer » : une visite dans l'espace de la Chambre, si elle l'autorise (dans le compte de son super admin
-// le plus ancien) ; l'entrée est notée dans son journal
 export async function entrerDansChambre(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);

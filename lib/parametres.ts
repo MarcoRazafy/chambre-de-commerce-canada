@@ -1,7 +1,5 @@
 import "server-only";
 
-// Paramètres de la plateforme (page Paramètres), lus dans la fiche de l'entreprise.
-// Un champ vide reprend la valeur par défaut, pour que rien ne change tant que rien n'est réglé.
 import { COORDONNEES } from "@/lib/coordonnees";
 import { RESEAUX, type Reseau } from "@/lib/lettre-blocs";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
@@ -15,7 +13,6 @@ export async function getParametres() {
   return calculer(await getProfilChambreBrut());
 }
 
-// Pour un envoi : jamais bloquant (valeurs par défaut si la fiche est illisible)
 export async function parametresPourCourriel() {
   try {
     return await getParametres();
@@ -27,10 +24,8 @@ export async function parametresPourCourriel() {
 
 function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
   const p = completerProfil(brut);
-  // Les valeurs par défaut (réseaux, confidentialité, courriel de l'équipe) sont celles de la Chambre n° 1
   const neutre = sansDefauts(brut);
 
-  // Réseaux : ceux réglés ; aucun réglé, ceux de la configuration
   const regles = Object.fromEntries(RESEAUX.map((r) => [r, brut?.[r]?.trim() ?? ""]).filter(([, v]) => v)) as Partial<Record<Reseau, string>>;
   const reseaux: Partial<Record<Reseau, string>> = Object.keys(regles).length || neutre
     ? regles
@@ -45,7 +40,6 @@ function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
   };
 
   const equipe = brut?.courrielEquipe.trim() ?? "";
-  // Sans adresse réglée : celle du serveur (Chambre n° 1), sinon le courriel de la Chambre
   const courrielEquipe = valide(equipe)
     ? equipe
     : neutre
@@ -55,7 +49,6 @@ function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
   return { reseaux, mentions, courrielEquipe };
 }
 
-// L'adresse qui reçoit les alertes de l'équipe (adhésion, rendez-vous, question d'un visiteur)
 export async function courrielEquipe(): Promise<string> {
   try {
     return (await getParametres()).courrielEquipe;

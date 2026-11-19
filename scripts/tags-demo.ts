@@ -1,10 +1,6 @@
 import { avecChambre, CHAMBRE_PRINCIPALE, chambreCourante } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
 
-// Données de démonstration des tags : des repères posés sur les entreprises membres,
-// selon leur secteur, leur situation et la fonction de leur contact principal.
-// Ajoute seulement : les tags déjà posés restent en place.
-
 type Entreprise = { secteur: string; statut: string; fonction: string; rang: number };
 
 const REGLES: [string, (e: Entreprise) => boolean][] = [

@@ -1,7 +1,5 @@
 import "server-only";
 
-// Espace Admin GM : son compte (session à part), et ce qu'il voit de toutes les Chambres.
-// Lectures sans limite de Chambre (prismaSysteme) : l'Admin GM n'appartient à aucune Chambre.
 import { redirect } from "next/navigation";
 import { sessionGMCourante } from "@/lib/auth-gm";
 import { prismaSysteme as db } from "@/lib/db";
@@ -11,7 +9,6 @@ export async function compteGM() {
   const s = await sessionGMCourante();
   if (!s) return null;
   const c = await db.compteGM.findUnique({ where: { id: s.id }, select: { id: true, nom: true, email: true, motDePasseModifieLe: true } });
-  // Mot de passe changé depuis l'ouverture de la session : à refaire
   if (!c || (c.motDePasseModifieLe && s.emiseLe + 1000 < c.motDePasseModifieLe.getTime())) return null;
   return { id: c.id, nom: c.nom, email: c.email };
 }
@@ -29,16 +26,12 @@ export const STATUTS: Record<StatutAffiche, { libelle: string; ton: "ok" | "warn
   suspendue: { libelle: "Suspendue", ton: "bad" },
 };
 
-// Membres comptés : ceux de l'annuaire (pas les candidatures ni les refus)
 const MEMBRES: Prisma.MemberWhereInput = { statut: { notIn: ["candidature", "refusee"] } };
-// En retard : une facture de l'abonnement impayée, datée d'avant aujourd'hui
 const limiteRetard = () => {
   const d = new Date();
   return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
 };
 
-// Toutes les Chambres : offre, statut (suspendue, en retard si une facture de l'abonnement attend son paiement),
-// membres, comptes de l'équipe, dernier paiement
 export async function listeChambres() {
   const [chambres, payees, retards] = await Promise.all([
     db.chambre.findMany({
@@ -57,7 +50,6 @@ export async function listeChambres() {
   const enRetard = new Set(retards.map((r) => r.chambreId));
   return chambres.map((c) => ({
     id: c.id, nom: c.nom, slug: c.slug, domaine: c.domaine, creeLe: c.createdAt, offre: c.offre,
-    // Le logo réglé par la Chambre (Mon entreprise) ; sans logo : ses initiales
     logo: c.profil?.logo ?? null,
     logoFond: c.profil?.logoFond ?? null,
     statut: (c.statut === "suspendue" ? "suspendue" : enRetard.has(c.id) ? "en_retard" : "active") as StatutAffiche,
@@ -89,7 +81,6 @@ export async function ficheChambre(id: string) {
 
 export const HISTORIQUE_PAR_PAGE = 50;
 
-// Tout l'historique d'une Chambre (offre, accès, adresse, paiements, démarrage), du plus récent au plus ancien, par pages
 export async function historiqueChambre(id: string, page = 1) {
   const where = { chambreId: id, entite: "Chambre" };
   const [chambre, total, entrees] = await Promise.all([
@@ -111,7 +102,6 @@ export function reglagesPlateforme() {
 
 const MOIS = new Intl.DateTimeFormat("fr-FR", { month: "short", timeZone: "UTC" });
 
-// Tableau de bord de l'Admin GM : Chambres (actives, en retard, nouvelles), revenus de l'abonnement
 export async function tableauDeBordGM(maintenant = new Date()) {
   const debutMois = (decalage: number) => new Date(Date.UTC(maintenant.getUTCFullYear(), maintenant.getUTCMonth() - decalage, 1));
   const il_y_a_30_jours = new Date(maintenant.getTime() - 30 * 86_400_000);
@@ -125,7 +115,6 @@ export async function tableauDeBordGM(maintenant = new Date()) {
       select: { id: true, numero: true, total: true, payeeLe: true, chambre: { select: { id: true, nom: true, profil: { select: { logo: true } } } } },
     }),
   ]);
-  // Revenus encaissés par mois, des 6 derniers mois (le plus ancien d'abord)
   const revenus = Array.from({ length: 6 }, (_, i) => {
     const debut = debutMois(5 - i);
     const fin = debutMois(4 - i);

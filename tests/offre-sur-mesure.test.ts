@@ -14,9 +14,7 @@ describe("offre sur mesure (à la carte)", () => {
     expect(forfaitOffre(aLaCarte, [])).toBe(40);
     expect(forfaitOffre(aLaCarte, ["evenements"])).toBe(55);
     expect(forfaitOffre(aLaCarte, ["evenements", "newsletter", "maillage"])).toBe(65.5);
-    // Une fonction hors de l'offre ne compte pas
     expect(forfaitOffre(aLaCarte, ["evenements", "messagerie"])).toBe(55);
-    // Offre fixe : son forfait, quel que soit le choix
     expect(forfaitOffre({ ...aLaCarte, surMesure: false, forfait: 100 }, ["evenements"])).toBe(100);
   });
 
@@ -31,7 +29,6 @@ describe("offre sur mesure (à la carte)", () => {
     const f = facturePlateforme(3, { ...configPlateforme({}), forfait, parUtilisateur: 15 }, 1);
     expect(f.forfait).toBe(65.5);
     expect(f.sousTotal).toBe(95.5);
-    // Rien de choisi, base à 0, pas de compte payant : gratuit
     expect(offreGratuite({ forfait: forfaitOffre({ ...aLaCarte, forfait: 0 }, []), parUtilisateur: 0 })).toBe(true);
     expect(offreGratuite({ forfait: forfaitOffre({ ...aLaCarte, forfait: 0 }, ["evenements"]), parUtilisateur: 0 })).toBe(false);
   });

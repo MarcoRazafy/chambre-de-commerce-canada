@@ -1,7 +1,5 @@
 import "server-only";
 
-// Session de l'Admin GM : cookie à part, signé à part (une session de Chambre n'ouvre jamais l'espace GM),
-// valable 12 heures, sur l'adresse de l'espace GM seulement.
 import { cookies } from "next/headers";
 import { timingSafeEqual } from "node:crypto";
 import { signer } from "@/lib/auth";

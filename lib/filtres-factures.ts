@@ -2,7 +2,6 @@ import type { Devise } from "@/lib/membership";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { plat } from "@/lib/texte";
 
-// Une facture à régler est en retard quand elle a été émise il y a plus de DELAI_REGLEMENT_JOURS
 export const DELAI_REGLEMENT_JOURS = 30;
 export function enRetard(f: Pick<Invoice, "statut" | "date">, aujourdhui = new Date()): boolean {
   if (f.statut !== "envoyee") return false;
@@ -10,7 +9,6 @@ export function enRetard(f: Pick<Invoice, "statut" | "date">, aujourdhui = new D
   return f.date.slice(0, 10) < limite;
 }
 
-// « retard » : les factures à régler dont le délai est dépassé
 const retient = (x: Invoice, statut: FiltresFactures["statut"]) =>
   statut === "toutes" || (statut === "retard" ? enRetard(x) : x.statut === statut);
 

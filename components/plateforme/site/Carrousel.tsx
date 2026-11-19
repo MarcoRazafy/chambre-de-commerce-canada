@@ -1,8 +1,5 @@
 "use client";
 
-// Carrousel du site : une piste qui défile à l'horizontale, cran par cran (quatre éléments visibles sur grand écran,
-// deux sur tablette, un et le bord du suivant sur téléphone), deux flèches rondes sur les bords qui avancent d'une
-// page et s'effacent en bout de piste ; au doigt, la piste se fait glisser
 import { useEffect, useRef, type ReactNode } from "react";
 import { ArrowLeft, ArrowRight } from "lucide-react";
 
@@ -14,7 +11,6 @@ export function Carrousel({ etiquette, elements }: { etiquette: string; elements
   const gauche = useRef<HTMLButtonElement>(null);
   const droite = useRef<HTMLButtonElement>(null);
 
-  // Les flèches s'effacent quand on est au début ou à la fin de la piste
   const maj = () => {
     const p = piste.current;
     if (!p) return;
@@ -31,7 +27,6 @@ export function Carrousel({ etiquette, elements }: { etiquette: string; elements
     return () => taille.disconnect();
   }, []);
 
-  // D'une page (la largeur visible) vers l'avant ou l'arrière
   const defiler = (sens: 1 | -1) => {
     const p = piste.current;
     if (!p) return;

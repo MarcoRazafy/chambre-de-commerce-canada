@@ -1,17 +1,13 @@
-// Questionnaire de maillage des membres (document « Questionnaire de maillage des membres », CanCham, nov. 2026).
-// Les 16 questions essentielles (★), reprises de la plateforme L'Alliée Virtuelle. Partagé par l'espace membre
-// (fenêtre « Répondre au questionnaire ») et par l'équipe ; aucune dépendance serveur.
-
 export type SectionId = 'A' | 'B' | 'C' | 'D' | 'E' | 'F';
 export type Champ = { k: string; label: string; type?: 'text' | 'number' | 'url' | 'date' | 'textarea'; placeholder?: string; requis?: boolean };
 export type Question = {
   id: string; section: SectionId; titre: string; aide?: string;
   type: 'champs' | 'texte' | 'fiches' | 'choix' | 'mots' | 'secteurs' | 'visibilite';
-  champs?: Champ[];                       // champs (plusieurs petits champs) et fiches (une fiche répétable)
-  min?: number; max?: number;             // fiches : nombre de fiches
-  options?: string[];                     // choix multiples
-  details?: string; detailsRequis?: boolean; // texte d'accompagnement (choix, mots, secteurs)
-  listes?: { k: string; label: string; placeholder?: string }[]; // mots : une ou plusieurs listes de mots-clés
+  champs?: Champ[];
+  min?: number; max?: number;
+  options?: string[];
+  details?: string; detailsRequis?: boolean;
+  listes?: { k: string; label: string; placeholder?: string }[];
   placeholder?: string;
 };
 export type Reponses = Record<string, unknown>;
@@ -94,14 +90,12 @@ export function progression(r: Reponses) {
   return { faites, total: QUESTIONS.length, pct: Math.round((faites / QUESTIONS.length) * 100) };
 }
 
-// Ne garde que les questions connues, avec une taille raisonnable (réponses envoyées depuis le lien public)
 export function nettoyer(entree: unknown): Reponses {
   const o = obj(entree), out: Reponses = {};
   for (const [k, v] of Object.entries(o)) if (IDS.has(k) && JSON.stringify(v ?? null).length <= 8000) out[k] = v;
   return out;
 }
 
-// Réponses de départ tirées de la fiche du membre (nom, site, secteur, description)
 export function prerempli(m: { nom?: string | null; siteweb?: string | null; secteur?: string | null; desc?: string | null; activite?: string | null }): Reponses {
   const r: Reponses = {};
   if (m.nom || m.siteweb) r.A1 = { nom: m.nom ?? '', site: m.siteweb ?? '' };
@@ -111,7 +105,6 @@ export function prerempli(m: { nom?: string | null; siteweb?: string | null; sec
   return r;
 }
 
-// Texte de ce que le membre cherche (section C), utilisé par les suggestions de mises en relation
 export function texteDemande(r: Reponses) {
   const c1 = Array.isArray(r.C1) ? (r.C1 as Record<string, string>[]).map(f => `${f.poste ?? ''} ${f.volume ?? ''}`).join(' ') : '';
   return [c1, obj(r.C2).texte, r.C4].filter(x => typeof x === 'string' && x).join(' ');

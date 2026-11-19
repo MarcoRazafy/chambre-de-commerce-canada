@@ -1,7 +1,5 @@
 import "server-only";
 
-// Alertes à l'Admin GM : un courriel à chaque compte GM, au nom de la plateforme, quel que soit le contexte
-// (action du site, webhook ou tâche dans une Chambre). Jamais bloquant : une erreur d'envoi est seulement notée.
 import { envoyerCourriel, gabarit } from "@/lib/courriel";
 import { prismaSysteme as db } from "@/lib/db";
 import { adresseGM } from "@/lib/visite-gm";

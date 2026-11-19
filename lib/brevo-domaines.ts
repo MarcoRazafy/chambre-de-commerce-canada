@@ -1,12 +1,7 @@
 import "server-only";
 
-// Domaines d'expédition chez Brevo (API v3, clé BREVO_API_KEY) : savoir si l'adresse d'une entreprise peut
-// servir d'expéditeur, déclarer son domaine, lancer la vérification DNS, créer l'expéditeur une fois validé.
-// Sans clé ou si Brevo ne répond pas, rien n'est validé : les courriels partent de l'adresse du serveur.
-
 const API = "https://api.brevo.com/v3";
 
-// Messageries gratuites : leur domaine appartient au fournisseur, impossible de le valider
 const WEBMAILS = new Set([
   "gmail.com", "googlemail.com", "yahoo.com", "yahoo.fr", "ymail.com", "hotmail.com", "hotmail.fr", "outlook.com",
   "outlook.fr", "live.com", "live.fr", "msn.com", "icloud.com", "me.com", "mac.com", "aol.com", "gmx.com", "gmx.fr",
@@ -24,7 +19,6 @@ export type EtatDomaine =
   | { etat: "indisponible"; domaine: string; raison: string };
 
 export const domaineDe = (email: string) => email.trim().toLowerCase().split("@")[1] ?? "";
-// « https://www.Entreprise.mg/contact », « contact@entreprise.mg » ou « entreprise.mg. » → « entreprise.mg »
 export function normaliserDomaine(saisie: string): string {
   let v = saisie.trim().toLowerCase().replace(/^[a-z][a-z0-9+.-]*:\/\//, "");
   if (v.includes("@")) v = v.slice(v.lastIndexOf("@") + 1);
@@ -55,7 +49,6 @@ type ReponseDomaine = {
 };
 
 function enregistrements(r: ReponseDomaine): EnregistrementDns[] {
-  // Dans l'ordre où l'entreprise les ajoute : code Brevo, signatures DKIM, puis DMARC
   const ordre = ["brevo_code", "dkim1Record", "dkim2Record", "dkim_record", "dmarc_record"];
   return ordre
     .map((k) => r.dns_records?.[k])
@@ -63,7 +56,6 @@ function enregistrements(r: ReponseDomaine): EnregistrementDns[] {
     .map((x) => ({ type: x.type ?? "TXT", nom: x.host_name ?? "@", valeur: x.value!, ok: Boolean(x.status) }));
 }
 
-// État d'un domaine (ou du domaine d'une adresse), lu chez Brevo (sans cache : pour la page Paramètres)
 export async function etatDomaine(saisie: string): Promise<EtatDomaine> {
   const domaine = normaliserDomaine(saisie);
   if (!domaine) return { etat: "vide" };
@@ -81,7 +73,6 @@ export async function etatDomaine(saisie: string): Promise<EtatDomaine> {
   }
 }
 
-// Pour l'envoi : l'adresse peut-elle être l'expéditeur ? Réponse gardée 10 min par domaine
 const memoire = new Map<string, { jusqua: number; ok: boolean }>();
 export async function adresseValidee(email: string): Promise<boolean> {
   const domaine = normaliserDomaine(email);
@@ -89,7 +80,6 @@ export async function adresseValidee(email: string): Promise<boolean> {
   if (m && m.jusqua > Date.now()) return m.ok;
   const e = await etatDomaine(email);
   const ok = e.etat === "valide";
-  // Brevo injoignable : on réessaie vite, sans retenir un « non » qui durerait
   memoire.set(domaine, { jusqua: Date.now() + (e.etat === "indisponible" ? 60_000 : 600_000), ok });
   return ok;
 }
@@ -97,7 +87,6 @@ export function oublierDomaine(saisie: string) {
   memoire.delete(normaliserDomaine(saisie));
 }
 
-// Déclare le domaine chez Brevo (sans effet s'il l'est déjà) ; renvoie son état, avec les enregistrements DNS
 export async function declarerDomaine(saisie: string): Promise<EtatDomaine> {
   const domaine = normaliserDomaine(saisie);
   if (!domaine || estWebmail(domaine) || !brevoConfigure()) return etatDomaine(domaine);
@@ -112,7 +101,6 @@ export async function declarerDomaine(saisie: string): Promise<EtatDomaine> {
   return etatDomaine(domaine);
 }
 
-// Demande à Brevo de contrôler les enregistrements DNS du domaine
 export async function verifierDomaine(saisie: string): Promise<EtatDomaine> {
   const domaine = normaliserDomaine(saisie);
   if (!domaine || estWebmail(domaine) || !brevoConfigure()) return etatDomaine(domaine);
@@ -126,7 +114,6 @@ export async function verifierDomaine(saisie: string): Promise<EtatDomaine> {
   return etatDomaine(domaine);
 }
 
-// L'adresse existe comme expéditeur chez Brevo (créée au besoin)
 export async function assurerExpediteur(email: string, nom: string): Promise<void> {
   if (!brevoConfigure()) return;
   try {

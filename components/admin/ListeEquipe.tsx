@@ -1,6 +1,5 @@
 "use client";
 
-// Liste de l'équipe (onglet « Équipe & accès ») : les super admins en haut, les admins en dessous, avec une recherche
 import { useMemo, useState } from "react";
 import { Search, Users } from "lucide-react";
 import { Vide } from "@/components/admin/ui";
@@ -24,14 +23,10 @@ export function ListeEquipe({
   comptes: CompteEquipe[];
   moiId: string;
   gere: boolean;
-  /** Comptes offerts par l'offre de la Chambre */
   offerts: number;
-  /** Prix d'un compte au-delà des offerts (0 : aucun compte n'est facturé) */
   parUtilisateur: number;
 }) {
   const [q, setQ] = useState("");
-  // Comptes facturés dans l'abonnement : tous sauf les offerts, pris d'abord parmi les admins, du plus ancien au plus
-  // récent (la liste va du plus ancien au plus récent)
   const payants = useMemo(() => {
     if (parUtilisateur <= 0) return new Set<string>();
     const ordre = [...comptes.filter((c) => c.niveau === "administrateur"), ...comptes.filter((c) => c.niveau !== "administrateur")];

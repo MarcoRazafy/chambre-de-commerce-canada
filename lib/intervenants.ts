@@ -1,8 +1,5 @@
 import type { Intervenant } from "@/lib/types";
 
-// Intervenants d'un événement tels que saisis dans le formulaire (une valeur par ligne, dans l'ordre affiché).
-// Une ligne sans nom est ignorée ; la photo est la nouvelle si elle a été envoyée, sinon l'actuelle,
-// sauf si elle a été retirée. Une « photo actuelle » qui ne vient pas de nos téléversements est écartée.
 export const INTERVENANTS_MAX = 20;
 
 export function lireIntervenants(l: {

@@ -23,7 +23,6 @@ import { CartesTarifs } from "@/components/plateforme/site/Tarifs";
 import { VisiteEspace } from "@/components/plateforme/site/VisiteEspace";
 import { offresPubliques } from "@/lib/plateforme-site";
 
-// Lu à chaque visite : les offres de l'Admin GM changent sans redéploiement (et la base n'est pas joignable à la construction)
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -42,7 +41,6 @@ const FONCTIONS = [
   { icone: Mail, titre: "Newsletter et messagerie", texte: "Lettres d’information, messages entre membres et avec l’équipe" },
 ];
 
-// Les deux encres de la plateforme : le rouge pour l'équipe, le vert pour les membres
 const ESPACES = [
   {
     titre: "L’espace de l’équipe",
@@ -83,7 +81,6 @@ const CONFIANCE = [
   { icone: LockKeyhole, titre: "Le support, sur autorisation", texte: "Il n’entre dans votre espace que si vous l’autorisez, et pour la durée que vous choisissez." },
 ];
 
-// Les tuiles de la sécurité : vert, rouge, bleu nuit, puis le dégradé de la marque
 const TONS_CONFIANCE = ["tuile-verte", "tuile-rouge", "tuile-bleue", "tuile-degrade"];
 
 const QUESTIONS = [
@@ -113,13 +110,11 @@ const QUESTIONS = [
   },
 ];
 
-// Site public de la plateforme : présentation, fonctions, fonctionnement, tarifs (offres de l'Admin GM), questions
 export default async function AccueilPlateforme() {
   const offres = await offresPubliques();
 
   return (
     <PageSite enteteTransparent>
-      {/* Accroche : le texte à gauche, l'aperçu du vrai produit en pleine largeur dessous, sur un fond dégradé */}
       <section className="accroche-site sur-sombre text-white -mt-16 pt-16">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-16 lg:pb-24">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] lg:items-center">
@@ -144,7 +139,6 @@ export default async function AccueilPlateforme() {
               </Link>
             </p>
           </div>
-          {/* L'aperçu de l'espace, qui flotte lentement */}
           <div className="illustration illustration-visible illustration-flotte w-full max-w-[620px] justify-self-end">
             <VisiteEspace />
           </div>
@@ -152,7 +146,6 @@ export default async function AccueilPlateforme() {
         </div>
       </section>
 
-      {/* Fonctions : un carrousel de cartes */}
       <section id="fonctions" className="bg-surface border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
@@ -163,7 +156,6 @@ export default async function AccueilPlateforme() {
           />
             <Illustration nom="evenements" className="hidden lg:block w-full max-w-[340px] justify-self-end" />
           </div>
-          {/* Les huit fonctions en carrousel : carré pastel, titre, texte */}
           <div className="mt-12">
             <Carrousel
               etiquette="Fonctions"
@@ -179,7 +171,6 @@ export default async function AccueilPlateforme() {
         </div>
       </section>
 
-      {/* Deux espaces */}
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
         <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
         <EnTeteSection
@@ -208,7 +199,6 @@ export default async function AccueilPlateforme() {
         </div>
       </section>
 
-      {/* Fonctionnement */}
       <section id="fonctionnement" className="sur-sombre bg-marque-nuit text-white">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
           <div data-reveal="" className="max-w-[680px]">
@@ -227,7 +217,6 @@ export default async function AccueilPlateforme() {
         </div>
       </section>
 
-      {/* Tarifs */}
       <section id="tarifs" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28">
         <EnTeteSection
           centre
@@ -245,7 +234,6 @@ export default async function AccueilPlateforme() {
         </p>
       </section>
 
-      {/* Confiance */}
       <section className="bg-surface border-y border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-24">
           <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)] lg:items-center">
@@ -266,7 +254,6 @@ export default async function AccueilPlateforme() {
         </div>
       </section>
 
-      {/* Questions */}
       <section id="questions" className="max-w-[1200px] mx-auto px-5 sm:px-8 py-20 lg:py-28 grid gap-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div>
           <EnTeteSection titre={<>Questions <Saillant>fréquentes</Saillant></>} />

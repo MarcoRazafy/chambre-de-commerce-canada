@@ -27,7 +27,6 @@ export default async function ContactPage({
   const { envoye } = await searchParams;
   const user = await getCurrentUser("membre");
 
-  // Téléphone, courriel et adresse : ceux de « Mon entreprise » (admin) ; le reste vient des coordonnées fixes
   const { telephone, email, adresse } = await getProfilChambre();
   const { whatsapp, horaires, reseaux } = COORDONNEES;
   const messageWhatsapp = encodeURIComponent(

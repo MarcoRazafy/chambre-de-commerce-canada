@@ -1,6 +1,3 @@
-// Signature des jetons de la plateforme (sessions, cookie de la Chambre choisie). Sans « server-only » :
-// lib/chambre-courante.ts, que les scripts importent aussi, relit la session pour connaître la Chambre sur les
-// adresses partagées (app. pour les équipes, client. pour les membres).
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 function cle(): string {
@@ -12,7 +9,6 @@ function cle(): string {
   return "cancham-developpement-uniquement";
 }
 
-// Signature d'une charge ; « usage » sépare les jetons (ex. « gm » : l'administrateur de la plateforme) d'une même clé
 export const signer = (charge: string, usage = "") =>
   createHmac("sha256", cle()).update(usage ? `${usage}:${charge}` : charge).digest("base64url");
 
@@ -20,7 +16,6 @@ const egale = (a: string, b: string) => a.length === b.length && timingSafeEqual
 
 export const NOM_COOKIE_SESSION = "cancham_session";
 
-// Le compte d'une session signée et pas expirée (« compte.expire[.v].signature ») ; null sinon
 export function compteDeLaSession(jeton: string | undefined | null): string | null {
   if (!jeton || jeton.length > 500) return null;
   const separateur = jeton.lastIndexOf(".");
@@ -32,7 +27,6 @@ export function compteDeLaSession(jeton: string | undefined | null): string | nu
   return userId;
 }
 
-// La Chambre choisie avant d'avoir un compte (demande d'adhésion sur client.), posée par proxy.ts
 export const NOM_COOKIE_CHAMBRE_CHOISIE = "chambre_choisie";
 export const scellerChambreChoisie = (chambreId: string) => `${chambreId}.${signer(chambreId, "chambre-choisie")}`;
 export function lireChambreChoisie(brut: string | undefined | null): string | null {

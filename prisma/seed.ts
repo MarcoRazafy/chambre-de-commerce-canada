@@ -14,7 +14,6 @@ import { hacher } from "../lib/mots-de-passe";
 
 const SCHEMA = new URL(process.env.DATABASE_URL ?? "postgres://x/x").searchParams.get("schema") || undefined;
 const prisma = new PrismaClient({
-  // Même schéma que l'application (?schema= dans DATABASE_URL), sinon « public »
   adapter: new PrismaPg(
     { connectionString: process.env.DATABASE_URL, options: SCHEMA ? `-c search_path="${SCHEMA}",public` : undefined },
     { schema: SCHEMA },

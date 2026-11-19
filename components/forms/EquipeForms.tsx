@@ -305,7 +305,6 @@ export function CarteEquipier({
   compte: CompteEquipe;
   cestMoi: boolean;
   gere: boolean;
-  /** Compte facturé dans l'abonnement (au-delà des comptes offerts) */
   payant?: boolean;
 }) {
   const pastilles = (
@@ -443,7 +442,6 @@ export function CarteEquipier({
   );
 }
 
-// « Ajouter un utilisateur » (Abonnement & utilisateurs) : le formulaire de création de compte, dans une fenêtre
 export function AjouterUtilisateur() {
   return (
     <Modal

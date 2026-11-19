@@ -4,7 +4,6 @@ import { numerosFiscaux, type ProfilChambre } from "@/lib/profil-chambre-defauts
 import { fmtMontant } from "@/lib/membership";
 import type { FactureDetaillee } from "@/lib/factures";
 
-// Facture d'un membre ; l'émetteur (logo, raison sociale, adresse, numéros fiscaux) vient de « Mon entreprise »
 export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureDetaillee; emetteur: ProfilChambre }) {
   const fiscaux = numerosFiscaux(e);
   const payee = f.statut === "payee";
@@ -12,13 +11,11 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
 
   return (
     <article className="bg-white text-[#16202b] border border-line rounded-[var(--radius-m)] shadow-[var(--shadow)] max-w-[820px] mx-auto print:border-0 print:shadow-none print:max-w-none print:rounded-none print:min-h-[296mm] print:flex print:flex-col">
-      {/* En-tête sur le dégradé de la barre latérale (celui de la Chambre s'il est réglé dans Paramètres → Couleurs) */}
       <div
         className="rounded-t-[var(--radius-m)] print:rounded-none text-white [print-color-adjust:exact] [-webkit-print-color-adjust:exact]"
         style={{ background: "var(--laterale, linear-gradient(180deg, #a3122a 0%, #5c1220 32%, #2a1f26 50%, #123f2d 70%, #007140 100%))" }}
       >
         <header className="px-8 sm:px-12 py-9 print:px-[16mm] print:py-[12mm] flex justify-between items-center gap-8 flex-wrap">
-          {/* Large, carré ou en hauteur : le logo tient entier dans ce cadre, calé à gauche */}
           <span className="relative block w-[220px] h-[90px] shrink-0">
             <Image src={e.logo} alt={e.raisonSociale} fill sizes="220px" className="object-contain object-left" priority />
           </span>

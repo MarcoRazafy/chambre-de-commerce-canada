@@ -11,7 +11,6 @@ import { lienGoogle } from "@/lib/google";
 
 export const metadata: Metadata = { title: { absolute: "Connexion · L’Alliée Virtuelle" } };
 
-// Connexion depuis le site de la plateforme : on arrive dans l'espace de sa Chambre
 export default async function ConnexionPlateforme({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string }> }) {
   const { erreur, email } = await searchParams;
   const google = lienGoogle();

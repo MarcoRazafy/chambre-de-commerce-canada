@@ -1,8 +1,6 @@
 import { confirmerDesabonnement } from "@/lib/actions/desabonnement";
 import { signatureValide } from "@/lib/newsletter";
 
-// Lien en bas de la lettre d'information : une page de confirmation (ouvrir le lien ne désabonne pas : certains
-// antivirus et messageries ouvrent les liens d'un courriel), puis le désabonnement au clic
 export default async function Desabonnement({ searchParams }: { searchParams: Promise<{ e?: string; s?: string; c?: string; fait?: string }> }) {
   const { e = "", s = "", c = "", fait } = await searchParams;
   const ok = !!e && !!s && c.length <= 64 && signatureValide(e, s, c);

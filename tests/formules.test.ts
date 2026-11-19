@@ -7,7 +7,6 @@ const canada: Formule = { id: "f2", pays: "Canada", profil: "Entreprise canadien
 
 describe("formules d'adhésion de la Chambre", () => {
   it("s'affichent d'après la formule elle-même", () => {
-    // Désignée par son type d'adhésion (le titre ne s'affiche plus)
     expect(libelleFormule(entreprise)).toBe("Entreprise");
     expect(fmtCotisation(entreprise)).toMatch(/^500\s000 Ar$/);
     expect(fmtCotisation(canada)).toBe("300 $");

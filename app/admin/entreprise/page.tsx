@@ -14,9 +14,6 @@ import { getCurrentUser } from "@/lib/session";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 
-// « Mon entreprise » : la Chambre elle-même. Sa présentation (logo, couverture, coordonnées)
-// et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ ; le logo est celui de l'entreprise),
-// puis ses formules d'adhésion (modifiables par les super admins)
 export default async function MonEntreprise() {
   const [brut, moi, formules] = await Promise.all([
     getProfilChambreBrut(),
@@ -29,7 +26,6 @@ export default async function MonEntreprise() {
   const gere = estAdministrateur(moi);
   const p = completerProfil(brut);
   const v = (k: keyof NonNullable<typeof brut>) => (brut?.[k] as string | null | undefined) ?? "";
-  // Sans aucune partie remplie, l'ancienne adresse d'un seul tenant se retrouve dans « Rue » (à répartir)
   const rue = v("adresseRue") || (v("codePostal") || v("ville") || v("province") || v("pays") ? "" : v("adresse"));
 
   return (
@@ -47,7 +43,6 @@ export default async function MonEntreprise() {
           <IconesImageChambre champ="couverture" personnalisee={Boolean(brut?.couverture)} className="absolute top-3 right-3" />
         </div>
         <div className="px-6 pb-6 flex flex-col sm:flex-row sm:items-start gap-4 sm:gap-5">
-          {/* Le cadre prend la forme du logo : hauteur fixe, largeur selon ses proportions (bornée) */}
           <span className="relative -mt-12 self-start h-[92px] min-w-[92px] max-w-[260px] shrink-0 inline-flex items-center justify-center p-1 rounded-[var(--radius-m)] bg-white border border-line shadow-[var(--shadow)]" style={p.logoFond ? { backgroundColor: p.logoFond } : undefined}>
             <Image src={p.logo} alt={p.nom} width={600} height={600} sizes="260px" className="h-full w-auto max-w-full object-contain" />
             <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
@@ -67,7 +62,6 @@ export default async function MonEntreprise() {
         </div>
       </Card>
 
-      {/* La Chambre à gauche, ses formules d'adhésion à droite (l'une sous l'autre sur petit écran) */}
       <div className="grid gap-5 items-start grid-cols-[minmax(0,1fr)] xl:grid-cols-2">
       <form action={enregistrerProfilChambre} className="flex flex-col gap-4 min-w-0">
         <Panneau titre="La Chambre" sousTitre="Sa présentation, ses coordonnées et ce qui figure sur ses factures" teinte="rouge">
@@ -78,7 +72,6 @@ export default async function MonEntreprise() {
             <Field label="Présentation">
               <textarea name="description" rows={5} maxLength={3000} defaultValue={v("description")} placeholder="Ce que fait l’entreprise, pour qui…" className={`${INPUT} block w-full leading-relaxed resize-y`} />
             </Field>
-            {/* Une seule adresse : rue, ville, province, code postal, pays */}
             <fieldset className="m-0 p-0 border-0 min-w-0 flex flex-col gap-3">
               <legend className="mb-2 p-0 text-[13px] font-semibold text-ink">Adresse</legend>
               <Field label="Rue">

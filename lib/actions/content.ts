@@ -1601,7 +1601,6 @@ async function mettreAuPressePapier(
   );
 }
 
-// « Supprimer » (barre de sélection) : les ressources cochées et leurs fichiers, notées au journal
 export async function supprimerRessources(formData: FormData) {
   await exigerEquipe();
   const retour = retourBibliotheque(formData);

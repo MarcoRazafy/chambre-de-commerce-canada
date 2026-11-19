@@ -16,7 +16,6 @@ export function CertificatAdhesion({
 }: {
   membre: Pick<Member, "nom" | "formule">;
   fin?: string | null;
-  /** Le site de la Chambre (celui de « Mon entreprise ») */
   site?: string;
 }) {
   return (

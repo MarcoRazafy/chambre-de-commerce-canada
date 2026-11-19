@@ -2,7 +2,6 @@ import Image from "next/image";
 import { initials } from "@/lib/format";
 import type { Intervenant } from "@/lib/types";
 
-// Les intervenants d'un événement : portrait rond, nom, fonction et entreprise, quelques mots de présentation
 export function ListeIntervenants({ intervenants }: { intervenants: Intervenant[] }) {
   return (
     <ul className="list-none m-0 p-0 grid gap-3 grid-cols-1 sm:grid-cols-2">

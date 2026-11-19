@@ -11,7 +11,6 @@ export const DELAI_REGLEMENT_JOURS = 30;
 
 export type Devise = "MGA" | "CAD";
 
-// Formule d'adhésion d'une Chambre (réglée dans ses Paramètres, lib/formules.ts) : « pays » est son titre
 export type FormuleId = string;
 export interface Formule {
   id: FormuleId;
@@ -26,7 +25,6 @@ export function libelleFormule(f: Formule | null | undefined): string {
   return f.profil;
 }
 
-// Tarifs en dollars canadiens ; « Ar » pour les montants en ariary
 export function fmtMontant(montant: number, devise: Devise): string {
   const nombre = montant.toLocaleString("fr-FR");
   return devise === "CAD" ? `${nombre} $` : `${nombre} Ar`;
@@ -46,7 +44,6 @@ export const PAGES_TOUJOURS_OUVERTES = [
   "/membre/cotisations",
   "/membre/contact",
   "/membre/aide",
-  // Le Support IT reste joignable même quand l'accès est restreint (problème de connexion ou de paiement)
   "/membre/support-it",
 ];
 

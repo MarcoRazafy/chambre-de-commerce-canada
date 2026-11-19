@@ -1,8 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Domaine d'expédition d'une Chambre : toutes partagent le compte Brevo, un domaine validé chez Brevo l'est donc pour
-// toutes. Une Chambre n'envoie depuis son domaine qu'avec sa propre preuve (TXT signé) lue dans le DNS.
-// DNS, base et Brevo simulés.
 const ZONES: Record<string, string[][]> = {};
 vi.mock("node:dns/promises", () => ({
   Resolver: class {
@@ -65,7 +62,7 @@ describe("la preuve de propriété", () => {
   it("une fois l'enregistrement ajouté, « Vérifier maintenant » la voit aussitôt (mémoire effacée)", async () => {
     expect(await preuvePresente("c-a", "entreprise.mg")).toBe(false);
     ZONES["entreprise.mg"] = [[preuveDomaine("c-a", "entreprise.mg")]];
-    expect(await preuvePresente("c-a", "entreprise.mg")).toBe(false); // encore en mémoire (1 min)
+    expect(await preuvePresente("c-a", "entreprise.mg")).toBe(false);
     oublierPreuve("entreprise.mg");
     expect(await preuvePresente("c-a", "entreprise.mg")).toBe(true);
   });

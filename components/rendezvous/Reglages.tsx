@@ -14,7 +14,6 @@ import { enMinutes, estHeure } from "@/lib/agenda";
 import { COULEURS_TYPE, JOURS_SEMAINE, LIEUX, PRIX_SUGGERES } from "@/lib/rendezvous";
 import type { TypeRendezvous } from "@/lib/rendezvous-donnees";
 
-// Les personnes de l'équipe qu'on peut choisir pour recevoir un type de rendez-vous
 export interface PersonneChoix {
   id: string;
   nom: string;
@@ -404,7 +403,6 @@ function resume(plages: Ligne[], duree: number): string {
     : "aucun créneau";
 }
 
-// Qui reçoit : spécialité, salle de visio fixe, et si la personne reçoit des rendez-vous
 export function ReglerPersonne({
   personne,
 }: {
@@ -445,7 +443,6 @@ export function ReglerPersonne({
   );
 }
 
-// Bouton compact qui copie un lien (page de réservation, lien d'un type)
 export function BoutonCopierLien({ lien, libelle }: { lien: string; libelle: string }) {
   const [copie, setCopie] = useState(false);
   return (

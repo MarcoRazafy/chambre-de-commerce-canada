@@ -9,7 +9,6 @@ import type { MemberType } from "@/lib/types";
 export interface ResumeTag {
   nom: string;
   entreprises: { id: string; nom: string; type: MemberType; photo: string | null; logo: string | null }[];
-  // Contacts sans entreprise qui portent le tag
   contacts: number;
 }
 
@@ -18,7 +17,6 @@ const CHAMP =
   "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent";
 const pluriel = (n: number) => `${n} contact${n > 1 ? "s" : ""}`;
 
-// Liste des tags : leur nombre, recherche et tri, puis une ligne par tag avec ses contacts
 export function ListeTags({ tags, totalTags, q, tri }: { tags: ResumeTag[]; totalTags: number; q: string; tri: "nombre" | "nom" }) {
   return (
     <>

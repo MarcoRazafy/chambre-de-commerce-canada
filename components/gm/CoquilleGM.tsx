@@ -1,7 +1,5 @@
 "use client";
 
-// Coquille de l'espace Admin GM : la même que celle du back-office (barre latérale à gauche, barre du haut),
-// aux couleurs de la plateforme : menu, Paramètres en pied, compte de l'Admin GM, déconnexion.
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -173,7 +171,6 @@ export function CoquilleGM({
 const ICONE_HAUT = `relative w-9 h-9 rounded-lg flex items-center justify-center no-underline text-white/75 hover:text-white hover:bg-white/10 ${FOCUS}`;
 const ENTREE_MENU = "flex w-full items-center gap-2.5 px-3 py-2.5 rounded-lg text-[13.5px] font-semibold no-underline bg-transparent border-0 cursor-pointer hover:bg-surface-2";
 
-// Avatar de la barre du haut : le compte de l'Admin GM, Paramètres, Se déconnecter
 function MenuCompte({ gm }: { gm: { nom: string; email: string } }) {
   const [ouvert, setOuvert] = useState(false);
   const zone = useRef<HTMLDivElement>(null);

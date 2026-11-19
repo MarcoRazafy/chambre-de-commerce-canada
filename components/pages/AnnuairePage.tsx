@@ -21,7 +21,6 @@ export async function AnnuairePage({
   espace: "membre" | "admin";
   searchParams: Promise<ParametresAnnuaire>;
   action?: ReactNode;
-  /** Onglets affichés sous le titre (back-office) */
   onglets?: ReactNode;
 }) {
   const [{ q = "", secteur = "" }, visibles] = await Promise.all([

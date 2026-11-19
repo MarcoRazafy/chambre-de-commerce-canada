@@ -1,9 +1,5 @@
 "use client";
 
-// Visite de l'espace (site de la plateforme) : des écrans dessinés, pas des captures (aucune donnée réelle). Les écrans
-// se succèdent d'eux-mêmes (l'un s'efface, le suivant apparaît), des points permettent d'en choisir un ; dans chaque
-// écran, les cartes et les listes sont en perspective, arrivent de la profondeur et flottent chacune à son rythme ; les
-// chiffres se comptent et les barres montent. Si l'appareil demande moins de mouvements : l'écran reste, les points marchent.
 import {
   createContext,
   useContext,
@@ -19,15 +15,12 @@ import { Marque } from "@/components/plateforme/site/MarqueSite";
 const CARTE = "c3d rounded-[10px] bg-white border border-line";
 const PISTE = "rounded bg-[#e6e3dc]";
 
-// Vrai dès qu'un onglet a été choisi : l'écran qui arrive est en mouvement
 const ContexteVisite = createContext(false);
 
 const delai = (ms: number) => ({ "--delai": `${ms}ms` }) as CSSProperties;
 const formater = (n: number) =>
   String(Math.round(n)).replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 
-// Le chiffre d'une tuile se compte de zéro à sa valeur (0,9 s) quand il apparaît ; il reste tel quel s'il est déjà à
-// l'écran au chargement de la page, ou si l'appareil demande moins de mouvements
 function useCompteur(valeur: string) {
   const ref = useRef<HTMLSpanElement>(null);
   const interagi = useContext(ContexteVisite);
@@ -85,7 +78,6 @@ function useCompteur(valeur: string) {
   return ref;
 }
 
-// Une donnée : le libellé, le chiffre, et ce à quoi il se compare
 function Tuile({
   libelle,
   valeur,
@@ -357,7 +349,6 @@ function EcranPaiements() {
   );
 }
 
-// L'espace d'un membre : sa carte de membre, rendue en code, est le moment de cette vue
 function EcranMembre() {
   return (
     <div className="grid gap-3 @2xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
@@ -499,8 +490,8 @@ const ECRANS: {
   },
 ];
 
-const DUREE = 3200; // ms d'affichage d'un écran
-const SORTIE = 260; // ms d'effacement avant le suivant
+const DUREE = 3200;
+const SORTIE = 260;
 
 const calme = () =>
   window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -515,7 +506,6 @@ export function VisiteEspace() {
   const manuel = useRef(0);
   const o = ECRANS[actif];
 
-  // La fenêtre est-elle à l'écran ? Les barres montent à sa première apparition ; hors de l'écran, les écrans attendent
   useEffect(() => {
     const el = fenetre.current;
     if (!el) return;
@@ -535,8 +525,6 @@ export function VisiteEspace() {
     return () => obs.disconnect();
   }, []);
 
-  // L'écran suivant toutes les DUREE ms : l'écran s'efface, le suivant apparaît. Pas sous le curseur ni au clavier,
-  // pas hors de l'écran ni dans un onglet caché, jamais si l'appareil demande moins de mouvements
   useEffect(() => {
     if (pause || calme()) return;
     let t1 = 0;
@@ -562,7 +550,6 @@ export function VisiteEspace() {
 
   useEffect(() => () => clearTimeout(manuel.current), []);
 
-  // Un point : cet écran, tout de suite (après l'effacement)
   const aller = (i: number) => {
     if (i === actif) return;
     setInteragi(true);
@@ -635,7 +622,6 @@ export function VisiteEspace() {
         </div>
       </div>
 
-      {/* Les points : l'écran affiché ; un clic en choisit un autre */}
       <div
         role="group"
         aria-label="Écrans de l’aperçu"

@@ -20,7 +20,6 @@ export interface EntrepriseTag {
   email: string | null;
 }
 
-// Entreprises à cocher : logo, nom, contact principal et son courriel ; recherche sur le tout
 function ChoixEntreprises({ entreprises }: { entreprises: EntrepriseTag[] }) {
   const [q, setQ] = useState("");
   const visible = (e: EntrepriseTag) => !q || plat(`${e.nom} ${e.contact ?? ""} ${e.email ?? ""}`).includes(plat(q));
@@ -62,7 +61,6 @@ function ChoixEntreprises({ entreprises }: { entreprises: EntrepriseTag[] }) {
   );
 }
 
-// Bouton « Ajouter un tag » : son nom suffit ; on arrive ensuite sur sa page pour y ajouter des entreprises
 export function NouveauTag() {
   return (
     <Modal
@@ -92,7 +90,6 @@ export function NouveauTag() {
   );
 }
 
-// Bouton « Ajouter une entreprise » d'un tag : les entreprises qui ne l'ont pas encore
 export function AjouterEntreprisesTag({ nom, entreprises }: { nom: string; entreprises: EntrepriseTag[] }) {
   return (
     <Modal

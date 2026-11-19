@@ -164,7 +164,6 @@ export async function getFinancesAnnee(annee: number | null): Promise<{
 }
 
 export async function getAnneesFactures(): Promise<number[]> {
-  // SQL brut : la limite de Chambre automatique ne s'applique pas, d'où le filtre
   const rows = await prisma.$queryRaw<{ annee: number }[]>`
     SELECT DISTINCT EXTRACT(YEAR FROM date)::int AS annee
     FROM invoices WHERE "chambreId" = ${await chambreCourante()} ORDER BY annee DESC`;

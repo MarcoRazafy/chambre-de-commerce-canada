@@ -87,17 +87,14 @@ export async function deposerCandidature(formData: FormData) {
     );
   }
   if (
-    // Une adresse = un seul espace : cherchée dans toutes les Chambres
     await prismaSysteme.user.findUnique({ where: { email }, select: { id: true } })
   ) {
     erreur("Cette adresse a déjà un compte : connectez-vous.");
   }
 
-  // Offre de la Chambre au complet : pas de nouvelle adhésion (l'équipe le voit dans son espace)
   if (await limiteAtteinte("membres")) erreur("Les adhésions sont fermées pour le moment.");
 
   const entreprise = independant ? rep : nomSaisi;
-  // Une formule proposée par la Chambre
   const formule = await formuleProposee(formuleSaisie);
   const membre = await prisma.member.create({
     data: {

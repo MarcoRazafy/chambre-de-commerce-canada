@@ -21,7 +21,6 @@ describe("mode développeur : liens et visites de l'Admin GM", () => {
     const autre = Buffer.from(JSON.stringify({ ...JSON.parse(Buffer.from(charge, "base64url").toString()), c: "chambre-b" })).toString("base64url");
     expect(lireLienEntree(`${autre}.${signature}`)).toBeNull();
     expect(lireLienEntree("n'importe.quoi")).toBeNull();
-    // Même signature, autre usage : un lien d'entrée n'est pas une visite
     expect(lireVisite(jeton)).toBeNull();
   });
 
@@ -31,7 +30,6 @@ describe("mode développeur : liens et visites de l'Admin GM", () => {
     const visite = `u-1.${fin}.v`;
     expect(lireSession(`${ordinaire}.${signer(ordinaire)}`)?.visite).toBe(false);
     expect(lireSession(`${visite}.${signer(visite)}`)?.visite).toBe(true);
-    // Retirer la marque de visite casse la signature
     expect(lireSession(`${ordinaire}.${signer(visite)}`)).toBeNull();
   });
 });

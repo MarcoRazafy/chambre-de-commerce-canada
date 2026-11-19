@@ -197,7 +197,6 @@ export function LogoMark({
     );
   }
 
-  // Ni logo ni photo : une icône de personne
   return (
     <div
       role="img"

@@ -40,7 +40,6 @@ export default async function PageReglement({
   const { id } = await params;
   const { etape, modifier } = await searchParams;
   const user = await getCurrentUser("membre");
-  // Le logo de la Chambre sur les écrans de règlement
   const { logo } = await getProfilChambre();
 
   const p = await prisma.paiement.findUnique({

@@ -6,14 +6,12 @@ import { fmtMoney } from "@/lib/format";
 import { marquerAbsentsPasses } from "@/lib/presences";
 import { getEvents } from "@/lib/queries";
 
-// Statistiques des événements affichés (période et recherche de la page) : inscriptions, présences, remplissage
 export async function GET(requete: Request) {
   await exigerEquipe();
   const params = new URL(requete.url).searchParams;
   const periode = lirePeriode(params.get("periode") ?? undefined);
   const q = (params.get("q") ?? "").trim().slice(0, 100);
 
-  // Les inscrits jamais pointés d'un événement terminé comptent comme absents, comme sur la liste des participants
   await marquerAbsentsPasses();
   const [events, presences, membres] = await Promise.all([
     getEvents(),

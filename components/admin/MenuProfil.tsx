@@ -1,6 +1,5 @@
 "use client";
 
-// Avatar de la barre du haut : un clic ouvre Mon profil, Paramètres et Se déconnecter
 import Link from "next/link";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { LogOut, Settings, UserRound } from "lucide-react";

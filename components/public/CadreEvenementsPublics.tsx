@@ -6,8 +6,6 @@ import type { EvenementPublic } from "@/lib/evenements-publics";
 import { dateLongue } from "@/lib/evenements-publics";
 import type { ProfilChambre } from "@/lib/profil-chambre-defauts";
 
-// Cadre de la page publique des événements d'une Chambre : en tête son logo (Mon entreprise), en pied son nom et ses
-// coordonnées
 export function CadreEvenementsPublics({ slug, profil, children }: { slug: string; profil: ProfilChambre; children: ReactNode }) {
   const site = profil.site ? (profil.site.startsWith("http") ? profil.site : `https://${profil.site}`) : null;
   return (
@@ -41,7 +39,6 @@ export function CadreEvenementsPublics({ slug, profil, children }: { slug: strin
   );
 }
 
-// Une carte d'événement (liste publique) : la photo et son format, la date et le lieu, le titre, le début du texte
 export function CarteEvenementPublic({ slug, e }: { slug: string; e: EvenementPublic }) {
   return (
     <Link href={`/c/${slug}/evenements/${e.id}`} className="group no-underline flex flex-col rounded-2xl border border-line bg-white overflow-hidden transition-shadow hover:shadow-[0_18px_40px_-20px_rgba(15,29,44,0.35)]">

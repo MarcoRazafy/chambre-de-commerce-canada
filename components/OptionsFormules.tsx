@@ -1,6 +1,5 @@
 import { fmtCotisation, libelleFormule, type Formule } from "@/lib/membership";
 
-// Les formules d'adhésion de la Chambre, en options d'une liste
 export function OptionsFormules({ formules, vide }: { formules: Formule[]; vide?: string }) {
   return (
     <>

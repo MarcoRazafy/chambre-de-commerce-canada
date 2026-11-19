@@ -17,7 +17,6 @@ export interface Courriel {
   html: string;
   texte: string;
   pieces?: PieceCourriel[];
-  /** Envoyé au nom de la plateforme, même depuis le contexte d'une Chambre (alertes à l'Admin GM) */
   dePlateforme?: boolean;
 }
 
@@ -28,7 +27,6 @@ export interface PieceCourriel {
   cid?: string;
 }
 
-// Expéditeur : COURRIEL_EXPEDITEUR, ou MAIL_FROM (réglage Brevo historique), sur un domaine vérifié
 const EXPEDITEUR =
   process.env.COURRIEL_EXPEDITEUR ||
   process.env.MAIL_FROM ||
@@ -38,26 +36,19 @@ export const COURRIEL_EQUIPE = process.env.COURRIEL_EQUIPE || COORDONNEES.email;
 
 type Adresse = { name: string; address: string };
 const enTexte = (a: Adresse) => (a.name ? `"${a.name.replace(/["\\]/g, "")}" <${a.address}>` : a.address);
-// « Nom <adresse> » ou « adresse » de la configuration du serveur
 function lireAdresse(v: string): Adresse {
   const m = /^\s*"?([^"<]*?)"?\s*<([^>]+)>\s*$/.exec(v);
   return m ? { name: m[1].trim(), address: m[2].trim() } : { name: "", address: v.trim() };
 }
 const SERVEUR = lireAdresse(EXPEDITEUR);
-// L'adresse du serveur (utilisée quand celle de l'entreprise n'est pas validée)
 export const adresseServeur = () => SERVEUR.address;
 const valide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
 
-// Expéditeur réglé dans Paramètres (nom, domaine, adresse), réponse au courriel de l'entreprise.
-// Relu au plus toutes les 30 s, pour chaque Chambre ; « secours » : l'adresse du serveur, si le fournisseur refuse
-// celle de l'entreprise
 type Expediteur = { de: Adresse; secours: Adresse | null; reponse: string };
 const memoire = new Map<string, { jusqua: number; valeur: Expediteur }>();
-// Après un changement dans Paramètres : relire l'expéditeur au prochain envoi
 export function oublierExpediteur() {
   memoire.clear();
 }
-// Hors de toute Chambre (espace Admin GM, site de la plateforme) : la plateforme écrit depuis l'adresse du serveur
 const PLATEFORME: Expediteur = { de: { name: "L’Alliée Virtuelle", address: SERVEUR.address }, secours: null, reponse: COURRIEL_EQUIPE };
 
 async function expediteur(c?: Courriel): Promise<Expediteur> {
@@ -80,9 +71,6 @@ async function expediteur(c?: Courriel): Promise<Expediteur> {
   }
   const nom = p?.expediteurNom.trim() || p?.nom.trim() || SERVEUR.name;
   const adresse = p?.expediteurEmail.trim() ?? "";
-  // L'adresse de l'entreprise ne sert d'expéditeur que si elle est sur son domaine, que ce domaine est validé chez
-  // Brevo et que cette Chambre a prouvé en avoir la main (le compte Brevo est commun à toutes) ; sinon (domaine non
-  // validé, preuve absente, Brevo injoignable) : l'adresse du serveur, avec le nom de l'entreprise
   const autorisee =
     valide(adresse) &&
     domaineDe(adresse) === p?.expediteurDomaine.trim() &&
@@ -94,14 +82,12 @@ async function expediteur(c?: Courriel): Promise<Expediteur> {
   const valeur = {
     de,
     secours: de.address !== SERVEUR.address ? { name: nom, address: SERVEUR.address } : null,
-    // Les réponses vont à l'adresse d'expédition saisie (même Gmail), sinon au courriel de l'entreprise
     reponse: valide(adresse) ? adresse : p?.email.trim() && valide(p.email.trim()) ? p.email.trim() : COURRIEL_EQUIPE,
   };
   memoire.set(chambreId, { jusqua: Date.now() + 30_000, valeur });
   return valeur;
 }
 
-// Fournisseur d'envoi : Brevo (ou tout serveur SMTP) avec SMTP_HOST, SMTP_USER et SMTP_PASS ; sinon Resend
 export function fournisseurCourriel(): "smtp" | "resend" | null {
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) return "smtp";
   if (process.env.RESEND_API_KEY) return "resend";
@@ -118,8 +104,6 @@ export async function envoyerCourriel(c: Courriel): Promise<boolean> {
   return (await envoyerCourrielSuivi(c)) !== null;
 }
 
-// Envoie et renvoie l'identifiant du courriel chez le fournisseur ; null si rien n'est parti.
-// « suivi » revient dans les webhooks (Brevo : en-tête X-Mailin-custom) pour relier remises, ouvertures et clics.
 export async function envoyerCourrielSuivi(
   c: Courriel,
   { suivi }: { suivi?: string } = {},
@@ -171,7 +155,6 @@ async function envoyerSmtp(c: Courriel, suivi?: string): Promise<string | null> 
       });
       return (info.messageId ?? "").replace(/^<|>$/g, "");
     } catch (e) {
-      // Adresse de l'entreprise refusée (domaine non vérifié chez le fournisseur) : on repart avec celle du serveur
       if (exp.secours && de !== exp.secours) {
         console.warn(`[courriel] ${de.address} refusée comme expéditeur, envoi avec ${exp.secours.address}`, e);
         de = exp.secours;
@@ -223,14 +206,12 @@ async function envoyerResend(c: Courriel, suivi?: string): Promise<string | null
           ...(suivi ? { tags: [{ name: "suivi", value: suivi.replace(/[^A-Za-z0-9_-]/g, "") }] } : {}),
         }),
       });
-      // Trop de courriels à la seconde (envoi d'une lettre) : on attend et on recommence, sans compter l'essai
       if (reponse.status === 429 && limites < LIMITES_TOLEREES) {
         limites++;
         essai--;
         await new Promise((r) => setTimeout(r, 1100));
         continue;
       }
-      // Domaine de l'entreprise non vérifié chez Resend : on repart avec l'adresse du serveur
       if ((reponse.status === 403 || reponse.status === 422) && exp.secours && de !== exp.secours) {
         console.warn(`[courriel] ${de.address} refusée comme expéditeur (${reponse.status}), envoi avec ${exp.secours.address}`);
         de = exp.secours;
@@ -261,7 +242,6 @@ const LIMITES_TOLEREES = 20;
 
 const ESSAIS_ENVOI = 2;
 
-// Adresse de secours des liens et images des courriels (sans APP_URL en ligne) : le site de la plateforme
 export const ADRESSE_PLATEFORME = process.env.DOMAINE_PLATEFORME?.trim()
   ? `https://${process.env.DOMAINE_PLATEFORME.trim().toLowerCase()}`
   : "https://lalliee-virtuelle.com";
@@ -278,11 +258,8 @@ function baseLiens(): string | null {
   return base && !estAdresseLocale(base) ? base : ADRESSE_PLATEFORME;
 }
 
-// L'espace d'un lien : le back-office (dev.) pour /admin et /demarrage, l'espace des membres (client.) sinon
 const espaceDuLien = (chemin: string): EspacePartage => (/^\/(admin|demarrage)(\/|\?|#|$)/.test(chemin) ? "equipe" : "client");
 
-// Lien vers l'espace : l'adresse propre de la Chambre en cours s'il y en a une, sinon l'espace partagé du lien (dev.
-// ou client.) ; sans l'un ni l'autre, celle du site (APP_URL, sinon l'adresse de la requête)
 export async function urlPublique(chemin: string): Promise<string> {
   const propre = await adresseDeLaChambre(await chambreCourante(), espaceDuLien(chemin));
   if (propre) return `${propre}${chemin}`;
@@ -296,20 +273,16 @@ export async function urlPublique(chemin: string): Promise<string> {
   return `${protocole}://${hote}${chemin}`;
 }
 
-// D'où les images des courriels sont servies (une adresse publique, jamais localhost)
 function baseImages(): string {
   const base = baseLiens();
   return base && !estAdresseLocale(base) ? base : ADRESSE_PLATEFORME;
 }
 
-// En-tête des courriels : une marque provisoire, remplacée à l'envoi par celle de l'expéditeur (marquerEnTete)
 const MARQUE_PROVISOIRE = "/marque/logo-courriel.png";
 export function enTete(): string {
   return `<img src="${echapper(`${baseImages()}${MARQUE_PROVISOIRE}`)}" width="220" height="89" alt="" style="display:block;border:0;outline:none;text-decoration:none;width:220px;height:auto;color:#ffffff;font-size:16px;font-weight:bold">`;
 }
 
-// La marque de l'en-tête selon l'expéditeur : la Chambre (son logo de Mon entreprise sur une pastille de sa couleur de
-// fond, blanche par défaut ; sans logo, son nom) ou la plateforme (logo de L'Alliée Virtuelle)
 const IMG_PROVISOIRE = /<img src="[^"]*\/marque\/logo-courriel\.png"[^>]*>/;
 async function marquerEnTete(c: Courriel): Promise<string> {
   if (!IMG_PROVISOIRE.test(c.html)) return c.html;
@@ -328,7 +301,6 @@ async function marquerEnTete(c: Courriel): Promise<string> {
         marque = `<span style="font-size:20px;font-weight:bold;color:#ffffff">${echapper(p.nom.trim())}</span>`;
       }
     } catch {
-      // Hors d'une Chambre : la marque de la plateforme
     }
   }
   return c.html.replace(IMG_PROVISOIRE, marque);

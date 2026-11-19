@@ -48,7 +48,6 @@ export async function demanderReinitialisation(formData: FormData) {
   }
 
   after(async () => {
-    // Sans session : le compte est cherché dans toutes les Chambres, la suite se fait dans la sienne
     const u = await prismaSysteme.user.findUnique({
       where: { email },
       select: { id: true, nom: true, role: true, chambreId: true },
@@ -118,8 +117,6 @@ export async function definirMotDePasse(formData: FormData) {
     }),
   ]));
 
-  // Le lien mène parfois à l'autre espace partagé (un membre sur dev., l'équipe sur client.) : la session s'ouvre
-  // alors dans le sien
   const ici = await hoteActuel();
   if (ici.partage && ici.partage !== espaceDuRole(user.role)) {
     const lien = await lienEntree(user.chambreId, user.id);

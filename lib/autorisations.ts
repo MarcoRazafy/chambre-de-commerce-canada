@@ -116,8 +116,6 @@ export async function exigerContact(
     where: { id: contactId },
     select: { memberId: true, role: true },
   });
-  // Un compte d’équipe garde son entreprise : ce n’est pas pour autant un
-  // contact que ses collègues, ou un manager, peuvent modifier ou supprimer.
   if (!contact?.memberId || contact.role !== "membre") {
     redirectWithErreur(retour, "Contact introuvable.");
   }

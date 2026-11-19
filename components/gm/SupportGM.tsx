@@ -1,8 +1,5 @@
 "use client";
 
-// Support IT : la conversation (avec l'équipe d'une Chambre ou un membre), la rédaction (texte, photos, vidéos, PDF),
-// la relecture régulière et la lecture des messages reçus. Côté Admin GM (page Messages) et côté membre (page
-// Support IT de son espace).
 import { Fragment, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { SendHorizontal } from "lucide-react";
@@ -18,7 +15,6 @@ type Cote = "gm" | "membre";
 const urlPiece = (cote: Cote) => (id: string, telecharger = false) =>
   `${cote === "gm" ? "/gm/pieces" : "/membre/support-it/pieces"}/${id}${telecharger ? "?telecharger=1" : ""}`;
 
-// Les messages : à droite ceux de celui qui lit (l'Admin GM, ou le membre), à gauche ceux de l'autre côté (signés)
 export function FilSupportGM({ messages, cote = "gm" }: { messages: MessageSupport[]; cote?: Cote }) {
   return (
     <div className="flex-1 min-h-0 overflow-y-auto flex flex-col-reverse bg-[#f7f9fc] px-4 py-4" aria-live="polite">
@@ -160,7 +156,6 @@ export function RedactionSupportGM({
   );
 }
 
-// Relit la page régulièrement (nouveaux messages), quand elle est visible
 export function RelectureAuto({ intervalle = 8_000 }: { intervalle?: number }) {
   const router = useRouter();
   useEffect(() => {
@@ -172,8 +167,6 @@ export function RelectureAuto({ intervalle = 8_000 }: { intervalle?: number }) {
   return null;
 }
 
-// Conversation ouverte avec des messages non lus : lue. « seulementLarge » : la conversation ouverte d'office n'est
-// affichée que sur écran large ; sur téléphone, elle reste non lue
 export function MarquerLu({
   chambreId = "",
   membreId = "",
@@ -185,7 +178,6 @@ export function MarquerLu({
   membreId?: string;
   repere: string;
   seulementLarge?: boolean;
-  /** Côté membre : son action ; sinon celle de l'Admin GM */
   marquer?: () => Promise<void>;
 }) {
   useEffect(() => {

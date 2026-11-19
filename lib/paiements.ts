@@ -28,7 +28,6 @@ export type Issue =
   | "inconnue"
   | "en_cours";
 
-// Appelé par le prestataire de paiement, sans session : la Chambre est celle du paiement
 export async function conclurePaiement(
   etat: EtatPaiement,
   charge: unknown,
@@ -46,7 +45,6 @@ async function conclureDansLaChambre(
   charge: unknown,
 ): Promise<Issue> {
   const trace = charge as Prisma.InputJsonValue;
-  // Le prestataire, pour le journal : Stripe (retour ou notification d'une session) ou Vanilla Pay
   const prestataire = (charge as { stripe?: unknown } | null)?.stripe ? "Stripe" : "Vanilla Pay";
 
   const p = await prisma.paiement.findUnique({

@@ -178,7 +178,6 @@ export async function registerForEvent(formData: FormData) {
   }
 
   const ecrit = await prisma.$transaction(ecritures);
-  // L'entreprise inscrite reçoit les tags de l'événement
   await poserTags([user.memberId], event.etiquettes);
   const facture = event.payant
     ? (ecrit[ecrit.length - 1] as { id: string })
@@ -453,12 +452,10 @@ export async function saveEvent(formData: FormData) {
     throw e;
   }
 
-  // Intervenants : chaque photo envoyée est enregistrée avant la transaction, comme celle de l'événement
   const noms = formData.getAll("intervenantNom").map(String);
   const nouvelles: (string | null)[] = [];
   let gardes = 0;
   for (let i = 0; i < noms.length; i++) {
-    // Pas de photo enregistrée pour une ligne ignorée (sans nom, ou au-delà du maximum)
     if (!noms[i].trim() || gardes >= INTERVENANTS_MAX) {
       nouvelles.push(null);
       continue;
@@ -546,7 +543,6 @@ export async function saveEvent(formData: FormData) {
     return ev;
   });
 
-  // Les entreprises déjà inscrites reçoivent les tags de l'événement
   const inscrites = data.etiquettes.length
     ? (await prisma.registration.findMany({ where: { eventId: e.id }, select: { memberId: true } })).map((r) => r.memberId)
     : [];

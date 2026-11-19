@@ -41,12 +41,10 @@ export default async function ConnexionPage({
   if (connecte && !enAttente) {
     redirect(connecte.role === "admin" ? "/admin" : "/membre");
   }
-  // Sur les espaces partagés (dev. : les équipes, client. : les membres), la page sert à toutes les Chambres
   const ici = await hoteActuel();
   const google = lienGoogle({ depuis: ici.partage ?? ici.chambreId, suite });
   const site = adresseSitePlateforme() ?? "";
   const equipe = ici.partage === "equipe";
-  // Espace membre d'une Chambre connue (son adresse, ou choisie avec ?chambre=…) : son logo, sa couverture, ses coordonnées
   const profil = !equipe && (ici.chambreId || (await chambreCouranteOuRien())) ? await getProfilChambre() : null;
   const adhesion = profil ? "/auth/inscription" : ici.partage ? `${site}/devenir-membre` : "/auth/inscription";
 

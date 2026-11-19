@@ -11,7 +11,6 @@ import { compteGMDuLien } from "@/lib/gm-compte";
 
 export const metadata: Metadata = { title: "Nouveau mot de passe · Administrateur" };
 
-// Nouveau mot de passe (Admin GM), depuis le lien reçu par courriel
 export default async function NouveauMotDePasseGM({ searchParams }: { searchParams: Promise<{ jeton?: string; erreur?: string }> }) {
   const { jeton, erreur } = await searchParams;
   const compte = await compteGMDuLien(jeton);

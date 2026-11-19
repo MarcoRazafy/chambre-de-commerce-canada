@@ -18,10 +18,8 @@ describe("profil de la Chambre", () => {
     const p = completerProfil({ adresseRue: "12 rue des Lilas", ville: "Montréal", province: "QC", codePostal: "H2X 1Y4", pays: "Canada" });
     expect(p.adresse).toBe("12 rue des Lilas, Montréal, QC H2X 1Y4, Canada");
     expect(p.adresseFacturation).toBe("12 rue des Lilas\nMontréal, QC H2X 1Y4\nCanada");
-    // Sans province : « Ville, Code postal »
     expect(adresseSurUneLigne({ adresseRue: "Lot 70", ville: "Antananarivo", codePostal: "101", pays: "Madagascar" })).toBe("Lot 70, Antananarivo, 101, Madagascar");
     expect(adresseSurUneLigne({ ville: "Montréal", pays: "Canada" })).toBe("Montréal, Canada");
-    // Ancienne adresse d'un seul tenant, sans parties : elle reste telle quelle
     expect(completerProfil({ adresse: "Antananarivo" }).adresse).toBe("Antananarivo");
   });
 });

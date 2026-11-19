@@ -6,7 +6,6 @@ import { nonLusSupportGM } from "@/lib/support-it";
 
 export const metadata: Metadata = { title: { default: "Administrateur", template: "%s · Administrateur" } };
 
-// Espace de l'Admin GM : les Chambres clientes de la plateforme et les offres
 export default async function EspaceGM({ children }: { children: React.ReactNode }) {
   const gm = await exigerGM();
   const nonLus = await nonLusSupportGM();

@@ -36,7 +36,6 @@ export async function FicheAnnuairePage({
 
   return (
     <>
-      {/* Le bouton « Retour » de la barre du haut ramène à l'annuaire */}
       <div className="mb-4 flex items-center justify-end gap-3 flex-wrap">
         <div className="flex gap-2 flex-wrap">
           <BoutonMessage memberId={m.id} space="membre" />

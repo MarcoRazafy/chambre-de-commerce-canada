@@ -20,25 +20,20 @@ import {
 } from "@/lib/contacts-admin";
 import { SANS_TAG, SITUATIONS } from "@/lib/filtres-contacts";
 
-// Contacts : une ligne par entreprise membre, avec son logo et son contact principal, à joindre, taguer ou exporter
 export default async function AdminContacts({
   searchParams,
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const sp = await searchParams;
-  // Deux onglets : les entreprises (avec leur contact principal), et les contacts sans entreprise
   const onglet = sp.onglet === "sans" ? "sans" : "avec";
   const f = lireFiltresContacts(sp);
   const params = parametresContacts(f);
   const filtre = params.size > 0;
   const retour = `/admin/contacts${filtre ? `?${params}` : ""}`;
-  // Toutes les entreprises (pour « Ajouter un contact »), et celles que les filtres retiennent
-  // Tous les tags, même ceux qu'aucune entreprise ne porte encore
   const [toutes, tousTags] = await Promise.all([getEntreprisesContacts(), getTousLesTags()]);
   const tags = tousTags;
   const entreprises = filtre ? await getEntreprisesContacts(f) : toutes;
-  // Les contacts sans entreprise (ajoutés par l'équipe ou inscrits à la newsletter depuis la page publique)
   const nbSeuls = await prisma.abonne.count({ where: { desabonneLe: null } });
   const seuls = await prisma.abonne.findMany({
     where: { desabonneLe: null, ...(f.q ? { OR: [{ prenom: { contains: f.q, mode: "insensitive" } }, { email: { contains: f.q, mode: "insensitive" } }] } : {}) },

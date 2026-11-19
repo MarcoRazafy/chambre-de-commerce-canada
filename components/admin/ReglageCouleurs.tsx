@@ -1,7 +1,5 @@
 "use client";
 
-// Paramètres → Couleurs : chaque couleur des espaces de la Chambre, avec un aperçu en direct. « Par défaut » rend
-// celle de la plateforme.
 import { useState } from "react";
 import { RotateCcw, TriangleAlert } from "lucide-react";
 import { nuance, tropClaire } from "@/lib/couleurs";
@@ -9,7 +7,6 @@ import { nuance, tropClaire } from "@/lib/couleurs";
 type Champ = "couleurPrincipale" | "couleurLaterale" | "couleurLaterale2" | "couleurHaut" | "couleurConnexion" | "couleurFondConnexion" | "couleurTexteConnexion";
 export type ValeursCouleurs = Record<Champ, string>;
 
-// Ce que montre l'aperçu quand rien n'est réglé (les couleurs de la plateforme)
 const DEFAUTS: Record<Champ, string> = {
   couleurPrincipale: "#ad0707",
   couleurLaterale: "#a3122a",
@@ -55,7 +52,6 @@ export function ReglageCouleurs({ initiales }: { initiales: ValeursCouleurs }) {
   const connexion = v.couleurConnexion || DEFAUTS.couleurConnexion;
   const texteConnexion = tropClaire(connexion) ? "#16202b" : "#ffffff";
   const fond = v.couleurFondConnexion || DEFAUTS.couleurFondConnexion;
-  // Comme sur la page : le texte choisi, sinon blanc sur un fond foncé
   const texte = v.couleurTexteConnexion || (tropClaire(fond) ? DEFAUTS.couleurTexteConnexion : "#ffffff");
   const lisibilite = tropClaire(fond) === tropClaire(texte) ? "Le texte et le fond se ressemblent : le texte sera peu lisible." : null;
 
@@ -82,7 +78,6 @@ export function ReglageCouleurs({ initiales }: { initiales: ValeursCouleurs }) {
         </div>
       </div>
 
-      {/* Aperçu */}
       <div className="flex flex-col gap-3" aria-hidden>
         <span className="text-[12.3px] font-semibold text-muted">Aperçu</span>
         <div className="rounded-[var(--radius-m)] border border-line overflow-hidden flex h-[220px] bg-white">

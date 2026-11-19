@@ -12,7 +12,6 @@ import type { EntrepriseContact } from "@/lib/contacts-admin";
 const pluriel = (n: number) => `${n} entreprise${n > 1 ? "s" : ""}`;
 const TH = "text-left text-[11px] uppercase tracking-[0.07em] text-faint font-semibold px-4 py-3 border-b border-line whitespace-nowrap";
 
-// Tableau de la page Contacts : on coche des entreprises (ou toutes), puis on agit sur la sélection
 export function TableauEntreprises({
   entreprises,
   tousTags,
@@ -25,7 +24,6 @@ export function TableauEntreprises({
   const [choisies, setChoisies] = useState<Set<string>>(new Set());
   const tout = useRef<HTMLInputElement>(null);
 
-  // Les filtres changent la liste : on ne garde que les entreprises encore affichées
   const visibles = useMemo(() => new Set(entreprises.map((e) => e.id)), [entreprises]);
   const selection = [...choisies].filter((id) => visibles.has(id));
   const n = selection.length;

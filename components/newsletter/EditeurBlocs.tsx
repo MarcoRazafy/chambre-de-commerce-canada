@@ -69,16 +69,12 @@ import {
 } from "@/lib/lettre-blocs";
 
 const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
-// Variables proposées dans la barre de mise en forme (newsletter par défaut ; un rappel a les siennes)
 const VariablesProposees = createContext<readonly { cle: string; libelle: string }[]>(VARIABLES);
-// Logo de l'entreprise, montré par une section Logo sans image choisie
 const LogoDefaut = createContext("/marque/logo-couleur.png");
-// Une section posée dans une colonne : marges des côtés resserrées
 const DansColonne = createContext(false);
 const serre = (p: string) => { const t = p.split(" "); return t.length >= 2 ? [t[0], "4px", ...t.slice(2)].join(" ") : p; };
-const BLEU = "#3b82f6"; // repères de l'éditeur (survol, sélection) : jamais dans la lettre
+const BLEU = "#3b82f6";
 
-// Lettre envoyée : son rendu exact, dans un cadre
 export function ApercuLettre({ doc, hauteur = 720 }: { doc: DocLettre; hauteur?: number }) {
   const html = useMemo(
     () =>
@@ -116,8 +112,6 @@ const demanderLien = (actuel: string, question = "Adresse du lien (https://…).
   return r === null ? null : urlSure(r);
 };
 
-// Texte mis en forme modifiable sur place, avec sa barre : gras, italique, souligné, couleur (palette),
-// alignement du paragraphe (début, milieu, fin, justifié), listes, lien, variables, effacer la mise en forme
 function TexteRiche({ html, onChange, style, ligne = false, placeholder = "Texte" }: {
   html: string; onChange: (h: string) => void; style?: CSSProperties; ligne?: boolean; placeholder?: string;
 }) {
@@ -222,8 +216,6 @@ const CATALOGUE: Record<TypeSection, { icone: ReactNode; aide: string }> = {
   espace: { icone: <MoveVertical size={18} />, aide: "Respiration verticale" },
 };
 
-// « + » entre deux sections : une carte avec toutes les sections possibles
-// Le choix du type de section (le « + » d'un emplacement vide)
 function Catalogue({ onChoix, onFermer, types }: { onChoix: (t: TypeSection) => void; onFermer: () => void; types?: readonly TypeSection[] }) {
   return (
     <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 w-[min(560px,92vw)] rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] text-left max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:left-3 max-sm:translate-x-0 max-sm:mt-0 max-sm:w-auto max-sm:max-h-[70vh] max-sm:overflow-y-auto" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
@@ -247,7 +239,6 @@ function Catalogue({ onChoix, onFermer, types }: { onChoix: (t: TypeSection) => 
   );
 }
 
-// Bouton rond « + »
 function BoutonPlus({ onClick, libelle, cache = false, ouvert = false, discret = false }: { onClick: () => void; libelle: string; cache?: boolean; ouvert?: boolean; discret?: boolean }) {
   return (
     <button type="button" onClick={(e) => { e.stopPropagation(); onClick(); }} aria-label={libelle} title={libelle} aria-expanded={ouvert}
@@ -257,8 +248,6 @@ function BoutonPlus({ onClick, libelle, cache = false, ouvert = false, discret =
   );
 }
 
-// Entre deux sections, au survol : ajoute un emplacement vide
-// Ferme un menu d'un clic ailleurs ou avec Échap (sans quitter le plein écran en même temps)
 function useFermeture(ouvert: boolean, fermer: () => void) {
   const zone = useRef<HTMLDivElement>(null);
   useEffect(() => {
@@ -272,7 +261,6 @@ function useFermeture(ouvert: boolean, fermer: () => void) {
   return zone;
 }
 
-// Nombre de colonnes de la nouvelle section (1 à COLONNES_MAX), chacune dessinée
 function ChoixColonnes({ onChoix }: { onChoix: (n: number) => void }) {
   return (
     <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-[#e5eaf0] bg-white p-3 shadow-[0_18px_40px_-12px_rgb(15_29_44/0.35)] max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:left-3 max-sm:translate-x-0 max-sm:mt-0 max-sm:w-auto max-sm:max-h-[70vh] max-sm:overflow-y-auto" style={{ fontFamily: "var(--font-texte)" }} onClick={(e) => e.stopPropagation()}>
@@ -292,7 +280,6 @@ function ChoixColonnes({ onChoix }: { onChoix: (n: number) => void }) {
   );
 }
 
-// « + » qui demande d'abord le nombre de colonnes
 function PlusColonnes({ onAjout, libelle, cache = false }: { onAjout: (n: number) => void; libelle: string; cache?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
   const zone = useFermeture(ouvert, () => setOuvert(false));
@@ -304,7 +291,6 @@ function PlusColonnes({ onAjout, libelle, cache = false }: { onAjout: (n: number
   );
 }
 
-// Entre deux sections, au survol
 function Inserer({ onAjout }: { onAjout: (n: number) => void }) {
   return (
     <div className="group/ins relative h-4 -my-2 z-20 flex items-center justify-center">
@@ -314,7 +300,6 @@ function Inserer({ onAjout }: { onAjout: (n: number) => void }) {
   );
 }
 
-// Emplacement vide : une petite section blanche, son « + » propose les types de section
 function Emplacement({ onChoix, types, compact = false }: { onChoix: (t: TypeSection) => void; types?: readonly TypeSection[]; compact?: boolean }) {
   const [ouvert, setOuvert] = useState(false);
   const zone = useFermeture(ouvert, () => setOuvert(false));
@@ -326,7 +311,6 @@ function Emplacement({ onChoix, types, compact = false }: { onChoix: (t: TypeSec
   );
 }
 
-// Pastilles de la palette
 function Nuancier({ libelle, valeur, onChange, fond = false }: { libelle: string; valeur: string; onChange: (c: never) => void; fond?: boolean }) {
   const choix: { cle: string; style: CSSProperties; nom: string }[] = [
     ...(fond ? [{ cle: "", style: { background: "repeating-linear-gradient(45deg,#fff 0 4px,#e5e7eb 4px 8px)" }, nom: "Aucun" }, { cle: "degrade", style: { backgroundImage: DEGRADE }, nom: "Dégradé rouge → vert" }] : []),
@@ -369,7 +353,6 @@ function Alignement({ valeur, onChange }: { valeur: Align; onChange: (a: Align) 
   );
 }
 
-// Réglages d'une section : taille, couleurs de la palette, fond, alignement, et ce qui lui est propre
 function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
   const m = maj as (c: Record<string, unknown>) => void;
   return (
@@ -388,7 +371,6 @@ function Style({ s, maj }: { s: Section; maj: (c: Partial<Section>) => void }) {
   );
 }
 
-// Copie d'une section (ou d'un emplacement) avec de nouveaux identifiants, sections des colonnes comprises
 function copier<T extends { id: string }>(b: T): T {
   const c = structuredClone(b) as T & { colonnes?: Section[][] };
   c.id = nouvelId();
@@ -396,11 +378,9 @@ function copier<T extends { id: string }>(b: T): T {
   return c;
 }
 
-// Dans l'éditeur seulement : un emplacement vide en attente de son type (jamais enregistré)
 type Bloc = Section | { id: string; type: "emplacement" };
 const estSection = (b: Bloc): b is Section => b.type !== "emplacement";
 
-// Éditeur : la lettre telle qu'elle sera reçue, faite de sections modifiables, déplaçables, supprimables
 export function EditeurBlocs({
   initial,
   reseaux,
@@ -416,16 +396,13 @@ export function EditeurBlocs({
   variables?: readonly { cle: string; libelle: string }[];
   mention?: string;
   logo?: string;
-  /** Mentions et coordonnées des Paramètres, pour un nouveau pied de page */
   pied?: PiedRegle;
 }) {
-  // Une lettre sans section commence par un emplacement vide
   const [doc, setDoc] = useState<Omit<DocLettre, "sections"> & { sections: Bloc[] }>(() =>
     initial.sections.length ? initial : { ...initial, sections: [{ id: nouvelId(), type: "emplacement" }] });
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
 
-  // Historique (Annuler / Rétablir) : une frappe continue compte pour une seule étape
   type Etat = typeof doc;
   const passe = useRef<Etat[]>([]);
   const futur = useRef<Etat[]>([]);
@@ -433,7 +410,6 @@ export function EditeurBlocs({
   const derniereEtape = useRef(0);
   const viaHistorique = useRef(false);
   const [pile, setPile] = useState({ passe: 0, futur: 0 });
-  // Remonte les sections après Annuler / Rétablir (les zones de texte ne relisent pas leur contenu sinon)
   const [generation, setGeneration] = useState(0);
   useEffect(() => {
     if (dernier.current === doc) return;
@@ -473,7 +449,6 @@ export function EditeurBlocs({
   const [plein, setPlein] = useState(false);
   const feuille = useRef<HTMLDivElement>(null);
 
-  // Un clic hors de la lettre désélectionne la section (et referme son style)
   useEffect(() => {
     if (!choisie && !style) return;
     const dehors = (e: PointerEvent) => {
@@ -485,7 +460,6 @@ export function EditeurBlocs({
     return () => document.removeEventListener("pointerdown", dehors);
   }, [choisie, style]);
 
-  // Plein écran : la page ne défile plus derrière, Échap le referme
   useEffect(() => {
     if (!plein) return;
     const avant = document.body.style.overflow;
@@ -496,8 +470,6 @@ export function EditeurBlocs({
   }, [plein]);
 
   const maj = (id: string, c: Partial<Section>) => setDoc((d) => ({ ...d, sections: d.sections.map((s) => (s.id === id ? ({ ...s, ...c } as Bloc) : s)) }));
-  // « + » : un emplacement vide, dont on choisit ensuite le type
-  // Une colonne : un emplacement vide ; plusieurs : une section de colonnes vides
   const inserer = (i: number, n = 1) => {
     const e: Bloc = n > 1
       ? { ...(sectionVide("colonnes") as Extract<Section, { type: "colonnes" }>), colonnes: Array.from({ length: n }, () => []) }
@@ -602,7 +574,6 @@ function Outil({ libelle, onClick, children, disabled, actif }: { libelle: strin
   );
 }
 
-// Petite barre d'actions propre à une section (image, liens), affichée quand elle est choisie
 function Actions({ children }: { children: ReactNode }) {
   return <div className="absolute left-2 top-2 z-10 flex flex-wrap gap-1.5" onClick={(e) => e.stopPropagation()}>{children}</div>;
 }
@@ -615,7 +586,6 @@ function ActionLien({ libelle, url, onChange }: { libelle: string; url: string; 
   );
 }
 
-// Dupliquer dans une colonne : en dessous (même colonne) ou à côté (colonne de droite, ou une nouvelle)
 function DupliquerVers({ onDessous, onACote }: { onDessous: () => void; onACote: () => void }) {
   const [ouvert, setOuvert] = useState(false);
   const zone = useFermeture(ouvert, () => setOuvert(false));
@@ -633,7 +603,6 @@ function DupliquerVers({ onDessous, onACote }: { onDessous: () => void; onACote:
   );
 }
 
-// Une colonne : ses sections (modifiables, déplaçables, supprimables) et un « + » pour en ajouter
 function Colonne({ sections, onChange, aCote }: { sections: Section[]; onChange: (c: Section[]) => void; aCote?: (copie: Section) => void }) {
   const [choisie, setChoisie] = useState<string | null>(null);
   const [style, setStyle] = useState<string | null>(null);
@@ -702,7 +671,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
   switch (s.type) {
     case "logo":
       return cadre(
-        // eslint-disable-next-line @next/next/no-img-element -- même logo que dans le courriel
+        // eslint-disable-next-line @next/next/no-img-element
         <img src={s.image || logoDefaut} alt="Logo" style={{ width: s.largeur || 150, maxWidth: "100%", height: "auto", display: "inline-block" }} />,
         "24px 32px 18px",
         <Actions>
@@ -762,7 +731,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
     case "image":
       return cadre(
         s.url ? (
-          // eslint-disable-next-line @next/next/no-img-element -- image de la lettre, de taille quelconque
+          // eslint-disable-next-line @next/next/no-img-element
           <img src={s.url} alt={s.alt} style={{ display: "inline-block", width: `${s.largeur}%`, height: "auto", borderRadius: 12 }} />
         ) : (
           <div className="flex flex-col items-center justify-center gap-2.5 py-10 rounded-xl border-2 border-dashed border-[#d5d8dd] bg-[#fafbfc] text-[#8a8a8a]" onClick={(e) => e.stopPropagation()}>
@@ -812,7 +781,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
               <button key={r} type="button" onClick={() => { const u = demanderLien(url, `Adresse de votre page ${nom}. Laissez vide pour ne pas l’afficher.`); if (u !== null) m({ liens: { ...s.liens, [r]: u } }); }}
                 title={url ? `${nom} : ${url}` : `${nom} : ajouter l’adresse`}
                 className={`relative p-0 border-0 bg-transparent cursor-pointer rounded-full hover:opacity-100 ${url ? "" : "opacity-25"}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element -- mêmes icônes que dans le courriel */}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src={`/marque/reseaux/${r}-${s.couleurIcone ?? "rouge"}.png`} alt={nom} width={44} height={44} className="block" />
                 {url ? null : <span className="absolute -right-1 -bottom-1 w-5 h-5 rounded-full text-white grid place-items-center" style={{ background: BLEU }}><Plus size={12} /></span>}
               </button>

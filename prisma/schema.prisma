@@ -126,20 +126,15 @@ enum StatutChambre {
   suspendue
 }
 
-// Offre d'abonnement à la plateforme (« gratuite », « payante »), réglée par l'Admin GM.
-// Montants en $ CAD par mois ; limites vides : sans limite. Les taxes et le jour de facturation restent
-// des réglages du serveur (PLATEFORME_TPS, PLATEFORME_TVQ, PLATEFORME_JOUR_FACTURATION).
 model Offre {
   id                  String   @id
   nom                 String
   forfait             Float    @default(0)
-  parUtilisateur      Float    @default(0) // par compte de l'équipe, au-delà des comptes offerts
+  parUtilisateur      Float    @default(0)
   utilisateursOfferts Int      @default(1)
   maxMembres          Int?
   maxUtilisateurs     Int?
   fonctions           String[] @default([])
-  // Offre à la carte : la Chambre choisit ses fonctions parmi « fonctions », chacune à son prix mensuel
-  // (prixFonctions : { cle: prix en $ }), ajouté au forfait de base
   surMesure           Boolean  @default(false)
   prixFonctions       Json     @default("{}")
   ordre               Int      @default(0)
@@ -161,17 +156,12 @@ enum ActionRetard {
   blocage
 }
 
-// Réglages de la plateforme (Admin GM), une seule ligne : retards de paiement de l'abonnement.
-// Une facture impayée relance la Chambre les jours indiqués après sa date ; passé le délai, l'espace passe
-// en lecture seule ou est bloqué (sauf l'abonnement), jusqu'au paiement.
 model ReglagesPlateforme {
   id                    String       @id @default("plateforme")
   delaiRetard           Int          @default(15)
   relances              Int[]        @default([1, 7, 14])
   actionRetard          ActionRetard @default(lecture)
-  // Part prélevée par la plateforme sur les cotisations payées par carte aux Chambres (en %, 0 : aucune)
   commissionCotisations Float        @default(0)
-  // Identité de la plateforme sur les factures de l'abonnement (vide : L'Alliée Virtuelle, sans coordonnées)
   nom                   String       @default("")
   raisonSociale         String       @default("")
   adresse               String       @default("")
@@ -186,58 +176,44 @@ model ReglagesPlateforme {
   @@map("reglages_plateforme")
 }
 
-// Compte de l'Admin GM (propriétaire de la plateforme) : à part des comptes des Chambres
 model CompteGM {
-  id                  String    @id @default(cuid())
-  nom                 String
-  email               String    @unique
-  motDePasse          String
-  motDePasseModifieLe DateTime?
-  // Mot de passe oublié : empreinte du lien envoyé par courriel, et sa fin de validité
+  id                    String    @id @default(cuid())
+  nom                   String
+  email                 String    @unique
+  motDePasse            String
+  motDePasseModifieLe   DateTime?
   jetonReinitialisation String?   @unique
   jetonExpire           DateTime?
-  createdAt           DateTime  @default(now())
+  createdAt             DateTime  @default(now())
 
   @@map("comptes_gm")
 }
 
-// Une Chambre cliente de la plateforme : son espace, ses comptes, ses données et ses réglages.
-// « principale » : la première Chambre, celle qui existait avant la plateforme multi-chambres.
 model Chambre {
   id        String   @id @default(cuid())
-  slug      String   @unique // son adresse : « slug ».DOMAINE_PLATEFORME (ex. cancham.lalliee-virtuelle.com)
-  domaine   String?  @unique // son domaine propre, s'il y en a un (ex. cancham.mg)
+  slug      String   @unique
+  domaine   String?  @unique
   nom       String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Abonnement à la plateforme (offre réglée par l'Admin GM) et accès à l'espace
-  offreId     String        @default("gratuite")
-  offre       Offre         @relation(fields: [offreId], references: [id])
-  // Offre à la carte : les fonctions choisies par la Chambre
-  fonctionsChoisies String[] @default([])
-  // Démarrage d'une Chambre créée depuis le site : l'étape en cours (choix de l'offre, paiement du premier mois,
-  // informations de la Chambre) ; vide : terminé. Tant qu'il dure, l'espace admin mène à /demarrage
+  offreId           String          @default("gratuite")
+  offre             Offre           @relation(fields: [offreId], references: [id])
+  fonctionsChoisies String[]        @default([])
   demarrage         EtapeDemarrage?
-  statut      StatutChambre @default(active)
-  suspendueLe DateTime?
+  statut            StatutChambre   @default(active)
+  suspendueLe       DateTime?
 
-  // Paiement de l'abonnement par carte (Stripe) : le client Stripe de la Chambre et sa carte enregistrée
-  // (jamais le numéro : la marque, les 4 derniers chiffres et l'échéance, pour l'affichage)
   stripeClientId String? @unique
   stripeCarteId  String?
   carteMarque    String?
   carteFin       String?
   carteExpire    String?
 
-  // Encaissement des cotisations des membres par carte : le compte Stripe de la Chambre (Stripe Connect),
-  // actif quand Stripe l'autorise à encaisser
   stripeCompteId    String? @unique
   stripeCompteActif Boolean @default(false)
   stripeComptePays  String?
 
-  // Mode développeur : l'Admin GM peut entrer dans l'espace jusqu'à cette date (vide : non autorisé),
-  // autorisation donnée par un super admin de la Chambre
   accesDevJusqua DateTime?
   accesDevPar    String?
 
@@ -269,9 +245,6 @@ model Chambre {
   @@map("chambres")
 }
 
-// Support IT : une conversation avec l'Admin GM pour l'équipe d'une Chambre (membreId vide), et une pour chaque
-// membre qui écrit (membreId : son compte). Lu par chaque côté jusqu'à une date (la Chambre ou le membre, l'Admin
-// GM) : les messages d'après sont non lus.
 model FilSupportIT {
   id          String    @id @default(cuid())
   chambreId   String
@@ -292,9 +265,9 @@ model MessageSupportIT {
   id       String       @id @default(cuid())
   filId    String
   fil      FilSupportIT @relation(fields: [filId], references: [id], onDelete: Cascade)
-  deGM     Boolean      @default(false) // écrit par l'Admin GM ; sinon par l'équipe de la Chambre
+  deGM     Boolean      @default(false)
   auteur   String
-  userId   String? // le compte de l'équipe qui a écrit
+  userId   String?
   texte    String
   envoyeLe DateTime     @default(now())
 
@@ -318,15 +291,13 @@ model PieceSupportIT {
   @@map("pieces_support_it")
 }
 
-// Formule d'adhésion d'une Chambre (ex. « Madagascar — Entreprise, 150 $ par an ») : réglée dans ses Paramètres.
-// Une formule déjà choisie par des membres s'archive (active = false) au lieu de disparaître.
 model FormuleAdhesion {
   id        String  @id @default(cuid())
   chambreId String  @default("principale")
   chambre   Chambre @relation(fields: [chambreId], references: [id])
-  pays      String // le titre (ex. Madagascar, Sur mesure)
-  profil    String // à qui elle s'adresse
-  montant   Int // par an
+  pays      String
+  profil    String
+  montant   Int
   devise    Devise  @default(CAD)
   ordre     Int     @default(0)
   active    Boolean @default(true)
@@ -376,12 +347,9 @@ model Member {
   logo   String?
   video  String?
 
-  // Maillage (repris de la plateforme L'Alliée Virtuelle) : étiquettes de ce que le membre propose,
-  // recherche et ce qui l'intéresse ; elles servent aux suggestions.
   offresTags   String[] @default([]) @map("offres_tags")
   besoinsTags  String[] @default([]) @map("besoins_tags")
   interetsTags String[] @default([]) @map("interets_tags")
-  // Tags : repères internes de l'équipe sur l'entreprise (cibler une newsletter, suivre un groupe)
   etiquettes   String[] @default([])
 
   createdAt DateTime @default(now())
@@ -438,7 +406,6 @@ model User {
   notesMembres       NoteMembre[]
   abonnementsPush    AbonnementPush[]
 
-  // Rendez-vous : ce que la personne de l'équipe reçoit (spécialité, salle de visio fixe, ouverte ou non)
   specialite String?
   lienVisio  String?
   recoitRdv  Boolean @default(false)
@@ -513,15 +480,12 @@ model Event {
   fin        String?
   pourQui    String?
 
-  // Rappels automatiques aux inscrits (7 jours avant, la veille, 2 heures avant) et leur courriel ;
-  // sujet et message vides : le texte par défaut
   rappelJ7      Boolean @default(true)
   rappelJ1      Boolean @default(true)
   rappelH2      Boolean @default(false)
   rappelSujet   String?
   rappelMessage String?
 
-  // Tags posés automatiquement sur les entreprises inscrites (à l'enregistrement et à chaque inscription)
   etiquettes String[] @default([])
 
   createdAt DateTime @default(now())
@@ -569,7 +533,6 @@ model EventAgenda {
   @@map("event_agenda")
 }
 
-// Un rappel parti : une adresse ne reçoit chaque rappel d'un événement qu'une fois
 model RappelEnvoye {
   id       String   @id @default(cuid())
   eventId  String
@@ -582,7 +545,6 @@ model RappelEnvoye {
   @@map("rappels_envoyes")
 }
 
-// Intervenant d'un événement (un ou plusieurs) : affiché dans l'ordre, avec sa photo
 model EventIntervenant {
   id         String  @id @default(cuid())
   nom        String
@@ -866,7 +828,7 @@ model Offer {
   desc        String
   image       String?
   lien        String?
-  prix        String? // texte libre : « 150 000 Ar », « 75 $ », « Gratuit »
+  prix        String?
   emplacement EmplacementOffre @default(partout)
 
   memberId String?
@@ -913,7 +875,6 @@ model Invoice {
   devise    Devise        @default(CAD)
   statut    InvoiceStatus @default(envoyee)
   payeeLe   DateTime?     @db.Date
-  // Relances automatiques déjà envoyées au membre (jours après la date de la facture)
   relances  Int[]         @default([])
 
   memberId String?
@@ -1129,12 +1090,9 @@ model Abonne {
 
   synchroniseLe DateTime?
 
-  // Adresse refusée par le serveur du destinataire (rebond définitif) : plus aucune lettre ne part
   erreurLe DateTime?
-  // Dernière invitation à adhérer envoyée par l'équipe
   inviteLe DateTime?
 
-  // Tags de l'équipe, comme sur les entreprises (cibler une newsletter)
   etiquettes String[] @default([])
 
   createdAt DateTime @default(now())
@@ -1155,8 +1113,6 @@ model TypeRendezvous {
   actif     Boolean @default(true)
   ordre     Int     @default(0)
 
-  // La personne de l'équipe qui reçoit (vide : l'équipe CanCham), où (visio, bureau, téléphone),
-  // la couleur de repère, le prix affiché, et si chaque réservation attend la confirmation de l'équipe
   hoteId     String?
   hote       User?   @relation(fields: [hoteId], references: [id], onDelete: SetNull)
   lieu       String  @default("bureau")
@@ -1209,7 +1165,6 @@ model Rendezvous {
 
   motif String?
 
-  // Qui reçoit (repris du type à la réservation), où, et l'état : « a_confirmer » ou « confirme »
   hoteId     String?
   hote       User?     @relation("rdvHote", fields: [hoteId], references: [id], onDelete: SetNull)
   lieu       String    @default("bureau")
@@ -1229,7 +1184,6 @@ model Rendezvous {
   @@map("rendezvous")
 }
 
-// Questionnaire de maillage d'un membre (16 questions essentielles) : réponses, avancement, relance
 model Maillage {
   memberId   String    @id
   member     Member    @relation(fields: [memberId], references: [id], onDelete: Cascade)
@@ -1243,7 +1197,6 @@ model Maillage {
   @@map("maillage")
 }
 
-// Mise en relation faite par la Chambre entre deux membres (ou suggestion écartée)
 model MiseEnRelation {
   id String @id @default(cuid())
 
@@ -1262,8 +1215,6 @@ model MiseEnRelation {
   @@map("mises_en_relation")
 }
 
-// Newsletter : une lettre écrite par l'équipe, envoyée par courriel à une audience choisie
-// (contacts des membres selon leur statut et les tags de l'entreprise, abonnés à la lettre)
 model Lettre {
   id String @id @default(cuid())
 
@@ -1276,7 +1227,6 @@ model Lettre {
   destinataires Int           @default(0)
   envoyes       Int           @default(0)
   envoyeeLe     DateTime?
-  // Envoi programmé : les courriels attendent chez Resend jusqu'à cette date (statut « programmee »)
   programmeeLe  DateTime?
   auteur        String
   createdAt     DateTime      @default(now())
@@ -1287,7 +1237,6 @@ model Lettre {
   @@map("lettres")
 }
 
-// Un courriel d'une lettre, suivi grâce aux webhooks de Resend (remise, ouverture, clic, rebond)
 model EnvoiLettre {
   id        String    @id @default(cuid())
   lettreId  String
@@ -1305,7 +1254,6 @@ model EnvoiLettre {
   @@map("envois_lettres")
 }
 
-// Un tag de l'équipe, qui existe même sans entreprise ; les entreprises le portent dans « etiquettes »
 model Tag {
   id String @id @default(cuid())
 
@@ -1319,30 +1267,27 @@ model Tag {
   @@map("tags")
 }
 
-// Un rappel automatique aux inscrits d'un événement : combien de temps avant le début, son objet et sa lettre.
-// Un événement en a autant que l'équipe en ajoute ; les envois sont notés dans RappelEnvoye (type = id du rappel).
 model RappelEvenement {
   id        String     @id @default(cuid())
   eventId   String
   event     Event      @relation(fields: [eventId], references: [id], onDelete: Cascade)
-  titre     String? // nom du rappel dans la liste
-  dates     DateTime[] @default([]) // moments d'envoi choisis par l'équipe (un ou plusieurs)
-  avant     Int        @default(0) // ancien réglage : minutes avant le début (si aucune date)
+  titre     String?
+  dates     DateTime[] @default([])
+  avant     Int        @default(0)
   sujet     String?
-  message   String? // lettre de l'éditeur (JSON) ; vide : le rappel par défaut
+  message   String?
   createdAt DateTime   @default(now())
 
   @@index([eventId])
   @@map("rappels_evenement")
 }
 
-// Facture mensuelle de l'abonnement de la Chambre à la plateforme : forfait + comptes de l'équipe ce jour-là
 model FacturePlateforme {
   id String @id @default(cuid())
 
   chambreId        String    @default("principale")
   chambre          Chambre   @relation(fields: [chambreId], references: [id])
-  numero           String // PLT-AAAA-MM
+  numero           String
   date             DateTime  @db.Date
   forfait          Float
   utilisateurs     Int
@@ -1354,13 +1299,11 @@ model FacturePlateforme {
   tvq              Float
   total            Float
   payeeLe          DateTime?
-  // Paiement par carte (Stripe) : le prélèvement, les échecs, les relances déjà envoyées (jours après la date)
   stripePaiementId String?
   tentatives       Int       @default(0)
   dernierEchec     String?
   dernierEchecLe   DateTime?
   relances         Int[]     @default([])
-  // Suivie pour les relances et les retards (les factures d'avant le paiement par carte ne le sont pas)
   suivie           Boolean   @default(true)
   createdAt        DateTime  @default(now())
 
@@ -1369,7 +1312,6 @@ model FacturePlateforme {
   @@map("factures_plateforme")
 }
 
-// Tag automatique : toute entreprise dans cette situation reçoit le tag, et le perd quand elle n'y est plus
 model RegleTag {
   id String @id @default(cuid())
 
@@ -1385,39 +1327,33 @@ model RegleTag {
   @@map("regles_tags")
 }
 
-// « Mon entreprise » : la Chambre elle-même (une seule ligne). Présentation, logo et couverture,
-// et ce qui figure sur ses factures (raison sociale, adresse, NEQ, TPS, TVQ, NIF, STAT, logo, mention).
-// Un champ vide reprend la valeur par défaut de la plateforme.
 model ProfilChambre {
   id String @id @default(cuid())
 
-  chambreId   String  @unique @default("principale")
-  chambre     Chambre @relation(fields: [chambreId], references: [id])
-  nom         String  @default("")
-  description String  @default("")
-  adresse     String  @default("") // recomposée à partir des champs ci-dessous
-  adresseRue  String  @default("")
-  codePostal  String  @default("")
-  ville       String  @default("")
-  province    String  @default("")
-  pays        String  @default("")
-  telephone   String  @default("")
-  email       String  @default("")
-  site        String  @default("")
-  logo        String?
-  couverture  String?
-  // Couleur de fond du cadre du logo (« #rrggbb ») : un logo clair reste lisible ; vide : blanc
-  logoFond    String?
-  // Couleurs de ses espaces (Paramètres → Couleurs), « #rrggbb » ; vide : celles de la plateforme
-  couleurPrincipale String?
-  couleurLaterale   String?
-  couleurLaterale2  String?
-  couleurHaut       String?
-  couleurConnexion  String?
+  chambreId             String  @unique @default("principale")
+  chambre               Chambre @relation(fields: [chambreId], references: [id])
+  nom                   String  @default("")
+  description           String  @default("")
+  adresse               String  @default("")
+  adresseRue            String  @default("")
+  codePostal            String  @default("")
+  ville                 String  @default("")
+  province              String  @default("")
+  pays                  String  @default("")
+  telephone             String  @default("")
+  email                 String  @default("")
+  site                  String  @default("")
+  logo                  String?
+  couverture            String?
+  logoFond              String?
+  couleurPrincipale     String?
+  couleurLaterale       String?
+  couleurLaterale2      String?
+  couleurHaut           String?
+  couleurConnexion      String?
   couleurFondConnexion  String?
   couleurTexteConnexion String?
-  // Relances automatiques des factures impayées des membres : les jours après la date de la facture ; vide : aucune
-  relancesMembres   Int[]   @default([])
+  relancesMembres       Int[]   @default([])
 
   raisonSociale      String  @default("")
   adresseFacturation String  @default("")
@@ -1429,13 +1365,10 @@ model ProfilChambre {
   logoFacture        String?
   mentionFacture     String  @default("")
 
-  // Expéditeur des courriels : le domaine de l'entreprise (validé chez Brevo), puis une adresse sur ce domaine.
-  // Vide : l'adresse de la configuration du serveur
   expediteurNom     String @default("")
   expediteurDomaine String @default("")
   expediteurEmail   String @default("")
 
-  // Paramètres : adresse qui reçoit les alertes de l'équipe, réseaux sociaux, mentions des courriels (vide : défaut)
   courrielEquipe  String @default("")
   facebook        String @default("")
   linkedin        String @default("")

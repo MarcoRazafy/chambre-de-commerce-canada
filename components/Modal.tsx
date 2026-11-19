@@ -41,8 +41,6 @@ export function Modal({
       {trigger?.(() => setOuvert(true))}
       <dialog
         ref={ref}
-        // React fait remonter close/cancel d’une fenêtre imbriquée jusqu’à
-        // celle qui la contient : chacune ne réagit qu’à sa propre fermeture.
         onClose={(e) => {
           if (e.target === e.currentTarget) setOuvert(false);
         }}

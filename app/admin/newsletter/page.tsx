@@ -14,7 +14,6 @@ const PASTILLE: Record<EtatLettre, [string, "info" | "muted" | "ok"]> = {
   envoyee: ["Envoyée", "ok"],
 };
 
-// Newsletter : la lettre d'information, envoyée tout de suite ou programmée, et son suivi (ouvertures, clics)
 export default async function AdminNewsletter() {
   const [brutes, audience] = await Promise.all([
     prisma.lettre.findMany({
@@ -27,7 +26,6 @@ export default async function AdminNewsletter() {
     .map((l) => {
       const suivi = suiviDe(l.envois);
       const etat = etatLettre(l);
-      // Le suivi ne porte que sur les lettres parties depuis sa mise en place
       const mesuree = etat === "envoyee" && suivi.envoyes > 0;
       return {
         ...l,

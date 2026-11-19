@@ -12,7 +12,6 @@ export function PiecesJointes({
   pieces: PieceJointe[];
   moi: boolean;
   space: Space;
-  // Adresse des fichiers, si elle n'est pas celle de la messagerie (Support IT)
   url?: (id: string, telecharger?: boolean) => string;
 }) {
   if (!pieces.length) return null;

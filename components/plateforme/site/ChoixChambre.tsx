@@ -1,8 +1,5 @@
 "use client";
 
-// Choix de sa Chambre (page Devenir membre) : la recherche filtre la liste pendant la saisie, sans bouton ; des filtres
-// par pays quand il y en a plusieurs ; jamais de cul-de-sac : sans résultat, des suggestions. L'adresse de la page
-// garde la recherche (?q=) pour qu'on puisse la partager.
 import { useId, useMemo, useState, type ReactNode } from "react";
 import { ArrowRight, Building2, Search, X } from "lucide-react";
 import { LogoChambre } from "@/components/gm/LogoChambre";
@@ -12,7 +9,6 @@ export type ChambrePublique = { id: string; nom: string; adresse: string; profil
 const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit";
 const FILETS = ["filet-vert", "filet-rouge", "filet-degrade"];
 
-// Comparaison sans accents ni majuscules
 const plat = (t: string) => t.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 
 export function ChoixChambre({ chambres, initiale, avant, illustration }: { chambres: ChambrePublique[]; initiale: string; avant: ReactNode; illustration: ReactNode }) {
@@ -37,7 +33,6 @@ export function ChoixChambre({ chambres, initiale, avant, illustration }: { cham
 
   return (
     <>
-      {/* Accroche : le titre, la recherche, les repères ; l'illustration à droite */}
       <section className="border-b border-line">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 lg:pt-20 pb-14 lg:pb-20 grid gap-10 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center">
           <div className="entree max-w-[640px]">
@@ -76,7 +71,6 @@ export function ChoixChambre({ chambres, initiale, avant, illustration }: { cham
         </div>
       </section>
 
-      {/* Les Chambres */}
       <section id={`${id}-resultats`} className="bg-surface border-b border-line" aria-live="polite">
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 py-14 lg:py-20">
           <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">

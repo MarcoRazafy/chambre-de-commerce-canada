@@ -1,7 +1,5 @@
 "use server";
 
-// Abonnement de la Chambre à la plateforme (super admins) : la carte, le paiement d'une facture, le passage
-// à l'offre Payante. Le paiement se fait sur la page de Stripe ; le retour revient à l'abonnement.
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { noter, passerALOffre, sessionCarte, sessionPaiement } from "@/lib/abonnement-stripe";
@@ -24,13 +22,11 @@ async function pret(retour: string) {
   return { moi, chambreId: await chambreCourante(), retour: await urlPublique(retour) };
 }
 
-// Ajouter ou changer la carte
 export async function enregistrerCarteAbonnement() {
   const { chambreId, retour } = await pret(FACTURES);
   redirect(await sessionCarte(chambreId, retour));
 }
 
-// Payer une facture en ligne
 export async function payerFactureAbonnement(formData: FormData) {
   const { chambreId, retour } = await pret(FACTURES);
   const url = await sessionPaiement(chambreId, String(formData.get("factureId") ?? ""), retour);
@@ -38,7 +34,6 @@ export async function payerFactureAbonnement(formData: FormData) {
   redirect(url);
 }
 
-// Passer à l'offre Payante : tout de suite si une carte est enregistrée, sinon après l'avoir enregistrée
 export async function passerAOffrePayante() {
   const moi = await exigerAdministrateur(PAGE);
   const chambreId = await chambreCourante();
@@ -51,8 +46,6 @@ export async function passerAOffrePayante() {
   redirect(await sessionCarte(chambreId, await urlPublique(PAGE), "payante"));
 }
 
-// Offre à la carte : choisir ses fonctions. Déjà sur cette offre : le choix s'applique tout de suite ; depuis une
-// autre offre : passage à l'offre à la carte, après l'enregistrement de la carte si elle est payante
 export async function composerOffre(formData: FormData) {
   const moi = await exigerAdministrateur(PAGE);
   const chambreId = await chambreCourante();
@@ -77,8 +70,6 @@ export async function composerOffre(formData: FormData) {
   redirect(await sessionCarte(chambreId, await urlPublique(PAGE), offre.id));
 }
 
-// « Passer sur cette formule » (onglet Les formules) : une offre gratuite s'applique tout de suite, une offre payante
-// aussi si une carte est enregistrée (sinon après son enregistrement) ; l'offre à la carte, avec ses fonctions cochées
 export async function changerFormule(formData: FormData) {
   const offre = await prisma.offre.findUnique({ where: { id: String(formData.get("offreId") ?? "").slice(0, 64) } });
   if (!offre) redirectWithErreur(PAGE, "Cette formule n’existe plus.");

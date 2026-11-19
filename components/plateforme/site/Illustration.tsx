@@ -1,9 +1,5 @@
 "use client";
 
-// Illustration du site (public/illustrations, SVG recolorés aux couleurs de la marque) : apparaît en fondu quand
-// elle entre dans l'écran ; « flotte » : un lent va-et-vient vertical. Autour de chaque dessin, des ornements animés
-// (pastilles qui flottent, icônes qui oscillent, anneaux qui tournent) arrivent l'un après l'autre ; tout est
-// immobile si l'appareil demande moins de mouvements
 import Image from "next/image";
 import { useEffect, useRef, type CSSProperties } from "react";
 import {
@@ -23,12 +19,10 @@ import {
   type LucideIcon,
 } from "lucide-react";
 
-// « poignee-de-main-claire » : la même poignée de main, silhouettes claires, pour un fond sombre
 export type NomIllustration =
   | "poignee-de-main" | "poignee-de-main-claire" | "evenements" | "reseau" | "paiement" | "questions" | "chambre" | "membres"
   | "acces" | "adhesion" | "oubli" | "courriel" | "mot-de-passe" | "bienvenue" | "admin";
 
-// Proportions de chaque dessin (largeur / hauteur de son viewBox), pour réserver la place avant le chargement
 const PROPORTIONS: Record<NomIllustration, [number, number]> = {
   "poignee-de-main": [759, 615],
   "poignee-de-main-claire": [759, 615],
@@ -49,9 +43,6 @@ const PROPORTIONS: Record<NomIllustration, [number, number]> = {
 
 type Ton = "vert" | "bleu" | "rouge";
 
-// Un ornement : « puce » (pastille blanche avec une icône ou des initiales et un mot), « tuile » (icône seule dans un
-// rond blanc), « anneau » (icône sur fond de couleur, entourée d'un cercle pointillé qui tourne) ; « ou » : sa place
-// par rapport au dessin ; « boucle » : son mouvement continu (va-et-vient par défaut)
 type Ornement = { ou: string; boucle?: "bobine" | "balance" | "pulsation" } & (
   | { type: "puce"; texte: string; icone?: LucideIcon; ton?: Ton; initiales?: string[] }
   | { type: "tuile"; icone: LucideIcon; ton: Ton; point?: boolean }
@@ -176,15 +167,12 @@ export function Illustration({
   nom: NomIllustration;
   className?: string;
   flotte?: boolean;
-  /** Dans l'accroche : chargée et visible tout de suite */
   priorite?: boolean;
-  /** Bornée à la moitié de la hauteur de l'écran (panneau d'une page d'authentification) */
   contenir?: boolean;
 }) {
   const cadre = useRef<HTMLDivElement>(null);
   const [largeur, hauteur] = PROPORTIONS[nom];
 
-  // Visible dès qu'elle entre dans l'écran (classe posée sur l'élément, sans nouveau rendu)
   useEffect(() => {
     const el = cadre.current;
     if (!el || priorite) return;
@@ -207,8 +195,6 @@ export function Illustration({
 
   return (
     <div ref={cadre} className={`illustration ${priorite ? "illustration-visible" : ""} ${flotte ? "illustration-flotte" : ""} ${className}`}>
-      {/* Le corps : le dessin et ses ornements, placés par rapport à lui ; « contenir » : sa largeur est celle qui
-          garde le dessin sous la moitié de la hauteur de l'écran */}
       <span className="illustration-corps relative block mx-auto" style={contenir ? { width: `min(100%, calc(48vh * ${(largeur / hauteur).toFixed(4)}))` } : undefined}>
         <Image
           src={`/illustrations/${nom}.svg`}
@@ -226,7 +212,6 @@ export function Illustration({
   );
 }
 
-// Les ornements d'un dessin, placés par rapport à leur parent « relative »
 function Ornements({ liste }: { liste: Ornement[] }) {
   return liste.map((o, i) => (
     <span key={i} aria-hidden className={`ornement ${o.ou}`} style={{ "--ordre": i } as CSSProperties}>

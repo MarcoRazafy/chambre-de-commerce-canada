@@ -4,7 +4,6 @@ import { prisma } from "@/lib/db";
 
 const ORIGINE: Record<string, string> = { vitrine: "Inscrit depuis le site", import: "Importé" };
 
-// Export des contacts sans entreprise cochés dans la page Contacts (envoyés par formulaire)
 export async function POST(requete: Request) {
   await exigerEquipe();
   const ids = (await requete.formData()).getAll("contacts").map(String);

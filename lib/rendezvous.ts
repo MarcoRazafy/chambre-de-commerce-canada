@@ -100,7 +100,6 @@ export function joursOuverts(depuis: string, plages: Plage[]): string[] {
   return jours;
 }
 
-// Où se tient un rendez-vous
 export type Lieu = "visio" | "bureau" | "telephone";
 export const LIEUX: { cle: Lieu; libelle: string; detail: string }[] = [
   { cle: "visio", libelle: "Visio", detail: "En visio : le lien est dans la confirmation" },
@@ -110,7 +109,6 @@ export const LIEUX: { cle: Lieu; libelle: string; detail: string }[] = [
 export const lireLieu = (v: unknown): Lieu => (v === "visio" || v === "telephone" ? v : "bureau");
 export const libelleLieu = (v: string) => LIEUX.find((l) => l.cle === lireLieu(v))!;
 
-// Couleurs de repère des types, dans la palette de la plateforme
 export const COULEURS_TYPE = ["#B5202B", "#2E7247", "#1B3A6B", "#A0630E", "#5B3FA8", "#0F7C80"];
 export const couleurType = (couleur: string | null | undefined, rang = 0) =>
   couleur && /^#[0-9a-f]{6}$/i.test(couleur) ? couleur : COULEURS_TYPE[Math.abs(rang) % COULEURS_TYPE.length];
@@ -119,7 +117,6 @@ export const PRIX_SUGGERES = ["Gratuit", "Inclus dans l’adhésion"];
 
 export type StatutRendezvous = "a_confirmer" | "confirme" | "annule";
 
-// Calendrier d'un mois (« AAAA-MM ») : les jours, précédés de cases vides pour commencer un lundi
 export function grilleMois(mois: string): (string | null)[] {
   const [a, m] = mois.split("-").map(Number);
   const premier = `${mois}-01`;
@@ -138,7 +135,6 @@ export function moisVoisin(mois: string, sens: -1 | 1): string {
 }
 export const estMois = (v: unknown): v is string => typeof v === "string" && /^\d{4}-(0[1-9]|1[0-2])$/.test(v);
 
-// « Mar, Jeu · 14:00 – 17:00 » : les jours qui partagent les mêmes heures d'accueil sont regroupés
 const JOURS_COURTS = ["", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"];
 export function resumePlages(plages: Plage[]): string {
   const groupes = new Map<string, number[]>();

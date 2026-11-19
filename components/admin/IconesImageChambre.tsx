@@ -1,6 +1,5 @@
 "use client";
 
-// Icônes posées sur le logo et la couverture de « Mon entreprise » : changer l'image (enregistrée dès qu'elle est envoyée) ou la retirer
 import { useEffect, useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { ImagePlus, LoaderCircle, Trash2 } from "lucide-react";
@@ -47,7 +46,6 @@ export function IconesImageChambre({
   className = "",
 }: {
   champ: "logo" | "couverture";
-  /** Une image a été choisie (sinon c'est celle par défaut) : on peut la retirer */
   personnalisee: boolean;
   className?: string;
 }) {
@@ -58,7 +56,6 @@ export function IconesImageChambre({
   const parti = useRef<File | null>(null);
   const nom = champ === "logo" ? "le logo" : "la couverture";
 
-  // Dès que l'image est envoyée (ou si l'envoi préalable échoue : elle part avec le formulaire), on enregistre
   useEffect(() => {
     const f = fichiers[0];
     if (!f || parti.current === f) return;
@@ -84,7 +81,6 @@ export function IconesImageChambre({
       >
         <input type="hidden" name="champ" value={champ} />
         <JetonsEnvoyes name={champ} jetons={jetons} />
-        {/* Si l'envoi préalable a échoué, le fichier part avec le formulaire */}
         {envoi?.erreur && fichiers[0] ? <FichierDeSecours name={champ} fichier={fichiers[0]} /> : null}
         <Changer
           champ={champ}
@@ -109,7 +105,6 @@ export function IconesImageChambre({
   );
 }
 
-// Un champ fichier caché, rempli avec le fichier choisi, pour l'envoyer avec le formulaire
 function FichierDeSecours({ name, fichier }: { name: string; fichier: File }) {
   const ref = useRef<HTMLInputElement>(null);
   useEffect(() => {

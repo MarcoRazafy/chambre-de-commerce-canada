@@ -10,9 +10,7 @@ describe("facture de l'abonnement selon l'offre de la Chambre", () => {
     expect(f.payants).toBe(5);
     expect(f.offerts).toBe(1);
     expect(f.sousTotal).toBe(175);
-    // Deux comptes offerts : un de moins à payer
     expect(facturePlateforme(6, config(100, 15), 2).sousTotal).toBe(160);
-    // Plus de comptes offerts que de comptes : rien en plus du forfait
     expect(facturePlateforme(1, config(100, 15), 3).sousTotal).toBe(100);
   });
 

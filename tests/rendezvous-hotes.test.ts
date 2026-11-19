@@ -13,12 +13,10 @@ import {
 
 describe("calendrier de réservation", () => {
   it("commence le mois un lundi, avec des cases vides avant le 1er", () => {
-    // Le 1er novembre 2026 est un dimanche : six cases vides avant
     const nov = grilleMois("2026-11");
     expect(nov.slice(0, 7)).toEqual([null, null, null, null, null, null, "2026-11-01"]);
     expect(nov.filter(Boolean)).toHaveLength(30);
     expect(nov.at(-1)).toBe("2026-11-30");
-    // Le 1er février 2027 est un lundi : aucune case vide, 28 jours
     expect(grilleMois("2027-02")[0]).toBe("2027-02-01");
     expect(grilleMois("2027-02")).toHaveLength(28);
   });

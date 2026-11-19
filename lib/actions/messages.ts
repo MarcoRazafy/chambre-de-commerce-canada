@@ -620,8 +620,6 @@ export async function reserverService(formData: FormData) {
   );
 }
 
-// Bulle de l'espace membre : le membre écrit à l'équipe de sa Chambre
-// (l'espace admin a la sienne : Support IT, /api/support-it)
 export async function ecrireAuSupport(
   _espace: string,
   _threadId: string | null,

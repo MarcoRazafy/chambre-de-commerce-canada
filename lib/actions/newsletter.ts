@@ -21,12 +21,10 @@ const SANS_COURRIELS = "L’envoi de courriels n’est pas configuré (variables
 
 function audienceDe(fd: FormData): Audience {
   return lireAudience({
-    // Tous les membres actifs ; les tags choisis restreignent, les tags exclus retirent
     statuts: ["a_jour", "en_attente", "en_retard"],
     etiquettes: fd.getAll("etiquettes").map(String),
     exclus: fd.getAll("exclus").map(String),
     contacts: texte(fd, "contacts"),
-    // Les contacts sans entreprise reçoivent la lettre envoyée à tous (sans tag choisi)
     abonnes: fd.getAll("etiquettes").length === 0,
     evenement: texte(fd, "evenement"),
   });
@@ -34,18 +32,15 @@ function audienceDe(fd: FormData): Audience {
 
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
-// Enregistrer le brouillon, s'envoyer un test, envoyer tout de suite ou programmer l'envoi (bouton « intention »)
 export async function enregistrerLettre(formData: FormData) {
   const moi = await exigerEquipe();
   const id = texte(formData, "id");
   const intention = texte(formData, "intention");
   const sujet = texte(formData, "sujet").slice(0, 200);
-  // Lettre de l'éditeur visuel : relue et nettoyée ici (couleurs, adresses, longueurs) avant d'être enregistrée
   const brut = texte(formData, "contenu").slice(0, 200000);
   const doc = lireDoc(brut);
   const contenu = doc ? (doc.sections.length ? JSON.stringify(doc) : "") : brut.slice(0, 20000);
   const audience = audienceDe(formData);
-  // Écrite depuis l'onglet Courriel d'un événement : on y revient (seule adresse de retour acceptée)
   const saisieRetour = texte(formData, "retour");
   const retour = /^\/admin\/evenements\/[\w-]+\?vue=courriel$/.test(saisieRetour) ? saisieRetour : null;
   const retourEdition = retour ? `${retour}${id ? `&lettre=${id}` : "&ecrire=1"}` : id ? `/admin/newsletter/${id}` : "/admin/newsletter/nouvelle";
@@ -58,7 +53,6 @@ export async function enregistrerLettre(formData: FormData) {
     if (avant.statut === "programmee") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est programmée : annulez la programmation pour la modifier.");
     if (avant.statut === "envoi") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est en cours d’envoi.");
   }
-  // Le texte est toujours enregistré, même si l'heure choisie est refusée : rien ne se perd
   const programmation = intention === "programmer" ? lireProgrammation(texte(formData, "programmeeLe")) : null;
 
   const lettre = id
@@ -79,7 +73,6 @@ export async function enregistrerLettre(formData: FormData) {
     const liste = await destinataires(audience);
     if (!liste.length) redirectWithErreur(page, "Aucun destinataire pour cette audience.");
     if (!courrielsActifs()) redirectWithErreur(page, SANS_COURRIELS);
-    // Programmée : rien ne part maintenant, le serveur l'enverra à l'heure dite (destinataires lus à ce moment-là)
     const partis = quand ? 0 : await envoyerLettre(lettre.id, sujet, contenu, liste);
     if (!quand && !partis) redirectWithErreur(page, "Aucun courriel n’a pu partir. Réessayez dans un instant.");
     await prisma.lettre.update({
@@ -108,7 +101,6 @@ export async function enregistrerLettre(formData: FormData) {
   redirectWithFlash(page, "Brouillon enregistré");
 }
 
-// Sauvegarde automatique pendant la rédaction : le brouillon est créé puis mis à jour, sans recharger la page
 export async function sauverBrouillon(formData: FormData): Promise<{ id: string } | { erreur: string }> {
   const moi = await exigerEquipe();
   const id = texte(formData, "id");
@@ -126,7 +118,6 @@ export async function sauverBrouillon(formData: FormData): Promise<{ id: string 
   return { id: lettre.id };
 }
 
-// Annuler un envoi programmé : la lettre redevient un brouillon, tant que son envoi n'a pas commencé
 export async function annulerProgrammation(formData: FormData) {
   const moi = await exigerEquipe();
   const id = texte(formData, "id");
@@ -160,7 +151,6 @@ export async function supprimerLettre(formData: FormData) {
   redirectWithFlash("/admin/newsletter", "Brouillon supprimé");
 }
 
-// Image d'une lettre (bandeau, image, colonne) : téléversée depuis l'éditeur, son adresse revient aussitôt
 export async function televerserImageLettre(formData: FormData): Promise<{ url: string } | { erreur: string }> {
   await exigerEquipe();
   try {

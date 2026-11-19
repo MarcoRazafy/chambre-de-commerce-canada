@@ -24,12 +24,9 @@ import { stripeConfigure } from "@/lib/stripe";
 
 const MARQUES: Record<string, string> = { visa: "Visa", mastercard: "Mastercard", amex: "American Express", discover: "Discover", unionpay: "UnionPay", jcb: "JCB" };
 
-// Abonnement de la Chambre à la plateforme (forfait + comptes actifs de l'équipe), en trois onglets : les formules
-// (côte à côte, l'actuelle signalée), l'équipe et ses accès, les factures
 export default async function AdminAbonnement({ searchParams }: { searchParams: Promise<{ onglet?: string; stripe?: string }> }) {
   const sp = await searchParams;
   const onglet = sp.onglet === "factures" ? "factures" : sp.onglet === "equipe" ? "equipe" : "formules";
-  // Retour de la page de paiement de Stripe : la carte ou le paiement s'applique tout de suite
   if (sp.stripe && stripeConfigure()) {
     const retour = `/admin/abonnement?onglet=${onglet}`;
     const resultat = await appliquerSession(sp.stripe, await chambreCourante()).catch((e) => {
@@ -51,7 +48,6 @@ export default async function AdminAbonnement({ searchParams }: { searchParams: 
   ]);
   const gere = estAdministrateur(moi);
   const parCarte = stripeConfigure();
-  // L'offre de la Chambre (réglée par l'Admin GM) : ses prix, ses limites
   const { config: c, offre, offerts } = await configDeLaChambre();
   const gratuite = !!offre && offreGratuite(offre);
   const n = equipe.length;

@@ -36,8 +36,6 @@ export function payableEnLigne(montant: number, devise: Devise): boolean {
   );
 }
 
-// Payable en ligne par la Chambre en cours : par carte sur son compte Stripe s'il est actif (toute devise), sinon par
-// Vanilla Pay (Ariary, au-dessus du minimum)
 export async function enLigneDansLaChambre(montant: number, devise: Devise): Promise<boolean> {
   return Boolean(await compteStripeActif()) || payableEnLigne(montant, devise);
 }

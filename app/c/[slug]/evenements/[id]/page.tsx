@@ -18,7 +18,6 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   return { title: { absolute: e && p ? `${e.titre} · ${p.profil.nom}` : "Évènement" }, description: e?.desc.slice(0, 160) };
 }
 
-// Un événement, vu du public : format et date, titre, photo, texte ; à côté, l'essentiel et les autres événements
 export default async function EvenementPublicPage({ params }: Params) {
   const { slug, id } = await params;
   const p = await pagePublique(slug);

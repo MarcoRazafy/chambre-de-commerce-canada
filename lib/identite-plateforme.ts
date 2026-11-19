@@ -1,7 +1,5 @@
 import "server-only";
 
-// Identité de la plateforme (réglée par l'Admin GM dans Paramètres › Plateforme) : ce qui figure comme émetteur
-// sur les factures de l'abonnement des Chambres. Lecture sans limite de Chambre.
 import { prismaSysteme as db } from "@/lib/db";
 
 export const NOM_PLATEFORME = "L’Alliée Virtuelle";
@@ -37,7 +35,6 @@ export async function identitePlateforme(): Promise<IdentitePlateforme> {
   };
 }
 
-// Les numéros d'entreprise et de taxes, pour le pied d'une facture
 export function numerosPlateforme(i: IdentitePlateforme): string[] {
   return [i.neq && `NEQ ${i.neq}`, i.numeroTps && `N° TPS ${i.numeroTps}`, i.numeroTvq && `N° TVQ ${i.numeroTvq}`].filter((x): x is string => Boolean(x));
 }

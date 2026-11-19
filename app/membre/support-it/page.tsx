@@ -9,8 +9,6 @@ import { supportITMembre } from "@/lib/support-it";
 
 export const metadata: Metadata = { title: "Support IT" };
 
-// Support IT de l'espace membre : la conversation du membre avec l'équipe technique de la plateforme (Admin GM),
-// pour un problème de connexion, d'affichage ou de paiement en ligne. Séparée de celle avec l'équipe de la Chambre.
 export default async function SupportIT() {
   const user = await getCurrentUser("membre");
   const { conversation } = await supportITMembre(user.id);

@@ -52,7 +52,6 @@ export async function connexion(formData: FormData) {
     );
   }
 
-  // Avant la connexion, la Chambre n'est pas connue : le compte est cherché partout (une adresse = un seul espace)
   const u = await prismaSysteme.user.findUnique({
     where: { email },
     select: {
@@ -78,8 +77,6 @@ export async function connexion(formData: FormData) {
     echec("Adresse ou mot de passe incorrect.", email, suite);
   }
 
-  // Sur une adresse propre de Chambre, le compte d'une autre Chambre (mot de passe juste) se connecte à la sienne ;
-  // sur les espaces partagés, la Chambre est celle du compte
   const ici = await hoteActuel();
   if (!ici.partage && u.chambreId !== ici.chambreId) {
     const adresse = await adresseDeLaChambre(u.chambreId, espaceDuRole(u.role));
@@ -103,7 +100,6 @@ export async function connexion(formData: FormData) {
 
   oublier(`connexion:${origine}:${email}`);
   const sienne = suite === `/${u.role}` || suite.startsWith(`/${u.role}/`);
-  // Le mauvais espace partagé (un membre sur dev., l'équipe sur client.) : la session s'ouvre dans le sien
   if (ici.partage && ici.partage !== espaceDuRole(u.role)) {
     const lien = await lienEntree(u.chambreId, u.id, { suite: sienne ? suite : "" });
     if (lien) redirect(lien);

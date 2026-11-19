@@ -77,8 +77,6 @@ export async function payerParCarte(formData: FormData) {
     data: { detail },
   });
 
-  // Compte Stripe de la Chambre actif : la carte passe par Stripe, quelle que soit la devise ; sinon Vanilla Pay,
-  // qui doit être raccordé et ne prend que l'Ariary
   if (!(await compteStripeActif())) {
     if (!vanillaPayActif()) {
       redirectWithErreur(
@@ -326,7 +324,6 @@ export async function payerInscriptionPublique(
     await inscriptionAPayer(formData);
 
   const canal = canalVanillaPay(mode);
-  // Carte avec le compte Stripe de la Chambre : toujours possible ; sinon les conditions de Vanilla Pay
   const parStripe = mode === "carte" && Boolean(await compteStripeActif());
   if (
     !parStripe &&

@@ -28,7 +28,6 @@ export function FiltresAuto({
     if (!form) return;
     const q = new URLSearchParams();
     for (const [cle, valeur] of new FormData(form)) {
-      // Plusieurs cases cochées sous le même nom : chacune garde sa valeur
       if (typeof valeur === "string" && valeur.trim() && !q.getAll(cle).includes(valeur.trim()))
         q.append(cle, valeur.trim());
     }
@@ -58,7 +57,6 @@ export function FiltresAuto({
         el instanceof HTMLSelectElement;
       if (!saisie) continue;
       const valeur = params.get(el.name);
-      // Sans paramètre, un menu revient à son choix par défaut (pas à une valeur vide qu'il ne propose pas)
       if (el instanceof HTMLSelectElement && valeur === null) {
         const defaut = Array.from(el.options).find((o) => o.defaultSelected) ?? el.options[0];
         el.value = defaut?.value ?? "";

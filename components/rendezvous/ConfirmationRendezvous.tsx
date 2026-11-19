@@ -5,7 +5,6 @@ import { fmtHeure, fmtJour } from "@/lib/agenda";
 import { libelleLieu, MENTION_FUSEAU } from "@/lib/rendezvous";
 import type { RendezvousPris } from "@/lib/rendezvous-donnees";
 
-// Après une réservation : ce qui est pris, où, et de quoi l'ajouter à son agenda
 export function ConfirmationRendezvous({ rdv, base }: { rdv: RendezvousPris; base: string }) {
   const attente = rdv.statut === "a_confirmer";
   const lieu = libelleLieu(rdv.lieu);

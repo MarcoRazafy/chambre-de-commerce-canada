@@ -1,8 +1,3 @@
-// Filtres de la page Contacts (une ligne par entreprise, représentée par son contact principal) :
-// recherche, situations à cocher (cotisation, accès du contact principal) et tags à cocher.
-// Dans une même famille, les cas cochés s'additionnent (« à jour » ou « en retard ») ;
-// d'une famille à l'autre, ils se combinent (« en retard » et « invitation en attente »).
-
 export const SITUATIONS = [
   {
     famille: "Cotisation",
@@ -27,7 +22,6 @@ const VALEURS = new Set<string>(SITUATIONS.flatMap((g) => g.options.map((o) => o
 type Statut = "a_jour" | "en_retard" | "en_attente" | "candidature";
 const STATUTS: Statut[] = ["a_jour", "en_retard", "en_attente", "candidature"];
 
-// Case « Sans tag » du filtre des tags
 export const SANS_TAG = "__sans_tag__";
 
 export type FiltresContacts = { q: string; situations: Situation[]; tags: string[] };
@@ -38,13 +32,11 @@ const liste = (v: string | string[] | undefined) => (Array.isArray(v) ? v : v ? 
 export function lireFiltresContacts(p: Parametres): FiltresContacts {
   const q = liste(p.q)[0]?.trim() ?? "";
   const situations = [...new Set(liste(p.situation))].filter((s): s is Situation => VALEURS.has(s));
-  // Anciennes adresses : ?acces=actif
   for (const a of liste(p.acces)) if ((a === "actif" || a === "invite") && !situations.includes(a)) situations.push(a);
   const tags = [...new Set(liste(p.tag).map((t) => t.trim().slice(0, 60)).filter(Boolean))];
   return { q, situations, tags };
 }
 
-// Les mêmes filtres en paramètres d'adresse (pour l'export et le retour après une action)
 export function parametresContacts(f: FiltresContacts): URLSearchParams {
   const p = new URLSearchParams();
   if (f.q) p.set("q", f.q);
@@ -53,7 +45,6 @@ export function parametresContacts(f: FiltresContacts): URLSearchParams {
   return p;
 }
 
-// Conditions Prisma (sur les entreprises membres) qui traduisent les filtres
 export function conditionsContacts(f: FiltresContacts) {
   const et: Record<string, unknown>[] = [];
   const statuts = STATUTS.filter((s) => f.situations.includes(s));

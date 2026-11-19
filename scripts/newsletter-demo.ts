@@ -1,11 +1,6 @@
 import { avecChambre, CHAMBRE_PRINCIPALE } from "../lib/chambre-courante";
 import { prisma } from "../lib/db";
-// Même audience que celle proposée par défaut dans l’éditeur (lib/newsletter, réservé au serveur)
 const AUDIENCE_DEFAUT = { statuts: ["a_jour", "en_attente", "en_retard"] as ("a_jour" | "en_attente" | "en_retard")[], etiquettes: [] as string[], contacts: "tous", abonnes: true };
-
-// Données de démonstration de la newsletter : des abonnés à la lettre (dont un désabonné, une adresse
-// en erreur, un invité à adhérer), deux lettres envoyées avec leur suivi et deux brouillons.
-// Rien n'est envoyé : les courriels « suivis » sont fictifs. Les lettres de démo ne sont créées qu'une fois.
 
 const ABONNES: [string, string, string, number, ("desabonne" | "erreur" | "invite")?][] = [
   ["Andry R.", "andry.r@exemple.mg", "vitrine", 1],
@@ -34,7 +29,7 @@ async function main() {
   const maintenant = new Date();
   const il = (jours: number, heure = 8) => {
     const d = new Date(maintenant.getTime() - jours * 86_400_000);
-    d.setUTCHours(heure - 3, 0, 0, 0); // heure de Madagascar
+    d.setUTCHours(heure - 3, 0, 0, 0);
     return d;
   };
 
@@ -64,7 +59,6 @@ async function main() {
   const abonnes = (await prisma.abonne.findMany({ select: { email: true } })).map((a) => a.email);
   const audience = [...new Set([...contacts.map((c) => c.email.toLowerCase()), ...abonnes])];
 
-  // Une lettre envoyée et son suivi : une part de remises, d'ouvertures et de clics, une adresse en erreur
   async function envoyee(sujet: string, jours: number, ouverture: number, clics: number) {
     const quand = il(jours);
     const l = await prisma.lettre.create({
@@ -108,8 +102,6 @@ async function main() {
       auteur: "Communication",
     },
   });
-  // Pas de lettre programmée dans la démo : le serveur l'enverrait vraiment, à de fausses adresses.
-  // Le brouillon « Novembre » se programme à la main pour essayer.
   await prisma.lettre.create({
     data: { sujet: LETTRES.novembre, contenu: CONTENU("novembre"), audience: AUDIENCE_DEFAUT, auteur: "Communication" },
   });

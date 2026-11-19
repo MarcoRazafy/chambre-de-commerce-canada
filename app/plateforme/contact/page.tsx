@@ -12,7 +12,6 @@ export const metadata: Metadata = { title: { absolute: "Contact · L’Alliée V
 
 type Saisies = { erreur?: string; nom?: string; email?: string; message?: string; envoye?: string };
 
-// Contact depuis le site (sans compte) : le message arrive à l'Admin GM par courriel
 export default async function Contact({ searchParams }: { searchParams: Promise<Saisies> }) {
   const sp = await searchParams;
 
@@ -34,7 +33,6 @@ export default async function Contact({ searchParams }: { searchParams: Promise<
             <p className="text-[15px] leading-6 text-muted m-0 mb-6">Posez votre question ou demandez une démonstration.</p>
             {sp.erreur ? <Alerte>{sp.erreur}</Alerte> : null}
             <form action={envoyerContact} className="flex flex-col gap-4">
-              {/* Piège à robots : laissé vide par une personne */}
               <div className="hidden" aria-hidden>
                 <label>Site web <input type="text" name="site" tabIndex={-1} autoComplete="off" /></label>
               </div>

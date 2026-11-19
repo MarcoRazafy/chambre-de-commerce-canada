@@ -50,14 +50,12 @@ const SUGGESTIONS = [
   "Je rencontre un problème sur la plateforme.",
 ];
 
-// Espace admin : le Support IT (l'Admin GM de la plateforme)
 const SUGGESTIONS_IT = [
   "Je rencontre un problème sur la plateforme.",
   "J’ai une question sur notre abonnement.",
   "Je voudrais une nouvelle fonction.",
 ];
 
-// « admin » : Support IT (l'équipe de la Chambre écrit à l'Admin GM) ; « membre » : le membre écrit à son équipe
 type Espace = "membre" | "admin";
 
 const urlPieceIT = (id: string, telecharger = false) =>
@@ -150,7 +148,6 @@ export function BulleSupport({
 }: {
   espace: Espace;
   prenom: string;
-  /** Espace membre : la Chambre (Mon entreprise) qui répond, son nom et son logo */
   chambre?: { nom: string; logo: string | null };
 }) {
   const nomEquipe = chambre?.nom || "L’équipe";
@@ -176,7 +173,6 @@ export function BulleSupport({
   const saisie = useRef<HTMLTextAreaElement>(null);
   const defilement = useRef<HTMLDivElement>(null);
 
-  // Le membre retrouve cette conversation dans sa messagerie : pas de bulle par-dessus
   const masquee =
     espace === "membre" && pathname.startsWith("/membre/messagerie");
 
@@ -224,7 +220,6 @@ export function BulleSupport({
   const conversation = donnees?.conversation ?? null;
   const chargement = !donnees;
 
-  // Lien d'un courriel du Support IT (« ?support=it ») : la bulle s'ouvre
   useEffect(() => {
     if (espace !== "admin") return;
     const p = new URLSearchParams(window.location.search);
@@ -260,7 +255,6 @@ export function BulleSupport({
     });
   const [envoi, setEnvoi] = useState<string | null>(null);
   const [erreurEnvoi, setErreurEnvoi] = useState<string | null>(null);
-  // Photos, vidéos, PDF joints (Support IT)
   const [pieces, setPieces] = useState<File[]>([]);
   const joindre = (nouveaux: File[]) => {
     const r = ajouterPieces(pieces, nouveaux);
@@ -319,7 +313,6 @@ export function BulleSupport({
     if (zone) zone.scrollTop = zone.scrollHeight;
   }, [ouvert, conversation?.id, dernier, envoi]);
 
-  // Une photo ou une vidéo qui se charge agrandit le fil : on reste en bas si on y était
   const contenu = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const zone = defilement.current;
@@ -524,7 +517,6 @@ export function BulleSupport({
             ) : (
               <span className="relative shrink-0">
                 {chambre?.logo ? (
-                  // Le logo de la Chambre, entier, sur un rond blanc
                   <span className="w-10 h-10 rounded-full bg-white flex items-center justify-center overflow-hidden p-1">
                     <Image src={chambre.logo} alt="" width={40} height={40} sizes="40px" className="w-full h-full object-contain" />
                   </span>
@@ -708,8 +700,6 @@ function FilMessages({
         const jour = jourLisible(m.envoyeLe);
         const nouveauJour =
           !precedent || jourLisible(precedent.envoyeLe) !== jour;
-        // Support IT (admin) : à droite, ce qu'écrit l'équipe de la Chambre ; à gauche, l'Admin GM.
-        // Signés : les messages de l'autre côté, et ceux d'un collègue
         const aDroite = espace === "admin" ? !m.equipe : m.moi;
         const signe =
           !m.supprime &&

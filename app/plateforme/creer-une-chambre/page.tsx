@@ -85,7 +85,6 @@ export default async function CreerUneChambre({
           autoComplete="new-password"
         />
 
-        {/* L'offre choisie sur le site : présélectionnée au démarrage, après l'inscription */}
         {offreChoisie ? (
           <input type="hidden" name="offre" value={offreChoisie} />
         ) : null}

@@ -1,6 +1,5 @@
 import "server-only";
 
-// Le retard de paiement de l'abonnement de la Chambre en cours (bandeau de l'espace)
 import { prisma, reglagesRetard } from "@/lib/db";
 import { etatRetard } from "@/lib/retards";
 

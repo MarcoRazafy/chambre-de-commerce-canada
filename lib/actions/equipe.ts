@@ -40,7 +40,6 @@ export async function modifierProfilEquipe(formData: FormData) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     redirectWithErreur(retour, "Indiquez une adresse e-mail valide.");
   }
-  // Une adresse = un seul espace : cherchée dans toutes les Chambres
   const pris = await prismaSysteme.user.findFirst({
     where: { email, id: { not: user.id } },
     select: { id: true },
@@ -112,7 +111,6 @@ export async function creerCompteEquipe(formData: FormData) {
   if (!fonction) redirectWithErreur(EQUIPE, "Indiquez sa fonction.");
   const limite = await limiteAtteinte("equipe");
   if (limite) redirectWithErreur(EQUIPE, limite);
-  // Une adresse = un seul espace : cherchée dans toutes les Chambres (sans rien montrer d'une autre)
   const existant = await prismaSysteme.user.findUnique({
     where: { email },
     select: { role: true, chambreId: true },

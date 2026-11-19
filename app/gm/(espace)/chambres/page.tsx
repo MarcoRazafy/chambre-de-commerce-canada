@@ -21,7 +21,6 @@ const ONGLETS: { cle: "toutes" | StatutAffiche; libelle: string }[] = [
 type Chambre = Awaited<ReturnType<typeof listeChambres>>[number];
 const ORDRE_STATUTS: StatutAffiche[] = ["active", "en_retard", "suspendue"];
 
-// Colonnes triables : la valeur comparée ; « descDabord » : le premier clic met les plus grands (ou récents) en tête
 const TRIS = {
   nom: { libelle: "Chambre", valeur: (c: Chambre) => c.nom, descDabord: false },
   offre: { libelle: "Offre", valeur: (c: Chambre) => c.offre.nom, descDabord: false },
@@ -34,7 +33,6 @@ const TRIS = {
 type Tri = keyof typeof TRIS;
 const TRI_DEFAUT: Tri = "creeLe";
 
-// « nom » : croissant ; « -nom » : décroissant ; autre chose : le tri par défaut
 function lireTri(v: string | undefined): { cle: Tri; desc: boolean } {
   const desc = v?.startsWith("-") ?? false;
   const cle = (desc ? v!.slice(1) : (v ?? "")) as Tri;
@@ -58,7 +56,6 @@ function ThTri({ cle, actif, desc, href, className = "" }: { cle: Tri; actif: bo
   );
 }
 
-// Les Chambres clientes : recherche, statut, offre, tri par colonne
 export default async function ChambresGM({ searchParams }: { searchParams: Promise<{ q?: string; statut?: string; offre?: string; tri?: string }> }) {
   const sp = await searchParams;
   const [chambres, offres] = await Promise.all([listeChambres(), offresPlateforme()]);
@@ -86,7 +83,6 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
     const s = u.toString();
     return `/gm/chambres${s ? `?${s}` : ""}`;
   };
-  // Le lien d'une colonne : même colonne, on inverse ; autre colonne, son sens de départ
   const lienTri = (c: Tri) => {
     const prochainDesc = c === cle ? !desc : TRIS[c].descDabord;
     return url({ statut, tri: c === TRI_DEFAUT && !prochainDesc ? "" : `${prochainDesc ? "-" : ""}${c}` });

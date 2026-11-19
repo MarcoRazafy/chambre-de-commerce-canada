@@ -4,7 +4,6 @@ import { ExternalLink, Link2 } from "lucide-react";
 import { Modal } from "@/components/Modal";
 import { BoutonCopierLien } from "@/components/rendezvous/Reglages";
 
-// « Liens membres » (page Membres) : le lien pour devenir membre et celui de la connexion des membres, à partager
 export function LiensMembres({ adhesion, connexion }: { adhesion: string; connexion: string }) {
   return (
     <Modal

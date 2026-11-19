@@ -12,12 +12,10 @@ export const metadata: Metadata = { title: "Tableau de bord" };
 
 const jour = (d: Date) => fmtDateShort(d.toISOString().slice(0, 10));
 const fiche = (id: string) => `/gm/chambres/${encodeURIComponent(id)}`;
-// Une ligne de liste : sur téléphone, le détail passe sous le nom (aligné après le logo) ; à partir de sm, sur la même ligne
 const ligne = "flex flex-col gap-1 py-2.5 text-[13.5px] border-b border-line last:border-b-0 sm:flex-row sm:items-center sm:justify-between sm:gap-3";
 const detail = "pl-[60px] sm:pl-0 text-[12.5px] sm:text-[13.5px] text-muted whitespace-nowrap";
 const nom = "flex items-center gap-3 min-w-0 font-semibold text-ink no-underline hover:text-accent";
 
-// Tableau de bord de l'Admin GM
 export default async function TableauDeBordGM() {
   const [t, gm] = await Promise.all([tableauDeBordGM(), exigerGM()]);
   const aujourdhui = today().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
@@ -33,8 +31,6 @@ export default async function TableauDeBordGM() {
         <Compteur icone={<Sparkles size={20} />} libelle="Nouvelles Chambres" valeur={t.nouvelles.length} detail="ces 30 derniers jours" teinte="degrade" />
       </div>
 
-      {/* Écran large : revenus à gauche, retards et nouvelles Chambres à droite, derniers paiements en pleine largeur.
-          Téléphone : les retards d'abord. */}
       <div className="grid gap-4 items-start lg:grid-cols-2">
         <div className="flex flex-col gap-4 lg:order-2">
           <Panneau titre="En retard" teinte="rouge" lien={t.enRetard.length ? { href: "/gm/chambres?statut=en_retard", libelle: "Toutes" } : undefined}>

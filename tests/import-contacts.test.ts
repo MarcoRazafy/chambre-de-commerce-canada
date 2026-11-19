@@ -28,7 +28,6 @@ describe("import de contacts (CSV)", () => {
       c,
     );
     expect(r[0]).toMatchObject({ numero: 2, erreur: null, fusion: null, ligne: { email: "noro@bio.mg", tags: ["VIP", "Export"] } });
-    // Sans entreprise : la ligne est valable, le contact ira dans « Sans entreprise »
     expect(r[1]).toMatchObject({ erreur: null, ligne: { entreprise: "", nom: "Tahiry", email: "t@bio.mg" } });
     expect(r[2].erreur).toContain("n’est pas un courriel valide");
   });
@@ -63,7 +62,6 @@ describe("import de contacts (CSV)", () => {
       fusion: { numeros: [2, 4], ecarts: ["entreprise « Autre SA » (ligne 4)"] },
     });
     expect(r[1].fusion).toBeNull();
-    // Une ligne incomplète est sauvée par son double
     expect(r[2]).toMatchObject({ numero: 5, erreur: null, ligne: { entreprise: "Bio Sud", nom: "Tahiry", email: "t@bio.mg" }, fusion: { numeros: [5, 6] } });
   });
 

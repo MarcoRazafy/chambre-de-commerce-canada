@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 
-// Le signe de la plateforme : deux encres, le rouge de l'équipe sur le vert des membres
 export function Marque({ className = "w-2 h-6" }: { className?: string }) {
   return (
     <span aria-hidden className={`flex flex-col rounded-[3px] overflow-hidden shrink-0 ${className}`}>
@@ -11,11 +10,8 @@ export function Marque({ className = "w-2 h-6" }: { className?: string }) {
   );
 }
 
-// Mention au pied des pages de la plateforme
 export const PIED_PLATEFORME = <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;
 
-// Marque du site : le logo IMPACT 261 (blanc sur fond sombre), seul dans l'en-tête, avec le nom de la plateforme
-// dans le pied (« avecNom »)
 export function MarqueSite({ clair = false, avecNom = false }: { clair?: boolean; avecNom?: boolean }) {
   return (
     <Link

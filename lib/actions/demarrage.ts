@@ -1,7 +1,5 @@
 "use server";
 
-// Démarrage d'une Chambre créée depuis le site (super admin) : choix de l'offre, paiement du premier mois sur la
-// page de Stripe (offre payante), informations de la Chambre. Chaque étape mène à la suivante (/demarrage).
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -22,7 +20,6 @@ import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 const PAGE = "/demarrage";
 const texte = (fd: FormData, k: string, max = 300) => String(fd.get(k) ?? "").trim().slice(0, max);
 
-// Le super admin, la Chambre et son étape ; démarrage fini : son espace
 async function etapeEnCours() {
   const moi = await exigerAdministrateur(PAGE);
   const chambreId = await chambreCourante();
@@ -31,7 +28,6 @@ async function etapeEnCours() {
   return { moi, chambreId, etape: c.demarrage };
 }
 
-// 1. L'offre : gratuite, on passe aux informations ; payante, au paiement du premier mois
 export async function choisirOffreDemarrage(formData: FormData) {
   const { moi, chambreId, etape } = await etapeEnCours();
   if (etape !== "offre") redirect(PAGE);
@@ -42,7 +38,6 @@ export async function choisirOffreDemarrage(formData: FormData) {
     : [];
   const payante = !offreGratuite({ forfait: forfaitOffre(offre, choisies), parUtilisateur: offre.parUtilisateur });
 
-  // Une facture impayée d'un choix précédent ne compte plus
   await db.facturePlateforme.deleteMany({ where: { chambreId, payeeLe: null } });
   await db.chambre.update({
     where: { id: chambreId },
@@ -54,7 +49,6 @@ export async function choisirOffreDemarrage(formData: FormData) {
   redirect(PAGE);
 }
 
-// Revenir au choix de l'offre (avant le paiement)
 export async function revenirAuxOffres() {
   const { chambreId, etape } = await etapeEnCours();
   if (etape === "paiement") {
@@ -64,7 +58,6 @@ export async function revenirAuxOffres() {
   redirect(PAGE);
 }
 
-// 2. Le paiement du premier mois, sur la page de Stripe (la carte est gardée pour les mois suivants)
 export async function payerDemarrage() {
   const { chambreId, etape } = await etapeEnCours();
   if (etape !== "paiement") redirect(PAGE);
@@ -75,8 +68,6 @@ export async function payerDemarrage() {
   redirect(url);
 }
 
-// 3. Les informations de la Chambre (logo, coordonnées, présentation, facturation), puis son espace.
-// « Plus tard » : rien n'est enregistré, tout se règle ensuite dans Mon entreprise.
 export async function terminerDemarrage(formData: FormData) {
   const { moi, chambreId, etape } = await etapeEnCours();
   if (etape !== "infos") redirect(PAGE);

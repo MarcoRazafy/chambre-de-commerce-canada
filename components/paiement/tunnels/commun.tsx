@@ -17,7 +17,6 @@ export interface PropsReglement {
   personne: string;
   detail: Record<string, unknown>;
   aujourdhui: string;
-  /** Le logo de la Chambre (Mon entreprise) */
   logo: string;
 }
 
@@ -33,7 +32,6 @@ export function conclu(statut: string): boolean {
   return statut === "annonce" || statut === "reussie";
 }
 
-// Le logo de la Chambre, sur une pastille blanche
 export function PastilleChambre({ logo, className = "" }: { logo: string; className?: string }) {
   return (
     <span

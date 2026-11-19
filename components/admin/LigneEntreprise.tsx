@@ -22,7 +22,6 @@ function Acces({ e }: { e: EntrepriseContact }) {
   return e.contact.actif ? <Pill tone="ok">Actif</Pill> : <Pill tone="warn">Invitation en attente</Pill>;
 }
 
-// Une ligne de la page Contacts : l'entreprise (son logo) et son contact principal ; un clic ouvre sa fiche et ses tags
 export function LigneEntreprise({
   entreprise: e,
   tousTags,
@@ -319,7 +318,6 @@ function FicheEntreprise({ entreprise: e, tousTags }: { entreprise: EntrepriseCo
   );
 }
 
-// Une entreprise sur la page d'un tag : un clic ouvre sa fiche (contact principal, tags) ; « Retirer » la sort du tag
 export function LigneEntrepriseTag({ entreprise: e, tousTags, tag }: { entreprise: EntrepriseContact; tousTags: string[]; tag: string }) {
   const [ouvert, setOuvert] = useState(false);
   const c = e.contact;

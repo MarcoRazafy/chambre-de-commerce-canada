@@ -1,6 +1,5 @@
 import Link from "next/link";
 
-// Bascule « Connexion | Inscription » en tête des formulaires de l'espace membre
 export function BasculeAuth({ actif, connexion, inscription }: { actif: "connexion" | "inscription"; connexion: string; inscription: string }) {
   const onglet = (cle: "connexion" | "inscription", href: string, libelle: string) => (
     <Link

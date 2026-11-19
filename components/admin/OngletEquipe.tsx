@@ -1,4 +1,3 @@
-// Onglet « Équipe & accès » de la page Abonnement & utilisateurs (sous l'abonnement) : l'équipe et ses rôles
 import { Lock } from "lucide-react";
 import { ListeEquipe } from "@/components/admin/ListeEquipe";
 import { Panneau } from "@/components/admin/ui";

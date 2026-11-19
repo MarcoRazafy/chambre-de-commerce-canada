@@ -24,7 +24,6 @@ export interface User {
   tel?: string;
   initiales: string;
   photo?: string | null;
-  // Visite de l'Admin GM (mode développeur) : son nom ; sinon null
   visiteGM?: string | null;
 }
 
@@ -44,7 +43,6 @@ export interface Member {
   secteur: string;
   ville: string;
   statut: MemberStatus;
-  // La formule d'adhésion de la Chambre choisie par le membre (titre, profil, montant, devise)
   formule: Formule | null;
   adhesion: string;
   retardDepuis: string | null;

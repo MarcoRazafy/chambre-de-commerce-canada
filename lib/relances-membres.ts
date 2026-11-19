@@ -1,9 +1,5 @@
 import "server-only";
 
-// Relances automatiques des factures impayées des membres, aux jours réglés par la Chambre (Paramètres → Courriels,
-// « 7, 15, 30 » : jours après la date de la facture ; vide : aucune). Appelé par les tâches régulières, dans la
-// Chambre. Une facture ne reçoit qu'une relance par jour réglé, et une seule par passage : à l'activation, une
-// facture déjà ancienne reçoit une relance, pas toutes celles passées.
 import { envoyerCourriel, urlPublique } from "@/lib/courriel";
 import { prisma } from "@/lib/db";
 import { fmtMontant } from "@/lib/membership";
@@ -32,7 +28,6 @@ export async function relancesMembresDues(maintenant = new Date()): Promise<numb
       orderBy: [{ contactPrincipal: "desc" }, { createdAt: "asc" }],
       select: { nom: true, email: true },
     });
-    // Toutes les relances passées comptent comme faites (même sans contact : pas de rattrapage plus tard)
     const faites = [...new Set([...f.relances, ...jours.filter((j) => j <= ecoules)])];
     if (contact?.email) {
       const parti = await envoyerCourriel(
@@ -47,7 +42,6 @@ export async function relancesMembresDues(maintenant = new Date()): Promise<numb
           lien: await urlPublique(`/membre/cotisations/${f.id}`),
         }),
       );
-      // Courriel refusé : la relance sera retentée au prochain passage
       if (!parti) continue;
       envoyees++;
       await prisma.auditLog.create({

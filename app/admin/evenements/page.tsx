@@ -29,7 +29,6 @@ export default async function AdminEvenements({
 }) {
   const p = await searchParams;
   const periode = lirePeriode(p.periode);
-  // « Vue publique » : la page des événements ouverts au public, générée automatiquement
   const publique = p.vue === "publique";
   const lienPublic = publique ? await lienPagePublique(await chambreCourante()) : null;
   const q = (p.q ?? "").trim().slice(0, 100);
@@ -54,7 +53,6 @@ export default async function AdminEvenements({
         }
         actions={
           <>
-            {/* Fichier CSV : les événements de l’onglet et de la recherche en cours */}
             <a
               href={`/admin/evenements/statistiques${avec({ periode: periode === "passes" ? "passes" : "", q })}`}
               download

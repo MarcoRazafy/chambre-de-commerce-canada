@@ -1,6 +1,5 @@
 "use client";
 
-// Choix de l'offre à la création d'une Chambre ; offre à la carte : ses fonctions à cocher, le prix en direct
 import { useState } from "react";
 import { ChoixCarte } from "@/components/public/ChoixCarte";
 import { ComposeurOffre } from "@/components/plateforme/ComposeurOffre";

@@ -25,15 +25,12 @@ import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { chambreCourante, oublierAdresses } from "@/lib/chambre-courante";
 
-// Paramètres (super admins) : l'expéditeur des courriels. D'abord le domaine de l'entreprise (validé chez Brevo),
-// ensuite le nom et l'adresse d'expédition sur ce domaine ; un envoi de test.
 const PAGE = "/admin/parametres";
 const texte = (fd: FormData, k: string, max = 200) => String(fd.get(k) ?? "").trim().slice(0, max);
 const adresseValide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
 const PARTIE_LOCALE = /^[a-z0-9](?:[a-z0-9._+-]{0,62}[a-z0-9])?$/;
 const nomSaisi = (fd: FormData) => texte(fd, "expediteurNom", 100).replace(/["<>]/g, "");
 
-// Enregistre le nom et l'adresse (partie avant le @, sur le domaine enregistré), sans rediriger sauf erreur de saisie
 async function sauverExpediteur(formData: FormData) {
   const moi = await exigerAdministrateur(PAGE);
   const actuel = await prisma.profilChambre.findFirst({ select: { nom: true, expediteurDomaine: true } });
@@ -56,27 +53,23 @@ async function sauverExpediteur(formData: FormData) {
   return { moi, domaine, email: expediteurEmail, nom: expediteurNom || actuel?.nom || "" };
 }
 
-// L'adresse, sur un domaine validé, existe comme expéditeur chez Brevo
 async function preparerExpediteur(email: string, nom: string) {
   if (email && (await adresseValidee(email))) await assurerExpediteur(email, nom);
 }
 
 export async function enregistrerExpediteur(formData: FormData) {
-  // Entrée dans le champ du domaine : c'est « Ajouter »
   if (texte(formData, "expediteurDomaine")) return ajouterDomaineExpediteur(formData);
   const { email, nom } = await sauverExpediteur(formData);
   await preparerExpediteur(email, nom);
   redirectWithFlash(PAGE, "Expéditeur enregistré");
 }
 
-// « Ajouter » : le domaine de l'entreprise est enregistré et déclaré à Brevo (enregistrements DNS à copier)
 export async function ajouterDomaineExpediteur(formData: FormData) {
   await sauverExpediteur(formData);
   const domaine = normaliserDomaine(texte(formData, "expediteurDomaine", 300));
   if (!domaine) redirectWithErreur(PAGE, "Indiquez votre nom de domaine.");
   if (!domaineValide(domaine)) redirectWithErreur(PAGE, `« ${domaine} » n’est pas un nom de domaine valide.`);
   if (estWebmail(domaine)) redirectWithErreur(PAGE, `${domaine} est une messagerie gratuite : indiquez le domaine de votre entreprise.`);
-  // Le compte Brevo est commun à toutes les Chambres : ni le domaine de la plateforme, ni celui d'une autre Chambre
   if (domaineDeLaPlateforme(domaine, domaineDe(adresseServeur()))) redirectWithErreur(PAGE, `${domaine} est le domaine de la plateforme : indiquez celui de votre entreprise.`);
   const chambreId = await chambreCourante();
   if (await domaineDUneAutreChambre(chambreId, domaine)) redirectWithErreur(PAGE, `${domaine} est déjà utilisé par une autre Chambre.`);
@@ -90,7 +83,6 @@ export async function ajouterDomaineExpediteur(formData: FormData) {
   redirectWithFlash(PAGE, etat.etat === "valide" ? "Domaine ajouté et déjà validé" : "Domaine ajouté : ajoutez les enregistrements DNS ci-dessous");
 }
 
-// « Retirer » : on revient au domaine de la plateforme
 export async function retirerDomaineExpediteur(formData: FormData) {
   await exigerAdministrateur(PAGE);
   await prisma.profilChambre.upsert({
@@ -103,7 +95,6 @@ export async function retirerDomaineExpediteur(formData: FormData) {
   redirectWithFlash(PAGE, "Domaine retiré");
 }
 
-// « Valider ce domaine » (domaine inconnu de Brevo) : il est déclaré de nouveau
 export async function validerDomaineExpediteur(formData: FormData) {
   const { domaine } = await sauverExpediteur(formData);
   if (!domaine) redirectWithErreur(PAGE, "Ajoutez d’abord votre nom de domaine.");
@@ -112,7 +103,6 @@ export async function validerDomaineExpediteur(formData: FormData) {
   redirectWithFlash(PAGE, etat.etat === "valide" ? "Ce domaine est déjà validé" : "Domaine déclaré");
 }
 
-// « Vérifier maintenant » : Brevo contrôle les enregistrements DNS ; validé, l'adresse devient un expéditeur
 export async function verifierDomaineExpediteur(formData: FormData) {
   const { domaine, email, nom } = await sauverExpediteur(formData);
   if (!domaine) redirectWithErreur(PAGE, "Ajoutez d’abord votre nom de domaine.");
@@ -133,7 +123,6 @@ export async function verifierDomaineExpediteur(formData: FormData) {
   );
 }
 
-// « M'envoyer un test » : un courriel à la personne connectée, avec l'expéditeur enregistré
 export async function envoyerTestExpediteur(formData: FormData) {
   const { moi, email, nom } = await sauverExpediteur(formData);
   if (!courrielsActifs()) redirectWithErreur(PAGE, "L’envoi de courriels n’est pas configuré sur le serveur.");
@@ -150,7 +139,6 @@ export async function envoyerTestExpediteur(formData: FormData) {
   redirectWithFlash(PAGE, `Test envoyé à ${moi.email}`);
 }
 
-// Enregistre quelques champs de la fiche (Paramètres), réservé aux super admins
 async function enregistrerChamps(onglet: string, data: Record<string, string>, message: string): Promise<never> {
   await exigerAdministrateur(`${PAGE}?onglet=${onglet}`);
   await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { ...data }, update: data });
@@ -158,14 +146,12 @@ async function enregistrerChamps(onglet: string, data: Record<string, string>, m
   redirectWithFlash(`${PAGE}?onglet=${onglet}`, message);
 }
 
-// Onglet Courriels : l'adresse qui reçoit les alertes de l'équipe
 export async function enregistrerAlertes(formData: FormData) {
   const courrielEquipe = texte(formData, "courrielEquipe").toLowerCase();
   if (courrielEquipe && !adresseValide(courrielEquipe)) redirectWithErreur(PAGE, `« ${courrielEquipe} » n’est pas une adresse e-mail valide.`);
   await enregistrerChamps("courriels", { courrielEquipe }, "Adresse des alertes enregistrée");
 }
 
-// Onglet Réseaux sociaux : une adresse par réseau (vide : pas d'icône)
 export async function enregistrerReseaux(formData: FormData) {
   const data: Record<string, string> = {};
   for (const r of RESEAUX) {
@@ -177,7 +163,6 @@ export async function enregistrerReseaux(formData: FormData) {
   await enregistrerChamps("reseaux", data, "Réseaux sociaux enregistrés");
 }
 
-// Onglet Mentions légales : politique de confidentialité et copyright du bas des courriels
 export async function enregistrerMentions(formData: FormData) {
   const saisie = texte(formData, "confidentialite", 500);
   const confidentialite = saisie ? urlSure(saisie) : "";
@@ -185,7 +170,6 @@ export async function enregistrerMentions(formData: FormData) {
   await enregistrerChamps("mentions", { confidentialite, copyright: texte(formData, "copyright", 300) }, "Mentions légales enregistrées");
 }
 
-// Onglet Paiements en ligne : connecter le compte Stripe de la Chambre (ou reprendre son inscription chez Stripe)
 export async function connecterStripe() {
   const onglet = `${PAGE}?onglet=paiements`;
   await exigerAdministrateur(onglet);
@@ -194,15 +178,12 @@ export async function connecterStripe() {
   try {
     lien = await lienInscriptionStripe(await chambreCourante(), await urlPublique(onglet));
   } catch (e) {
-    // Stripe refuse (Connect pas encore activé sur le compte de la plateforme, réseau…) : un message, pas une page d'erreur
     console.error("[stripe] connexion du compte de la Chambre", e);
     redirectWithErreur(onglet, "Stripe n’a pas pu ouvrir la connexion pour le moment. Réessayez plus tard ; si cela continue, écrivez au Support IT.");
   }
   redirect(lien);
 }
 
-// Onglet Mode développeur : autoriser l'Admin GM à entrer dans l'espace (24 h, 7 jours ou 30 jours), ou retirer
-// l'autorisation. Seulement par un super admin de la Chambre, jamais pendant une visite de l'Admin GM.
 const DEV = `${PAGE}?onglet=developpeur`;
 
 async function superAdminDeLaChambre() {
@@ -238,7 +219,6 @@ export async function desactiverModeDeveloppeur() {
   redirectWithFlash(DEV, "Mode développeur désactivé");
 }
 
-// Onglet Couleurs : les couleurs des espaces de la Chambre (vide : celle de la plateforme)
 export async function enregistrerCouleurs(formData: FormData) {
   const data: Record<string, string> = {};
   for (const champ of ["couleurPrincipale", "couleurLaterale", "couleurLaterale2", "couleurHaut", "couleurConnexion", "couleurFondConnexion", "couleurTexteConnexion"]) {
@@ -247,12 +227,10 @@ export async function enregistrerCouleurs(formData: FormData) {
     if (saisie && !valeur) redirectWithErreur(`${PAGE}?onglet=couleurs`, "Couleur inconnue.");
     data[champ] = valeur ?? "";
   }
-  // Pas de dégradé sans première couleur
   if (!data.couleurLaterale) data.couleurLaterale2 = "";
   await enregistrerChamps("couleurs", data, "Couleurs enregistrées");
 }
 
-// Onglet Courriels : relances automatiques des factures impayées des membres (jours après la date de la facture)
 export async function enregistrerRelancesMembres(formData: FormData) {
   const ici = `${PAGE}?onglet=courriels`;
   await exigerAdministrateur(ici);

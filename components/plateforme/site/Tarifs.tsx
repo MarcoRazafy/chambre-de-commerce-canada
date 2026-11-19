@@ -1,4 +1,3 @@
-// Tarifs du site : les offres de l'Admin GM en cartes (l'offre à la carte ouvre une fenêtre de choix), le tableau comparatif
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { Check, Minus, Plus } from "lucide-react";
@@ -11,7 +10,6 @@ import type { OffrePublique } from "@/lib/plateforme-site";
 export const TOUJOURS_INCLUS = ["Membres, contacts et factures", "Espace membre", "Cotisations payées par carte", "Support IT"];
 const DEPART = ["evenements", "newsletter"];
 
-// Ce qui distingue une offre, en deux mots
 const etiquette = (o: OffrePublique, i: number) =>
   o.surMesure ? "À la carte" : o.gratuite ? "Gratuite" : (["Pour démarrer", "Pour grandir", "Pour les grands réseaux"][i] ?? "");
 
@@ -73,8 +71,6 @@ function CarteOffre({ o, rang, miseEnAvant }: { o: OffrePublique; rang: number; 
   );
 }
 
-// Les offres en cartes, côte à côte ; l'offre à la carte ouvre sa fenêtre de choix ; « revele » : les cartes
-// apparaissent l'une après l'autre quand elles entrent dans l'écran
 export function CartesTarifs({ offres, revele = false }: { offres: OffrePublique[]; revele?: boolean }) {
   const cartes = offres.filter((o) => !o.surMesure || o.options.length);
   const n = cartes.length;
@@ -88,8 +84,6 @@ export function CartesTarifs({ offres, revele = false }: { offres: OffrePublique
     </div>
   );
 }
-
-// --- Tableau comparatif ---
 
 const Oui = () => (
   <span className="inline-grid place-items-center text-success">

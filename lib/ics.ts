@@ -1,10 +1,6 @@
-// Invitation de calendrier (.ics) : s'ajoute à Google Agenda, Outlook, Apple Calendrier…
-// Sans dépendance au serveur.
-
 const echapper = (v: string) => v.replace(/\\/g, "\\\\").replace(/\n/g, "\\n").replace(/[,;]/g, (c) => `\\${c}`);
 const horodatage = (d: Date) => d.toISOString().replace(/[-:]/g, "").replace(/\.\d{3}/, "");
 
-// Les lignes de plus de 75 octets se replient (RFC 5545)
 function plier(ligne: string): string {
   const morceaux: string[] = [];
   let reste = ligne;

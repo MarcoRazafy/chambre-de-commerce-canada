@@ -76,7 +76,6 @@ export default async function TableauDeBord() {
   const aVenir = events.filter((e) => !isPast(e.date)).slice(0, 4);
   const derniers = factures.slice(0, 5);
   const adherents = formules.reduce((n, f) => n + f.n, 0);
-  // Les blocs d'une fonction que l'offre de la Chambre n'ouvre pas ne s'affichent pas (comme le menu)
   const ouverte = (f: Fonction) => !offre || offre.fonctions.includes(f);
 
   const aujourdhui = today().toLocaleDateString("fr-FR", {

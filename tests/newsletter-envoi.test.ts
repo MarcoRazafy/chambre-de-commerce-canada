@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Envoi des lettres programmées, avec une base et des courriels simulés
 type Lettre = { id: string; sujet: string; contenu: string; audience: unknown; auteur: string; statut: string; programmeeLe: Date | null; envoyes?: number };
 let lettres: Lettre[] = [];
 let envois: { id: string; lettreId: string; email: string; resendId?: string }[] = [];
@@ -9,7 +8,6 @@ let abonnes: { email: string; prenom: string }[] = [];
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    // Aucune règle de tag automatique : les tags ne bougent pas
     regleTag: { findMany: async () => [] },
     lettre: {
       findMany: async ({ where }: { where: { statut: string; programmeeLe: { lte: Date } } }) =>
@@ -38,7 +36,6 @@ vi.mock("@/lib/db", () => ({
     auditLog: { create: async () => ({}) },
   },
 }));
-// La Chambre des lettres (en vrai, fixée par la tâche régulière) : le lien de désabonnement la porte
 vi.mock("@/lib/chambre-courante", async (original) => ({
   ...(await original<typeof import("@/lib/chambre-courante")>()),
   chambreCourante: async () => "c-essai",

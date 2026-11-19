@@ -3,8 +3,6 @@ import "server-only";
 import { createHash, randomBytes } from "node:crypto";
 import { prisma, prismaSysteme } from "@/lib/db";
 
-// « connexion » : passage du site de la plateforme à l'adresse de la Chambre (la session ne suit pas d'une
-// adresse à l'autre) : à usage unique, valable 10 minutes
 export type UsageJeton = "reinitialisation" | "invitation" | "connexion";
 
 const DUREE: Record<UsageJeton, number> = {
@@ -37,7 +35,6 @@ export async function creerJeton(
 
 export async function jetonValide(brut: string | undefined) {
   if (!brut || brut.length > 100) return null;
-  // Lien reçu par courriel, ouvert sans session : le jeton est cherché dans toutes les Chambres
   const jeton = await prismaSysteme.jetonCompte.findUnique({
     where: { empreinte: empreinte(brut) },
     include: {

@@ -1,13 +1,10 @@
 import "server-only";
 
-// Site public de la plateforme : les Chambres qu'on peut rejoindre, les offres à la création d'une Chambre.
-// Hors de toute Chambre : lectures sans limite (prismaSysteme), seulement ce qui est public.
 import { adresseOuSite } from "@/lib/adresse-chambre";
 import { prismaSysteme as db } from "@/lib/db";
 import { FONCTIONS } from "@/lib/fonctions-plateforme";
 import { fmtDollars, lirePrixFonctions, offreGratuite } from "@/lib/plateforme";
 
-// Les Chambres actives (nom, ville, pays), avec le lien vers leur inscription
 export async function chambresPubliques(q: string) {
   const chambres = await db.chambre.findMany({
     where: { statut: "active", ...(q ? { nom: { contains: q, mode: "insensitive" as const } } : {}) },
@@ -15,7 +12,6 @@ export async function chambresPubliques(q: string) {
     take: 100,
     select: { id: true, nom: true, slug: true, profil: { select: { ville: true, pays: true, logo: true, logoFond: true } } },
   });
-  // Le lien de la demande d'adhésion : l'espace des membres, la Chambre précisée par son identifiant
   const avecAdresse = await Promise.all(
     chambres.map(async (c) => {
       const base = await adresseOuSite(c.id, "client");
@@ -27,8 +23,6 @@ export async function chambresPubliques(q: string) {
 
 const majuscule = (t: string) => t.charAt(0).toUpperCase() + t.slice(1);
 
-// Les offres, résumées pour le choix à la création et pour les tarifs du site (fonctions incluses : leurs libellés).
-// Offre à la carte : pas de prix affiché (il se calcule en composant l'offre), chaque fonction au choix avec son prix.
 export async function offresPubliques() {
   const offres = await db.offre.findMany({ orderBy: { ordre: "asc" } });
   return offres.map((o) => {
@@ -52,7 +46,6 @@ export async function offresPubliques() {
       surMesure: o.surMesure,
       fonctions: incluses.map((f) => f.libelle),
       cles: incluses.map((f) => f.cle as string),
-      // Chiffres (offre à la carte, tableau comparatif)
       base: o.forfait,
       parUtilisateur: o.parUtilisateur,
       offerts: o.utilisateursOfferts,

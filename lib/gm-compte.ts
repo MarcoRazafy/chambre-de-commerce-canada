@@ -1,7 +1,5 @@
 import "server-only";
 
-// Compte de l'Admin GM : lien « mot de passe oublié » (empreinte en base, une heure, un seul usage) et son courriel.
-// Hors de toute Chambre : prismaSysteme ; les liens mènent à l'adresse de l'espace GM.
 import { createHash, randomBytes } from "node:crypto";
 import { envoyerCourriel, gabarit } from "@/lib/courriel";
 import { prismaSysteme as db } from "@/lib/db";
@@ -10,7 +8,6 @@ import { adresseGM } from "@/lib/visite-gm";
 export const DUREE_LIEN_MS = 60 * 60 * 1000;
 export const empreinte = (brut: string) => createHash("sha256").update(brut).digest("hex");
 
-// Un nouveau lien pour ce compte ; le précédent ne vaut plus
 export async function creerLienReinitialisationGM(id: string): Promise<string> {
   const brut = randomBytes(32).toString("base64url");
   await db.compteGM.update({
@@ -20,7 +17,6 @@ export async function creerLienReinitialisationGM(id: string): Promise<string> {
   return `${adresseGM()}/gm/nouveau-mot-de-passe?${new URLSearchParams({ jeton: brut })}`;
 }
 
-// Le compte d'un lien encore valable, sinon null
 export async function compteGMDuLien(brut: string | undefined) {
   if (!brut || brut.length > 100) return null;
   const c = await db.compteGM.findUnique({

@@ -67,7 +67,6 @@ export default async function ProfilPage({
   searchParams: Promise<{ onglet?: string }>;
 }) {
   const { onglet: demande } = await searchParams;
-  // Ancien onglet (liens déjà envoyés) : les factures ont leur propre page
   if (demande === "factures") redirect("/membre/cotisations");
   const onglet: Onglet = ONGLETS.includes(demande as Onglet) ? (demande as Onglet) : "profil";
   const user = await getCurrentUser("membre");

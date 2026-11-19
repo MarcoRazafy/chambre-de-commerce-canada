@@ -46,7 +46,6 @@ export function fmtDateShort(iso: string): string {
   return fmtDate(iso, { day: "2-digit", month: "2-digit", year: "numeric" });
 }
 
-// Tous les tarifs sont en dollars canadiens
 export function fmtMoney(n: number): string {
   return `${n.toLocaleString("fr-FR")} $`;
 }

@@ -19,8 +19,6 @@ import type { JourProposable, TypeRendezvous } from "@/lib/rendezvous-donnees";
 
 const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 
-// Réservation en ligne : choisir un type, puis un jour dans le calendrier, une heure, et confirmer.
-// « base » : la page qui l'affiche (espace membre, ou aperçu de l'équipe, où rien ne se réserve).
 export function Reservation({
   types,
   type,

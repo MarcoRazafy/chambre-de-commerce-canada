@@ -1,12 +1,10 @@
 "use client";
 
-// Sauvegarde automatique d'une lettre : à chaque modification, le brouillon est enregistré (créé la première fois)
 import { useEffect, useRef, useState } from "react";
 import { Check, Loader2 } from "lucide-react";
 import { sauverBrouillon } from "@/lib/actions/newsletter";
 
 const DELAI = 1200;
-// Ce qui ne fait pas partie de la lettre elle-même
 const IGNORES = new Set(["intention", "programmeeLe", "id"]);
 
 function empreinte(form: HTMLFormElement): string {
@@ -15,7 +13,7 @@ function empreinte(form: HTMLFormElement): string {
   );
 }
 
-export function SauvegardeAuto({ id: idInitial, adresse = "/admin/newsletter/" }: { id?: string; /** Adresse du brouillon, suivie de son id */ adresse?: string }) {
+export function SauvegardeAuto({ id: idInitial, adresse = "/admin/newsletter/" }: { id?: string; adresse?: string }) {
   const [id, setId] = useState(idInitial ?? "");
   const [etat, setEtat] = useState<{ quand: Date } | "enCours" | "erreur" | null>(null);
   const ancre = useRef<HTMLInputElement>(null);
@@ -43,7 +41,6 @@ export function SauvegardeAuto({ id: idInitial, adresse = "/admin/newsletter/" }
           if (!idCourant.current) {
             idCourant.current = r.id;
             setId(r.id);
-            // Retour, actualisation : on retrouve la lettre enregistrée
             window.history.replaceState(window.history.state, "", `${adresse}${r.id}`);
           }
           setEtat({ quand: new Date() });

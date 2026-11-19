@@ -278,7 +278,6 @@ export function FormulaireEvenement({
                     key={p.cle}
                     className="border border-line rounded-[var(--radius-m)] p-3.5 bg-surface-2"
                   >
-                    {/* Photo déjà enregistrée : gardée si rien n’est choisi ni retiré */}
                     <input type="hidden" name="intervenantPhotoActuelle" value={p.photo ?? ""} />
                     <div className="flex items-start justify-between gap-3">
                       <ChampPhoto

@@ -2,9 +2,6 @@ import type { ReactNode } from "react";
 import { EnTeteSite } from "@/components/plateforme/site/EnTeteSite";
 import { Illustration, type NomIllustration } from "@/components/plateforme/site/Illustration";
 
-// Cadre des pages du site de la plateforme (créer une Chambre, devenir membre, se connecter, démarrage) :
-// l'en-tête du site (ou « entete » à sa place), un fond calme, une carte blanche ; « illustration » : à droite sur
-// grand écran
 export function CadrePlateforme({ large = false, entete, illustration, children }: { large?: boolean; entete?: ReactNode; illustration?: NomIllustration; children: ReactNode }) {
   const colonne = large ? "max-w-[908px]" : "max-w-[608px]";
   return (
@@ -23,7 +20,6 @@ export function CadrePlateforme({ large = false, entete, illustration, children 
   );
 }
 
-// La carte blanche des formulaires
 export function CartePlateforme({ children }: { children: ReactNode }) {
   return (
     <div className="rounded-2xl border border-line bg-surface shadow-[0_8px_24px_rgba(0,0,0,0.06)] px-6 py-8 sm:px-10 sm:py-10">

@@ -14,7 +14,7 @@ import { effetEvenement, signatureResendValide } from "@/lib/resend-webhook";
 import { effetBrevo, identifiantsBrevo, momentBrevo } from "@/lib/brevo-webhook";
 import { configPlateforme, dateFactureDuMois, facturePlateforme, numeroFacturePlateforme, prochaineFacturation } from "@/lib/plateforme";
 
-const MAINTENANT = new Date("2026-11-08T10:00:00Z"); // 13 h à Antananarivo
+const MAINTENANT = new Date("2026-11-08T10:00:00Z");
 
 describe("état d'une lettre", () => {
   it("distingue brouillon, programmée et envoyée", () => {
@@ -58,7 +58,6 @@ describe("programmation d'un envoi", () => {
     const defaut = programmationParDefaut(MAINTENANT);
     expect(defaut).toBe("2026-11-09T09:00");
     expect(lireProgrammation(defaut, MAINTENANT)).toHaveProperty("date");
-    // Juste avant minuit à Antananarivo (20 h 59 UTC), « demain » est bien le lendemain local
     expect(programmationParDefaut(new Date("2026-11-08T20:59:00Z"))).toBe("2026-11-09T09:00");
     expect(programmationParDefaut(new Date("2026-11-08T21:01:00Z"))).toBe("2026-11-10T09:00");
   });
@@ -152,7 +151,6 @@ describe("abonnement à la plateforme", () => {
       tvq: 20.45,
       total: 235.7,
     });
-    // Le super admin seul : rien en plus du forfait
     expect(facturePlateforme(1, configPlateforme({}))).toMatchObject({ payants: 0, offerts: 1, equipe: 0, sousTotal: 100 });
     expect(facturePlateforme(0, configPlateforme({}))).toMatchObject({ payants: 0, offerts: 0, equipe: 0 });
   });

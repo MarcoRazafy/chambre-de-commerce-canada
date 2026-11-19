@@ -127,7 +127,6 @@ async function ouvrirTunnel(
     }));
   const page = `/membre/cotisations/payer/${p.id}`;
 
-  // Carte : tout de suite chez le prestataire (Stripe de la Chambre s'il est actif, sinon Vanilla Pay en Ariary)
   if (mode === "carte" && ((await compteStripeActif()) || (vanillaPayActif() && f.devise === "MGA"))) {
     const ouverture = await ouvrirChezLePrestataire(
       { id: p.id, montant: p.montant, numeroFacture: f.numero },

@@ -153,7 +153,6 @@ export function Onglets({
 }: {
   onglets: { cle: string; libelle: string; href: string; compte?: number }[];
   actif: string;
-  /** Contenu aligné à droite des onglets (recherche…) ; passe dessous sur petit écran */
   fin?: ReactNode;
 }) {
   const liens = (

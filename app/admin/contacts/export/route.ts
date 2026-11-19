@@ -3,7 +3,6 @@ import { getEntreprisesContacts, lireFiltresContacts, type EntrepriseContact } f
 import { reponseCsv, versCsv } from "@/lib/csv";
 import { statusLabel } from "@/lib/format";
 
-// Export de la page Contacts : une ligne par entreprise, avec son contact principal
 function csv(entreprises: EntrepriseContact[]) {
   return reponseCsv(
     "contacts",
@@ -25,7 +24,6 @@ function csv(entreprises: EntrepriseContact[]) {
   );
 }
 
-// Selon les filtres de l'adresse
 export async function GET(requete: Request) {
   await exigerEquipe();
   const sp = new URL(requete.url).searchParams;
@@ -33,7 +31,6 @@ export async function GET(requete: Request) {
   return csv(await getEntreprisesContacts(f));
 }
 
-// Les entreprises sélectionnées dans le tableau (envoyées par formulaire)
 export async function POST(requete: Request) {
   await exigerEquipe();
   const ids = new Set((await requete.formData()).getAll("entreprises").map(String));

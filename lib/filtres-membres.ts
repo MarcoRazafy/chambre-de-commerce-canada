@@ -12,7 +12,6 @@ export const STATUTS_FILTRE: { cle: MemberStatus | "tous"; libelle: string }[] =
     { cle: "refusee", libelle: "Refusées" },
   ];
 
-// Les demandes (et celles refusées) ne sont pas encore des membres : « Tous » ne les compte pas
 const PAS_ENCORE_MEMBRE: MemberStatus[] = ["candidature", "refusee"];
 
 export function dansOnglet(
@@ -42,7 +41,6 @@ export function lireFiltres(params: {
       ? demande
       : "tous") as FiltresMembres["statut"],
     recherche: params.q?.trim() ?? "",
-    // Identifiant d'une formule de la Chambre (une valeur inconnue ne retient simplement aucun membre)
     formule: params.formule?.trim().slice(0, 64) || null,
   };
 }

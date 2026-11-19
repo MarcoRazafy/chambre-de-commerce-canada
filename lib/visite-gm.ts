@@ -1,10 +1,5 @@
 import "server-only";
 
-// Mode développeur : visite de l'Admin GM dans l'espace d'une Chambre qui l'y autorise.
-//  - le lien d'entrée (de l'espace GM à l'adresse de la Chambre) : signé, valable 2 minutes ;
-//  - la visite : la session du super admin de la Chambre, plus ce cookie signé (2 heures) qui la désigne comme
-//    une visite de l'Admin GM (bandeau, actions signées « (Admin GM) ») ; elle cesse dès que la Chambre
-//    retire l'autorisation (proxy.ts).
 import { cookies } from "next/headers";
 import { timingSafeEqual } from "node:crypto";
 import { DUREE_SESSION_VISITE_MS, signer } from "@/lib/auth";
@@ -14,8 +9,6 @@ export const NOM_COOKIE_VISITE = "gm_visite";
 const DUREE_LIEN_MS = 2 * 60_000;
 export const DUREE_VISITE_MS = DUREE_SESSION_VISITE_MS;
 
-// Entrée : la Chambre, le compte qui reçoit la visite (super admin), l'Admin GM ; visite : sans la Chambre
-// (le cookie ne vaut que sur l'adresse de la Chambre)
 export type Entree = { c: string; u: string; g: string; n: string; e: number };
 export type Visite = { u: string; g: string; n: string; e: number };
 
@@ -59,13 +52,10 @@ export async function fermerVisite(): Promise<void> {
   (await cookies()).delete(NOM_COOKIE_VISITE);
 }
 
-// La visite en cours (sur cette adresse), si le cookie est valide
 export async function visiteCourante(): Promise<Visite | null> {
   return lireVisite((await cookies()).get(NOM_COOKIE_VISITE)?.value);
 }
 
-// L'adresse de l'espace administrateur de la plateforme (manage.…), pour y revenir en quittant une visite, et pour les
-// liens des courriels et des alertes
 export function adresseGM(): string {
   const plateforme = process.env.DOMAINE_PLATEFORME?.trim().toLowerCase();
   if (plateforme) return `https://${SOUS_DOMAINE_ADMIN}.${plateforme}`;

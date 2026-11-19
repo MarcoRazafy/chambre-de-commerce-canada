@@ -49,7 +49,6 @@ export default async function AdminPaiements({
     `/admin/paiements${parametresFactures(filtres, changes)}`;
   const periode = filtres.annee ? `en ${filtres.annee}` : "au total";
 
-  // Totaux en dollars canadiens ; les anciennes factures en Ariary s'ajoutent en dessous
   const montants = (m: { MGA: number; CAD: number }) =>
     m.MGA ? (
       <span className="flex flex-col leading-tight">

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { courrielAbonnementPaye, courrielPaiementEquipe, courrielPaiementRecu } from "@/lib/modeles-courriels";
 
-// Courriels après un paiement en ligne : reçu au membre, alerte à l'équipe, reçu de l'abonnement à la Chambre
 describe("courriels de paiement", () => {
   it("reçu au membre : la Chambre, le montant, le moyen, l'objet, la facture et son lien", () => {
     const c = courrielPaiementRecu("m@x.mg", { nom: "Tojo Rabe", chambre: "Ucan", objet: "Cotisation annuelle 2026", numero: "CC-2026-0415", montant: "150 $", moyen: "Carte bancaire", lien: "https://client.x/membre/cotisations/f1" });

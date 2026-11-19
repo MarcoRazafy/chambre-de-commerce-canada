@@ -19,7 +19,6 @@ export const metadata: Metadata = { title: "Chambre" };
 
 const jour = (d: Date) => fmtDateShort(d.toISOString().slice(0, 10));
 
-// Tableau dans un panneau (écran large ; sur téléphone : une liste)
 function Tableau({ children }: { children: React.ReactNode }) {
   return (
     <div className="hidden md:block overflow-x-auto border-t border-line">
@@ -32,7 +31,6 @@ function ListeMobile({ children }: { children: React.ReactNode }) {
   return <ul className="md:hidden m-0 p-0 list-none border-t border-line divide-y divide-line">{children}</ul>;
 }
 
-// Une ligne « libellé : valeur » d'un panneau
 function Ligne({ libelle, children }: { libelle: string; children: React.ReactNode }) {
   return (
     <div className="flex items-start justify-between gap-4 py-2.5 text-[13.5px]">
@@ -47,10 +45,8 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
   const [f, offres] = await Promise.all([ficheChambre(decodeURIComponent(id)), offresPlateforme()]);
   if (!f) notFound();
   const { chambre: c, statut, equipe, factures, membres, evenements, journal, journalTotal } = f;
-  // L'espace de l'équipe de la Chambre (son domaine propre, sinon le back-office partagé) et son lien d'adhésion
   const [adresse, espaceMembres] = await Promise.all([adresseDeLaChambre(c.id, "equipe"), adresseDeLaChambre(c.id, "client")]);
   const lienAdhesion = espaceMembres ? `${espaceMembres}/auth/inscription?${new URLSearchParams({ chambre: c.slug })}` : null;
-  // Ce que l'offre coûte aujourd'hui, avec l'équipe actuelle (avant taxes)
   const forfait = forfaitOffre(c.offre, c.fonctionsChoisies);
   const estimation = offreGratuite({ forfait, parUtilisateur: c.offre.parUtilisateur })
     ? null

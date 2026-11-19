@@ -1,6 +1,3 @@
-// « ou », puis le bouton « Continuer avec Google » (pages de connexion) ; le lien vient de lienGoogle (lib/google.ts)
-
-// Le « G » de Google, dans ses quatre couleurs
 function LogoGoogle() {
   return (
     <svg viewBox="0 0 48 48" width="20" height="20" aria-hidden className="shrink-0">

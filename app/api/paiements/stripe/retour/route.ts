@@ -1,5 +1,3 @@
-// Retour du navigateur après un paiement sur la page de Stripe (compte de la Chambre de cette adresse) :
-// le paiement se conclut tout de suite, puis on revient à la page habituelle du règlement (« vers »).
 import { etatSessionStripe } from "@/lib/encaissement-stripe";
 import { conclurePaiement } from "@/lib/paiements";
 
@@ -15,7 +13,6 @@ export async function GET(req: Request) {
       const etat = await etatSessionStripe(session);
       if (etat) await conclurePaiement(etat, { stripe: session });
     } catch (e) {
-      // La page de retour (et le webhook) rattraperont le paiement
       console.error("[stripe] retour de paiement non appliqué", e);
     }
   }

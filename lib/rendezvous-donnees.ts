@@ -15,7 +15,6 @@ import {
   type StatutRendezvous,
 } from "@/lib/rendezvous";
 
-// La personne de l'équipe qui reçoit ; null : « l'équipe CanCham »
 export interface Hote {
   id: string;
   nom: string;
@@ -110,7 +109,6 @@ function versRendezvous(r: Ligne): RendezvousPris {
   };
 }
 
-// Types de rendez-vous. Pour les membres (tous = false) : ceux proposés, dont la personne reçoit
 export async function getTypesRendezvous(tous = false): Promise<TypeRendezvous[]> {
   const lignes = await prisma.typeRendezvous.findMany({
     where: tous ? undefined : { actif: true, OR: [{ hoteId: null }, { hote: { recoitRdv: true } }] },
@@ -144,7 +142,6 @@ export async function getPlages(typeId: string): Promise<(Plage & { id: string }
   });
 }
 
-// Créneaux déjà pris par la même personne (ou par « l'équipe ») : chacun a son propre agenda
 export async function occupesPour(hoteId: string | null, du: string, au: string): Promise<Map<string, Occupe[]>> {
   const pris = await prisma.rendezvous.findMany({
     where: {
@@ -206,7 +203,6 @@ export async function getRendezvous(id: string): Promise<(RendezvousPris & { use
 
 export type PeriodeRendezvous = "a_venir" | "passes" | "annules";
 
-// Liste de l'équipe : à venir (du plus proche), passés ou annulés (du plus récent), pour une personne ou toutes
 export async function getRendezvousEquipe(
   { periode = "a_venir", hote = "" }: { periode?: PeriodeRendezvous; hote?: string } = {},
 ): Promise<RendezvousPris[]> {
@@ -238,7 +234,6 @@ export async function getRendezvousAgenda(du: string, au: string, userId?: strin
   return lignes.map(versRendezvous);
 }
 
-// Les comptes de l'équipe, et ce qu'ils reçoivent
 export interface PersonneEquipe extends Hote {
   email: string;
   lienVisio: string | null;

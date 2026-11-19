@@ -5,10 +5,6 @@ import { avecChambre } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import { signatureValide } from "@/lib/newsletter";
 
-// « Confirmer le désabonnement » : seul ce clic désabonne (un antivirus ou une messagerie qui ouvre le lien de la
-// lettre ne désabonne personne). La signature est vérifiée de nouveau. La Chambre vient du lien signé (espace
-// partagé) ; un lien plus ancien vaut à l'adresse de sa Chambre. Une lettre programmée lit ses destinataires au
-// moment de partir : elle ne parviendra plus.
 export async function confirmerDesabonnement(formData: FormData) {
   const e = String(formData.get("e") ?? "").slice(0, 320);
   const s = String(formData.get("s") ?? "").slice(0, 64);

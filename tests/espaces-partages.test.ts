@@ -1,9 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { createHmac } from "node:crypto";
 
-// Espaces partagés (dev. : les équipes, client. : les membres) : la Chambre vient du compte connecté, jamais de
-// l'adresse ; avant d'avoir un compte, de la Chambre choisie pour la demande d'adhésion (cookie signé). Une valeur
-// falsifiée ne donne aucune Chambre.
 let hote = "client.lalliee-virtuelle.com";
 let biscuits: Record<string, string> = {};
 vi.mock("next/headers", () => ({

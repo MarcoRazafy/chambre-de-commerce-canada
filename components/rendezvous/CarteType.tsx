@@ -12,7 +12,6 @@ export const ICONE_LIEU: Record<Lieu, ReactNode> = {
   telephone: <Phone size={14} className="shrink-0" />,
 };
 
-// La personne qui reçoit (ou l'équipe), en petit
 export function QuiRecoit({ hote, taille = 28 }: { hote: TypeRendezvous["hote"]; taille?: number }) {
   const nom = hote?.nom ?? "L’équipe CanCham";
   return (
@@ -26,7 +25,6 @@ export function QuiRecoit({ hote, taille = 28 }: { hote: TypeRendezvous["hote"];
   );
 }
 
-// Un type de rendez-vous en carte, avec sa couleur de repère en haut (membres : « Choisir un créneau » ; équipe : ses actions)
 export function CarteType({ type, actions, masque }: { type: TypeRendezvous; actions: ReactNode; masque?: ReactNode }) {
   const lieu = libelleLieu(type.lieu);
   return (

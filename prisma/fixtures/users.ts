@@ -228,7 +228,6 @@ export const CONTACTS: {
   },
 ];
 
-// Équipe de démonstration : comptes du back-office en plus de u-admin (onglet « Équipe & accès »)
 export const EQUIPE: {
   id: string;
   niveau: "administrateur" | "manager";

@@ -4,10 +4,6 @@ import { revalidatePath } from "next/cache";
 import { prismaSysteme } from "@/lib/db";
 import type { Effet } from "@/lib/brevo-webhook";
 
-// Applique un événement de suivi (webhook Brevo ou Resend) : sur l'envoi de lettre concerné,
-// et sur l'abonné de cette adresse. La première date compte ; un clic vaut aussi ouverture.
-// Appelé par le fournisseur, sans session : la Chambre est celle de la lettre (envoi inconnu, par exemple un
-// courriel de compte : l'adresse est notée dans toutes les Chambres, comme un rebond l'exige).
 export async function appliquerSuivi({
   effet,
   envoi,

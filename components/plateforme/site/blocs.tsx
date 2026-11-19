@@ -1,4 +1,3 @@
-// Blocs du site de la plateforme : cadre de page, titres de section, champ e-mail, questions, appel final
 import type { ReactNode } from "react";
 import Form from "next/form";
 import Link from "next/link";
@@ -9,10 +8,8 @@ import { Revelateur } from "@/components/plateforme/site/Revelateur";
 
 export const FOCUS = "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit";
 
-// Huit teintes pastel, dans l'ordre des cartes
 export const TEINTES = ["bg-[#e8f0fb]", "bg-[#fbe9e1]", "bg-[#fbf3d6]", "bg-[#e4f3ea]", "bg-[#ece8f8]", "bg-[#fbe6ea]", "bg-[#e2f3f0]", "bg-[#f3ecdc]"];
 
-// Une icône au trait, bleu nuit, sur un carré pastel ; « grande » : en tête d'une carte, sur toute sa largeur
 export function IconePastel({ icone: Icone, teinte, grande = false }: { icone: LucideIcon; teinte: number; grande?: boolean }) {
   const fond = TEINTES[teinte % TEINTES.length];
   return (
@@ -22,8 +19,6 @@ export function IconePastel({ icone: Icone, teinte, grande = false }: { icone: L
   );
 }
 
-// Une page du site : lien d'évitement, en-tête fixe, contenu, pied ; les blocs marqués data-reveal apparaissent en défilant
-// enteteTransparent : la barre se fond dans l'accroche en haut de page (l'accueil, dont l'accroche passe sous la barre)
 export function PageSite({ enteteTransparent = false, children }: { enteteTransparent?: boolean; children: ReactNode }) {
   return (
     <div className="site-plateforme min-h-dvh bg-bg text-ink">
@@ -38,7 +33,6 @@ export function PageSite({ enteteTransparent = false, children }: { enteteTransp
   );
 }
 
-// Titre d'une section ; les titres de niveau 2 apparaissent quand la section entre dans l'écran
 export function EnTeteSection({ surtitre, titre, texte, centre = false, niveau = 2 }: { surtitre?: string; titre: ReactNode; texte?: string; centre?: boolean; niveau?: 1 | 2 }) {
   const Titre = niveau === 1 ? "h1" : "h2";
   return (
@@ -50,7 +44,6 @@ export function EnTeteSection({ surtitre, titre, texte, centre = false, niveau =
   );
 }
 
-// Champ e-mail qui ouvre la création d'une Chambre, adresse déjà remplie
 export function FormulaireEmail({ sombre = false, bouton = "Créer ma Chambre" }: { sombre?: boolean; bouton?: string }) {
   return (
     <Form
@@ -109,7 +102,6 @@ export function Questions({ questions }: { questions: { q: string; r: string }[]
   );
 }
 
-// Bandeau final : champ e-mail, lien vers l'adhésion
 export function AppelFinal() {
   return (
     <section className="px-5 sm:px-8 pb-20 lg:pb-28">
@@ -134,7 +126,6 @@ export function AppelFinal() {
   );
 }
 
-// Une page de texte (mentions légales, confidentialité, conditions) : une colonne, des titres de section
 export function PageTexte({ titre, intro, maj, children }: { titre: string; intro?: string; maj?: string; children: ReactNode }) {
   return (
     <PageSite>

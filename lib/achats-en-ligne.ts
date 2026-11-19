@@ -185,7 +185,6 @@ export async function conclureAchat(
   }
   if (!conclu) return "deja_reglee";
   const { factureId, numero } = conclu;
-  // Reçu au membre, alerte à l'équipe (comme les autres paiements en ligne)
   await avertirPaiement({ facture: { id: factureId, numero, objet }, membreId: p.memberId, nom: p.nomMembre, eventId: null, montant, moyen: MODES[p.mode].titre });
 
   if (achat.type === "ressource") {

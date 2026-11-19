@@ -18,8 +18,6 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 RUN npm run build
 
-# Seulement l'outil Prisma (aux versions du package-lock), pour « prisma migrate deploy » au démarrage :
-# l'image finale n'embarque plus tout node_modules.
 FROM base AS migrate
 WORKDIR /migrate
 COPY package-lock.json ./
@@ -42,7 +40,6 @@ RUN apt-get update \
       fonts-crosextra-carlito \
       fonts-crosextra-caladea \
  && rm -rf /var/lib/apt/lists/*
-# output: "standalone" (next.config.ts) : server.js et le sous-ensemble de node_modules qu'il utilise.
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public

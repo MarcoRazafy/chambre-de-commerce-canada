@@ -13,7 +13,6 @@ import { envoyerTestRappel } from "@/lib/rappels-envoi";
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const pageCourriel = (eventId: string, rappel?: string) => `/admin/evenements/${eventId}?vue=rappel${rappel ? `&rappel=${rappel}` : ""}`;
 
-// Onglet « Courriel » d'un événement : ajouter ou modifier un rappel (délai, objet, lettre), et s'envoyer un test
 export async function enregistrerRappel(formData: FormData) {
   const moi = await exigerEquipe();
   const eventId = texte(formData, "eventId");
@@ -22,7 +21,6 @@ export async function enregistrerRappel(formData: FormData) {
   if (!e) redirectWithErreur("/admin/evenements", "Événement introuvable.");
   const retour = pageCourriel(eventId, id || "nouveau");
 
-  // Dates d'envoi (heure de Madagascar) : au moins une, toutes avant le début de l'événement
   const debut = debutEvenement(toISODate(e.date), e.debut);
   const saisies = formData.getAll("dates").map(String).filter(Boolean);
   const dates = [...new Set(saisies.map(lireDateEnvoi))].filter((t): t is number => t !== null).sort((a, b) => a - b);
@@ -31,7 +29,6 @@ export async function enregistrerRappel(formData: FormData) {
   if (dates.length > DATES_MAX) redirectWithErreur(retour, `${DATES_MAX} dates d’envoi au plus par rappel.`);
   const titre = texte(formData, "titre").slice(0, 120);
   const sujet = texte(formData, "sujet").slice(0, 200);
-  // La lettre vient de l'éditeur : relue et nettoyée avant d'être enregistrée
   const doc = lireDoc(String(formData.get("message") ?? "").slice(0, 200000));
   if (!doc?.sections.length) redirectWithErreur(retour, "Le message du rappel ne peut pas être vide.");
   const data = {

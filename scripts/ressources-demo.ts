@@ -180,7 +180,6 @@ async function convertir(
 }
 
 async function main() {
-  // La grille du kit d'adhésion : les formules de la Chambre
   const formules = await prisma.formuleAdhesion.findMany({ where: { active: true }, orderBy: { ordre: "asc" } });
   const grille = formules.map((f) => `<tr><td>${libelleFormule(f)}</td><td>${fmtCotisation(f)}</td></tr>`).join("");
   const ressources = await prisma.resource.findMany({ orderBy: { id: "asc" } });

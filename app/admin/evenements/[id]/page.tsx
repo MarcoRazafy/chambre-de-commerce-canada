@@ -122,7 +122,6 @@ export default async function EvenementAdmin({
   const restantes = Math.max(0, e.cap - participants.length);
 
   const vueListe = sp.vue === "inscrits";
-  // « courriel » avec un rappel ouvert : ancien lien, désormais dans l'onglet Rappels
   const vueRappel = sp.vue === "rappel" || (sp.vue === "courriel" && !!sp.rappel);
   const vueCourriel = sp.vue === "courriel" && !vueRappel;
   const par = TAILLES.some((t) => t.cle === sp.par)

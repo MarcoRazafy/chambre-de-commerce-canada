@@ -16,7 +16,7 @@ import { AvatarRond, OfferCard } from "@/components/domain";
 import { TexteLie } from "@/components/TexteLie";
 import { RegisterButton } from "@/components/forms/EventForms";
 import { Card, Saillant } from "@/components/ui";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- Agenda / Actualités retirés pour l'instant, gardé pour les remettre
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { CetteSemaine } from "@/components/agenda/CetteSemaine";
 import { plageHoraire } from "@/lib/agenda";
 import { fmtMoney, isPast, parseISO } from "@/lib/format";
@@ -70,8 +70,6 @@ export default async function VueDEnsemble() {
     getDernieresOffres(OFFRES_ACCUEIL),
     getResources(),
     getServices(),
-    // Agenda retiré pour l'instant (bloc « Cette semaine » plus bas) : remettre « semaine » ci-dessus et
-    // getAgenda({ userId: user.id, memberId: me.id }, aujourdhuiISO(), ajouterJours(aujourdhuiISO(), 6)),
     getContacts(me.id),
     modesProposes(),
     offreDeLaChambre(),
@@ -90,7 +88,6 @@ export default async function VueDEnsemble() {
   const enAttente = ADHESION_PENDING.includes(me.statut);
   const bloque = retardBloque(me);
   const enRetard = isOverdueWarning(me);
-  // Les blocs d'une fonction que l'offre de la Chambre n'ouvre pas ne s'affichent pas (comme le menu)
   const ouverte = (f: Fonction) => !offre || offre.fonctions.includes(f);
 
   return (
@@ -121,14 +118,6 @@ export default async function VueDEnsemble() {
               Offres &amp; promotions {<Saillant ton="vert">membres</Saillant>}
             </h2>
           </div>
-          {/* Retiré pour l'instant (Actualités) : à décommenter pour le remettre
-          <Link
-            href="/membre/actualites"
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-accent no-underline hover:underline"
-          >
-            Toutes les offres <ArrowRight size={14} />
-          </Link>
-          */}
         </div>
 
         {offres.length ? (
@@ -278,13 +267,6 @@ export default async function VueDEnsemble() {
           </Link>
         </Card>
       </div>
-
-      {/* Retiré pour l'instant (Agenda) : à décommenter pour le remettre
-      <CetteSemaine
-        elements={semaine.filter((e) => !e.fait).slice(0, 5)}
-        aujourdhui={aujourdhui}
-      />
-      */}
 
       <div className="grid gap-4 md:grid-cols-3">
         {ouverte("messagerie") ? (

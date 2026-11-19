@@ -3,8 +3,6 @@
 import { useState, useTransition } from "react";
 import { majEtiquettes, majTagsEntreprise, type ChampEtiquettes } from "@/lib/actions/maillage";
 
-// Liste d'étiquettes modifiable sur place : on tape puis Entrée ; × retire ; enregistré aussitôt.
-// Étiquettes de maillage d'un membre (champ), ou tags de l'entreprise (tags, équipe seulement).
 export function EtiquettesMembre({
   memberId,
   champ,

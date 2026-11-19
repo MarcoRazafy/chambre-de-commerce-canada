@@ -1,5 +1,3 @@
-// Onglet « Courriel » d'un événement : écrire tout de suite aux inscrits (événement passé, en cours ou à venir)
-// et retrouver les courriels qui leur ont été écrits. « ecrire » : nouveau courriel ; « lettre » : un brouillon rouvert.
 import Link from "next/link";
 import { Mail, PenLine } from "lucide-react";
 import { Panneau, Vide } from "@/components/admin/ui";
@@ -35,7 +33,6 @@ export async function CourrielsInscrits({
   const base = `/admin/evenements/${e.id}?vue=courriel`;
   const audience = { ...AUDIENCE_DEFAUT, evenement: e.id };
 
-  // Un brouillon de cet événement, rouvert pour être terminé
   const brouillon = lettreId ? lettres.find((l) => l.id === lettreId && etatLettre(l) === "brouillon") : undefined;
   if (brouillon || ecrire) {
     const quand = quandEvenement(e);

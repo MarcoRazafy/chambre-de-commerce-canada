@@ -23,7 +23,6 @@ function basePrestataire(): string {
   return domaine ? `https://${domaine}` : baseSite();
 }
 
-// Où revient le navigateur après le paiement : l'adresse de la Chambre (la session y est valable)
 async function baseRetour(): Promise<string> {
   if (process.env.NODE_ENV === "production") {
     return (await adresseDeLaChambre(await chambreCourante())) ?? basePrestataire();
@@ -77,9 +76,7 @@ export async function ouvrirChezLePrestataire(
   cheminRetour: (reference: string) => string = (reference) =>
     `/membre/cotisations/retour?ref=${encodeURIComponent(reference)}`,
 ): Promise<{ url: string } | { raison: string }> {
-  // Carte : sur le compte Stripe de la Chambre, s'il est connecté (l'argent va à la Chambre)
   const compte = mode === "international" ? await compteStripeActif() : null;
-  // VanillaPay : son compte marchand (réglé sur le serveur) est celui de la Chambre n° 1, seule à s'en servir
   const chambreId = await chambreCourante();
   if (!compte && chambreId !== CHAMBRE_PRINCIPALE) {
     return { raison: "Le paiement en ligne n’est pas encore disponible : choisissez un autre moyen." };
@@ -130,8 +127,6 @@ export async function ouvrirChezLePrestataire(
   };
 }
 
-// Le courriel du payeur pour la page de Stripe : celui de l'inscription publique (détail du règlement), sinon celui du
-// membre connecté ; null s'il n'est pas connu (Stripe le demandera)
 async function courrielDuPayeur(detail?: Prisma.InputJsonValue): Promise<string | null> {
   const d = detail && typeof detail === "object" && !Array.isArray(detail) ? (detail as Record<string, unknown>) : {};
   if (typeof d.email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(d.email)) return d.email;

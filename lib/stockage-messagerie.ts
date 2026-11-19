@@ -99,7 +99,7 @@ export async function recevoirPiece(
           : "mp4";
   const fichier = `${id}.${extension}`;
   await writeFile(
-    path.join(/*turbopackIgnore: true*/ RACINE_MESSAGERIE, fichier),
+    path.join(RACINE_MESSAGERIE, fichier),
     octets,
   );
   return { nom: entree.name, type, fichier, taille: octets.length };

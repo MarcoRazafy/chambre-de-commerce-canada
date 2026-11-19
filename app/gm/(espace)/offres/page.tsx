@@ -15,8 +15,6 @@ const nombre = (n: number) => String(n).replace(".", ",");
 
 const TEINTES = ["vert", "rouge", "bleu"] as const;
 
-// Les offres de la plateforme (Gratuite, Payante, Sur mesure) : prix, limites, fonctions incluses ; à la carte :
-// le prix de chaque fonction
 export default async function OffresGM() {
   const offres = await offresPlateforme();
   return (

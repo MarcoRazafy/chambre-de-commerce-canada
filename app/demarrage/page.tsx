@@ -53,7 +53,6 @@ function EnTete() {
   );
 }
 
-// Les trois étapes ; « sautee » : le paiement d'une offre gratuite
 function Etapes({ actuelle, sautee }: { actuelle: Etape; sautee: boolean }) {
   const rang = ETAPES.findIndex((e) => e.cle === actuelle);
   return (
@@ -89,8 +88,6 @@ function Titre({ children }: { children: React.ReactNode }) {
 
 type Recherche = { offre?: string; fonctions?: string; stripe?: string; msg?: string; ton?: string };
 
-// Démarrage d'une Chambre créée depuis le site : son offre, le paiement du premier mois (offre payante), ses
-// informations ; ensuite, son espace
 export default async function Demarrage({ searchParams }: { searchParams: Promise<Recherche> }) {
   const sp = await searchParams;
   await getCurrentUser("admin");
@@ -98,7 +95,6 @@ export default async function Demarrage({ searchParams }: { searchParams: Promis
   const c = await prisma.chambre.findFirst({ select: { demarrage: true, offreId: true, fonctionsChoisies: true } });
   if (!c?.demarrage) redirect("/admin");
 
-  // Retour de la page de paiement de Stripe
   if (sp.stripe && stripeConfigure()) {
     const r = await appliquerSession(sp.stripe, chambreId).catch((e) => {
       console.error("[stripe] retour du démarrage non appliqué", e);
@@ -109,7 +105,6 @@ export default async function Demarrage({ searchParams }: { searchParams: Promis
   }
 
   let etape: Etape = c.demarrage;
-  // Premier mois payé (retour de Stripe ou confirmation de la banque) : étape suivante
   if (etape === "paiement") {
     const [dues, payees] = await Promise.all([
       prisma.facturePlateforme.count({ where: { payeeLe: null } }),
@@ -188,7 +183,6 @@ export default async function Demarrage({ searchParams }: { searchParams: Promis
     );
   }
 
-  // Informations de la Chambre
   const p = await prisma.profilChambre.findFirst();
   const v = (k: "description" | "adresseRue" | "codePostal" | "ville" | "pays" | "telephone" | "site" | "raisonSociale" | "neq" | "tps" | "tvq") => p?.[k] ?? "";
   const sousTitre = "m-0 pt-2 text-[12px] font-bold uppercase tracking-[0.1em] text-muted";

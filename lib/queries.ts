@@ -1548,7 +1548,6 @@ export async function rechercher(
 
   const admin = space === "admin";
   const visibles = await visibiliteRessources(await utilisateurConnecte());
-  // Actualités retirées pour l'instant : remettre « actualites » ici, la requête et le bloc plus bas
   const [membres, evenements, ressources, contacts, factures] =
     await Promise.all([
       prisma.member.findMany({
@@ -1572,12 +1571,6 @@ export async function rechercher(
         take: 8,
         orderBy: { date: "desc" },
       }),
-      // prisma.news.findMany({
-      //   where: { OR: [{ titre: like }, { extrait: like }, { corps: like }] },
-      //   select: { id: true, titre: true, date: true },
-      //   take: 8,
-      //   orderBy: { date: "desc" },
-      // }),
       prisma.resource.findMany({
         where: { ...visibles, titre: like },
         select: { id: true, titre: true, taille: true, type: true },
@@ -1645,13 +1638,6 @@ export async function rechercher(
       detail: `${e.lieu} · ${toISODate(e.date)}`,
       href: `${base}/evenements/${e.id}`,
     })),
-    // ...actualites.map((n) => ({
-    //   type: "actualite" as const,
-    //   id: n.id,
-    //   titre: n.titre,
-    //   detail: toISODate(n.date),
-    //   href: `${base}/actualites/${n.id}`,
-    // })),
     ...ressources.map((r) => ({
       type: "ressource" as const,
       id: r.id,

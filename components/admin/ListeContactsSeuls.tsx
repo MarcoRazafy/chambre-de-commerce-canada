@@ -1,6 +1,5 @@
 "use client";
 
-// Contacts sans entreprise (page Contacts) : on coche des contacts (ou tous), puis on les exporte ou on les retire
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Download, Plus, Tags, Trash2, X } from "lucide-react";
 import { ChoixTags } from "@/components/admin/ChoixTags";
@@ -16,7 +15,6 @@ export function ListeContactsSeuls({ contacts, retour, tousTags }: { contacts: C
   const [choisis, setChoisis] = useState<Set<string>>(new Set());
   const tout = useRef<HTMLInputElement>(null);
 
-  // La recherche change la liste : on ne garde que les contacts encore affichés
   const visibles = useMemo(() => new Set(contacts.map((c) => c.id)), [contacts]);
   const selection = [...choisis].filter((id) => visibles.has(id));
   const n = selection.length;

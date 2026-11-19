@@ -11,7 +11,6 @@ import { getCurrentUser } from "@/lib/session";
 
 const BASE = "/admin/rendez-vous/apercu";
 
-// Aperçu de la page de réservation, telle que les membres la voient (rien ne s'y réserve)
 export default async function ApercuReservation({
   searchParams,
 }: {
@@ -21,7 +20,6 @@ export default async function ApercuReservation({
   const p = await searchParams;
   const tous = await getTypesRendezvous(true);
   const proposes = await getTypesRendezvous();
-  // Un type masqué ou d'une personne qui ne reçoit pas s'affiche aussi, pour le vérifier avant de l'ouvrir
   const type = tous.find((t) => t.id === p.type) ?? null;
   const jours = type ? await getCreneaux(type) : [];
   const jour = estJourISO(p.jour) && jours.some((j) => j.jour === p.jour) ? p.jour : null;

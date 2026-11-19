@@ -34,7 +34,6 @@ const Etat = ({ ok, libelle, cle }: { ok: boolean; libelle: string; cle: string 
   </li>
 );
 
-// Paramètres : le compte GM, l'identité de la plateforme (factures), la facturation de l'abonnement, le paiement par carte
 export default async function ParametresGM({ searchParams }: { searchParams: Promise<{ onglet?: string }> }) {
   const sp = await searchParams;
   const onglet: Onglet = ONGLETS.find((o) => o.cle === sp.onglet)?.cle ?? "compte";

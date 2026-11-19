@@ -21,7 +21,6 @@ export default async function AdminLayout({
   children: React.ReactNode;
 }) {
   const user = await getCurrentUser("admin");
-  // Chambre qui vient d'être créée : d'abord son démarrage (offre, paiement, informations)
   const chambre = await prisma.chambre.findFirst({ select: { demarrage: true } });
   if (chambre?.demarrage && !user.visiteGM) redirect("/demarrage");
   const [stats, unread, notifications, paiement, offre, marque] = await Promise.all([
@@ -56,7 +55,6 @@ export default async function AdminLayout({
       ) : null}
       <BandeauRetard etat={paiement} />
       {children}
-      {/* Support IT : l'équipe de la Chambre écrit à l'Admin GM (pas pendant une visite de l'Admin GM) */}
       {user.visiteGM ? null : <BulleSupport espace="admin" prenom={user.nom.split(" ")[0]} />}
     </CoquilleAdmin>
     </>

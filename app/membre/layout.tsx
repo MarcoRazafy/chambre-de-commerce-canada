@@ -35,7 +35,6 @@ export default async function MembreLayout({
     offreDeLaChambre(),
     marqueDeLaChambre(),
   ]);
-  // Le menu sans les fonctions que l'offre de la Chambre n'inclut pas
   const nav = filtrerNav(NAV_MEMBRE, offre?.fonctions);
 
   const verrouille = isAccessLocked(membre);
@@ -79,7 +78,6 @@ export default async function MembreLayout({
           : []
       }
     >
-      {/* L'abonnement de la Chambre est en retard : l'espace est en lecture seule */}
       {paiement.restriction === "lecture" ? (
         <p role="alert" className="mb-5 rounded-[var(--radius-m)] border border-warn/40 bg-warn-soft px-4 py-3 text-[13.5px] text-ink m-0">
           L’espace est en lecture seule pour le moment.

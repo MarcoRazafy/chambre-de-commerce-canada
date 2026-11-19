@@ -2,7 +2,6 @@ import Link from "next/link";
 import { TriangleAlert } from "lucide-react";
 import type { EtatPaiement } from "@/lib/etat-paiement";
 
-// En haut de l'espace : une facture de l'abonnement attend son paiement (et l'espace est peut-être restreint)
 export function BandeauRetard({ etat, lien = true }: { etat: EtatPaiement; lien?: boolean }) {
   if (!etat.enRetard) return null;
   const texte =

@@ -12,8 +12,6 @@ import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { limiteAtteinte } from "@/lib/limites-offre";
 
-// Page Contacts (équipe) : ajouter un contact, importer un CSV, poser ou retirer des tags sur une sélection
-
 const ADRESSE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
@@ -32,8 +30,6 @@ async function journal(action: string, entiteId: string, acteur: string, detail:
   await prisma.auditLog.create({ data: { action, entite: "Member", entiteId, acteur, detail } });
 }
 
-// Nouvelle entreprise, comme « Ajouter un membre » : en attente de paiement, fiche à compléter
-// (la limite de membres de l'offre est vérifiée avant)
 function nouvelleEntreprise(nom: string, secteur: string, ville: string, logo: string | null = null) {
   return prisma.member.create({
     data: {
@@ -51,7 +47,6 @@ function nouvelleEntreprise(nom: string, secteur: string, ville: string, logo: s
   });
 }
 
-// « Ajouter un contact » : à une entreprise existante, avec une nouvelle entreprise, ou seul (sans entreprise)
 export async function ajouterContact(formData: FormData) {
   const equipe = await exigerEquipe();
   const retour = retourContacts(formData);
@@ -62,7 +57,6 @@ export async function ajouterContact(formData: FormData) {
 
   if (!nom || !email) redirectWithErreur(retour, "Le nom et le courriel du contact sont obligatoires.");
   if (!ADRESSE.test(email)) redirectWithErreur(retour, `« ${email} » n’est pas un courriel valide.`);
-  // Sans entreprise : un contact seul, qui reçoit la newsletter envoyée à tous
   if (!memberIdChoisi && !nomEntreprise) {
     await prisma.abonne.upsert({
       where: { chambreId_email: { chambreId: await chambreCourante(), email } },
@@ -72,7 +66,6 @@ export async function ajouterContact(formData: FormData) {
     revalidatePath("/admin/contacts");
     redirectWithFlash(retour, `${nom} a été ajouté (sans entreprise)`);
   }
-  // Une adresse = un seul espace : cherchée dans toutes les Chambres (sans rien montrer d'une autre)
   const occupe = await prismaSysteme.user.findUnique({ where: { email }, select: { chambreId: true, member: { select: { nom: true } } } });
   if (occupe && occupe.chambreId !== (await chambreCourante())) redirectWithErreur(retour, `${email} est déjà utilisée sur un autre espace.`);
   if (occupe) redirectWithErreur(retour, `${email} a déjà un compte${occupe.member ? ` (${occupe.member.nom})` : ""}.`);
@@ -82,7 +75,6 @@ export async function ajouterContact(formData: FormData) {
   if (memberId) {
     if (!(await prisma.member.findUnique({ where: { id: memberId }, select: { id: true } }))) redirectWithErreur(retour, "Entreprise introuvable.");
   } else {
-    // Logo facultatif de la nouvelle entreprise, vérifié avant de créer quoi que ce soit
     let logo: string | null = null;
     try {
       logo = await enregistrerImage(formData.get("logo"), { prefixe: `logo-${crypto.randomUUID().slice(0, 8)}`, largeur: 600, transparence: true });
@@ -124,7 +116,6 @@ export type BilanImport = {
   ignores: { email: string; raison: string }[];
 };
 
-// Import CSV (lignes déjà mises en correspondance dans le navigateur, revérifiées ici)
 export async function importerContacts(lignes: unknown[]): Promise<BilanImport> {
   const equipe = await exigerEquipe();
   const bilan: BilanImport = { entreprisesCreees: 0, contactsCrees: 0, contactsMisAJour: 0, ignores: [] };
@@ -150,7 +141,6 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
     }
     const nom = nomComplet(l);
 
-    // Sans entreprise : un contact de l'onglet « Sans entreprise » (créé, ou remis s'il avait été retiré)
     if (!l.entreprise) {
       if (existant) {
         bilan.ignores.push({ email: l.email, raison: existant.role === "admin" ? "compte de l’équipe" : "déjà contact d’une entreprise" });
@@ -214,7 +204,6 @@ export async function importerContacts(lignes: unknown[]): Promise<BilanImport> 
   return bilan;
 }
 
-// Sélection : ajouter des tags à plusieurs entreprises
 export async function ajouterTagsEntreprises(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -231,7 +220,6 @@ export async function ajouterTagsEntreprises(formData: FormData) {
   redirectWithFlash(retour, `${pluriel(tags.length, "tag")} ajouté${tags.length > 1 ? "s" : ""} à ${pluriel(ms.length, "entreprise")}`);
 }
 
-// Sélection : retirer des tags de plusieurs entreprises (les tags restent dans la liste des tags)
 export async function retirerTagsEntreprises(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -244,7 +232,6 @@ export async function retirerTagsEntreprises(formData: FormData) {
   redirectWithFlash(retour, `${pluriel(tags.length, "tag")} retiré${tags.length > 1 ? "s" : ""} de ${pluriel(ms.length, "entreprise")}`);
 }
 
-// Retirer un contact sans entreprise : il ne reçoit plus la newsletter (son adresse reste connue)
 export async function retirerContactSeul(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -253,7 +240,6 @@ export async function retirerContactSeul(formData: FormData) {
   redirectWithFlash(retour, `${a.prenom || a.email} a été retiré`);
 }
 
-// Sélection (contacts sans entreprise) : retirer plusieurs contacts d'un coup ; ils ne reçoivent plus la newsletter
 export async function retirerContactsSeuls(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -264,7 +250,6 @@ export async function retirerContactsSeuls(formData: FormData) {
   redirectWithFlash(retour, `${count} contact${count > 1 ? "s" : ""} retiré${count > 1 ? "s" : ""}`);
 }
 
-// Sélection (contacts sans entreprise) : ajouter des tags à plusieurs contacts
 export async function ajouterTagsContactsSeuls(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -281,7 +266,6 @@ export async function ajouterTagsContactsSeuls(formData: FormData) {
   redirectWithFlash(retour, `${pluriel(tags.length, "tag")} ajouté${tags.length > 1 ? "s" : ""} à ${cs.length} contact${cs.length > 1 ? "s" : ""}`);
 }
 
-// Sélection (contacts sans entreprise) : retirer des tags de plusieurs contacts
 export async function retirerTagsContactsSeuls(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -294,7 +278,6 @@ export async function retirerTagsContactsSeuls(formData: FormData) {
   redirectWithFlash(retour, `${pluriel(tags.length, "tag")} retiré${tags.length > 1 ? "s" : ""} de ${cs.length} contact${cs.length > 1 ? "s" : ""}`);
 }
 
-// Fiche d'un contact sans entreprise : ses tags
 export async function majTagsContactSeul(formData: FormData) {
   await exigerEquipe();
   const retour = retourContacts(formData);
@@ -305,7 +288,6 @@ export async function majTagsContactSeul(formData: FormData) {
   redirectWithFlash(retour, `Tags de ${c.prenom || c.email} enregistrés`);
 }
 
-// Page d'un tag : retirer ce tag d'un contact sans entreprise
 export async function retirerTagContactSeul(formData: FormData) {
   await exigerEquipe();
   const tag = texte(formData, "tag");

@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Relances automatiques des factures impayées des membres : base, envoi et profil simulés
 type F = { id: string; numero: string; objet: string; montant: number; devise: "CAD"; date: Date; relances: number[]; memberId: string; member: { nom: string } };
 let factures: F[] = [];
 let contact: { nom: string; email: string } | null = null;

@@ -1,15 +1,8 @@
-// Lettre de la newsletter, faite de sections libres (logo, bandeau, titre, texte, image, bouton, encadré
-// d'appel, réseaux sociaux, pied, séparateur, espace) : chacune s'ajoute, se déplace, se supprime et se règle
-// (taille, couleurs de la palette IMPACT 261, alignement). Lecture sûre, nettoyage du texte mis en forme,
-// rendu HTML de courriel et texte brut — partagés par l'éditeur et l'envoi.
-
 export const LARGEUR = 600;
 export const COLONNES_MAX = 5;
-// Ce qu'une colonne peut contenir
 export const TYPES_DANS_COLONNE = ["titre", "texte", "image", "bouton", "logo", "separateur", "espace"] as const;
 export const POLICE = "Inter, 'Helvetica Neue', Arial, sans-serif";
 
-// Palette de la plateforme (charte IMPACT 261) : seules ces couleurs sont proposées
 export const PALETTE = {
   rouge: { hex: "#ad0707", libelle: "Rouge" },
   bordeaux: { hex: "#8b0512", libelle: "Bordeaux" },
@@ -25,7 +18,6 @@ export const PALETTE = {
 } as const;
 export type Couleur = keyof typeof PALETTE;
 export const COULEURS = Object.keys(PALETTE) as Couleur[];
-// Le dégradé signature (rouge → vert), pour les fonds
 export const DEGRADE = "linear-gradient(120deg,#ad0707 0%,#5c1220 52%,#007140 100%)";
 export type Fond = Couleur | "degrade" | "";
 export const hex = (c: Couleur) => PALETTE[c].hex;
@@ -55,7 +47,7 @@ export const TYPES_SECTION: { type: TypeSection; libelle: string }[] = [
   { type: "bandeau", libelle: "Bandeau" },
   { type: "titre", libelle: "Titre" },
   { type: "texte", libelle: "Texte" },
-  { type: "colonnes", libelle: "Colonnes" }, // choisie par le « + » (nombre de colonnes), pas dans la liste
+  { type: "colonnes", libelle: "Colonnes" },
   { type: "image", libelle: "Image" },
   { type: "bouton", libelle: "Bouton" },
   { type: "appel", libelle: "Encadré d’appel" },
@@ -67,8 +59,8 @@ export const TYPES_SECTION: { type: TypeSection; libelle: string }[] = [
 
 export interface DocLettre {
   v: 3;
-  apercu: string; // ligne d'aperçu, affichée après l'objet dans la boîte de réception
-  fond: Couleur; // fond autour de la lettre
+  apercu: string;
+  fond: Couleur;
   sections: Section[];
 }
 
@@ -78,7 +70,6 @@ export const VARIABLES = [
   { cle: "entreprise", libelle: "Entreprise" },
   { cle: "email", libelle: "Courriel" },
 ] as const;
-// Valeurs des variables pour un destinataire ({prenom}, {entreprise}… ou celles d'un rappel : {événement}, {date}…)
 export type Variables = Record<string, string | undefined>;
 
 const chaine = (v: unknown, max = 5000) => (typeof v === "string" ? v.slice(0, max) : "");
@@ -90,7 +81,6 @@ const align = (v: unknown, defaut: Align): Align => (v === "left" || v === "cent
 let compteur = 0;
 export const nouvelId = () => `s${Date.now().toString(36)}${(compteur++).toString(36)}`;
 
-// Adresse sûre : http(s), mailto, tel, ou un fichier téléversé sur la plateforme
 export function urlSure(v: unknown): string {
   const u = chaine(v, 2000).trim();
   if (/^(https?:\/\/|mailto:|tel:)/i.test(u) || /^\/televersements\/[\w.\-/]+$/.test(u)) return u;
@@ -102,13 +92,11 @@ const echapper = (t: string) =>
   t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 const enHtml = (t: string) => echapper(t).replace(/\n/g, "<br>");
 
-// Texte mis en forme dans l'éditeur : seules ces balises restent, sans attribut (sauf l'adresse d'un lien)
 const BALISES: Record<string, string> = {
   b: "strong", strong: "strong", i: "em", em: "em", u: "u", br: "br", p: "p", div: "p", ul: "ul", ol: "ol", li: "li", a: "a",
   span: "span", font: "span",
 };
 const ALIGNEMENTS = ["left", "center", "right", "justify"];
-// Une couleur écrite par le navigateur (#hex, rgb(), ou l'attribut color de <font>), gardée si elle est dans la palette
 function couleurPalette(attributs: string): string | null {
   const brut = /color\s*[:=]\s*["']?\s*(#[0-9a-f]{3,6}|rgb\([^)]*\))/i.exec(attributs)?.[1]?.toLowerCase();
   if (!brut) return null;
@@ -146,7 +134,6 @@ export function nettoyerHtml(brut: string): string {
     });
 }
 
-// Coordonnées par défaut du pied de page (modifiables dans chaque lettre)
 export const PIED_DEFAUT = {
   confidentialite: "https://www.formation.cancham.mg/contidentialite",
   adresse: "Antananarivo, Madagascar",
@@ -157,7 +144,6 @@ export const PIED_DEFAUT = {
 
 const PIED = "La Chambre de Commerce et de Coopération Canada–Madagascar rassemble les entreprises des deux pays et facilite leurs échanges.";
 
-// Pied de page réglé dans les Paramètres (mentions légales, coordonnées de l'entreprise)
 export type PiedRegle = Partial<typeof PIED_DEFAUT>;
 
 export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): Section {
@@ -201,12 +187,10 @@ export function docVide(reseaux: Partial<Record<Reseau, string>> = {}, pied: Pie
   };
 }
 
-// Nouvelle lettre : aucune section, on part du « + »
 export function docBlanc(): DocLettre {
   return { v: 3, apercu: "", fond: "brume", sections: [] };
 }
 
-// Une lettre écrite en texte simple devient une lettre de ce modèle
 export function docDepuisTexte(sujet: string, contenu: string, reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): DocLettre {
   const bandeau = { ...(sectionVide("bandeau") as Extract<Section, { type: "bandeau" }>), titre: sujet || "La lettre de la Chambre" };
   const textes = contenu.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean)
@@ -214,12 +198,10 @@ export function docDepuisTexte(sujet: string, contenu: string, reseaux: Partial<
   return { v: 3, apercu: "", fond: "brume", sections: [sectionVide("logo"), bandeau, ...textes, sectionVide("reseaux", reseaux), sectionVide("pied", {}, pied)] };
 }
 
-// Texte d'une section : mis en forme (nettoyé), ou texte simple (échappé, retours à la ligne gardés)
 const riche = (v: unknown, max = 3000) => {
   const t = chaine(v, max);
   return /<[a-z/][^>]*>|&[a-z#0-9]+;/i.test(t) ? nettoyerHtml(t) : enHtml(t);
 };
-// Le texte seul, sans balise (adresse d'un lien mailto, version texte du courriel)
 export const sansBalise = (h: string) =>
   h.replace(/<br>|<\/p>|<\/li>/g, "\n").replace(/<[^>]+>/g, "").replace(/&nbsp;/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'").trim();
 
@@ -240,7 +222,6 @@ function lireSection(s: unknown): Section | null {
     case "texte":
       return { ...d, ...base, html: nettoyerHtml(typeof o.html === "string" ? o.html : enHtml(chaine(o.texte))), taille: entier(o.taille, 11, 24, d.taille), couleur: couleur(o.couleur, d.couleur) };
     case "colonnes": {
-      // Chaque colonne : ses sections (un ancien texte simple devient une section de texte)
       const c = (Array.isArray(o.colonnes) ? o.colonnes : []).slice(0, COLONNES_MAX).map((col): Section[] => {
         if (typeof col === "string") return col.trim() ? [lireSection({ ...sectionVide("texte"), html: col })!] : [];
         return (Array.isArray(col) ? col : []).slice(0, 20).map(lireSection)
@@ -273,7 +254,6 @@ function lireSection(s: unknown): Section | null {
   }
 }
 
-// Anciennes versions de l'éditeur (1 et 2) : reprises dans ce modèle
 function depuisAncien(o: Record<string, unknown>, reseaux: Partial<Record<Reseau, string>>): DocLettre {
   const blocs = (Array.isArray(o.blocs) ? o.blocs : []) as Record<string, unknown>[];
   const ba = (o.v === 2 ? o.bandeau : blocs.find((b) => b?.type === "bandeau")) as Record<string, unknown> | undefined;
@@ -292,7 +272,6 @@ function depuisAncien(o: Record<string, unknown>, reseaux: Partial<Record<Reseau
   return { v: 3, apercu: chaine(o.apercu, 200), fond: "brume", sections };
 }
 
-// Lit le contenu enregistré : une lettre de l'éditeur (JSON), sinon null (texte simple)
 export function lireDoc(contenu: string, reseaux: Partial<Record<Reseau, string>> = {}): DocLettre | null {
   if (!contenu.trimStart().startsWith("{")) return null;
   try {
@@ -310,28 +289,25 @@ export function lireDoc(contenu: string, reseaux: Partial<Record<Reseau, string>
   }
 }
 
-// Une variable connue est remplacée ; une variable inconnue reste telle quelle
 const remplacer = (t: string, vars: Variables) =>
   t.replace(/\{([^{}<>\s][^{}<>]{0,30})\}/g, (tout, k: string) => vars[k.trim().toLowerCase()] ?? tout);
 
 export type OptionsRendu = {
-  base: string; // adresse du site, pour le logo, les icônes et les images téléversées
+  base: string;
   vars: Variables;
-  mention: string; // pourquoi la personne reçoit ce courriel
-  desabonnement: string | null; // lien de désabonnement (abonnés à la lettre)
+  mention: string;
+  desabonnement: string | null;
   coordonnees: { adresse: string; email: string; telephone: string; confidentialite: string };
-  apres?: string; // lignes HTML (<tr>) ajoutées après les sections, ex. les QR codes d'un rappel
-  logo?: string; // logo de l'entreprise (« Mon entreprise »), pour une section Logo sans image choisie
+  apres?: string;
+  logo?: string;
 };
 
-// Fond d'une section, pour un courriel (couleur de repli quand le dégradé n'est pas affiché)
 export function styleFond(f: Fond, image = "", abs: (u: string) => string = (u) => u): string {
   if (image) return `background-color:${hex("rouge")};background-image:url('${echapper(abs(image))}');background-size:cover;background-position:center;`;
   if (f === "degrade") return `background-color:${hex("rouge")};background-image:${DEGRADE};`;
   return f ? `background-color:${hex(f)};` : "";
 }
 
-// Rendu HTML pour les messageries (tableaux et styles en ligne)
 export function versHtml(doc: DocLettre, o: OptionsRendu): string {
   const abs = (u: string) => (u.startsWith("/") ? `${o.base}${u}` : u);
   const lien = `color:${hex("rouge")};text-decoration:none`;
@@ -343,7 +319,6 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
       .replace(/<(ul|ol)>/g, '<$1 style="margin:0 0 12px;padding-left:22px">');
   const v = (t: string) => echapper(remplacer(t, o.vars));
   const r = (h: string) => riche(h).replace(/<p( style="text-align:\w+")?>/g, "<div$1>").replace(/<\/p>/g, "</div>");
-  // Dans une colonne, les marges sur les côtés se resserrent
   let imbrique = false;
   const serre = (p: string) => { const t = p.split(" "); return t.length >= 2 ? [t[0], "4px", ...t.slice(2)].join(" ") : p; };
   const cellule = (s: Section, contenu: string, pad = "12px 32px") =>
@@ -391,7 +366,6 @@ export function versHtml(doc: DocLettre, o: OptionsRendu): string {
     }
   };
 
-  // Ce qui s'ajoute (QR codes d'un rappel) arrive avant les réseaux sociaux et le pied de page de la fin
   let coupe = doc.sections.length;
   while (coupe > 0 && ["reseaux", "pied", "separateur", "espace"].includes(doc.sections[coupe - 1].type)) coupe--;
   const avantFin = doc.sections.slice(0, coupe), fin = doc.sections.slice(coupe);
@@ -412,7 +386,6 @@ ${fin.map(section).join("\n")}
 </td></tr></table></body></html>`;
 }
 
-// Version texte (messageries sans HTML)
 export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mention" | "desabonnement" | "coordonnees">): string {
   const brut = (h: string) =>
     remplacer(nettoyerHtml(h), o.vars)

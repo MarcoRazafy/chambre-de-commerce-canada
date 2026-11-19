@@ -1,6 +1,5 @@
 import "server-only";
 
-// Notifications d'un compte Stripe de Chambre (Stripe Connect) : compte prêt à encaisser, paiement d'un membre
 import type Stripe from "stripe";
 import { avecChambre } from "@/lib/chambre-courante";
 import { prismaSysteme as db } from "@/lib/db";

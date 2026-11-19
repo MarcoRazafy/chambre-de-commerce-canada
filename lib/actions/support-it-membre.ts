@@ -1,6 +1,5 @@
 "use server";
 
-// Support IT, côté membre : écrire à l'Admin GM (texte, photos, vidéos, PDF), marquer les réponses lues
 import { revalidatePath } from "next/cache";
 import { getCurrentUser } from "@/lib/session";
 import { ecrireSupportITMembre, lireSupportITMembre, type ResultatEnvoi } from "@/lib/support-it";

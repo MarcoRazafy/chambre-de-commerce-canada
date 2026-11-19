@@ -19,8 +19,6 @@ async function journal(action: string, entiteId: string, acteur: string, detail?
   await prisma.auditLog.create({ data: { action, entite: "Member", entiteId, acteur, detail } });
 }
 
-// Enregistre une partie des réponses (appelé au fil de la saisie, depuis la fenêtre du questionnaire).
-// Le membre ne remplit que le sien ; l'équipe peut remplir celui de n'importe quel membre.
 export async function enregistrerMaillage(memberId: string, patch: unknown) {
   const acces = await ficheParApi(memberId);
   if (!acces.ok) return { ok: false as const, erreur: acces.erreur };
@@ -33,7 +31,6 @@ export async function enregistrerMaillage(memberId: string, patch: unknown) {
   });
   if (!m) return { ok: false as const, erreur: "Fiche introuvable." };
   const avant = (m.maillage?.reponses ?? {}) as Reponses;
-  // Première réponse : on part des informations de la fiche pour ne pas les perdre
   const reponses = { ...(Object.keys(avant).length ? avant : prerempli(m)), ...r } as Prisma.InputJsonObject;
   const par = acces.estEquipe ? `${acces.nom} (équipe)` : acces.nom;
   const mg = await prisma.maillage.upsert({
@@ -49,7 +46,6 @@ export async function enregistrerMaillage(memberId: string, patch: unknown) {
   return { ok: true as const, ...p };
 }
 
-// Relance (équipe) : courriel au contact principal et notification sur ses appareils
 export async function relancerMaillage(formData: FormData) {
   await exigerEquipe();
   const id = texte(formData, "memberId");
@@ -99,7 +95,6 @@ export async function relancerMaillage(formData: FormData) {
   redirectWithFlash(fiche, `Relance envoyée à ${contact.email}`);
 }
 
-// Mettre deux membres en relation (équipe), depuis une suggestion
 export async function mettreEnRelation(formData: FormData) {
   await exigerEquipe();
   const a = texte(formData, "a"), b = texte(formData, "b");
@@ -125,7 +120,6 @@ export async function mettreEnRelation(formData: FormData) {
   redirectWithFlash(retour, `${na} et ${nb} sont mis en relation`);
 }
 
-// Écarter une suggestion : elle ne revient plus
 export async function ecarterSuggestion(formData: FormData) {
   await exigerEquipe();
   const [x, y] = [texte(formData, "a"), texte(formData, "b")].sort();
@@ -141,7 +135,6 @@ export async function ecarterSuggestion(formData: FormData) {
   redirectWithFlash(retour, "Suggestion écartée");
 }
 
-// Étiquettes de maillage d'un membre : ce qu'il propose, recherche, ce qui l'intéresse
 const CHAMPS_ETIQUETTES = ["offresTags", "besoinsTags", "interetsTags"] as const;
 export type ChampEtiquettes = (typeof CHAMPS_ETIQUETTES)[number];
 
@@ -162,7 +155,6 @@ export async function majEtiquettes(memberId: string, champ: ChampEtiquettes, va
   return { ok: true as const, valeurs: propres };
 }
 
-// Tags d'une entreprise : repères internes, réservés à l'équipe
 export async function majTagsEntreprise(memberId: string, valeurs: string[]) {
   await exigerEquipe();
   const m = await prisma.member.findUnique({ where: { id: memberId }, select: { id: true } });
@@ -174,13 +166,11 @@ export async function majTagsEntreprise(memberId: string, valeurs: string[]) {
   return { ok: true as const, valeurs: propres };
 }
 
-/* ===== Page Tags (équipe) : renommer, supprimer, poser sur plusieurs entreprises ===== */
 const propreEtiquette = (v: string) => v.trim().replace(/\s+/g, " ").slice(0, 60);
 const pluriel = (n: number) => `${n} entreprise${n > 1 ? "s" : ""}`;
 const garderTag = async (nom: string) =>
   prisma.tag.upsert({ where: { chambreId_nom: { chambreId: await chambreCourante(), nom } }, create: { nom }, update: {} });
 
-// « Créer » dans le choix des tags (événement, contacts) : le tag rejoint tout de suite la liste des tags
 export async function enregistrerTag(nom: string): Promise<{ nom: string } | { erreur: string }> {
   await exigerEquipe();
   const propre = propreEtiquette(nom);
@@ -190,7 +180,6 @@ export async function enregistrerTag(nom: string): Promise<{ nom: string } | { e
   return { nom: propre };
 }
 
-// Créer un tag : son nom suffit, les entreprises s'ajoutent ensuite depuis sa page
 export async function creerTag(formData: FormData) {
   await exigerEquipe();
   const nom = propreEtiquette(texte(formData, "nom"));
@@ -212,7 +201,6 @@ export async function renommerEtiquette(formData: FormData) {
   for (const m of ms) {
     await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...new Set(m.etiquettes.map((e) => (e === ancien ? nouveau : e)))] } });
   }
-  // Les contacts sans entreprise et les événements qui rattachent ce tag suivent le nouveau nom
   const seuls = await prisma.abonne.findMany({ where: { etiquettes: { has: ancien } }, select: { id: true, etiquettes: true } });
   for (const c of seuls) {
     await prisma.abonne.update({ where: { id: c.id }, data: { etiquettes: [...new Set(c.etiquettes.map((x) => (x === ancien ? nouveau : x)))] } });
@@ -233,7 +221,6 @@ export async function supprimerEtiquette(formData: FormData) {
   for (const m of ms) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: m.etiquettes.filter((e) => e !== nom) } });
   const seuls = await prisma.abonne.findMany({ where: { etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
   for (const c of seuls) await prisma.abonne.update({ where: { id: c.id }, data: { etiquettes: c.etiquettes.filter((x) => x !== nom) } });
-  // Un tag supprimé n'est plus rattaché aux inscrits des événements (sinon il reviendrait à la prochaine inscription)
   const evs = await prisma.event.findMany({ where: { etiquettes: { has: nom } }, select: { id: true, etiquettes: true } });
   for (const e of evs) await prisma.event.update({ where: { id: e.id }, data: { etiquettes: e.etiquettes.filter((x) => x !== nom) } });
   revalidatePath("/admin", "layout");
@@ -249,7 +236,6 @@ export async function attribuerEtiquette(formData: FormData) {
   const ms = await prisma.member.findMany({ where: { id: { in: ids } }, select: { id: true, etiquettes: true } });
   for (const m of ms) if (!m.etiquettes.includes(nom)) await prisma.member.update({ where: { id: m.id }, data: { etiquettes: [...m.etiquettes, nom] } });
   revalidatePath("/admin", "layout");
-  // Depuis la page Contacts : on y revient, avec les mêmes filtres
   const retour = texte(formData, "retour");
   const destination = retour.startsWith("/admin/contacts") ? retour : `/admin/etiquettes?e=${encodeURIComponent(nom)}`;
   redirectWithFlash(destination, `« ${nom} » ajouté à ${pluriel(ms.length)}`);

@@ -1,11 +1,5 @@
 import "server-only";
 
-// Abonnement à la plateforme payé par carte (Stripe, compte de la plateforme). Les factures restent celles de
-// la plateforme (numéro, taxes) ; Stripe garde la carte de la Chambre et prélève chaque facture.
-//  - la carte s'enregistre (ou une facture se paie) sur la page de paiement de Stripe (Checkout) ;
-//  - le résultat s'applique au retour du navigateur et par le webhook (sans doublon) ;
-//  - les tâches régulières prélèvent les factures dues et envoient les relances (réglages de l'Admin GM).
-// Écritures sans limite de Chambre (prismaSysteme), toujours avec la Chambre en clair.
 import type Stripe from "stripe";
 import { alerterGM } from "@/lib/alertes-gm";
 import { oublierAdresses } from "@/lib/chambre-courante";
@@ -24,7 +18,6 @@ export async function noter(chambreId: string, action: string, detail: string, a
   await db.auditLog.create({ data: { chambreId, action, entite: "Chambre", entiteId: chambreId, acteur, detail } });
 }
 
-// Le client Stripe de la Chambre, créé au besoin
 async function clientStripe(chambreId: string): Promise<string> {
   const c = await db.chambre.findUnique({ where: { id: chambreId }, select: { stripeClientId: true, nom: true, profil: { select: { email: true } } } });
   if (!c) throw new Error(`Chambre ${chambreId} introuvable`);
@@ -39,7 +32,6 @@ async function clientStripe(chambreId: string): Promise<string> {
 
 const avecSession = (retour: string) => `${retour}${retour.includes("?") ? "&" : "?"}stripe={CHECKOUT_SESSION_ID}`;
 
-// Page Stripe pour enregistrer (ou changer) la carte ; « passerA » : l'offre à prendre une fois la carte enregistrée
 export async function sessionCarte(chambreId: string, retour: string, passerA?: string): Promise<string> {
   const s = await stripe().checkout.sessions.create({
     mode: "setup",
@@ -53,7 +45,6 @@ export async function sessionCarte(chambreId: string, retour: string, passerA?: 
   return s.url;
 }
 
-// Page Stripe pour payer une facture de l'abonnement (la carte est gardée pour les prochaines)
 export async function sessionPaiement(chambreId: string, factureId: string, retour: string): Promise<string | null> {
   const f = await db.facturePlateforme.findFirst({ where: { id: factureId, chambreId, payeeLe: null }, select: { id: true, numero: true, total: true } });
   if (!f) return null;
@@ -61,7 +52,6 @@ export async function sessionPaiement(chambreId: string, factureId: string, reto
     mode: "payment",
     customer: await clientStripe(chambreId),
     line_items: [{ quantity: 1, price_data: { currency: "cad", unit_amount: enCents(f.total), product_data: { name: `Abonnement à la plateforme — ${f.numero}` } } }],
-    // En dollars canadiens, sans conversion proposée par Stripe
     adaptive_pricing: { enabled: false },
     payment_intent_data: { setup_future_usage: "off_session", metadata: { chambreId, factureId: f.id } },
     metadata: { chambreId, factureId: f.id },
@@ -72,7 +62,6 @@ export async function sessionPaiement(chambreId: string, factureId: string, reto
   return s.url;
 }
 
-// La carte (marque, 4 derniers chiffres, échéance) sur la Chambre, et carte par défaut chez Stripe
 async function enregistrerCarte(chambreId: string, pm: Stripe.PaymentMethod) {
   const carte = pm.card;
   await db.chambre.update({
@@ -99,7 +88,6 @@ export async function passerALOffre(chambreId: string, offreId: string, acteur?:
   return true;
 }
 
-// Facture payée (carte, ou réglée autrement et notée par l'Admin GM) : sans effet si elle l'est déjà
 export async function marquerPayee(factureId: string, paiementId: string | null, acteur?: string) {
   const f = await db.facturePlateforme.findUnique({ where: { id: factureId }, select: { chambreId: true, numero: true, total: true, chambre: { select: { nom: true } } } });
   if (!f) return false;
@@ -108,10 +96,8 @@ export async function marquerPayee(factureId: string, paiementId: string | null,
     data: { payeeLe: new Date(), stripePaiementId: paiementId, dernierEchec: null },
   });
   if (!r.count) return false;
-  oublierAdresses(); // un espace en retard se rouvre tout de suite
+  oublierAdresses();
   await noter(f.chambreId, "facture_payee", `Facture ${f.numero} payée.`, acteur);
-  // Paiement par carte (pas une facture marquée payée par l'Admin GM) : l'Admin GM est prévenu, et les admins de la
-  // Chambre reçoivent leur reçu
   if (!acteur) {
     await alerterGM({
       sujet: `Paiement reçu : ${f.chambre.nom}`,
@@ -124,7 +110,6 @@ export async function marquerPayee(factureId: string, paiementId: string | null,
   return true;
 }
 
-// Une session Checkout terminée (retour du navigateur ou webhook) ; chambreAttendue : celle de l'adresse du site
 export async function appliquerSession(sessionId: string, chambreAttendue?: string): Promise<"carte" | "payee" | "rien"> {
   const s = await stripe().checkout.sessions.retrieve(sessionId, { expand: ["setup_intent.payment_method", "payment_intent.payment_method"] });
   const chambreId = s.metadata?.chambreId;
@@ -144,7 +129,6 @@ export async function appliquerSession(sessionId: string, chambreAttendue?: stri
   return "rien";
 }
 
-// Le refus de la banque, en clair
 export function messageRefus(e: unknown): string {
   const err = e as { code?: string; decline_code?: string };
   switch (err?.decline_code ?? err?.code) {
@@ -164,7 +148,6 @@ export function messageRefus(e: unknown): string {
   }
 }
 
-// Prélève une facture sur la carte enregistrée
 async function prelever(
   f: { id: string; numero: string; total: number; tentatives: number },
   c: { id: string; nom: string; stripeClientId: string; stripeCarteId: string },
@@ -215,7 +198,6 @@ async function echec(factureId: string, message: string) {
   });
 }
 
-// Tâche régulière, pour une Chambre : prélève ses factures suivies impayées (3 essais, 2 jours d'écart)
 export async function prelevementsDus(chambreId: string, maintenant = new Date()): Promise<number> {
   if (!stripeConfigure()) return 0;
   const c = await db.chambre.findUnique({ where: { id: chambreId }, select: { id: true, nom: true, stripeClientId: true, stripeCarteId: true } });
@@ -238,8 +220,6 @@ export async function prelevementsDus(chambreId: string, maintenant = new Date()
   return payees;
 }
 
-// Tâche régulière, pour une Chambre (dans avecChambre) : relance ses super admins pour chaque facture en retard,
-// aux jours réglés par l'Admin GM, une fois par jour de relance
 export async function relancesDues(chambreId: string, maintenant = new Date()): Promise<number> {
   const r = await reglagesRetard();
   const factures = await db.facturePlateforme.findMany({
@@ -269,10 +249,8 @@ export async function relancesDues(chambreId: string, maintenant = new Date()): 
         ],
         bouton: { libelle: "Payer la facture", url: lien },
       });
-      // Au nom de la plateforme (les tâches tournent dans la Chambre : sans cela, son propre expéditeur)
       await envoyerCourriel({ a: u.email, sujet: `Facture ${f.numero} en attente`, html, texte, dePlateforme: true });
     }
-    // Toutes les relances passées comptent comme faites : une seule par passage
     const faites = [...new Set([...f.relances, ...r.relances.filter((d) => d <= jours)])];
     await db.facturePlateforme.update({ where: { id: f.id }, data: { relances: faites } });
     await alerterGM({
@@ -288,7 +266,6 @@ export async function relancesDues(chambreId: string, maintenant = new Date()): 
   return aRelancer.length;
 }
 
-// Webhook Stripe : session de paiement terminée, prélèvement confirmé plus tard (confirmation de la banque)
 export async function traiterEvenement(ev: Stripe.Event): Promise<void> {
   switch (ev.type) {
     case "checkout.session.completed":
@@ -303,7 +280,6 @@ export async function traiterEvenement(ev: Stripe.Event): Promise<void> {
   }
 }
 
-// Reçu de l'abonnement aux admins de la Chambre (paiement par carte) ; jamais bloquant
 async function recuAbonnement(chambreId: string, numero: string, total: number) {
   try {
     const [admins, base] = await Promise.all([

@@ -3,7 +3,6 @@ import { FUSEAU_CHAMBRE, libelleLieu } from "@/lib/rendezvous";
 import { getRendezvous } from "@/lib/rendezvous-donnees";
 import { getCurrentUser } from "@/lib/session";
 
-// L'invitation d'agenda (.ics) d'un rendez-vous du membre connecté
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser("membre");
   const r = await getRendezvous((await params).id);

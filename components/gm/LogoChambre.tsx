@@ -1,8 +1,5 @@
 import Image from "next/image";
 
-// Le logo d'une Chambre (réglé dans « Mon entreprise »), comme celui des entreprises membres dans le back-office ;
-// sans logo : ses initiales, dans un cadre de même taille (les listes restent alignées). Le nom est toujours affiché
-// à côté : l'image est décorative
 export function LogoChambre({ nom, logo, fond, taille = 40 }: { nom: string; logo: string | null; fond?: string | null; taille?: number }) {
   const largeur = Math.round(taille * 1.6);
   if (logo) {

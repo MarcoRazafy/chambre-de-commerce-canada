@@ -8,12 +8,9 @@ import { COORDONNEES } from "@/lib/coordonnees";
 import { logoPourCourriel } from "@/lib/profil-chambre";
 import { lireDoc, versHtml, versTexte } from "@/lib/lettre-blocs";
 
-// Audience d'une lettre : les contacts des membres (selon le statut et les tags de l'entreprise, principal ou tous)
-// et, si coché, les abonnés à la lettre d'information. Avec « evenement », seulement les inscrits de cet événement.
 export type Audience = {
   statuts: ("a_jour" | "en_attente" | "en_retard")[];
   etiquettes: string[];
-  // Entreprises qui ne reçoivent pas la lettre, même si elles ont un tag choisi
   exclus: string[];
   contacts: "principal" | "tous";
   abonnes: boolean;
@@ -39,14 +36,11 @@ export function lireAudience(v: unknown): Audience {
   };
 }
 
-// « motif » : pourquoi la personne reçoit ce courriel, rappelé en bas (sinon : membre ou abonné)
 export type Destinataire = { email: string; nom: string; abonne: boolean; motif?: string; entreprise?: string };
 
-// Une adresse n'apparaît qu'une fois, même si elle est à la fois contact et abonnée
 export async function destinataires(a: Audience): Promise<Destinataire[]> {
   const parAdresse = new Map<string, Destinataire>();
   if (a.evenement) {
-    // Les inscrits de l'événement (pas ceux notés absents), un courriel par adresse
     const e = await prisma.event.findUnique({ where: { id: a.evenement }, select: { titre: true } });
     if (!e) return [];
     const inscrits = await prisma.attendee.findMany({
@@ -77,7 +71,6 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
     });
     for (const c of contacts) parAdresse.set(c.email.toLowerCase(), { email: c.email, nom: c.nom, abonne: false, entreprise: c.member?.nom });
   }
-  // Contacts sans entreprise : tous s'il n'y a pas de tag choisi, sinon ceux qui portent un des tags ; jamais les exclus
   if (a.abonnes || a.etiquettes.length) {
     const abonnes = await prisma.abonne.findMany({
       where: {
@@ -93,8 +86,6 @@ export async function destinataires(a: Audience): Promise<Destinataire[]> {
   return [...parAdresse.values()];
 }
 
-// Lien de désabonnement signé (abonnés à la lettre seulement) ; il porte sa Chambre (« c ») : l'espace des membres
-// est partagé entre toutes les Chambres. Les liens plus anciens, sans Chambre, valent à l'adresse de la leur.
 function signature(email: string, chambreId = "") {
   const charge = chambreId ? `desabonnement:${chambreId}:${email.toLowerCase()}` : `desabonnement:${email.toLowerCase()}`;
   return createHmac("sha256", process.env.AUTH_SECRET ?? "cancham").update(charge).digest("base64url").slice(0, 32);
@@ -104,7 +95,6 @@ export function signatureValide(email: string, s: string, chambreId = "") {
   return attendu.length === recu.length && timingSafeEqual(attendu, recu);
 }
 
-// Logo de « Mon entreprise », relu au plus toutes les 30 s pour chaque Chambre (une lettre part vers beaucoup d'adresses)
 const logoMemo = new Map<string, { jusqua: number; url: string | undefined }>();
 async function logoEntreprise() {
   const chambreId = await chambreCourante();
@@ -118,7 +108,6 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
   const desabonnement = d.abonne
     ? await urlPublique(`/desabonnement?${new URLSearchParams({ e: d.email, c: chambreId, s: signature(d.email, chambreId) })}`)
     : null;
-  // Lettre composée dans l'éditeur visuel : son rendu, avec les variables du destinataire
   const doc = lireDoc(contenu);
   if (doc) {
     const o = {
@@ -144,8 +133,6 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
   };
 }
 
-// Envoi à toute l'audience : chaque courriel est noté avant de partir, et son identifiant revient dans
-// les webhooks du fournisseur (remise, ouverture, clic, rebond) ; renvoie le nombre de courriels partis
 export async function envoyerLettre(lettreId: string, sujet: string, contenu: string, liste: Destinataire[]) {
   let partis = 0;
   for (const d of liste) {
@@ -161,9 +148,6 @@ export async function envoyerLettre(lettreId: string, sujet: string, contenu: st
   return partis;
 }
 
-// Lettres programmées dont l'heure est venue (appelé toutes les 5 minutes, comme les rappels d'événements).
-// La lettre est d'abord passée « en cours d'envoi » : deux passages simultanés ne l'envoient pas deux fois.
-// Les destinataires sont lus au moment de l'envoi : un désabonnement entre-temps est respecté.
 export async function envoyerLettresDues(maintenant = new Date()): Promise<number> {
   if (!courrielsActifs()) return 0;
   const dues = await prisma.lettre.findMany({

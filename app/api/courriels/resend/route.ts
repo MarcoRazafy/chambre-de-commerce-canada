@@ -1,8 +1,6 @@
 import { appliquerSuivi } from "@/lib/suivi-courriels";
 import { effetEvenement, signatureResendValide, type EvenementResend } from "@/lib/resend-webhook";
 
-// Webhook de Resend : remise, ouverture, clic, rebond et plainte des courriels de la newsletter.
-// À déclarer dans Resend (Webhooks) avec l'adresse …/api/courriels/resend ; secret dans RESEND_WEBHOOK_SECRET.
 export async function POST(req: Request) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
   if (!secret) return new Response("webhook non configuré", { status: 503 });

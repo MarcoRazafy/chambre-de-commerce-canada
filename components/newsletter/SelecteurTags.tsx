@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react";
 import { Plus, Search, Tag, X } from "lucide-react";
 import { plat } from "@/lib/texte";
 
-// Tags choisis en pastilles, et un bouton qui ouvre la liste des autres tags (recherche comprise)
 export function SelecteurTags({
   name,
   options,

@@ -9,7 +9,6 @@ import { demanderReinitialisationGM } from "@/lib/actions/gm-compte";
 
 export const metadata: Metadata = { title: "Mot de passe oublié · Administrateur" };
 
-// Mot de passe oublié (Admin GM) : un lien par courriel, valable une heure
 export default async function MotDePasseOublieGM({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string; envoye?: string }> }) {
   const { erreur, email, envoye } = await searchParams;
 

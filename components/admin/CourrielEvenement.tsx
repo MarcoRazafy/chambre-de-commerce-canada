@@ -23,8 +23,6 @@ import { DatesRappel } from "@/components/admin/DatesRappel";
 
 const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 
-// Onglet « Rappels » d'un événement : les rappels automatiques aux inscrits, ajoutés un à un.
-// « rappel » : « nouveau » ou l'id du rappel ouvert dans le formulaire.
 export async function CourrielEvenement({
   eventId,
   passe,
@@ -120,7 +118,6 @@ async function FormulaireRappel({
   const doc =
     (rappel?.message && lireDoc(rappel.message, reseaux)) ||
     (rappel?.message ? docDepuisTexte(titre, rappel.message, reseaux, mentions) : rappelParDefaut(reseaux, mentions));
-  // Par défaut : la veille, à l'heure du début de l'événement
   const dates = rappel ? momentsEnvoi(rappel, debut).map(versSaisie) : [];
 
   return (

@@ -6,11 +6,9 @@ import { Card, Saillant } from "@/components/ui";
 import { OFFRES_ACCUEIL } from "@/lib/offres";
 import { getMembers, getOffers } from "@/lib/queries";
 
-// Offres & promotions des membres, montrées sur l'accueil de l'espace membre (les plus récentes d'abord)
 export default async function OffresAdmin() {
   const [offres, membres] = await Promise.all([getOffers(), getMembers()]);
   const proposants = membres.filter((m) => m.statut !== "candidature").map((m) => ({ id: m.id, nom: m.nom }));
-  // Ce que voient les membres : les plus récentes qui vont sur l'accueil
   const surAccueil = new Set(
     offres.filter((o) => o.emplacement !== "actualites").slice(0, OFFRES_ACCUEIL).map((o) => o.id),
   );

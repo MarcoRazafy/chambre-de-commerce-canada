@@ -1,6 +1,5 @@
 "use client";
 
-// Carte de l'offre à la carte (site) : son bouton ouvre une fenêtre pour choisir ses fonctions et voir le prix
 import { useId, useRef } from "react";
 import { X } from "lucide-react";
 import { ComposeurOffre, type OffreComposable } from "@/components/plateforme/ComposeurOffre";
@@ -24,7 +23,6 @@ export function BoutonComposer({ offre, initiales }: { offre: OffreComposable; i
       <dialog
         ref={fenetre}
         aria-labelledby={`${id}-titre`}
-        // Un clic hors de la fenêtre la ferme
         onClick={(e) => e.target === e.currentTarget && fermer()}
         className="fenetre-composeur m-auto p-0 border-0 bg-transparent w-[min(960px,calc(100vw-24px))] max-w-none max-h-[calc(100dvh-24px)] overflow-y-auto rounded-[20px] backdrop:bg-[rgba(15,29,44,0.6)] backdrop:backdrop-blur-sm"
       >

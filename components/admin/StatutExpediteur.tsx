@@ -1,6 +1,3 @@
-// Domaine d'expédition (Paramètres → Courriels) : il s'ajoute d'abord ; ensuite son état chez Brevo et, tant qu'il
-// n'est pas validé, les enregistrements DNS à copier chez l'hébergeur du domaine.
-// Les boutons envoient tout le formulaire de l'expéditeur (rien de ce qui a été tapé ne se perd).
 import { CheckCircle2, Plus, RefreshCw, ShieldCheck, X, XCircle } from "lucide-react";
 import { INPUT } from "@/components/champ-style";
 import { BoutonCopier } from "@/components/paiement/Copiable";
@@ -14,7 +11,6 @@ import type { EtatDomaine } from "@/lib/brevo-domaines";
 
 const BOUTON = "btn-contour btn-contour-sm text-ink hover:bg-surface-2 self-start";
 const LIBELLE = "block text-[12.3px] font-semibold text-muted mb-1.5";
-// « @ » → « domaine.com. » ; « brevo1._domainkey » → « brevo1._domainkey.domaine.com. » (le point final : nom absolu)
 const nomComplet = (nom: string, domaine: string) => `${nom === "@" ? domaine : `${nom}.${domaine}`}.`;
 
 const PASTILLE: Partial<Record<EtatDomaine["etat"], { libelle: string; ton: string }>> = {
@@ -23,7 +19,6 @@ const PASTILLE: Partial<Record<EtatDomaine["etat"], { libelle: string; ton: stri
   absent: { libelle: "À valider", ton: "bg-warn-soft text-warn" },
 };
 
-// Le domaine qui envoie les courriels en ce moment (celui de la plateforme tant que l'entreprise n'a pas le sien)
 export function DomaineActif({ domaine }: { domaine: string }) {
   return (
     <span className="inline-flex items-center gap-2 text-[12.5px] font-semibold text-muted">
@@ -36,7 +31,7 @@ export function DomaineActif({ domaine }: { domaine: string }) {
   );
 }
 
-export function DomaineExpediteur({ domaine, etat, gere }: { domaine: string; etat: EtatDomaine | null; /** Super admin */ gere: boolean }) {
+export function DomaineExpediteur({ domaine, etat, gere }: { domaine: string; etat: EtatDomaine | null; gere: boolean }) {
   if (!domaine || !etat) {
     return (
       <div>
@@ -109,7 +104,6 @@ export function DomaineExpediteur({ domaine, etat, gere }: { domaine: string; et
                         <code className="font-[family-name:var(--font-mono)] text-ink break-all">{x.nom}</code>
                         <BoutonCopier valeur={x.nom} libelle={`le nom ${x.nom}`} className="!min-h-8 !px-2 !text-[12px] border-line bg-surface text-ink" />
                       </div>
-                      {/* Nom complet, pour les hébergeurs qui refusent « @ » ou les noms courts (cPanel) */}
                       <div className="mt-1 flex items-center gap-2 text-[11.5px] text-muted">
                         ou <code className="font-[family-name:var(--font-mono)] break-all">{nomComplet(x.nom, etat.domaine)}</code>
                         <BoutonCopier valeur={nomComplet(x.nom, etat.domaine)} libelle={`le nom complet ${nomComplet(x.nom, etat.domaine)}`} className="!min-h-7 !px-2 !text-[11px] border-line bg-surface text-ink" />

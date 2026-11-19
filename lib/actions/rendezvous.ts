@@ -92,7 +92,6 @@ const SELECTION = {
   hote: { select: { nom: true, email: true } },
 } as const;
 
-// L'invitation de calendrier d'un rendez-vous (annulation : la même, marquée annulée)
 function ics(r: RendezvousAnnonce, annule = false) {
   const jour = toISODate(r.jour);
   const lieu = libelleLieu(r.lieu);
@@ -151,7 +150,6 @@ export async function reserverRendezvous(formData: FormData) {
     redirectWithErreur(MEMBRE, "Ce type de rendez-vous n’est plus proposé.");
   }
 
-  // Les créneaux pris de la même personne (chacun a son agenda)
   const [plages, pris] = await Promise.all([
     prisma.disponibilite.findMany({
       where: { typeId: type.id },
@@ -243,7 +241,6 @@ export async function reserverRendezvous(formData: FormData) {
   );
 }
 
-// L'équipe confirme une demande de rendez-vous : le membre reçoit la confirmation et l'invitation d'agenda
 export async function confirmerRendezvous(formData: FormData) {
   const moi = await exigerEquipe();
   const retour = texte(formData, "retour").startsWith("/admin") ? texte(formData, "retour") : EQUIPE;
@@ -308,8 +305,6 @@ export async function annulerRendezvous(formData: FormData) {
       ? notifierEquipe({ ...annulation, url: EQUIPE })
       : notifier([rendezvous.userId], { ...annulation, url: MEMBRE }),
   );
-  // Annulé par le membre : l'équipe et la personne qui reçoit sont prévenues ; par l'équipe : le membre,
-  // avec l'invitation d'agenda marquée annulée pour retirer le rendez-vous de son calendrier
   const destinataires = parLeMembre
     ? [...new Set([await courrielEquipe(), rendezvous.hote?.email].filter((x): x is string => !!x))]
     : [rendezvous.user.email];
@@ -474,7 +469,6 @@ export async function enregistrerTypeRendezvous(formData: FormData) {
         : "aucune heure d’accueil"
     }${hote ? ` · avec ${hote.nom}` : ""}${actif ? "" : " · masqué"}.`,
   );
-  // Un type rattaché à une personne qui ne reçoit pas encore n'apparaît pas aux membres : on le signale
   if (hote && !hote.recoitRdv && actif) {
     revalider();
     redirectWithFlash(
@@ -520,7 +514,6 @@ export async function supprimerTypeRendezvous(formData: FormData) {
   redirectWithFlash(EQUIPE, `Type « ${type.titre} » supprimé`);
 }
 
-// Qui reçoit : spécialité, salle de visio fixe (Meet, Zoom…), et si la personne reçoit des rendez-vous
 export async function enregistrerPersonneRdv(formData: FormData) {
   const moi = await exigerEquipe();
   const retour = `${EQUIPE}?onglet=equipe`;

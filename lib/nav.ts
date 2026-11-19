@@ -4,7 +4,6 @@ export interface NavItem {
   href: string;
   label: string;
   icon: string;
-  /** Autres adresses qui allument aussi cette entrée (ex. Rendez-vous sous « Agenda & rendez-vous ») */
   aussi?: string[];
 }
 
@@ -13,8 +12,6 @@ export interface NavGroup {
   items: NavItem[];
 }
 
-// Menus construits comme ceux de la plateforme L'Alliée Virtuelle : Accueil, puis des rubriques
-// (surtitre en couleur), et en pied les réglages et l'aide.
 export const NAV_MEMBRE: NavGroup[] = [
   { label: "", items: [{ href: "/membre", label: "Accueil", icon: "home" }] },
   {
@@ -35,14 +32,6 @@ export const NAV_MEMBRE: NavGroup[] = [
     items: [
       { href: "/membre/evenements", label: "Événements", icon: "calendar" },
       { href: "/membre/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
-      // Retiré pour l'instant (Agenda et Actualités) : à décommenter pour le remettre, et retirer la ligne « Rendez-vous » ci-dessus
-      // {
-      //   href: "/membre/agenda",
-      //   label: "Agenda & rendez-vous",
-      //   icon: "agenda",
-      //   aussi: ["/membre/rendez-vous"],
-      // },
-      // { href: "/membre/actualites", label: "Actualités", icon: "news" },
       {
         href: "/membre/ressources",
         label: "Ressources & services",
@@ -58,13 +47,11 @@ export const NAV_MEMBRE: NavGroup[] = [
   {
     label: "Aide",
     items: [
-      // « Contacter l'équipe » s'ouvre depuis « Besoin d'aide ? » (aussi : messagerie, bulle d'aide)
       { href: "/membre/contact", label: "Besoin d’aide ?", icon: "help" },
       { href: "/membre/support-it", label: "Support IT", icon: "support" },
     ],
   },
 ];
-
 
 export const NAV_ADMIN: NavGroup[] = [
   { label: "", items: [{ href: "/admin", label: "Accueil", icon: "home" }] },
@@ -78,11 +65,8 @@ export const NAV_ADMIN: NavGroup[] = [
     label: "Activités",
     items: [
       { href: "/admin/evenements", label: "Événements", icon: "calendar" },
-      // Retiré pour l'instant (Agenda et Actualités) : à décommenter pour le remettre
-      // { href: "/admin/agenda", label: "Agenda", icon: "agenda" },
       { href: "/admin/rendez-vous", label: "Rendez-vous", icon: "rendezvous" },
       { href: "/admin/offres", label: "Offres & promotions", icon: "offre" },
-      // { href: "/admin/actualites", label: "Actualités", icon: "news" },
       {
         href: "/admin/ressources",
         label: "Ressources & services",
@@ -120,8 +104,6 @@ export const NAV_ADMIN: NavGroup[] = [
     ],
   },
 ];
-
-
 
 export function navFor(space: Space): NavGroup[] {
   return space === "admin" ? NAV_ADMIN : NAV_MEMBRE;
@@ -185,8 +167,6 @@ export function titrePour(
   return cle ? TITLES[cle] : defaut;
 }
 
-// Fil d'Ariane de la barre du haut : l'espace (accueil), puis chaque niveau jusqu'à la page affichée.
-// Les sous-pages sans titre propre (une fiche, « modifier »…) prennent un libellé générique.
 export type Miette = { libelle: string; href: string | null };
 
 const SOUS_PAGES: Record<string, string> = {
@@ -218,7 +198,6 @@ const FICHES: Record<string, string> = {
   "/membre/cotisations/payer": "Règlement",
 };
 
-// Pages dont le détail est dans l'adresse (« /admin/etiquettes?e=VIP ») : le paramètre donne le dernier niveau
 const DETAIL_PAR_PARAMETRE: Record<string, string> = { "/admin/etiquettes": "e" };
 
 export function filPour(chemin: string, racine: string, params?: URLSearchParams | null): Miette[] {
@@ -227,12 +206,10 @@ export function filPour(chemin: string, racine: string, params?: URLSearchParams
   const fil: Miette[] = [{ libelle: espace, href: propre === racine ? null : racine }];
   if (propre === racine) return [...fil, { libelle: accueil, href: null }];
 
-  // Le niveau connu le plus profond qui contient la page
   const connue = (c: string) => c !== racine && c.startsWith(`${racine}/`) && (propre === c || propre.startsWith(`${c}/`));
   const cles = Object.keys(TITLES).filter(connue).sort((a, b) => a.length - b.length);
   for (const cle of cles) fil.push({ libelle: TITLES[cle][1], href: cle });
 
-  // La suite du chemin, au-delà du dernier niveau connu
   let base = cles.at(-1) ?? racine;
   for (const segment of propre.slice(base.length).split("/").filter(Boolean)) {
     const libelle = SOUS_PAGES[segment] ?? FICHES[base] ?? "Détail";
@@ -245,7 +222,6 @@ export function filPour(chemin: string, racine: string, params?: URLSearchParams
   return fil;
 }
 
-// Espace Admin GM : même coquille que le back-office (Paramètres en pied de menu)
 export const NAV_GM: NavGroup[] = [
   { label: "", items: [{ href: "/gm", label: "Tableau de bord", icon: "gauge" }] },
   {

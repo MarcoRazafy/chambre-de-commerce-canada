@@ -1,6 +1,5 @@
 "use server";
 
-// Compte de l'Admin GM : son nom et son adresse, son mot de passe, et « mot de passe oublié » (lien par courriel)
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
@@ -25,7 +24,6 @@ function vers(chemin: string, params: Record<string, string>): never {
   redirect(`${chemin}?${new URLSearchParams(params)}`);
 }
 
-// Nom et adresse e-mail du compte connecté
 export async function modifierCompteGM(formData: FormData) {
   const gm = await exigerGM();
   const nom = texte(formData, "nom", 100);
@@ -39,7 +37,6 @@ export async function modifierCompteGM(formData: FormData) {
   redirectWithFlash(COMPTE, "Compte mis à jour");
 }
 
-// Nouveau mot de passe, l'actuel à l'appui ; les autres sessions ouvertes se ferment, celle-ci continue
 export async function changerMotDePasseGM(formData: FormData) {
   const gm = await exigerGM();
   const actuel = String(formData.get("actuel") ?? "");
@@ -65,7 +62,6 @@ export async function changerMotDePasseGM(formData: FormData) {
   redirectWithFlash(COMPTE, "Mot de passe modifié");
 }
 
-// Mot de passe oublié : un lien par courriel si l'adresse est celle d'un compte (la réponse ne dit pas si c'est le cas)
 export async function demanderReinitialisationGM(formData: FormData) {
   const email = texte(formData, "email").toLowerCase();
   if (!ADRESSE.test(email)) vers(OUBLI, { erreur: "Indiquez une adresse e-mail valide.", email });
@@ -83,7 +79,6 @@ export async function demanderReinitialisationGM(formData: FormData) {
   vers(OUBLI, { envoye: email });
 }
 
-// Le nouveau mot de passe, depuis le lien reçu ; le compte est ensuite connecté
 export async function definirMotDePasseGM(formData: FormData) {
   const brut = texte(formData, "jeton", 100);
   const motDePasse = String(formData.get("motDePasse") ?? "");
