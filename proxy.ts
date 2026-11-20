@@ -203,6 +203,9 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
 
 export default async function proxy(request: NextRequest) {
   const hote = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (process.env.NODE_ENV === "production" && request.headers.get("x-forwarded-proto")?.split(",")[0].trim() === "http" && hote) {
+    return NextResponse.redirect(`https://${hote.split(",")[0].trim()}${request.nextUrl.pathname}${request.nextUrl.search}`, 308);
+  }
   if (estHoteGM(hote)) return proxyGM(request);
   if (estHotePlateforme(hote)) return proxyPlateforme(request);
   if (estGM(request.nextUrl.pathname) || estSitePlateforme(request.nextUrl.pathname)) return introuvable();
