@@ -88,16 +88,19 @@ export async function passerALOffre(chambreId: string, offreId: string, acteur?:
   return true;
 }
 
-export async function marquerPayee(factureId: string, paiementId: string | null, acteur?: string) {
+export async function marquerPayee(factureId: string, paiementId: string | null, acteur?: string, manuel?: { le: Date; mode: string; note?: string }) {
   const f = await db.facturePlateforme.findUnique({ where: { id: factureId }, select: { chambreId: true, numero: true, total: true, chambre: { select: { nom: true } } } });
   if (!f) return false;
   const r = await db.facturePlateforme.updateMany({
     where: { id: factureId, payeeLe: null },
-    data: { payeeLe: new Date(), stripePaiementId: paiementId, dernierEchec: null },
+    data: { payeeLe: manuel?.le ?? new Date(), stripePaiementId: paiementId, dernierEchec: null },
   });
   if (!r.count) return false;
   oublierAdresses();
-  await noter(f.chambreId, "facture_payee", `Facture ${f.numero} payée.`, acteur);
+  const detail = manuel
+    ? `Facture ${f.numero} payée par ${manuel.mode.toLowerCase()} le ${manuel.le.toLocaleDateString("fr-FR", { timeZone: "UTC" })} · ${fmtDollars(f.total)}${manuel.note ? ` · ${manuel.note}` : ""}.`
+    : `Facture ${f.numero} payée.`;
+  await noter(f.chambreId, "facture_payee", detail, acteur);
   if (!acteur) {
     await alerterGM({
       sujet: `Paiement reçu : ${f.chambre.nom}`,

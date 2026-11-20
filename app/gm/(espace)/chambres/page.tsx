@@ -5,6 +5,8 @@ import { EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { LogoChambre } from "@/components/gm/LogoChambre";
+import { ConfirmerPaiementChambre } from "@/components/gm/ConfirmerPaiementChambre";
+import { fmtDollars } from "@/lib/plateforme";
 import { Card, Pill, Saillant, Td, Th } from "@/components/ui";
 import { fmtDateShort } from "@/lib/format";
 import { listeChambres, offresPlateforme, STATUTS, type StatutAffiche } from "@/lib/gm";
@@ -87,6 +89,8 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
     const prochainDesc = c === cle ? !desc : TRIS[c].descDabord;
     return url({ statut, tri: c === TRI_DEFAUT && !prochainDesc ? "" : `${prochainDesc ? "-" : ""}${c}` });
   };
+  const retourListe = url({ statut, tri: triActuel });
+  const aPayer = (c: (typeof chambres)[number]) => c.impayees.map((f) => ({ id: f.id, numero: f.numero, total: fmtDollars(f.total) }));
   const colonne = (c: Tri, className?: string) => <ThTri cle={c} actif={c === cle} desc={desc} href={lienTri(c)} className={className} />;
 
   return (
@@ -153,9 +157,12 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
                       <Td className="whitespace-nowrap">{c.dernierPaiement ? jour(c.dernierPaiement) : <span className="text-faint">—</span>}</Td>
                       <Td className="whitespace-nowrap">{jour(c.creeLe)}</Td>
                       <Td className="text-right">
-                        <Link href={fiche(c.id)} aria-label={`Ouvrir la fiche de ${c.nom}`} className="inline-flex w-8 h-8 rounded-lg items-center justify-center text-faint hover:text-ink hover:bg-surface">
-                          <ChevronRight size={17} aria-hidden />
-                        </Link>
+                        <div className="flex items-center justify-end gap-2">
+                          <ConfirmerPaiementChambre chambreId={c.id} nom={c.nom} factures={aPayer(c)} retour={retourListe} />
+                          <Link href={fiche(c.id)} aria-label={`Ouvrir la fiche de ${c.nom}`} className="inline-flex w-8 h-8 rounded-lg items-center justify-center text-faint hover:text-ink hover:bg-surface">
+                            <ChevronRight size={17} aria-hidden />
+                          </Link>
+                        </div>
                       </Td>
                     </tr>
                   ))}
@@ -187,6 +194,11 @@ export default async function ChambresGM({ searchParams }: { searchParams: Promi
                       <div><dt className="text-muted">Dernier paiement</dt><dd className="m-0 font-semibold tabular-nums">{c.dernierPaiement ? jour(c.dernierPaiement) : "—"}</dd></div>
                     </dl>
                   </Link>
+                  {c.impayees.length ? (
+                    <div className="mt-3 pt-3 border-t border-line flex justify-end">
+                      <ConfirmerPaiementChambre chambreId={c.id} nom={c.nom} factures={aPayer(c)} retour={retourListe} />
+                    </div>
+                  ) : null}
                 </Card>
               </li>
             ))}

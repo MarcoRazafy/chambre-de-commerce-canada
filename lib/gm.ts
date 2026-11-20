@@ -33,7 +33,7 @@ const limiteRetard = () => {
 };
 
 export async function listeChambres() {
-  const [chambres, payees, retards] = await Promise.all([
+  const [chambres, payees, retards, impayees] = await Promise.all([
     db.chambre.findMany({
       orderBy: { createdAt: "asc" },
       select: {
@@ -45,6 +45,7 @@ export async function listeChambres() {
     }),
     db.facturePlateforme.groupBy({ by: ["chambreId"], _max: { payeeLe: true } }),
     db.facturePlateforme.groupBy({ by: ["chambreId"], where: { payeeLe: null, date: { lt: limiteRetard() } }, _count: { _all: true } }),
+    db.facturePlateforme.findMany({ where: { payeeLe: null }, orderBy: { date: "asc" }, select: { id: true, numero: true, total: true, chambreId: true } }),
   ]);
   const dernier = new Map(payees.map((p) => [p.chambreId, p._max.payeeLe]));
   const enRetard = new Set(retards.map((r) => r.chambreId));
@@ -56,6 +57,7 @@ export async function listeChambres() {
     membres: c._count.membres,
     equipe: c._count.utilisateurs,
     dernierPaiement: dernier.get(c.id) ?? null,
+    impayees: impayees.filter((f) => f.chambreId === c.id).map(({ id, numero, total }) => ({ id, numero, total })),
   }));
 }
 

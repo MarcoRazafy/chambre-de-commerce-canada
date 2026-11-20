@@ -5,9 +5,10 @@ import { CalendarDays, Coins, ExternalLink, KeyRound, LogIn, MessageSquare, Paus
 import { Compteur, EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { LogoChambre } from "@/components/gm/LogoChambre";
+import { ConfirmerPaiementChambre } from "@/components/gm/ConfirmerPaiementChambre";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
-import { changerOffreChambre, entrerDansChambre, envoyerLienConnexion, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, supprimerChambre, suspendreChambre } from "@/lib/actions/gm";
+import { changerOffreChambre, entrerDansChambre, envoyerLienConnexion, modifierAdresseChambre, reactiverChambre, supprimerChambre, suspendreChambre } from "@/lib/actions/gm";
 import { CHAMBRE_PRINCIPALE } from "@/lib/chambre-courante";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
@@ -157,11 +158,7 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                         {x.payeeLe ? <Pill tone="ok">Payée le {jour(x.payeeLe)}</Pill> : (
                           <div className="flex items-center gap-2 flex-wrap">
                             <Pill tone="warn">À payer</Pill>
-                            <form action={marquerFacturePayee}>
-                              <input type="hidden" name="chambreId" value={c.id} />
-                              <input type="hidden" name="factureId" value={x.id} />
-                              <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">Marquer payée</button>
-                            </form>
+                            <ConfirmerPaiementChambre chambreId={c.id} nom={c.nom} factures={[{ id: x.id, numero: x.numero, total: fmtDollars(x.total) }]} />
                           </div>
                         )}
                         {!x.payeeLe && x.dernierEchec ? <div className="text-[12px] text-bad mt-1">{x.dernierEchec}</div> : null}
@@ -184,11 +181,7 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                       {x.payeeLe ? <Pill tone="ok">Payée le {jour(x.payeeLe)}</Pill> : (
                         <span className="flex items-center gap-2">
                           <Pill tone="warn">À payer</Pill>
-                          <form action={marquerFacturePayee}>
-                            <input type="hidden" name="chambreId" value={c.id} />
-                            <input type="hidden" name="factureId" value={x.id} />
-                            <button type="submit" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2">Marquer payée</button>
-                          </form>
+                          <ConfirmerPaiementChambre chambreId={c.id} nom={c.nom} factures={[{ id: x.id, numero: x.numero, total: fmtDollars(x.total) }]} />
                         </span>
                       )}
                     </div>

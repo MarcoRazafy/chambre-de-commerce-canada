@@ -9,6 +9,7 @@ import { domaineValide, normaliserDomaine } from "@/lib/brevo-domaines";
 import { marquerPayee } from "@/lib/abonnement-stripe";
 import { CHAMBRE_PRINCIPALE, oublierAdresses } from "@/lib/chambre-courante";
 import { effacerChambre } from "@/lib/suppression-chambre";
+import { MODES_PAIEMENT_CHAMBRE } from "@/lib/modes-paiement-chambre";
 import { oublierReglages, prismaSysteme as db } from "@/lib/db";
 import { lireRelances } from "@/lib/retards";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -204,13 +205,20 @@ export async function enregistrerOffre(formData: FormData) {
 export async function marquerFacturePayee(formData: FormData) {
   const gm = await exigerGM();
   const c = await chambreOuErreur(formData);
+  const brut = texte(formData, "retour", 300);
+  const retour = brut.startsWith("/gm") && !brut.startsWith("//") ? brut : fiche(c.id);
   const id = texte(formData, "factureId", 100);
   const f = await db.facturePlateforme.findFirst({ where: { id, chambreId: c.id }, select: { numero: true, payeeLe: true } });
-  if (!f) redirectWithErreur(fiche(c.id), "Facture introuvable.");
-  if (f.payeeLe) redirectWithFlash(fiche(c.id), "Facture déjà payée");
-  await marquerPayee(id, null, `${gm.nom} (administrateur de la plateforme)`);
+  if (!f) redirectWithErreur(retour, "Facture introuvable.");
+  if (f.payeeLe) redirectWithFlash(retour, "Facture déjà payée");
+  const mode = texte(formData, "mode", 40);
+  if (!MODES_PAIEMENT_CHAMBRE.includes(mode)) redirectWithErreur(retour, "Choisissez le mode de paiement.");
+  const saisie = texte(formData, "date", 10);
+  const le = /^\d{4}-\d{2}-\d{2}$/.test(saisie) ? new Date(`${saisie}T00:00:00Z`) : new Date();
+  if (Number.isNaN(le.getTime()) || le.getTime() > Date.now()) redirectWithErreur(retour, "La date du paiement ne peut pas être dans le futur.");
+  await marquerPayee(id, null, `${gm.nom} (administrateur de la plateforme)`, { le, mode, note: texte(formData, "note", 200) });
   revalidatePath("/gm", "layout");
-  redirectWithFlash(fiche(c.id), `Facture ${f.numero} payée`);
+  redirectWithFlash(retour, `Paiement confirmé · facture ${f.numero} réglée`);
 }
 
 export async function enregistrerReglages(formData: FormData) {
