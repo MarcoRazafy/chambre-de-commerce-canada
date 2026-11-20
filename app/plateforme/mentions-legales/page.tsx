@@ -5,7 +5,7 @@ import { identitePlateforme, numerosPlateforme } from "@/lib/identite-plateforme
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: { absolute: "Mentions légales · L’Alliée Virtuelle" } };
+export const metadata: Metadata = { title: { absolute: "Mentions légales · L’Alliée Virtuelle" }, description: "Éditeur, hébergement, propriété intellectuelle et contact de L’Alliée Virtuelle." };
 
 export default async function MentionsLegales() {
   const p = await identitePlateforme();

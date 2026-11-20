@@ -5,7 +5,7 @@ import { identitePlateforme } from "@/lib/identite-plateforme";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: { absolute: "Confidentialité · L’Alliée Virtuelle" } };
+export const metadata: Metadata = { title: { absolute: "Confidentialité · L’Alliée Virtuelle" }, description: "Les données enregistrées par L’Alliée Virtuelle, pourquoi, combien de temps, avec qui elles sont partagées, et vos droits." };
 
 export default async function Confidentialite() {
   const p = await identitePlateforme();

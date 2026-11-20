@@ -13,6 +13,7 @@ import { offresPubliques } from "@/lib/plateforme-site";
 
 export const metadata: Metadata = {
   title: { absolute: "Créer une Chambre · L’Alliée Virtuelle" },
+  description: "Ouvrez l’espace de votre Chambre de commerce en quelques minutes : membres, cotisations, événements et échanges.",
 };
 
 type Saisies = {

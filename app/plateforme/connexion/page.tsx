@@ -9,7 +9,7 @@ import { MarqueSite, PIED_PLATEFORME } from "@/components/plateforme/site/Marque
 import { connexionPlateforme } from "@/lib/actions/plateforme";
 import { lienGoogle } from "@/lib/google";
 
-export const metadata: Metadata = { title: { absolute: "Connexion · L’Alliée Virtuelle" } };
+export const metadata: Metadata = { title: { absolute: "Connexion · L’Alliée Virtuelle" }, description: "Connectez-vous à l’espace de votre Chambre de commerce sur L’Alliée Virtuelle." };
 
 export default async function ConnexionPlateforme({ searchParams }: { searchParams: Promise<{ erreur?: string; email?: string }> }) {
   const { erreur, email } = await searchParams;

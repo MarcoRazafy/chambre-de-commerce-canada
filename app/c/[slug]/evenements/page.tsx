@@ -10,7 +10,10 @@ type Params = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const p = await pagePublique((await params).slug);
-  return { title: { absolute: p ? `Nos évènements · ${p.profil.nom}` : "Nos évènements" } };
+  if (!p) return { title: { absolute: "Nos évènements" } };
+  const titre = `Nos évènements · ${p.profil.nom}`;
+  const description = `Les prochains évènements de ${p.profil.nom} : rencontres, ateliers et rendez-vous d’affaires, ouverts à l’inscription.`;
+  return { title: { absolute: titre }, description };
 }
 
 export default async function EvenementsPublics({ params }: Params) {

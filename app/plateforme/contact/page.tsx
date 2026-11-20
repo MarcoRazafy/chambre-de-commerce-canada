@@ -8,7 +8,7 @@ import { CHAMP_AUTH } from "@/components/public/style-champs";
 import { CadrePlateforme, CartePlateforme } from "@/components/plateforme/CadrePlateforme";
 import { envoyerContact } from "@/lib/actions/plateforme";
 
-export const metadata: Metadata = { title: { absolute: "Contact · L’Alliée Virtuelle" } };
+export const metadata: Metadata = { title: { absolute: "Contact · L’Alliée Virtuelle" }, description: "Une question sur L’Alliée Virtuelle, une démonstration ou un devis : écrivez-nous, nous répondons rapidement." };
 
 type Saisies = { erreur?: string; nom?: string; email?: string; message?: string; envoye?: string };
 

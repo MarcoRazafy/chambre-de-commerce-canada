@@ -11,7 +11,7 @@ import {
   IBM_Plex_Sans,
   Inter,
 } from "next/font/google";
-import { baseSite } from "@/lib/site";
+import { metadonneesParDefaut } from "@/lib/metadonnees";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -50,22 +50,9 @@ const inter = Inter({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(baseSite()),
-  title: {
-    default:
-      "IMPACT 261 — Chambre de Commerce et de Coopération Canada–Madagascar",
-    template: "%s · IMPACT 261",
-  },
-  description:
-    "Le réseau des entreprises du Canada et de Madagascar : événements, mises en relation et accompagnement à l’export.",
-  applicationName: "IMPACT 261",
-  appleWebApp: {
-    capable: true,
-    title: "IMPACT 261",
-    statusBarStyle: "default",
-  },
-};
+export function generateMetadata(): Promise<Metadata> {
+  return metadonneesParDefaut();
+}
 
 export const viewport: Viewport = {
   themeColor: "#0f1d2c",

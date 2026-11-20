@@ -5,7 +5,7 @@ import { identitePlateforme } from "@/lib/identite-plateforme";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = { title: { absolute: "Conditions d’utilisation · L’Alliée Virtuelle" } };
+export const metadata: Metadata = { title: { absolute: "Conditions d’utilisation · L’Alliée Virtuelle" }, description: "Les conditions d’utilisation de L’Alliée Virtuelle : comptes, offres et prix, paiement, données, disponibilité, suspension et responsabilité." };
 
 export default async function Conditions() {
   const p = await identitePlateforme();

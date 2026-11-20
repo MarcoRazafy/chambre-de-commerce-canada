@@ -21,6 +21,9 @@ import { getProfilChambre } from "@/lib/profil-chambre";
 import { CoordonneesChambre, LogoChambreAuth } from "@/components/public/CoordonneesChambre";
 import { lienGoogle } from "@/lib/google";
 import { utilisateurConnecte } from "@/lib/session";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Connexion" };
 
 export default async function ConnexionPage({
   searchParams,

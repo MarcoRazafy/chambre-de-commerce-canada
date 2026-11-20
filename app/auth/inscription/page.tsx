@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2, KeyRound, Mail, MapPin, User } from "lucide-react";
@@ -19,6 +20,12 @@ import { getProfilChambre } from "@/lib/profil-chambre";
 import { adresseSitePlateforme } from "@/lib/adresse-chambre";
 import { CoordonneesChambre, LogoChambreAuth } from "@/components/public/CoordonneesChambre";
 import { BasculeAuth } from "@/components/public/BasculeAuth";
+
+export async function generateMetadata(): Promise<Metadata> {
+  const profil = await getProfilChambre();
+  const description = `Déposez votre demande d’adhésion à ${profil.nom} : l’équipe l’examine, puis vous complétez votre fiche et rejoignez le réseau.`;
+  return { title: { absolute: `Rejoindre ${profil.nom}` }, description };
+}
 
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();

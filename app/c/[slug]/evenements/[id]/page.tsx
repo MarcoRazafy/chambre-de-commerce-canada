@@ -15,7 +15,10 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug, id } = await params;
   const p = await pagePublique(slug);
   const e = p ? await evenementPublic(p.chambreId, id) : null;
-  return { title: { absolute: e && p ? `${e.titre} · ${p.profil.nom}` : "Évènement" }, description: e?.desc.slice(0, 160) };
+  if (!e || !p) return { title: { absolute: "Évènement" } };
+  const titre = `${e.titre} · ${p.profil.nom}`;
+  const description = e.desc.replace(/\s+/g, " ").trim().slice(0, 160);
+  return { title: { absolute: titre }, description, openGraph: { title: titre, description, ...(e.photo ? { images: [{ url: e.photo, alt: e.titre }] } : {}) } };
 }
 
 export default async function EvenementPublicPage({ params }: Params) {
