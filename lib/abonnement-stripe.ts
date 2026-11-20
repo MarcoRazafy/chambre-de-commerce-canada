@@ -96,6 +96,7 @@ export async function marquerPayee(factureId: string, paiementId: string | null,
     data: { payeeLe: manuel?.le ?? new Date(), stripePaiementId: paiementId, dernierEchec: null },
   });
   if (!r.count) return false;
+  await db.chambre.updateMany({ where: { id: f.chambreId, paiementDiffere: true }, data: { paiementDiffere: false } });
   oublierAdresses();
   const detail = manuel
     ? `Facture ${f.numero} payée par ${manuel.mode.toLowerCase()} le ${manuel.le.toLocaleDateString("fr-FR", { timeZone: "UTC" })} · ${fmtDollars(f.total)}${manuel.note ? ` · ${manuel.note}` : ""}.`

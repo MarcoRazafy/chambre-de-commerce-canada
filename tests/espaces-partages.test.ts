@@ -26,7 +26,7 @@ beforeEach(() => {
   biscuits = {};
   brancherRechercheCompte(async (id) => COMPTES[id] ?? null);
   brancherRechercheChambre(async (r) =>
-    "domaine" in r && r.domaine === "membres.hei.mg" ? { id: "c-hei", suspendue: false, restriction: null, accesDev: false, fonctions: null } : null,
+    "domaine" in r && r.domaine === "membres.hei.mg" ? { id: "c-hei", suspendue: false, restriction: null, accesDev: false, fonctions: null, paiementAttendu: false } : null,
   );
 });
 afterEach(() => vi.unstubAllEnvs());

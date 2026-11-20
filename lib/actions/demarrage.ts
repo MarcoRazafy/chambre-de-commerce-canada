@@ -11,8 +11,8 @@ import { oublierExpediteur, urlPublique } from "@/lib/courriel";
 import { prisma, prismaSysteme as db } from "@/lib/db";
 import { factureDeDemarrage } from "@/lib/factures-plateforme";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
-import { estFonction, libellesFonctions } from "@/lib/fonctions-plateforme";
-import { forfaitOffre, offreGratuite } from "@/lib/plateforme";
+import { libellesFonctions } from "@/lib/fonctions-plateforme";
+import { appliquerOffre } from "@/lib/demarrage";
 import { adresseSurUneLigne } from "@/lib/profil-chambre-defauts";
 import { stripeConfigure } from "@/lib/stripe";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
@@ -31,21 +31,8 @@ async function etapeEnCours() {
 export async function choisirOffreDemarrage(formData: FormData) {
   const { moi, chambreId, etape } = await etapeEnCours();
   if (etape !== "offre") redirect(PAGE);
-  const offre = await db.offre.findUnique({ where: { id: texte(formData, "offre", 50) } });
-  if (!offre) redirectWithErreur(PAGE, "Choisissez une offre.");
-  const choisies = offre.surMesure
-    ? [...new Set(formData.getAll("fonctions").map(String).filter(estFonction))].filter((f) => offre.fonctions.includes(f))
-    : [];
-  const payante = !offreGratuite({ forfait: forfaitOffre(offre, choisies), parUtilisateur: offre.parUtilisateur });
-
-  await db.facturePlateforme.deleteMany({ where: { chambreId, payeeLe: null } });
-  await db.chambre.update({
-    where: { id: chambreId },
-    data: { offreId: offre.id, fonctionsChoisies: choisies, demarrage: payante ? "paiement" : "infos" },
-  });
-  await noter(chambreId, "offre_choisie", `Offre ${offre.nom}.${offre.surMesure ? ` Fonctions : ${libellesFonctions(choisies) || "aucune"}.` : ""}`, moi.nom);
-  oublierAdresses();
-  if (payante) await factureDeDemarrage();
+  const fonctions = formData.getAll("fonctions").map(String);
+  if (!(await appliquerOffre(chambreId, texte(formData, "offre", 50), fonctions, moi.nom))) redirectWithErreur(PAGE, "Choisissez une offre.");
   redirect(PAGE);
 }
 
@@ -66,6 +53,16 @@ export async function payerDemarrage() {
   const url = f ? await sessionPaiement(chambreId, f.id, await urlPublique(PAGE)) : null;
   if (!url) redirectWithErreur(PAGE, "Cette facture est introuvable ou déjà payée.");
   redirect(url);
+}
+
+export async function payerPlusTard() {
+  const { moi, chambreId, etape } = await etapeEnCours();
+  if (etape !== "paiement") redirect(PAGE);
+  if (!(await factureDeDemarrage())) redirect(PAGE);
+  await db.chambre.update({ where: { id: chambreId }, data: { demarrage: "infos", paiementDiffere: true } });
+  await noter(chambreId, "paiement_differe", "Paiement du premier mois remis à plus tard.", moi.nom);
+  oublierAdresses();
+  redirect(PAGE);
 }
 
 export async function terminerDemarrage(formData: FormData) {

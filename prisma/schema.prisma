@@ -201,6 +201,7 @@ model Chambre {
   offre             Offre           @relation(fields: [offreId], references: [id])
   fonctionsChoisies String[]        @default([])
   demarrage         EtapeDemarrage?
+  paiementDiffere   Boolean         @default(false)
   statut            StatutChambre   @default(active)
   suspendueLe       DateTime?
 

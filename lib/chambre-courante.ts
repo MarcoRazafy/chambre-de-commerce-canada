@@ -18,7 +18,7 @@ export class EspaceIntrouvable extends Error {
 }
 
 type Recherche = { slug: string } | { domaine: string } | { id: string };
-type Trouvee = { id: string; suspendue: boolean; restriction: "lecture" | "blocage" | null; accesDev: boolean; fonctions: string[] | null } | null;
+type Trouvee = { id: string; suspendue: boolean; restriction: "lecture" | "blocage" | null; accesDev: boolean; fonctions: string[] | null; paiementAttendu: boolean } | null;
 let chercherChambre: ((r: Recherche) => Promise<Trouvee>) | null = null;
 export function brancherRechercheChambre(f: (r: Recherche) => Promise<Trouvee>) {
   chercherChambre = f;
@@ -29,7 +29,7 @@ export function brancherRechercheCompte(f: (userId: string) => Promise<string | 
   chercherCompte = f;
 }
 
-type Resolue = { id: string | null; propre: boolean; partage: EspacePartage | null; suspendue: boolean; restriction: "lecture" | "blocage" | null; accesDev: boolean; fonctions: string[] | null };
+type Resolue = { id: string | null; propre: boolean; partage: EspacePartage | null; suspendue: boolean; restriction: "lecture" | "blocage" | null; accesDev: boolean; fonctions: string[] | null; paiementAttendu: boolean };
 const parHote = new Map<string, Resolue & { jusqua: number }>();
 export function oublierAdresses() {
   parHote.clear();
@@ -42,8 +42,8 @@ export async function resoudreHote(brut: string | null | undefined): Promise<Res
   if (m && m.jusqua > Date.now()) return m;
   if (!chercherChambre) throw new Error("Recherche des Chambres non branchée (lib/db.ts)");
   let r: Resolue;
-  const etat = (c: Trouvee) => ({ suspendue: c?.suspendue ?? false, restriction: c?.restriction ?? null, accesDev: c?.accesDev ?? false, fonctions: c?.fonctions ?? null });
-  const aucune = { suspendue: false, restriction: null, accesDev: false, fonctions: null };
+  const etat = (c: Trouvee) => ({ suspendue: c?.suspendue ?? false, restriction: c?.restriction ?? null, accesDev: c?.accesDev ?? false, fonctions: c?.fonctions ?? null, paiementAttendu: c?.paiementAttendu ?? false });
+  const aucune = { suspendue: false, restriction: null, accesDev: false, fonctions: null, paiementAttendu: false };
   if (h.type === "gm" || h.type === "plateforme") r = { id: null, propre: true, partage: null, ...aucune };
   else if (h.type === "partage") r = { id: null, propre: true, partage: h.espace, ...aucune };
   else if (h.type === "sous-domaine") {

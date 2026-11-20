@@ -24,6 +24,7 @@ export function CoquilleAdmin({
   notifications = [],
   messagerie = true,
   marque,
+  lockedHrefs = [],
   children,
 }: {
   user: User;
@@ -32,6 +33,7 @@ export function CoquilleAdmin({
   notifications?: Notification[];
   messagerie?: boolean;
   marque: { logo: string | null; nom: string };
+  lockedHrefs?: string[];
   children: ReactNode;
 }) {
   const pathname = usePathname();
@@ -88,6 +90,20 @@ export function CoquilleAdmin({
                   (h) => pathname === h || (h !== "/admin" && pathname.startsWith(`${h}/`)),
                 );
                 const badge = badges[item.href];
+
+                if (lockedHrefs.includes(item.href)) {
+                  const Cadenas = NAV_ICONS.lock;
+                  return (
+                    <span
+                      key={item.href}
+                      title="Accès ouvert dès le paiement de votre abonnement"
+                      className="flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-[14px] text-white/70 opacity-35 cursor-not-allowed"
+                    >
+                      <Cadenas size={18} className="shrink-0" />
+                      <span>{item.label}</span>
+                    </span>
+                  );
+                }
 
                 if (item.externe) {
                   return (

@@ -11,7 +11,7 @@ import { ChampAuth, Saisie } from "@/components/public/ChampsAuth";
 import { CHAMP_AUTH } from "@/components/public/style-champs";
 import { appliquerSession } from "@/lib/abonnement-stripe";
 import { deconnexion } from "@/lib/actions/auth";
-import { choisirOffreDemarrage, payerDemarrage, revenirAuxOffres, terminerDemarrage } from "@/lib/actions/demarrage";
+import { choisirOffreDemarrage, payerDemarrage, payerPlusTard, revenirAuxOffres, terminerDemarrage } from "@/lib/actions/demarrage";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma, prismaSysteme } from "@/lib/db";
 import { factureDeDemarrage } from "@/lib/factures-plateforme";
@@ -173,8 +173,13 @@ export default async function Demarrage({ searchParams }: { searchParams: Promis
             ) : (
               <button type="button" disabled className="btn-action w-full opacity-50 cursor-not-allowed">Payer {f ? fmtDollars(f.total) : ""}</button>
             )}
+            {f ? (
+              <form action={payerPlusTard}>
+                <button type="submit" className="btn-contour w-full text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit">Payer plus tard</button>
+              </form>
+            ) : null}
             <form action={revenirAuxOffres}>
-              <button type="submit" className="btn-contour w-full text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit">Changer d’offre</button>
+              <button type="submit" className="w-full min-h-[44px] rounded-md border-0 bg-transparent text-[14px] font-semibold text-muted cursor-pointer hover:text-ink hover:bg-surface-2 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-marque-nuit">Changer d’offre</button>
             </form>
           </div>
           <p className="mt-5 mb-0 text-[12.5px] leading-relaxed text-faint">Paiement sur la page sécurisée de Stripe. La carte est gardée pour les mois suivants.</p>

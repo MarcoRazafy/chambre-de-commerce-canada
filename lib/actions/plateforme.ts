@@ -8,6 +8,9 @@ import { comptesDeLAdresse, comptesDuMotDePasse, comptesOuverts, lierComptes, sc
 import { avecChambre, oublierAdresses } from "@/lib/chambre-courante";
 import { envoyerCourriel, gabarit, urlPublique } from "@/lib/courriel";
 import { estFonction } from "@/lib/fonctions-plateforme";
+import { numeroComplet, PAYS, telephoneValide } from "@/lib/accueil";
+import { appliquerOffre } from "@/lib/demarrage";
+import { offresPubliques } from "@/lib/plateforme-site";
 import { prismaSysteme as db } from "@/lib/db";
 import { slugValide } from "@/lib/hote-chambre";
 import { lienEntree } from "@/lib/entree-chambre";
@@ -43,22 +46,34 @@ async function identifiantLibre(nom: string): Promise<string> {
 
 export async function creerChambre(formData: FormData) {
   const nomChambre = texte(formData, "nomChambre", 120);
-  const nom = texte(formData, "nom", 100);
+  const nomFamille = texte(formData, "nom", 60);
+  const prenom = texte(formData, "prenom", 60);
+  const nom = [prenom, nomFamille].filter(Boolean).join(" ");
   const email = texte(formData, "email").toLowerCase();
+  const indicatif = texte(formData, "indicatif", 8);
+  const numero = texte(formData, "tel", 24);
+  const telephone = numeroComplet(indicatif, numero);
+  const ville = texte(formData, "ville", 80);
+  const paysSaisi = texte(formData, "pays", 40);
+  const pays = (PAYS as readonly string[]).includes(paysSaisi) ? paysSaisi : "Madagascar";
   const motDePasse = String(formData.get("motDePasse") ?? "");
   const offreId = texte(formData, "offre", 50);
-  const fonctions = texte(formData, "fonctions", 300).split(",").filter(estFonction).join(",");
+  const fonctions = formData.getAll("fonctions").flatMap((v) => String(v).split(",")).filter(estFonction);
 
   const erreur: (message: string) => never = (message) =>
-    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, nom, email, offre: offreId, fonctions })}`);
+    redirect(`/creer-une-chambre?${new URLSearchParams({ erreur: message, nomChambre, nom: nomFamille, prenom, email, indicatif, tel: numero, ville, pays, offre: offreId, fonctions: fonctions.join(",") })}`);
 
   const origine = await origineAppelante();
   const attente = tentative(`creer-chambre:${origine}`, 5, HEURE);
   if (attente) erreur(`Trop de créations depuis cette connexion. Réessayez dans ${minutes(attente)} minute${minutes(attente) > 1 ? "s" : ""}.`);
 
-  if (!nomChambre) erreur("Indiquez le nom de la Chambre.");
-  if (!nom) erreur("Indiquez votre nom.");
+  if (!nomFamille || !prenom) erreur("Indiquez votre nom et votre prénom.");
   if (!ADRESSE.test(email)) erreur("Indiquez une adresse e-mail valide.");
+  if (!numero) erreur("Indiquez votre numéro de téléphone.");
+  if (!telephoneValide(telephone)) erreur(`« ${numero} » n’est pas un numéro de téléphone valide.`);
+  if (!ville) erreur("Indiquez votre ville.");
+  if (!nomChambre) erreur("Indiquez le nom de la Chambre.");
+  if (!(await offresPubliques()).some((o) => o.id === offreId)) erreur("Choisissez une offre.");
   if (motDePasse.length < MOT_DE_PASSE_MIN) erreur(`Le mot de passe fait au moins ${MOT_DE_PASSE_MIN} caractères.`);
   if (await db.user.findFirst({ where: { email }, select: { id: true } })) erreur("Cette adresse e-mail a déjà un compte : connectez-vous.");
   const slug = await identifiantLibre(nomChambre);
@@ -67,7 +82,7 @@ export async function creerChambre(formData: FormData) {
   try {
     creee = await db.$transaction(async (tx) => {
       const c = await tx.chambre.create({ data: { slug, nom: nomChambre, demarrage: "offre" }, select: { id: true } });
-      await tx.profilChambre.create({ data: { chambreId: c.id, nom: nomChambre, email } });
+      await tx.profilChambre.create({ data: { chambreId: c.id, nom: nomChambre, email, telephone, ville, pays } });
       const u = await tx.user.create({
         data: { chambreId: c.id, role: "admin", niveauEquipe: "administrateur", nom, fonction: "", email, motDePasse: hacher(motDePasse) },
         select: { id: true },
@@ -82,8 +97,9 @@ export async function creerChambre(formData: FormData) {
     throw e;
   }
   oublierAdresses();
+  await appliquerOffre(creee.chambreId, offreId, fonctions, nom);
 
-  const lien = await entree(creee.chambreId, creee.userId, { offre: offreId, fonctions });
+  const lien = await entree(creee.chambreId, creee.userId);
   const adresse = await adresseOuSite(creee.chambreId, "equipe");
   after(() =>
     avecChambre(creee.chambreId, async () => {

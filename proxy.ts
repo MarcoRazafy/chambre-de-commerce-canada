@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { MESSAGE_AVANT_PAIEMENT, ouvertAvantPaiement } from "@/lib/acces-paiement";
 import { lireSession, NOM_COOKIE, sessionPerimee } from "@/lib/auth";
 import { lireSessionGM, NOM_COOKIE_GM } from "@/lib/auth-gm";
 import { lireVisite, NOM_COOKIE_VISITE } from "@/lib/visite-gm";
@@ -168,6 +169,9 @@ async function proxyPartage(request: NextRequest, espace: EspacePartage): Promis
   if (fonction && ici.fonctions && !ici.fonctions.includes(fonction)) {
     return vers(`/${espaceDuChemin}`, { msg: "Cette fonction n’est pas incluse dans l’offre de la Chambre.", ton: "erreur" });
   }
+  if (espaceDuChemin === "admin" && ici.paiementAttendu && !ouvertAvantPaiement(pathname)) {
+    return vers("/admin/abonnement", { onglet: "factures", msg: MESSAGE_AVANT_PAIEMENT, ton: "erreur" });
+  }
 
   const cookieVisite = request.cookies.get(NOM_COOKIE_VISITE)?.value;
   if (session.visite || cookieVisite) {
@@ -235,6 +239,12 @@ export default async function proxy(request: NextRequest) {
     accueil.pathname = `/${espace}`;
     accueil.search = new URLSearchParams({ msg: "Cette fonction n’est pas incluse dans l’offre de la Chambre.", ton: "erreur" }).toString();
     return NextResponse.redirect(accueil);
+  }
+  if (espace === "admin" && ici.paiementAttendu && !ouvertAvantPaiement(pathname)) {
+    const abonnement = request.nextUrl.clone();
+    abonnement.pathname = "/admin/abonnement";
+    abonnement.search = new URLSearchParams({ onglet: "factures", msg: MESSAGE_AVANT_PAIEMENT, ton: "erreur" }).toString();
+    return NextResponse.redirect(abonnement);
   }
 
   const vers = (chemin: string, params?: Record<string, string>) => {

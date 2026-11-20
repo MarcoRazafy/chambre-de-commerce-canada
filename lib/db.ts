@@ -64,6 +64,7 @@ brancherRechercheChambre(async (r) => {
       accesDevJusqua: true,
       offre: { select: { fonctions: true, surMesure: true } },
       fonctionsChoisies: true,
+      paiementDiffere: true,
       facturesPlateforme: { where: { payeeLe: null, suivie: true }, orderBy: { date: "asc" }, take: 1, select: { date: true, payeeLe: true, suivie: true } },
     },
   });
@@ -74,6 +75,7 @@ brancherRechercheChambre(async (r) => {
     restriction: etatRetard(c.facturesPlateforme, await reglagesRetard()).restriction,
     accesDev: !!c.accesDevJusqua && c.accesDevJusqua > new Date(),
     fonctions: fonctionsOuvertes(c.offre, c.fonctionsChoisies),
+    paiementAttendu: c.paiementDiffere,
   };
 });
 
