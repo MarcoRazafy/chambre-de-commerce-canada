@@ -15,7 +15,7 @@ import { urlPublique } from "@/lib/courriel";
 import { minutes, origineAppelante, tentative } from "@/lib/limite";
 import { envoyerAttente, envoyerBillets, lignesDe } from "@/lib/billets";
 import { numeroFacture } from "@/lib/factures";
-import { modesProposes } from "@/lib/reglements";
+import { modesFactures } from "@/lib/reglements";
 import {
   codeInscription,
   codeRepresentant,
@@ -203,7 +203,7 @@ export async function registerForEvent(formData: FormData) {
 
   revalideTout();
 
-  if (facture && (await modesProposes()).length) {
+  if (facture && (await modesFactures()).length) {
     redirectWithFlash(
       `${fiche}?regler=${facture.id}`,
       `Inscription enregistrée · ${n} représentant${n > 1 ? "s" : ""} · choisissez votre moyen de paiement`,

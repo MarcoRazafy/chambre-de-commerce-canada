@@ -22,6 +22,7 @@ import { getCurrentUser } from "@/lib/session";
 import {
   estModeReglement,
   MODES,
+  modesFactures,
   modesProposes,
   referenceReglement,
   type ModeReglement,
@@ -71,12 +72,12 @@ export async function enregistrerCoordonneesPaiement(formData: FormData) {
   redirectWithFlash(retour, "Coordonnées enregistrées");
 }
 
-async function modeDemande(formData: FormData, retour: string) {
+async function modeDemande(formData: FormData, retour: string, facture = true) {
   const mode = texte(formData, "mode");
   if (!estModeReglement(mode)) {
     redirectWithErreur(retour, "Choisissez un moyen de paiement.");
   }
-  if (!(await modesProposes()).includes(mode)) {
+  if (!(await (facture ? modesFactures() : modesProposes())).includes(mode)) {
     redirectWithErreur(retour, `${MODES[mode].titre} : pas encore disponible.`);
   }
   return mode;
@@ -168,7 +169,7 @@ export async function reglerAchat(formData: FormData) {
     );
   }
   const { achat } = examen;
-  const mode = await modeDemande(formData, retour);
+  const mode = await modeDemande(formData, retour, false);
   const detail = detailAchat(achat, user.id);
 
   const ouvert = await prisma.paiement.findFirst({

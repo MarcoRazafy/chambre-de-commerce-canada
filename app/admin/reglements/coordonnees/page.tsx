@@ -128,7 +128,7 @@ export default async function CoordonneesPaiement() {
               rows={3}
               defaultValue={c.plateformes}
               placeholder={
-                "PayPal — dons@cancham.mg\nWise — CanCham Madagascar"
+                "Wise — paiements@votrechambre.com"
               }
               className={INPUT}
             />

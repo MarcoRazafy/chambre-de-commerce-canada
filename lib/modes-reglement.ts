@@ -6,6 +6,7 @@ export type ModeReglement =
   | "depot"
   | "especes"
   | "carte"
+  | "paypal"
   | "plateforme";
 
 export interface DescriptionMode {
@@ -19,6 +20,11 @@ export const MODES: Record<ModeReglement, DescriptionMode> = {
     titre: "Carte bancaire",
     detail: "Visa, Mastercard. Paiement immédiat, sur la page du prestataire.",
     enLigne: true,
+  },
+  paypal: {
+    titre: "PayPal",
+    detail: "Depuis votre compte PayPal, vers celui de la chambre.",
+    enLigne: false,
   },
   mvola: {
     titre: "MVola",
@@ -52,7 +58,7 @@ export const MODES: Record<ModeReglement, DescriptionMode> = {
   },
   plateforme: {
     titre: "Plateformes de paiement",
-    detail: "PayPal, Wise et consorts.",
+    detail: "Wise et autres services de transfert.",
     enLigne: false,
   },
 };
@@ -87,6 +93,7 @@ export type Coordonnees = {
   adresseBureau: string;
   horaires: string;
   plateformes: string;
+  paypal: string;
 };
 
 export const COORDONNEES_VIDES: Coordonnees = {
@@ -102,6 +109,7 @@ export const COORDONNEES_VIDES: Coordonnees = {
   adresseBureau: "",
   horaires: "",
   plateformes: "",
+  paypal: "",
 };
 
 export function numeroPortefeuille(
@@ -140,5 +148,7 @@ export function modeDisponible(
       return Boolean(c.adresseBureau);
     case "plateforme":
       return Boolean(c.plateformes.trim());
+    case "paypal":
+      return Boolean(c.paypal.trim());
   }
 }

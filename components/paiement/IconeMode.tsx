@@ -39,6 +39,7 @@ const ICONES: Record<ModeReglement, LucideIcon> = {
   especes: HandCoins,
   carte: CreditCard,
   plateforme: Wallet,
+  paypal: Wallet,
 };
 
 export function IconeMode({
@@ -58,7 +59,12 @@ export function VisuelMode({ mode }: { mode: ModeReglement }) {
   const logo = LOGOS[mode];
   return (
     <span className="flex h-12 items-center justify-center">
-      {logo ? (
+      {mode === "paypal" ? (
+        <span className="text-[26px] font-extrabold italic tracking-[-0.02em]" aria-hidden>
+          <span style={{ color: "#003087" }}>Pay</span>
+          <span style={{ color: "#009cde" }}>Pal</span>
+        </span>
+      ) : logo ? (
         <Image
           src={logo.src}
           alt=""

@@ -91,6 +91,15 @@ export function TunnelReglement({
             </div>
           ) : null}
 
+          {mode === "paypal" ? (
+            <>
+              <Copiable libelle="Adresse PayPal de la chambre" valeur={c.paypal} />
+              <a href="https://www.paypal.com/myaccount/transfer/homepage/pay" target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm w-fit text-ink no-underline hover:bg-surface-2">
+                Ouvrir PayPal
+              </a>
+            </>
+          ) : null}
+
           {mode === "plateforme" ? (
             <div className="rounded-[var(--radius-m)] border border-line bg-surface-2 px-4 py-3.5 text-[13.6px] whitespace-pre-line">
               {c.plateformes}
@@ -119,7 +128,9 @@ export function TunnelReglement({
             libelle={
               mode === "especes"
                 ? "Référence à donner à l’équipe"
-                : estPortefeuille(mode)
+                : mode === "paypal"
+                  ? "Référence à mettre dans le message PayPal"
+                  : estPortefeuille(mode)
                   ? "Référence à mettre en note du transfert"
                   : "Motif du virement, à recopier tel quel"
             }
@@ -163,7 +174,9 @@ export function AnnonceReglement({
       <h2 className="m-0 text-[15.5px] font-semibold">
         {mode === "especes"
           ? "Vous avez remis l’argent ?"
-          : estPortefeuille(mode)
+          : mode === "paypal"
+            ? "Vous avez payé avec PayPal ?"
+            : estPortefeuille(mode)
             ? "Vous avez envoyé l’argent ?"
             : "Vous avez fait le virement ?"}
       </h2>
@@ -189,7 +202,9 @@ export function AnnonceReglement({
             placeholder={
               mode === "especes"
                 ? "Nom de la personne qui remet"
-                : estPortefeuille(mode)
+                : mode === "paypal"
+                  ? "Numéro de transaction PayPal"
+                  : estPortefeuille(mode)
                   ? "Référence du SMS de confirmation"
                   : "Donnée par votre banque après le virement"
             }

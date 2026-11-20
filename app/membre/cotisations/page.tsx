@@ -24,7 +24,7 @@ import {
   type Devise,
 } from "@/lib/membership";
 import { getInvoices, getMember } from "@/lib/queries";
-import { modesBientot, modesProposes } from "@/lib/reglements";
+import { modesBientot, modesFactures } from "@/lib/reglements";
 import { BlocCotisation } from "@/components/paiement/Cotisation";
 import { cotisationDue } from "@/lib/cotisation";
 import { FenetreMoyens } from "@/components/paiement/FenetreMoyens";
@@ -42,7 +42,7 @@ export default async function CotisationsPage({
 
   const [factures, modes, cotisation, bientot] = await Promise.all([
     getInvoices(m.id),
-    modesProposes(),
+    modesFactures(),
     cotisationDue(m),
     modesBientot(),
   ]);

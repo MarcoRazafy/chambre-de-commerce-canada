@@ -119,6 +119,7 @@ enum ModeReglement {
   especes
   carte
   plateforme
+  paypal
 }
 
 enum StatutChambre {
@@ -964,6 +965,7 @@ model CoordonneesPaiement {
   horaires      String @default("")
 
   plateformes String @default("")
+  paypal      String @default("")
 
   updatedAt DateTime @updatedAt
 

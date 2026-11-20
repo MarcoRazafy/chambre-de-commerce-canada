@@ -34,6 +34,7 @@ export async function getCoordonneesPaiement(): Promise<Coordonnees> {
     adresseBureau: c.adresseBureau,
     horaires: c.horaires,
     plateformes: c.plateformes,
+    paypal: c.paypal,
   };
 }
 
@@ -43,6 +44,11 @@ export async function modesProposes(): Promise<ModeReglement[]> {
   return MODES_EN_LIGNE.filter((m) =>
     m === "carte" ? Boolean(stripe) || (vanillaPay && vanillaPayActif()) : vanillaPay && mobileMoneyEnLigne(),
   );
+}
+
+export async function modesFactures(): Promise<ModeReglement[]> {
+  const [modes, c] = await Promise.all([modesProposes(), prisma.coordonneesPaiement.findFirst({ select: { paypal: true } })]);
+  return c?.paypal.trim() ? [...modes, "paypal"] : modes;
 }
 
 export async function modesPublics(montant: number): Promise<ModeReglement[]> {

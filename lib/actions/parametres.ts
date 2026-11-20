@@ -254,3 +254,21 @@ export async function enregistrerRelancesMembres(formData: FormData) {
   revalidatePath("/admin/parametres");
   redirectWithFlash(ici, jours?.length ? `Relances automatiques : ${jours.join(", ")} jours après la facture` : "Relances automatiques coupées");
 }
+
+const ONGLET_PAIEMENTS = `${PAGE}?onglet=paiements`;
+
+export async function connecterPaypal(formData: FormData) {
+  await exigerAdministrateur(ONGLET_PAIEMENTS);
+  const paypal = texte(formData, "paypal", 200).toLowerCase();
+  if (!/^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(paypal)) redirectWithErreur(ONGLET_PAIEMENTS, "Indiquez l’adresse e-mail de votre compte PayPal.");
+  await prisma.coordonneesPaiement.upsert({ where: { chambreId: await chambreCourante() }, create: { paypal }, update: { paypal } });
+  revalidatePath("/", "layout");
+  redirectWithFlash(ONGLET_PAIEMENTS, "PayPal connecté");
+}
+
+export async function retirerPaypal() {
+  await exigerAdministrateur(ONGLET_PAIEMENTS);
+  await prisma.coordonneesPaiement.updateMany({ where: { chambreId: await chambreCourante() }, data: { paypal: "" } });
+  revalidatePath("/", "layout");
+  redirectWithFlash(ONGLET_PAIEMENTS, "PayPal retiré");
+}

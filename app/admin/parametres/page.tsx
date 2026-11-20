@@ -31,6 +31,7 @@ import { urlPublique } from "@/lib/courriel";
 import { stripeConfigure } from "@/lib/stripe";
 import { ReglageCouleurs } from "@/components/admin/ReglageCouleurs";
 import { PasserelleStripe } from "@/components/admin/PasserelleStripe";
+import { PasserellePaypal } from "@/components/admin/PasserellePaypal";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
@@ -59,6 +60,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
   const compte = onglet === "paiements"
     ? await prisma.chambre.findFirst({ select: { stripeCompteId: true, stripeCompteActif: true, stripeComptePays: true } })
     : null;
+  const paypal = onglet === "paiements" ? ((await prisma.coordonneesPaiement.findFirst({ select: { paypal: true } }))?.paypal ?? "") : "";
   if (onglet === "paiements" && sp.stripe) {
     const ici = "/admin/parametres?onglet=paiements";
     if (sp.stripe === "reprendre" && gere) redirect(await lienInscriptionStripe(await chambreCourante(), await urlPublique(ici)));
@@ -217,6 +219,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
             {verrou}
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <PasserelleStripe disponible={stripeConfigure()} compte={compte} gere={gere} />
+              <PasserellePaypal adresse={paypal} gere={gere} />
             </div>
           </div>
         </Panneau>
