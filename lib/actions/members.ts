@@ -439,14 +439,14 @@ export async function registerPayment(formData: FormData) {
   });
   if (!avant) redirectWithErreur("/admin/membres", "Membre introuvable.");
 
-  if (!avant.formule) {
+  const nouvelle = avant.formule ? null : await formuleProposee(texte(formData, "formuleId"));
+  const tarif = avant.formule ?? nouvelle;
+  if (!tarif) {
     redirectWithErreur(
-      `/admin/membres/${id}`,
-      "Choisissez d’abord la formule de ce membre : c’est elle qui donne le montant et la devise.",
+      retourInterne(formData, `/admin/membres/${id}`),
+      "Choisissez la formule de ce membre : c’est elle qui donne le montant et la devise.",
     );
   }
-
-  const tarif = avant.formule;
   const montant = Number(formData.get("montant")) || tarif.montant;
   const devise: Devise = tarif.devise;
 
@@ -460,6 +460,7 @@ export async function registerPayment(formData: FormData) {
       data: {
         statut: "a_jour",
         retardDepuis: null,
+        ...(nouvelle ? { formuleId: nouvelle.id } : {}),
         ...(premier ? { adhesion: date } : {}),
         paiementNote: `Payé par ${mode.toLowerCase()} · ${fmtMontant(montant, devise)} · le ${date.toLocaleDateString("fr-FR", { timeZone: "UTC" })}${note ? ` · ${note}` : ""}`,
       },

@@ -560,6 +560,7 @@ export default async function AdminMembreDetail({
                   premier={!m.paiementNote}
                   nom={m.nom}
                   formule={m.formule}
+                  formules={formules}
                 />
               )}
               {m.statut === "en_retard" || m.statut === "en_attente" ? (

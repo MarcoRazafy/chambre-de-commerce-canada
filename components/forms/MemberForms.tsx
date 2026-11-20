@@ -188,6 +188,7 @@ export function RegisterPaymentButton({
   formule,
   retour,
   compact = false,
+  formules = [],
 }: {
   memberId: string;
   premier: boolean;
@@ -195,10 +196,12 @@ export function RegisterPaymentButton({
   formule: Formule | null;
   retour?: string;
   compact?: boolean;
+  formules?: Formule[];
 }) {
   const aujourdhui = new Date().toISOString().slice(0, 10);
+  const [choisie, setChoisie] = useState<Formule | null>(formule ?? formules[0] ?? null);
 
-  if (!formule) {
+  if (!choisie) {
     return (
       <Modal
         title="Enregistrer le paiement"
@@ -224,10 +227,7 @@ export function RegisterPaymentButton({
                 Aucune formule n’est encore choisie pour <strong>{nom}</strong>.
               </p>
               <p className="m-0 text-[13px] text-muted">
-                C’est elle qui donne le montant attendu et la devise de la
-                facture. Choisissez-la d’abord — le crayon à côté de « Formule
-                », plus haut sur cette fiche — puis revenez enregistrer le
-                règlement.
+                Ajoutez d’abord une formule dans Mon entreprise, rubrique « Formules d’adhésion ».
               </p>
             </ModalBody>
             <ModalFooter>
@@ -239,7 +239,7 @@ export function RegisterPaymentButton({
     );
   }
 
-  const { montant, devise } = formule;
+  const { montant, devise } = choisie;
   return (
     <Modal
       title="Enregistrer le paiement"
@@ -269,6 +269,22 @@ export function RegisterPaymentButton({
                 ? `Confirmez le règlement de la cotisation pour activer l’accès complet de ${nom}.`
                 : `Enregistrez un règlement pour ${nom}.`}
             </p>
+            {!formule ? (
+              <Field label="Formule">
+                <select
+                  name="formuleId"
+                  className={INPUT}
+                  value={choisie.id}
+                  onChange={(e) => setChoisie(formules.find((f) => f.id === e.target.value) ?? choisie)}
+                >
+                  {formules.map((f) => (
+                    <option key={f.id} value={f.id}>
+                      {libelleFormule(f)} · {fmtMontant(f.montant, f.devise)} par an
+                    </option>
+                  ))}
+                </select>
+              </Field>
+            ) : null}
             <Field label="Mode de paiement">
               <select name="mode" className={INPUT} defaultValue="Espèces">
                 <option>Espèces</option>
@@ -280,9 +296,10 @@ export function RegisterPaymentButton({
             <div className="grid gap-3.5 md:grid-cols-2">
               <Field
                 label={`Montant (${devise === "CAD" ? "$ CAD" : "Ariary"})`}
-                hint={`${libelleFormule(formule)} : ${fmtMontant(montant, devise)} par an`}
+                hint={`${libelleFormule(choisie)} : ${fmtMontant(montant, devise)} par an`}
               >
                 <input
+                  key={choisie.id}
                   type="number"
                   name="montant"
                   defaultValue={montant}

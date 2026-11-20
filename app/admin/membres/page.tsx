@@ -201,7 +201,7 @@ export default async function AdminMembres({
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         {m.statut === "en_attente" ? (
-                          <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} retour={retourListe} compact /></div>
+                          <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} formules={formules} retour={retourListe} compact /></div>
                         ) : (
                           <Link
                             href={`/admin/membres/${m.id}`}
@@ -266,7 +266,7 @@ export default async function AdminMembres({
                     </div>
                     {m.statut === "en_attente" ? (
                       <div className="mt-3 pt-3 border-t border-line flex justify-end">
-                        <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} retour={retourListe} compact /></div>
+                        <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} formules={formules} retour={retourListe} compact /></div>
                       </div>
                     ) : null}
                   </Card>
