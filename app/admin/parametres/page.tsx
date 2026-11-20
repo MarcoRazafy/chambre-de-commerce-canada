@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { CreditCard, ExternalLink, Lock, Save, Send } from "lucide-react";
+import { Lock, Save, Send } from "lucide-react";
 import { DomaineActif, DomaineExpediteur } from "@/components/admin/StatutExpediteur";
 import { EnTeteAdmin, Onglets, Panneau } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
@@ -23,15 +23,14 @@ import { getParametres } from "@/lib/parametres";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 import { getCurrentUser } from "@/lib/session";
-import { connecterStripe } from "@/lib/actions/parametres";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { prisma } from "@/lib/db";
 import { lienInscriptionStripe, majCompteStripe } from "@/lib/encaissement-stripe";
 import { redirectWithFlash } from "@/lib/flash";
 import { urlPublique } from "@/lib/courriel";
 import { stripeConfigure } from "@/lib/stripe";
-import { Pill } from "@/components/ui";
 import { ReglageCouleurs } from "@/components/admin/ReglageCouleurs";
+import { PasserelleStripe } from "@/components/admin/PasserelleStripe";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
@@ -52,7 +51,7 @@ const RESEAUX_LIBELLES: { cle: Reseau; libelle: string; exemple: string }[] = [
 export default async function Parametres({ searchParams }: { searchParams: Promise<{ onglet?: string; stripe?: string }> }) {
   const sp = await searchParams;
   if (sp.onglet === "formules") redirect("/admin/entreprise#formules");
-  const onglets = ONGLETS.filter((o) => o.cle !== "paiements" || stripeConfigure());
+  const onglets = ONGLETS;
   const onglet = onglets.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
   const [moi, brut, reglages] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut(), getParametres()]);
   const gere = estAdministrateur(moi);
@@ -213,31 +212,11 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
       ) : null}
 
       {onglet === "paiements" ? (
-        <Panneau titre="Encaissement par carte" sousTitre="Les cotisations payées par carte arrivent sur le compte Stripe de la Chambre" teinte="bleu">
+        <Panneau titre="Paiements en ligne" sousTitre="Les cotisations payées en ligne arrivent sur le compte de la Chambre" teinte="bleu">
           <div className="flex flex-col gap-4">
             {verrou}
-            <div className="flex items-center justify-between gap-3 flex-wrap">
-              <p className="m-0 flex items-center gap-2.5 text-[14px]">
-                <CreditCard size={18} className="text-muted" aria-hidden />
-                {compte?.stripeCompteActif ? (
-                  <span className="inline-flex items-center gap-2"><Pill tone="ok">Actif</Pill> Compte Stripe{compte.stripeComptePays ? ` · ${compte.stripeComptePays}` : ""}</span>
-                ) : compte?.stripeCompteId ? (
-                  <Pill tone="warn">Inscription à terminer</Pill>
-                ) : (
-                  <span className="text-muted">Aucun compte connecté</span>
-                )}
-              </p>
-              <div className="flex items-center gap-2.5 flex-wrap">
-                {compte?.stripeCompteActif ? (
-                  <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">
-                    <ExternalLink size={14} aria-hidden /> Tableau de bord Stripe
-                  </a>
-                ) : gere ? (
-                  <form action={connecterStripe}>
-                    <button type="submit" className="btn-action btn-action-sm">{compte?.stripeCompteId ? "Terminer l’inscription" : "Connecter Stripe"}</button>
-                  </form>
-                ) : null}
-              </div>
+            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <PasserelleStripe disponible={stripeConfigure()} compte={compte} gere={gere} />
             </div>
           </div>
         </Panneau>
