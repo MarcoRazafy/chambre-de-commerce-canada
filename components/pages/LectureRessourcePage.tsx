@@ -14,8 +14,7 @@ import { terminerRessource } from "@/lib/actions/content";
 import { reglerAchat } from "@/lib/actions/reglements";
 import { GrilleMoyens } from "@/components/paiement/GrilleMoyens";
 import { fmtMoney } from "@/lib/format";
-import { modesProposes } from "@/lib/reglements";
-import { MONTANT_MINIMUM_EN_LIGNE } from "@/lib/vanillapay";
+import { modesMembres } from "@/lib/reglements";
 import { verifierAcces } from "@/lib/acces-ressources";
 import {
   getFilDossier,
@@ -39,8 +38,8 @@ export async function LectureRessourcePage({
     !acces.ok &&
     acces.aAcheter &&
     space === "membre" &&
-    r.prix >= MONTANT_MINIMUM_EN_LIGNE
-      ? await modesProposes()
+    r.prix > 0
+      ? await modesMembres()
       : [];
   const video = r.fmt === "video";
   const page = r.fmt === "page";

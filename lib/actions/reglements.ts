@@ -10,8 +10,8 @@ import { courrielReglementEcarte } from "@/lib/modeles-courriels";
 import { ouvrirChezLePrestataire } from "@/lib/paiement-en-ligne";
 import { vanillaPayActif } from "@/lib/vanillapay";
 import { enLigneDansLaChambre, ouvrirFactureCotisation } from "@/lib/cotisation";
-import { detailAchat, estTypeAchat, pageAchat } from "@/lib/achat";
-import { examinerAchat } from "@/lib/achats-en-ligne";
+import { achatDe, detailAchat, estTypeAchat, pageAchat } from "@/lib/achat";
+import { conclureAchat, examinerAchat } from "@/lib/achats-en-ligne";
 import { prisma } from "@/lib/db";
 import { exigerEquipe } from "@/lib/autorisations";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -22,8 +22,7 @@ import { getCurrentUser } from "@/lib/session";
 import {
   estModeReglement,
   MODES,
-  modesFactures,
-  modesProposes,
+  modesMembres,
   referenceReglement,
   type ModeReglement,
 } from "@/lib/reglements";
@@ -72,12 +71,12 @@ export async function enregistrerCoordonneesPaiement(formData: FormData) {
   redirectWithFlash(retour, "Coordonnées enregistrées");
 }
 
-async function modeDemande(formData: FormData, retour: string, facture = true) {
+async function modeDemande(formData: FormData, retour: string) {
   const mode = texte(formData, "mode");
   if (!estModeReglement(mode)) {
     redirectWithErreur(retour, "Choisissez un moyen de paiement.");
   }
-  if (!(await (facture ? modesFactures() : modesProposes())).includes(mode)) {
+  if (!(await modesMembres()).includes(mode)) {
     redirectWithErreur(retour, `${MODES[mode].titre} : pas encore disponible.`);
   }
   return mode;
@@ -169,7 +168,7 @@ export async function reglerAchat(formData: FormData) {
     );
   }
   const { achat } = examen;
-  const mode = await modeDemande(formData, retour, false);
+  const mode = await modeDemande(formData, retour);
   const detail = detailAchat(achat, user.id);
 
   const ouvert = await prisma.paiement.findFirst({
@@ -196,7 +195,7 @@ export async function reglerAchat(formData: FormData) {
           reference: referenceReglement(),
           memberId: user.memberId,
           montant: achat.prix,
-          devise: "MGA",
+          devise: "CAD",
           mode,
           detail,
         },
@@ -386,6 +385,25 @@ export async function confirmerReglement(formData: FormData) {
   });
   if (!p) redirectWithErreur(retour, "Règlement introuvable.");
   if (p.statut === "reussie") redirectWithFlash(retour, "Déjà confirmé.");
+
+  const achat = p.invoice ? null : achatDe(p.detail);
+  if (achat && p.member) {
+    await conclureAchat(
+      { id: p.id, montant: p.montant, devise: p.devise, mode: p.mode, memberId: p.member.id, nomMembre: p.member.nom },
+      achat,
+      null,
+      { confirmePar: user.nom },
+    );
+    await prisma.paiement.update({ where: { id: p.id }, data: { confirmePar: user.nom } });
+    await journal(
+      "reglement_confirme",
+      p.reference,
+      `${fmtMontant(p.montant, p.devise)} par ${MODES[p.mode as ModeReglement].titre.toLowerCase()} · ${p.member.nom} · ${achat.titre} · réf. ${p.reference}`,
+      user.nom,
+    );
+    revalidatePath("/", "layout");
+    redirectWithFlash(retour, `Règlement ${p.reference} confirmé · « ${achat.titre} » ouvert à ${p.member.nom}`);
+  }
 
   const cotisation =
     p.invoice !== null &&

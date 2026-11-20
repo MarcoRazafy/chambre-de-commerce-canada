@@ -1,9 +1,9 @@
 import "server-only";
+import { modesMembres } from "@/lib/reglements";
 import { avertirPaiement } from "@/lib/courriels-paiement";
 
 import { after } from "next/server";
 import { objetAchat, type Achat, type TypeAchat } from "@/lib/achat";
-import { payableEnLigne } from "@/lib/cotisation";
 import { prisma } from "@/lib/db";
 import { numeroFacture } from "@/lib/factures";
 import { ecrireAEquipe } from "@/lib/fil-equipe";
@@ -14,10 +14,6 @@ import { MODES, type ModeReglement } from "@/lib/modes-reglement";
 import { notifierEquipe, notifierMembre } from "@/lib/push";
 import { dossiersInterdits, getMember } from "@/lib/queries";
 import { utilisateurConnecte } from "@/lib/session";
-
-export function achetableEnLigne(prix: number): boolean {
-  return payableEnLigne(prix, "MGA");
-}
 
 export interface AchatDemande {
   type: TypeAchat;
@@ -84,10 +80,8 @@ export async function examinerAchat(
     achat = { type, id: s.id, titre: s.titre, prix: s.prix };
   }
 
-  if (!achetableEnLigne(achat.prix)) {
-    return refus(
-      "Cet achat ne se règle pas en ligne : écrivez à l’équipe CanCham.",
-    );
+  if (!(await modesMembres()).length) {
+    return refus("Cet achat ne se règle pas encore en ligne : écrivez à l’équipe.");
   }
   return { ok: true, achat };
 }

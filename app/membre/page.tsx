@@ -38,7 +38,7 @@ import {
   getServices,
   getUnreadTotal,
 } from "@/lib/queries";
-import { modesFactures } from "@/lib/reglements";
+import { modesMembres } from "@/lib/reglements";
 import { OFFRES_ACCUEIL } from "@/lib/offres";
 import { getCurrentUser } from "@/lib/session";
 import { type Fonction } from "@/lib/fonctions-plateforme";
@@ -71,7 +71,7 @@ export default async function VueDEnsemble() {
     getResources(),
     getServices(),
     getContacts(me.id),
-    modesFactures(),
+    modesMembres(),
     offreDeLaChambre(),
   ]);
 

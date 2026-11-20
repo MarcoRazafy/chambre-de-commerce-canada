@@ -31,7 +31,7 @@ import {
 import { matriceQr } from "@/lib/qr";
 import { prisma } from "@/lib/db";
 import { fmtMontant } from "@/lib/membership";
-import { modesBientot, modesFactures } from "@/lib/reglements";
+import { modesBientot, modesMembres } from "@/lib/reglements";
 import { FenetreMoyens } from "@/components/paiement/FenetreMoyens";
 import { getCurrentUser } from "@/lib/session";
 import { plageHoraire } from "@/lib/agenda";
@@ -56,7 +56,7 @@ export default async function EvenementDetailPage({
     getEvents(),
     user.memberId ? getMember(user.memberId) : null,
     user.memberId ? getContacts(user.memberId) : [],
-    e.payant ? modesFactures() : [],
+    e.payant ? modesMembres() : [],
   ]);
 
   const entreprise = membre?.nom ?? null;

@@ -46,7 +46,7 @@ export async function modesProposes(): Promise<ModeReglement[]> {
   );
 }
 
-export async function modesFactures(): Promise<ModeReglement[]> {
+export async function modesMembres(): Promise<ModeReglement[]> {
   const [modes, c] = await Promise.all([modesProposes(), prisma.coordonneesPaiement.findFirst({ select: { paypal: true } })]);
   return c?.paypal.trim() ? [...modes, "paypal"] : modes;
 }

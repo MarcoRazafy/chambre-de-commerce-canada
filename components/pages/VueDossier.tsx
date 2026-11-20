@@ -28,8 +28,7 @@ import {
   type MembreChoisissable,
 } from "@/components/forms/BibliothequeOutils";
 import { DownloadResourceButton } from "@/components/forms/ContentForms";
-import { modesProposes } from "@/lib/reglements";
-import { MONTANT_MINIMUM_EN_LIGNE } from "@/lib/vanillapay";
+import { modesMembres } from "@/lib/reglements";
 import type { ModeReglement } from "@/lib/modes-reglement";
 import { ListeTriable } from "@/components/forms/ListeTriable";
 import {
@@ -82,7 +81,7 @@ export function achatRessource(r: Resource, modes: ModeReglement[]) {
   return {
     titre: r.titre,
     somme: fmtMoney(r.prix),
-    modes: r.prix >= MONTANT_MINIMUM_EN_LIGNE ? modes : [],
+    modes: r.prix > 0 ? modes : [],
   };
 }
 
@@ -129,7 +128,7 @@ export async function VueDossier({
     admin ? getArborescenceDossiers() : Promise.resolve([]),
     admin ? getMembresPourAcces() : Promise.resolve([]),
     admin ? lirePressePapier() : Promise.resolve(null),
-    admin ? Promise.resolve([]) : modesProposes(),
+    admin ? Promise.resolve([]) : modesMembres(),
   ]);
   if (!dossier) return null;
 

@@ -24,7 +24,7 @@ import {
   Lignes,
   VueDossier,
 } from "@/components/pages/VueDossier";
-import { modesProposes } from "@/lib/reglements";
+import { modesMembres } from "@/lib/reglements";
 import { copierRessources } from "@/lib/actions/content";
 import { lirePressePapier } from "@/lib/presse-papier";
 import {
@@ -94,7 +94,7 @@ export async function RessourcesPage({
         list.filter((r) => r.type === "payant").map((r) => r.id),
       )
     : {};
-  const modes = admin ? [] : await modesProposes();
+  const modes = admin ? [] : await modesMembres();
 
   return (
     <>

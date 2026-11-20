@@ -13,7 +13,7 @@ import { offreDeLaChambre } from "@/lib/offre-chambre";
 import { marqueDeLaChambre } from "@/lib/profil-chambre";
 import { BandeauCotisation } from "@/components/paiement/Cotisation";
 import { cotisationDue } from "@/lib/cotisation";
-import { modesFactures } from "@/lib/reglements";
+import { modesMembres } from "@/lib/reglements";
 import { etatPaiementChambre } from "@/lib/etat-paiement";
 import { comptesLies } from "@/lib/comptes-lies";
 
@@ -31,7 +31,7 @@ export default async function MembreLayout({
     getStatsPubliques(),
     getNotifications("membre", membre.id, user.id),
     cotisationDue(membre),
-    modesFactures(),
+    modesMembres(),
     etatPaiementChambre(),
     offreDeLaChambre(),
     marqueDeLaChambre(),
