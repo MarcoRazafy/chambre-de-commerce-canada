@@ -1,13 +1,14 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { CalendarDays, Coins, ExternalLink, KeyRound, LogIn, MessageSquare, Pause, Play, Save, UserCog, Users } from "lucide-react";
+import { CalendarDays, Coins, ExternalLink, KeyRound, LogIn, MessageSquare, Pause, Play, Save, Trash2, UserCog, Users } from "lucide-react";
 import { Compteur, EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { LogoChambre } from "@/components/gm/LogoChambre";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
-import { changerOffreChambre, entrerDansChambre, envoyerLienConnexion, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, suspendreChambre } from "@/lib/actions/gm";
+import { changerOffreChambre, entrerDansChambre, envoyerLienConnexion, marquerFacturePayee, modifierAdresseChambre, reactiverChambre, supprimerChambre, suspendreChambre } from "@/lib/actions/gm";
+import { CHAMBRE_PRINCIPALE } from "@/lib/chambre-courante";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
 import { NIVEAU_EQUIPE_LABEL } from "@/lib/enums";
 import { fmtDateShort } from "@/lib/format";
@@ -319,6 +320,28 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
               </ul>
             ) : <Vide>Rien pour l’instant</Vide>}
           </Panneau>
+
+          {c.id !== CHAMBRE_PRINCIPALE ? (
+            <Panneau titre="Zone sensible" teinte="rouge" className="border-bad/40">
+              <details className="group">
+                <summary className="btn-contour btn-contour-sm text-bad hover:bg-surface-2 list-none cursor-pointer w-fit [&::-webkit-details-marker]:hidden">
+                  <Trash2 size={14} aria-hidden /> Supprimer la Chambre
+                </summary>
+                <form action={supprimerChambre} className="mt-3 flex flex-col gap-3">
+                  <input type="hidden" name="chambreId" value={c.id} />
+                  <p className="m-0 text-[13.5px] text-muted">
+                    Membres, équipe, événements, factures, messages et réglages de {c.nom} seront effacés. Cette action est définitive.
+                  </p>
+                  <Field label={`Tapez « ${c.slug} » pour confirmer`}>
+                    <input name="confirmation" required autoComplete="off" autoCapitalize="none" spellCheck={false} className={INPUT} />
+                  </Field>
+                  <button type="submit" className="btn-contour btn-contour-sm w-fit text-white bg-bad border-bad hover:opacity-90">
+                    <Trash2 size={14} aria-hidden /> Supprimer définitivement
+                  </button>
+                </form>
+              </details>
+            </Panneau>
+          ) : null}
         </div>
       </div>
     </>

@@ -7,7 +7,8 @@ import { fermerSessionGM, ouvrirSessionGM } from "@/lib/auth-gm";
 import { verifier } from "@/lib/auth";
 import { domaineValide, normaliserDomaine } from "@/lib/brevo-domaines";
 import { marquerPayee } from "@/lib/abonnement-stripe";
-import { oublierAdresses } from "@/lib/chambre-courante";
+import { CHAMBRE_PRINCIPALE, oublierAdresses } from "@/lib/chambre-courante";
+import { effacerChambre } from "@/lib/suppression-chambre";
 import { oublierReglages, prismaSysteme as db } from "@/lib/db";
 import { lireRelances } from "@/lib/retards";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -105,6 +106,24 @@ export async function reactiverChambre(formData: FormData) {
   oublierAdresses();
   revalidatePath("/gm", "layout");
   redirectWithFlash(fiche(c.id), "Espace réactivé");
+}
+
+export async function supprimerChambre(formData: FormData) {
+  const gm = await exigerGM();
+  const c = await chambreOuErreur(formData);
+  if (c.id === CHAMBRE_PRINCIPALE) redirectWithErreur(fiche(c.id), "La Chambre principale ne peut pas être supprimée.");
+  if (texte(formData, "confirmation", 100).toLowerCase() !== c.slug) redirectWithErreur(fiche(c.id), `Tapez « ${c.slug} » pour confirmer la suppression.`);
+  try {
+    await effacerChambre(c.id);
+  } catch (e) {
+    console.error("[gm] suppression de la Chambre", c.id, e);
+    redirectWithErreur(fiche(c.id), "La suppression n’a pas abouti : rien n’a été effacé.");
+  }
+  console.info(`[gm] Chambre ${c.nom} (${c.slug}, ${c.id}) supprimée par ${gm.nom}`);
+  oublierAdresses();
+  oublierAdressesChambres();
+  revalidatePath("/gm", "layout");
+  redirectWithFlash("/gm/chambres", `${c.nom} supprimée`);
 }
 
 export async function modifierAdresseChambre(formData: FormData) {
