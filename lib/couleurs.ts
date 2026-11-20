@@ -29,6 +29,26 @@ export function luminance(hex: string): number {
 }
 export const tropClaire = (hex: string) => luminance(hex) > 0.45;
 
+export const BLANC = "#ffffff";
+export const TEXTE_FONCE = "#16202b";
+export const CONTRASTE_MIN = 4.5;
+
+export function contraste(a: string, b: string): number {
+  const [x, y] = [luminance(a), luminance(b)].sort((m, n) => n - m);
+  return (x + 0.05) / (y + 0.05);
+}
+
+export const texteLisible = (fond: string) => (contraste(fond, BLANC) >= contraste(fond, TEXTE_FONCE) ? BLANC : TEXTE_FONCE);
+
+export function nuanceLisible(hex: string, texte: string = BLANC): string {
+  const vers = luminance(texte) > luminance(hex) ? -1 : 1;
+  for (let i = 1; i <= 20; i++) {
+    const c = nuance(hex, vers * i * 0.05);
+    if (contraste(c, texte) >= CONTRASTE_MIN) return c;
+  }
+  return vers < 0 ? "#000000" : BLANC;
+}
+
 export function cssCouleurs(c: CouleursChambre): string {
   const v: string[] = [];
   const p = couleur(c.principale);
@@ -48,7 +68,7 @@ export function cssCouleurs(c: CouleursChambre): string {
   const k = couleur(c.connexion);
   if (k) v.push(`--connexion:${k}`);
   const f = couleur(c.fondConnexion);
-  const t = couleur(c.texteConnexion) ?? (f && !tropClaire(f) ? "#ffffff" : null);
+  const t = couleur(c.texteConnexion) ?? (f && texteLisible(f) === BLANC ? BLANC : null);
   if (!v.length && !f && !t) return "";
   let css = v.length ? `html :is(.espace-admin,.espace-membre,.cadre-auth){${v.join(";")}}` : "";
   if (f) css += `html .cadre-auth{background:${f};--fond-connexion:${f}}`;
@@ -57,6 +77,6 @@ export function cssCouleurs(c: CouleursChambre): string {
     css += "html .cadre-auth .colonne-connexion :is(.bg-white,.bg-surface,.bg-surface-2,.bg-surface-3,.champ-auth,.champ-auth-cadre){--text:#16202b;--text-muted:#5b6b7a;--text-faint:#8797a6}";
     css += `html .cadre-auth .colonne-connexion main .surtitre{color:color-mix(in srgb,${t} 80%,transparent)}`;
   }
-  if (k && !tropClaire(k)) css += "html .cadre-auth .panneau-connexion{--text:#ffffff;--text-muted:rgba(255,255,255,.82);--text-faint:rgba(255,255,255,.7)}";
+  if (k && texteLisible(k) === BLANC) css += "html .cadre-auth .panneau-connexion{--text:#ffffff;--text-muted:rgba(255,255,255,.82);--text-faint:rgba(255,255,255,.7)}";
   return css;
 }

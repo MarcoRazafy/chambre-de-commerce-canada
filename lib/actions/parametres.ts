@@ -18,7 +18,7 @@ import {
 } from "@/lib/brevo-domaines";
 import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur, urlPublique } from "@/lib/courriel";
 import { avecPreuve, domaineDeLaPlateforme, domaineDUneAutreChambre, oublierPreuve } from "@/lib/domaine-proprietaire";
-import { couleur } from "@/lib/couleurs";
+import { BLANC, contraste, CONTRASTE_MIN, couleur, nuanceLisible } from "@/lib/couleurs";
 import { lireRelances } from "@/lib/retards";
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
@@ -228,6 +228,19 @@ export async function enregistrerCouleurs(formData: FormData) {
     data[champ] = valeur ?? "";
   }
   if (!data.couleurLaterale) data.couleurLaterale2 = "";
+  const SUR_BLANC: [string, string][] = [["couleurPrincipale", "La couleur principale"], ["couleurLaterale", "La barre latérale"], ["couleurLaterale2", "Le bas de la barre latérale"], ["couleurHaut", "La barre du haut"]];
+  for (const [champ, libelle] of SUR_BLANC) {
+    const c = data[champ];
+    if (c && contraste(c, BLANC) < CONTRASTE_MIN) {
+      redirectWithErreur(`${PAGE}?onglet=couleurs`, `${libelle} (${c.toUpperCase()}) est trop claire : le texte blanc ne se lit pas. Essayez ${nuanceLisible(c).toUpperCase()}.`);
+    }
+  }
+  if (data.couleurTexteConnexion) {
+    const fond = data.couleurFondConnexion || BLANC;
+    if (contraste(fond, data.couleurTexteConnexion) < CONTRASTE_MIN) {
+      redirectWithErreur(`${PAGE}?onglet=couleurs`, `Le texte de la page de connexion ne se lit pas sur son fond. Essayez ${nuanceLisible(data.couleurTexteConnexion, fond).toUpperCase()}.`);
+    }
+  }
   await enregistrerChamps("couleurs", data, "Couleurs enregistrées");
 }
 

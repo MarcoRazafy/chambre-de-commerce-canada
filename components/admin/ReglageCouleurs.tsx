@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { RotateCcw, TriangleAlert } from "lucide-react";
-import { nuance, tropClaire } from "@/lib/couleurs";
+import { BLANC, contraste, CONTRASTE_MIN, nuance, nuanceLisible, texteLisible } from "@/lib/couleurs";
 
 type Champ = "couleurPrincipale" | "couleurLaterale" | "couleurLaterale2" | "couleurHaut" | "couleurConnexion" | "couleurFondConnexion" | "couleurTexteConnexion";
 export type ValeursCouleurs = Record<Champ, string>;
@@ -18,7 +18,9 @@ const DEFAUTS: Record<Champ, string> = {
 };
 const LATERALE_DEFAUT = "linear-gradient(180deg,#a3122a 0%,#5c1220 32%,#2a1f26 50%,#123f2d 70%,#007140 100%)";
 
-function Couleur({ libelle, nom, valeur, onChange, alerte }: { libelle: string; nom: Champ; valeur: string; onChange: (v: string) => void; alerte?: string | null }) {
+type Alerte = { texte: string; correction?: string } | null;
+
+function Couleur({ libelle, nom, valeur, onChange, alerte }: { libelle: string; nom: Champ; valeur: string; onChange: (v: string) => void; alerte?: Alerte }) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="text-[12.3px] font-semibold text-muted">{libelle}</span>
@@ -35,7 +37,16 @@ function Couleur({ libelle, nom, valeur, onChange, alerte }: { libelle: string; 
         ) : null}
         <input type="hidden" name={nom} value={valeur} />
       </div>
-      {alerte ? <span className="flex items-center gap-1.5 text-[12px] text-warn"><TriangleAlert size={13} aria-hidden /> {alerte}</span> : null}
+      {alerte ? (
+        <span className="flex items-center gap-1.5 flex-wrap text-[12px] text-warn">
+          <TriangleAlert size={13} aria-hidden /> {alerte.texte}
+          {alerte.correction ? (
+            <button type="button" onClick={() => onChange(alerte.correction!)} className="inline-flex items-center gap-1.5 font-semibold text-ink underline bg-transparent border-0 p-0 cursor-pointer">
+              <span className="size-3 rounded-sm border border-line" style={{ backgroundColor: alerte.correction }} aria-hidden /> Utiliser {alerte.correction.toUpperCase()}
+            </button>
+          ) : null}
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -44,16 +55,16 @@ export function ReglageCouleurs({ initiales }: { initiales: ValeursCouleurs }) {
   const [v, setV] = useState<ValeursCouleurs>(initiales);
   const [degrade, setDegrade] = useState(Boolean(initiales.couleurLaterale2));
   const maj = (c: Champ) => (x: string) => setV((o) => ({ ...o, [c]: x }));
-  const clair = (x: string) => (x && tropClaire(x) ? "Couleur claire : le texte blanc sera peu lisible." : null);
+  const clair = (x: string): Alerte => (x && contraste(x, BLANC) < CONTRASTE_MIN ? { texte: "Le texte blanc sera peu lisible.", correction: nuanceLisible(x) } : null);
 
   const p = v.couleurPrincipale || DEFAUTS.couleurPrincipale;
   const laterale = v.couleurLaterale ? (degrade && v.couleurLaterale2 ? `linear-gradient(180deg,${v.couleurLaterale} 0%,${v.couleurLaterale2} 100%)` : v.couleurLaterale) : LATERALE_DEFAUT;
   const haut = v.couleurHaut || DEFAUTS.couleurHaut;
   const connexion = v.couleurConnexion || DEFAUTS.couleurConnexion;
-  const texteConnexion = tropClaire(connexion) ? "#16202b" : "#ffffff";
+  const texteConnexion = texteLisible(connexion);
   const fond = v.couleurFondConnexion || DEFAUTS.couleurFondConnexion;
-  const texte = v.couleurTexteConnexion || (tropClaire(fond) ? DEFAUTS.couleurTexteConnexion : "#ffffff");
-  const lisibilite = tropClaire(fond) === tropClaire(texte) ? "Le texte et le fond se ressemblent : le texte sera peu lisible." : null;
+  const texte = v.couleurTexteConnexion || texteLisible(fond);
+  const lisibilite: Alerte = contraste(fond, texte) < CONTRASTE_MIN ? { texte: "Le texte sera peu lisible sur ce fond.", correction: v.couleurTexteConnexion ? nuanceLisible(v.couleurTexteConnexion, fond) : undefined } : null;
 
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)] items-start">
