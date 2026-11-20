@@ -16,8 +16,6 @@ import { AvatarRond, OfferCard } from "@/components/domain";
 import { TexteLie } from "@/components/TexteLie";
 import { RegisterButton } from "@/components/forms/EventForms";
 import { Card, Saillant } from "@/components/ui";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { CetteSemaine } from "@/components/agenda/CetteSemaine";
 import { plageHoraire } from "@/lib/agenda";
 import { fmtMoney, isPast, parseISO } from "@/lib/format";
 import {

@@ -286,8 +286,6 @@ async function notificationsMembre(
     fil,
     inscription,
     offre,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    actualite,
     rappels,
     rendezvous,
     factures,
@@ -311,11 +309,6 @@ async function notificationsMembre(
         memberId: true,
         member: { select: { nom: true } },
       },
-    }),
-    prisma.news.findFirst({
-      where: { OR: [{ memberId: null }, { memberId: { not: memberId } }] },
-      orderBy: [{ date: "desc" }, { createdAt: "desc" }],
-      select: { id: true, titre: true, date: true },
     }),
     rappelsProches(userId, "membre"),
     rendezvousProches(userId, "membre"),

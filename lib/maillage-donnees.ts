@@ -161,11 +161,9 @@ export async function relations(memberId?: string) {
 }
 
 export async function activiteMembre(memberId: string) {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const [inscriptions, rdv, publications, rels] = await Promise.all([
+  const [inscriptions, rdv, rels] = await Promise.all([
     prisma.registration.findMany({ where: { memberId }, include: { event: { select: { id: true, titre: true, date: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
     prisma.rendezvous.findMany({ where: { memberId }, include: { type: { select: { titre: true } } }, orderBy: { createdAt: "desc" }, take: 30 }),
-    prisma.news.findMany({ where: { memberId }, select: { id: true, titre: true, createdAt: true }, orderBy: { createdAt: "desc" }, take: 30 }),
     relations(memberId),
   ]);
   type Ligne = { quand: string; icone: "evenement" | "rendezvous" | "publication" | "relation"; texte: string; lien: string };

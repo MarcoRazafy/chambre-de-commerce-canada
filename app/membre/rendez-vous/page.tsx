@@ -1,6 +1,4 @@
 import { CalendarClock } from "lucide-react";
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { OngletsAgenda } from "@/components/OngletsAgenda";
 import { CarteRendezvous } from "@/components/rendezvous/CarteRendezvous";
 import { ConfirmationRendezvous } from "@/components/rendezvous/ConfirmationRendezvous";
 import { Reservation } from "@/components/rendezvous/Reservation";
