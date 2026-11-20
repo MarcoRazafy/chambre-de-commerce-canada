@@ -21,8 +21,8 @@ export function PasserelleStripe({
   compte: { stripeCompteId: string | null; stripeCompteActif: boolean; stripeComptePays: string | null } | null;
   gere: boolean;
 }) {
-  const connecte = !!compte?.stripeCompteActif;
-  const enCours = !connecte && !!compte?.stripeCompteId;
+  const connecte = disponible && !!compte?.stripeCompteActif;
+  const enCours = disponible && !connecte && !!compte?.stripeCompteId;
 
   return (
     <div className={`flex flex-col gap-4 rounded-[var(--radius-m)] border bg-surface p-5 ${connecte ? "border-success/40" : "border-line"}`}>
