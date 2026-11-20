@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
-import { ChevronRight, Menu, MessageSquare, Search, Settings } from "lucide-react";
+import { ArrowUpRight, ChevronRight, Menu, MessageSquare, Search, Settings } from "lucide-react";
 import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
 import { BoutonInstaller } from "@/components/Application";
 import { LogoEspace } from "@/components/LogoEspace";
@@ -88,6 +88,23 @@ export function CoquilleAdmin({
                   (h) => pathname === h || (h !== "/admin" && pathname.startsWith(`${h}/`)),
                 );
                 const badge = badges[item.href];
+
+                if (item.externe) {
+                  return (
+                    <a
+                      key={item.href}
+                      href={item.href}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMenuOuvert(false)}
+                      className="entree-menu flex items-center gap-3 pl-4 pr-3 py-2.5 rounded-lg text-[14px] no-underline transition-colors text-white/70 hover:bg-white/[0.08] hover:text-white"
+                    >
+                      <Icone size={18} className="shrink-0 opacity-90" />
+                      <span className="flex-1">{item.label}</span>
+                      <ArrowUpRight size={15} className="shrink-0 opacity-60" aria-hidden />
+                    </a>
+                  );
+                }
 
                 return (
                   <Link
