@@ -504,7 +504,7 @@ export async function registerPayment(formData: FormData) {
 
   revalideTout();
   redirectWithFlash(
-    `/admin/membres/${id}`,
+    retourInterne(formData, `/admin/membres/${id}`),
     `${premier ? "Adhésion activée" : "Paiement enregistré"} pour ${avant.nom} · facture ${numero} ${ouverte ? "réglée" : "générée"}`,
   );
 }

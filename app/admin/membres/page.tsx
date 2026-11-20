@@ -2,6 +2,7 @@ import Link from "next/link";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import { ChevronRight, Download, Search, Users } from "lucide-react";
 import { EtatAcces } from "@/components/admin/EtatAcces";
+import { RegisterPaymentButton } from "@/components/forms/MemberForms";
 import { EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { LogoMark } from "@/components/domain";
 import { AddMemberButton } from "@/components/forms/MemberForms";
@@ -199,12 +200,16 @@ export default async function AdminMembres({
                         />
                       </td>
                       <td className="px-5 py-3.5 text-right">
-                        <Link
-                          href={`/admin/membres/${m.id}`}
-                          className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
-                        >
-                          {s.action ?? "Ouvrir"} <ChevronRight size={15} />
-                        </Link>
+                        {m.statut === "en_attente" ? (
+                          <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} retour={retourListe} compact /></div>
+                        ) : (
+                          <Link
+                            href={`/admin/membres/${m.id}`}
+                            className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
+                          >
+                            {s.action ?? "Ouvrir"} <ChevronRight size={15} />
+                          </Link>
+                        )}
                       </td>
                     </tr>
                   );
@@ -259,6 +264,11 @@ export default async function AdminMembres({
                         retour={retourListe}
                       />
                     </div>
+                    {m.statut === "en_attente" ? (
+                      <div className="mt-3 pt-3 border-t border-line flex justify-end">
+                        <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} retour={retourListe} compact /></div>
+                      </div>
+                    ) : null}
                   </Card>
                 </li>
               );

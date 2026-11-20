@@ -186,11 +186,15 @@ export function RegisterPaymentButton({
   premier,
   nom,
   formule,
+  retour,
+  compact = false,
 }: {
   memberId: string;
   premier: boolean;
   nom: string;
   formule: Formule | null;
+  retour?: string;
+  compact?: boolean;
 }) {
   const aujourdhui = new Date().toISOString().slice(0, 10);
 
@@ -198,14 +202,20 @@ export function RegisterPaymentButton({
     return (
       <Modal
         title="Enregistrer le paiement"
-        trigger={(ouvrir) => (
-          <button
-            onClick={ouvrir}
-            className={`${BTN_PRIMARY} w-full justify-center text-[12.4px] px-[11px] py-1.5`}
-          >
-            <CreditCard size={14} /> Enregistrer le paiement
-          </button>
-        )}
+        trigger={(ouvrir) =>
+          compact ? (
+            <button onClick={ouvrir} className="btn-action btn-action-sm whitespace-nowrap">
+              <Check size={14} /> Confirmer le paiement
+            </button>
+          ) : (
+            <button
+              onClick={ouvrir}
+              className={`${BTN_PRIMARY} w-full justify-center text-[12.4px] px-[11px] py-1.5`}
+            >
+              <CreditCard size={14} /> Enregistrer le paiement
+            </button>
+          )
+        }
       >
         {(fermer) => (
           <>
@@ -233,19 +243,26 @@ export function RegisterPaymentButton({
   return (
     <Modal
       title="Enregistrer le paiement"
-      trigger={(ouvrir) => (
-        <button
-          onClick={ouvrir}
-          className={`${BTN_PRIMARY} w-full justify-center text-[12.4px] px-[11px] py-1.5`}
-        >
-          <CreditCard size={14} />{" "}
-          {premier ? "Enregistrer le paiement" : "Enregistrer un règlement"}
-        </button>
-      )}
+      trigger={(ouvrir) =>
+        compact ? (
+          <button onClick={ouvrir} className="btn-action btn-action-sm whitespace-nowrap">
+            <Check size={14} /> Confirmer le paiement
+          </button>
+        ) : (
+          <button
+            onClick={ouvrir}
+            className={`${BTN_PRIMARY} w-full justify-center text-[12.4px] px-[11px] py-1.5`}
+          >
+            <CreditCard size={14} />{" "}
+            {premier ? "Enregistrer le paiement" : "Enregistrer un règlement"}
+          </button>
+        )
+      }
     >
       {(fermer) => (
         <form action={registerPayment}>
           <input type="hidden" name="memberId" value={memberId} />
+          {retour ? <input type="hidden" name="retour" value={retour} /> : null}
           <ModalBody>
             <p className="text-[13px] text-muted m-0">
               {premier
