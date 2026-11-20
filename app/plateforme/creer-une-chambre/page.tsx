@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { Building2, Lock, Mail, MapPin, User } from "lucide-react";
 import { BoutonEnvoi } from "@/components/public/BoutonMarque";
 import { Alerte, CadreAuth, CHAMP_AUTH } from "@/components/public/CadreAuth";
@@ -104,6 +105,11 @@ export default async function CreerUneChambre({ searchParams }: { searchParams: 
         <div className="mt-3">
           <BoutonEnvoi enCours="Création de l’espace…">Créer mon espace</BoutonEnvoi>
         </div>
+        <p className="m-0 text-[12.5px] text-muted">
+          En créant votre espace, vous acceptez les{" "}
+          <Link href="/conditions" className="text-ink underline">conditions d’utilisation</Link> et la{" "}
+          <Link href="/confidentialite" className="text-ink underline">politique de confidentialité</Link>.
+        </p>
       </form>
     </CadreAuth>
   );

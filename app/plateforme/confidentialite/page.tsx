@@ -12,7 +12,7 @@ export default async function Confidentialite() {
   const contact = p.courriel ? ` à ${p.courriel}` : "";
 
   return (
-    <PageTexte titre="Politique de confidentialité" intro="Ce que la plateforme enregistre, pourquoi, combien de temps, et vos droits." maj="13 novembre 2026">
+    <PageTexte titre="Politique de confidentialité" intro="Ce que la plateforme enregistre, pourquoi, combien de temps, et vos droits." maj="20 novembre 2026">
       <h2>Qui est responsable</h2>
       <p>
         {p.nom} est responsable des données des comptes de la plateforme (équipes des Chambres, comptes d’administration). Chaque Chambre est responsable des données qu’elle saisit sur ses membres dans son espace : la plateforme les traite pour son compte.
@@ -25,7 +25,8 @@ export default async function Confidentialite() {
         <li>Membres des Chambres : fiches des entreprises, contacts, adhésions, cotisations et factures, inscriptions aux événements, messages, saisis par la Chambre ou par les membres eux-mêmes.</li>
         <li>Paiements par carte : traités par Stripe. La plateforme ne conserve jamais de numéro de carte, seulement la marque, les quatre derniers chiffres et la date d’expiration, pour l’affichage.</li>
         <li>Courriels : adresse du destinataire, sujet et état de remise des messages envoyés par la plateforme.</li>
-        <li>Journaux techniques : adresse IP et horodatage des connexions et des actions sensibles, pour la sécurité.</li>
+        <li>Historique des actions : qui a fait quoi et quand dans un espace (ajout d’un membre, paiement enregistré, réglage modifié…), sans adresse IP.</li>
+        <li>Connexion avec Google, si vous la choisissez : la plateforme reçoit seulement votre adresse e-mail confirmée par Google.</li>
       </ul>
 
       <h2>Pourquoi</h2>
@@ -39,14 +40,15 @@ export default async function Confidentialite() {
 
       <h2>Combien de temps</h2>
       <p>
-        Les données d’un compte sont gardées tant que le compte existe. Les factures et les écritures de paiement sont conservées le temps imposé par les obligations comptables et fiscales. Les journaux techniques sont effacés au bout de douze mois au plus.
+        Les données d’un compte sont gardées tant que le compte existe. Les factures et les écritures de paiement sont conservées le temps imposé par les obligations comptables et fiscales. L’historique des actions est gardé tant que l’espace de la Chambre existe. Les adresses IP servent seulement, en mémoire et pendant quelques minutes, à limiter les tentatives de connexion : elles ne sont pas enregistrées.
       </p>
 
       <h2>Avec qui</h2>
       <ul>
         <li>Stripe, pour les paiements par carte, selon ses propres conditions.</li>
         <li>Notre fournisseur d’envoi de courriels, pour la remise des messages.</li>
-        <li>{p.hebergeur ? `Notre hébergeur : ${p.hebergeur}.` : "Notre hébergeur, pour le stockage et l’exploitation de la plateforme."}</li>
+        <li>Google, seulement si vous vous connectez avec votre compte Google.</li>
+          <li>{p.hebergeur ? `Notre hébergeur : ${p.hebergeur}.` : "Notre hébergeur, pour le stockage et l’exploitation de la plateforme."}</li>
       </ul>
       <p>Aucune donnée n’est vendue ni transmise à des fins publicitaires.</p>
 
