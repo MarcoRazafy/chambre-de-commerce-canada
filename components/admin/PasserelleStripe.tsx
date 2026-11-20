@@ -1,4 +1,4 @@
-import { CheckCircle2, ExternalLink } from "lucide-react";
+import { CheckCircle2, LogIn } from "lucide-react";
 import { Pill } from "@/components/ui";
 import { connecterStripe } from "@/lib/actions/parametres";
 
@@ -43,17 +43,10 @@ export function PasserelleStripe({
         </div>
       </div>
 
-      {connecte && compte?.stripeCompteId ? (
-        <p className="m-0 text-[12.5px] text-muted tabular-nums truncate">
-          {compte.stripeCompteId}
-          {compte.stripeComptePays ? ` · ${compte.stripeComptePays}` : ""}
-        </p>
-      ) : null}
-
       <div className="mt-auto flex flex-wrap gap-2">
         {connecte ? (
-          <a href="https://dashboard.stripe.com" target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">
-            <ExternalLink size={14} aria-hidden /> Tableau de bord Stripe
+          <a href="https://dashboard.stripe.com/login" target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink hover:bg-surface-2 no-underline">
+            <LogIn size={14} aria-hidden /> Se connecter
           </a>
         ) : gere && disponible ? (
           <form action={connecterStripe}>
