@@ -16,7 +16,7 @@ import { INDICATIFS, PAYS } from "@/lib/accueil";
 import { deposerCandidature } from "@/lib/actions/accueil";
 import { utilisateurConnecte } from "@/lib/session";
 import { getFormules } from "@/lib/formules";
-import { getProfilChambre } from "@/lib/profil-chambre";
+import { getProfilChambre, getProfilChambreBrut } from "@/lib/profil-chambre";
 import { adresseSitePlateforme } from "@/lib/adresse-chambre";
 import { CoordonneesChambre, LogoChambreAuth } from "@/components/public/CoordonneesChambre";
 import { BasculeAuth } from "@/components/public/BasculeAuth";
@@ -30,8 +30,10 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function InscriptionPage() {
   const connecte = await utilisateurConnecte();
   if (connecte) redirect(connecte.role === "admin" ? "/admin" : "/membre");
-  const [formules, profil] = await Promise.all([getFormules(), getProfilChambre()]);
+  const [formules, profil, brut] = await Promise.all([getFormules(), getProfilChambre(), getProfilChambreBrut()]);
   const site = adresseSitePlateforme();
+  const cgv = brut?.cgv.trim() || null;
+  const politique = brut?.confidentialite.trim() || (site ? `${site}/confidentialite` : null);
 
   return (
     <CadreAuth
@@ -217,10 +219,17 @@ export default async function InscriptionPage() {
             detail="L’équipe de la Chambre est prévenue et l’examine au plus vite."
           />
         </div>
-        {site ? (
+        {politique ? (
           <p className="m-0 text-[12.5px] text-muted">
-            Vos données sont traitées selon la{" "}
-            <a href={`${site}/confidentialite`} target="_blank" rel="noopener noreferrer" className="text-ink underline">politique de confidentialité</a>.
+            {cgv ? (
+              <>
+                En envoyant votre demande, vous acceptez les{" "}
+                <a href={cgv} target="_blank" rel="noopener noreferrer" className="text-ink underline">conditions générales de vente</a> et la{" "}
+              </>
+            ) : (
+              <>Vos données sont traitées selon la </>
+            )}
+            <a href={politique} target="_blank" rel="noopener noreferrer" className="text-ink underline">politique de confidentialité</a>.
           </p>
         ) : null}
       </form>

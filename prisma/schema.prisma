@@ -1384,6 +1384,7 @@ model ProfilChambre {
   youtube         String @default("")
   tiktok          String @default("")
   confidentialite String @default("")
+  cgv             String @default("")
   copyright       String @default("")
 
   updatedAt DateTime @updatedAt

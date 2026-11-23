@@ -8,6 +8,7 @@ import { oublierExpediteur } from "@/lib/courriel";
 import { adresseSurUneLigne, couleurValide } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { chambreCourante } from "@/lib/chambre-courante";
+import { urlSure } from "@/lib/lettre-blocs";
 
 const PAGE = "/admin/entreprise";
 const texte = (fd: FormData, k: string, max = 300) => String(fd.get(k) ?? "").trim().slice(0, max);
@@ -32,6 +33,14 @@ async function sauverProfil(formData: FormData) {
 
   const email = texte(formData, "email", 200);
   if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) redirectWithErreur(PAGE, `« ${email} » n’est pas une adresse e-mail valide.`);
+  const lien = (champ: string, libelle: string) => {
+    const saisie = texte(formData, champ, 500);
+    const url = saisie ? urlSure(saisie) : "";
+    if (saisie && !url) redirectWithErreur(PAGE, `Le lien ${libelle} n’est pas une adresse web valide.`);
+    return url;
+  };
+  const cgv = lien("cgv", "des conditions générales de vente");
+  const confidentialite = lien("confidentialite", "de la politique de confidentialité");
 
   const data = {
     nom: texte(formData, "nom", 200),
@@ -57,6 +66,9 @@ async function sauverProfil(formData: FormData) {
     neq: texte(formData, "neq", 40),
     tps: texte(formData, "tps", 40),
     tvq: texte(formData, "tvq", 40),
+    cgv,
+    confidentialite,
+    copyright: texte(formData, "copyright", 300),
   };
   await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { ...data }, update: data });
   oublierExpediteur();

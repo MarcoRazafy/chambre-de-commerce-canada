@@ -8,7 +8,6 @@ import { Saillant } from "@/components/ui";
 import {
   enregistrerAlertes,
   enregistrerExpediteur,
-  enregistrerMentions,
   enregistrerCouleurs,
   enregistrerRelancesMembres,
   enregistrerReseaux,
@@ -37,7 +36,6 @@ const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
   { cle: "couleurs", libelle: "Couleurs" },
   { cle: "reseaux", libelle: "Réseaux sociaux" },
-  { cle: "mentions", libelle: "Mentions légales" },
   { cle: "paiements", libelle: "Paiements en ligne" },
 ] as const;
 
@@ -225,22 +223,6 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
         </Panneau>
       ) : null}
 
-      {onglet === "mentions" ? (
-        <form action={enregistrerMentions}>
-          <Panneau titre="Mentions légales" sousTitre="Le bas de page des courriels (newsletter, rappels)" teinte="vert">
-            <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
-              {verrou}
-              <Field label="Lien de la politique de confidentialité">
-                <input name="confidentialite" inputMode="url" maxLength={500} defaultValue={brut?.confidentialite ?? ""} placeholder="votre-site.com/confidentialite" className={INPUT} />
-              </Field>
-              <Field label="Copyright">
-                <input name="copyright" maxLength={300} defaultValue={brut?.copyright ?? ""} placeholder={reglages.mentions.copyright} className={INPUT} />
-              </Field>
-              {enregistrer}
-            </fieldset>
-          </Panneau>
-        </form>
-      ) : null}
     </>
   );
 }

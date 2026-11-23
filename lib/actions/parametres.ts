@@ -163,13 +163,6 @@ export async function enregistrerReseaux(formData: FormData) {
   await enregistrerChamps("reseaux", data, "Réseaux sociaux enregistrés");
 }
 
-export async function enregistrerMentions(formData: FormData) {
-  const saisie = texte(formData, "confidentialite", 500);
-  const confidentialite = saisie ? urlSure(saisie) : "";
-  if (saisie && !confidentialite) redirectWithErreur(`${PAGE}?onglet=mentions`, "Le lien de la politique de confidentialité n’est pas une adresse web valide.");
-  await enregistrerChamps("mentions", { confidentialite, copyright: texte(formData, "copyright", 300) }, "Mentions légales enregistrées");
-}
-
 export async function connecterStripe() {
   const onglet = `${PAGE}?onglet=paiements`;
   await exigerAdministrateur(onglet);

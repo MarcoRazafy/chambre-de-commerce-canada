@@ -63,22 +63,25 @@ export default async function MonEntreprise() {
               <span className="inline-flex items-center gap-1.5"><Phone size={14} className="shrink-0" aria-hidden />{p.telephone}</span>
               {p.site ? <span className="inline-flex items-center gap-1.5 break-all"><Globe size={14} className="shrink-0" aria-hidden />{p.site.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span> : null}
             </div>
-            {connexion ? (
-              <div className="flex flex-wrap items-center gap-2 mt-4">
-                <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink mr-1"><LogIn size={14} className="shrink-0" aria-hidden />Lien de connexion</span>
-                <a href={connexion} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted break-all mr-1 hover:text-ink">{connexion}</a>
-                <BoutonCopierLien lien={connexion} libelle="Copier le lien" />
-                <a href={connexion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
-                  <ExternalLink size={14} aria-hidden /> Ouvrir
-                </a>
-              </div>
-            ) : null}
+            <div className="flex flex-wrap items-center gap-2 mt-4">
+              {connexion ? (
+                <>
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink mr-1"><LogIn size={14} className="shrink-0" aria-hidden />Lien de connexion</span>
+                  <a href={connexion} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted break-all mr-1 hover:text-ink">{connexion}</a>
+                  <BoutonCopierLien lien={connexion} libelle="Copier le lien" />
+                  <a href={connexion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
+                    <ExternalLink size={14} aria-hidden /> Ouvrir
+                  </a>
+                </>
+              ) : null}
+              <SubmitButton form="profil-chambre" sm pendingLabel="Enregistrement…"><Save size={14} /> Enregistrer</SubmitButton>
+            </div>
           </div>
         </div>
       </Card>
 
       <div className="grid gap-5 items-start grid-cols-[minmax(0,1fr)] xl:grid-cols-2">
-      <form action={enregistrerProfilChambre} className="flex flex-col gap-4 min-w-0">
+      <form id="profil-chambre" action={enregistrerProfilChambre} className="flex flex-col gap-4 min-w-0">
         <Panneau titre="La Chambre" sousTitre="Sa présentation, ses coordonnées et ce qui figure sur ses factures" teinte="rouge">
           <div className="flex flex-col gap-4">
             <Field label="Nom">
@@ -132,10 +135,22 @@ export default async function MonEntreprise() {
             <Field label="Site web">
               <input name="site" maxLength={300} defaultValue={v("site")} placeholder="www.entreprise.com" className={INPUT} />
             </Field>
+            <fieldset className="m-0 p-0 border-0 min-w-0 flex flex-col gap-3 pt-1">
+              <legend className="mb-2 p-0 text-[13px] font-semibold text-ink">Mentions légales</legend>
+              <Field label="Conditions générales de vente (lien)">
+                <input name="cgv" inputMode="url" maxLength={500} defaultValue={v("cgv")} placeholder="www.entreprise.com/cgv" className={INPUT} />
+              </Field>
+              <Field label="Politique de confidentialité (lien)">
+                <input name="confidentialite" inputMode="url" maxLength={500} defaultValue={v("confidentialite")} placeholder="www.entreprise.com/confidentialite" className={INPUT} />
+              </Field>
+              <Field label="Copyright">
+                <input name="copyright" maxLength={300} defaultValue={v("copyright")} placeholder={`© ${new Date().getFullYear()} ${p.nom}. Tous droits réservés.`} className={INPUT} />
+              </Field>
+            </fieldset>
           </div>
         </Panneau>
 
-        <div className="sticky bottom-0 z-10 py-3 bg-bg/90 backdrop-blur border-t border-line flex items-center justify-end gap-3 flex-wrap">
+        <div className="flex justify-center pt-1">
           <SubmitButton pendingLabel="Enregistrement…"><Save size={15} /> Enregistrer les modifications</SubmitButton>
         </div>
       </form>
