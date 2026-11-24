@@ -186,6 +186,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
                   couleurFondConnexion: brut?.couleurFondConnexion ?? "",
                   couleurTexteConnexion: brut?.couleurTexteConnexion ?? "",
                 }}
+                logo={brut?.logo?.trim() || null}
               />
               {enregistrer}
             </fieldset>
