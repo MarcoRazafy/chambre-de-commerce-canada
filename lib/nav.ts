@@ -5,7 +5,6 @@ export interface NavItem {
   label: string;
   icon: string;
   aussi?: string[];
-  externe?: boolean;
 }
 
 export interface NavGroup {
@@ -94,7 +93,6 @@ export const NAV_ADMIN: NavGroup[] = [
         icon: "card",
         aussi: ["/admin/reglements"],
       },
-      { href: "https://dashboard.stripe.com/login", label: "Stripe", icon: "stripe", externe: true },
     ],
   },
   {

@@ -41,7 +41,7 @@ export default async function AdminLayout({
   const aRegler = enAttente
     ? await prisma.facturePlateforme.findFirst({ where: { payeeLe: null }, orderBy: { date: "asc" }, select: { total: true } })
     : null;
-  const verrous = enAttente ? nav.flatMap((g) => g.items).filter((i) => !i.externe && !ouvertAvantPaiement(i.href)).map((i) => i.href) : [];
+  const verrous = enAttente ? nav.flatMap((g) => g.items).filter((i) => !ouvertAvantPaiement(i.href)).map((i) => i.href) : [];
 
   return (
     <>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarClock, Mail, MousePointerClick, Plus, Send, Trash2, Users } from "lucide-react";
+import { CalendarClock, Mail, MousePointerClick, Pencil, Plus, Trash2, Users } from "lucide-react";
 import { Compteur, EnTeteAdmin, Vide } from "@/components/admin/ui";
 import { Card, Pill, Saillant, TableWrap, Td, Th } from "@/components/ui";
 import { annulerProgrammation, supprimerLettre } from "@/lib/actions/newsletter";
@@ -93,7 +93,7 @@ export default async function AdminNewsletter() {
                 <Td className="text-right whitespace-nowrap">
                   {l.etat === "brouillon" ? (
                     <span className="inline-flex gap-2 justify-end">
-                      <Link href={`/admin/newsletter/${l.id}#envoi`} className="btn-contour btn-contour-sm text-ink no-underline"><Send size={14} /> Programmer</Link>
+                      <Link href={`/admin/newsletter/${l.id}`} className="btn-contour btn-contour-sm text-ink no-underline"><Pencil size={14} /> Modifier</Link>
                       <form action={supprimerLettre}>
                         <input type="hidden" name="id" value={l.id} />
                         <button type="submit" aria-label={`Supprimer le brouillon « ${l.sujet} »`} className="grid place-items-center w-8 h-8 rounded-[var(--radius-s)] border border-line bg-surface text-muted hover:text-bad cursor-pointer"><Trash2 size={14} /></button>
