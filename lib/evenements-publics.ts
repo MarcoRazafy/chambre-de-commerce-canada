@@ -6,8 +6,10 @@ import { prisma, prismaSysteme } from "@/lib/db";
 import { EVENT_FORMAT_LABEL } from "@/lib/enums";
 import { getProfilChambre } from "@/lib/profil-chambre";
 import type { ProfilChambre } from "@/lib/profil-chambre-defauts";
+import type { CouleursPage } from "@/lib/couleurs-evenement";
+import { couleur } from "@/lib/couleurs";
 
-const CHAMPS = { id: true, titre: true, date: true, lieu: true, format: true, desc: true, photo: true, debut: true, fin: true, payant: true, prixPublic: true, pourQui: true } as const;
+const CHAMPS = { id: true, titre: true, date: true, lieu: true, format: true, desc: true, photo: true, debut: true, fin: true, payant: true, prixPublic: true, pourQui: true, couleurHaut: true, couleurPied: true, couleurPied2: true } as const;
 
 export type EvenementPublic = {
   id: string;
@@ -22,23 +24,34 @@ export type EvenementPublic = {
   payant: boolean;
   prixPublic: number;
   pourQui: string | null;
+  couleurHaut: string | null;
+  couleurPied: string | null;
+  couleurPied2: string | null;
 };
+
+export const couleursEvenement = (e: Pick<EvenementPublic, "couleurHaut" | "couleurPied" | "couleurPied2">): CouleursPage => ({ haut: e.couleurHaut, pied: e.couleurPied, pied2: e.couleurPied2 });
+
+export async function couleursChambre(): Promise<CouleursPage> {
+  const p = await prisma.profilChambre.findFirst({ select: { couleurHaut: true, couleurLaterale: true, couleurLaterale2: true } });
+  return { haut: couleur(p?.couleurHaut), pied: couleur(p?.couleurLaterale), pied2: couleur(p?.couleurLaterale2) };
+}
 
 const versPublic = (e: { format: keyof typeof EVENT_FORMAT_LABEL } & Omit<EvenementPublic, "format">): EvenementPublic => ({ ...e, format: EVENT_FORMAT_LABEL[e.format] });
 
-export async function pagePublique(slug: string): Promise<{ chambreId: string; slug: string; profil: ProfilChambre; aVenir: EvenementPublic[]; passes: EvenementPublic[] } | null> {
+export async function pagePublique(slug: string): Promise<{ chambreId: string; slug: string; profil: ProfilChambre; couleurs: CouleursPage; aVenir: EvenementPublic[]; passes: EvenementPublic[] } | null> {
   const s = slug.trim().toLowerCase();
   if (!/^[a-z0-9-]{1,63}$/.test(s)) return null;
   const chambreId = await chambreDuSlug(s);
   if (!chambreId) return null;
   return avecChambre(chambreId, async () => {
     const debutJour = new Date(new Date().toISOString().slice(0, 10));
-    const [profil, aVenir, passes] = await Promise.all([
+    const [profil, couleurs, aVenir, passes] = await Promise.all([
       getProfilChambre(),
+      couleursChambre(),
       prisma.event.findMany({ where: { public: true, date: { gte: debutJour } }, orderBy: { date: "asc" }, select: CHAMPS }),
       prisma.event.findMany({ where: { public: true, date: { lt: debutJour } }, orderBy: { date: "desc" }, take: 9, select: CHAMPS }),
     ]);
-    return { chambreId, slug: s, profil, aVenir: aVenir.map(versPublic), passes: passes.map(versPublic) };
+    return { chambreId, slug: s, profil, couleurs, aVenir: aVenir.map(versPublic), passes: passes.map(versPublic) };
   });
 }
 

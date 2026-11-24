@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { CalendarDays } from "lucide-react";
 import { CadreEvenementsPublics, CarteEvenementPublic } from "@/components/public/CadreEvenementsPublics";
 import { pagePublique } from "@/lib/evenements-publics";
+import { stylePagePublique } from "@/lib/couleurs-evenement";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +21,7 @@ export default async function EvenementsPublics({ params }: Params) {
   const p = await pagePublique((await params).slug);
   if (!p) notFound();
   return (
-    <CadreEvenementsPublics slug={p.slug} profil={p.profil}>
+    <CadreEvenementsPublics slug={p.slug} profil={p.profil} style={stylePagePublique(null, p.couleurs)}>
       <section className="max-w-[1200px] mx-auto px-5 sm:px-8 pt-12 sm:pt-16 pb-16">
         <h1 className="m-0 text-[clamp(32px,4.4vw,48px)] leading-tight">Nos évènements</h1>
         {p.aVenir.length ? (

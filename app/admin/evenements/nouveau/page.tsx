@@ -2,6 +2,7 @@ import { EnTeteAdmin } from "@/components/admin/ui";
 import { FormulaireEvenement } from "@/components/forms/FormulaireEvenement";
 import { Saillant } from "@/components/ui";
 import { getTousLesTags } from "@/lib/contacts-admin";
+import { couleursChambre } from "@/lib/evenements-publics";
 
 export default async function NouvelEvenement() {
   return (
@@ -14,7 +15,7 @@ export default async function NouvelEvenement() {
           </>
         }
       />
-      <FormulaireEvenement tousTags={await getTousLesTags()} />
+      <FormulaireEvenement tousTags={await getTousLesTags()} couleursChambre={await couleursChambre()} />
     </>
   );
 }

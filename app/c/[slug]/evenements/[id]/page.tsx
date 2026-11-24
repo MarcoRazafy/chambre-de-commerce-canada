@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Ticket } from "lucide-react";
 import { CadreEvenementsPublics } from "@/components/public/CadreEvenementsPublics";
-import { dateLongue, evenementPublic, pagePublique } from "@/lib/evenements-publics";
+import { couleursEvenement, dateLongue, evenementPublic, pagePublique } from "@/lib/evenements-publics";
+import { stylePagePublique } from "@/lib/couleurs-evenement";
 import { fmtMoney } from "@/lib/format";
 
 export const dynamic = "force-dynamic";
@@ -32,7 +33,7 @@ export default async function EvenementPublicPage({ params }: Params) {
   const horaire = e.debut ? `${e.debut}${e.fin ? ` – ${e.fin}` : ""}` : null;
 
   return (
-    <CadreEvenementsPublics slug={p.slug} profil={p.profil}>
+    <CadreEvenementsPublics slug={p.slug} profil={p.profil} style={stylePagePublique(couleursEvenement(e), p.couleurs)}>
       <div className="max-w-[1100px] mx-auto px-5 sm:px-8 pt-8 pb-20 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
         <article className="min-w-0">
           <Link href={`/c/${p.slug}/evenements`} className="inline-flex items-center gap-1.5 text-[13.5px] text-muted no-underline hover:text-ink">

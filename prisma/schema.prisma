@@ -487,6 +487,10 @@ model Event {
   fin        String?
   pourQui    String?
 
+  couleurHaut  String?
+  couleurPied  String?
+  couleurPied2 String?
+
   rappelJ7      Boolean @default(true)
   rappelJ1      Boolean @default(true)
   rappelH2      Boolean @default(false)

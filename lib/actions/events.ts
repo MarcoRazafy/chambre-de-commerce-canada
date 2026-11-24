@@ -29,6 +29,7 @@ import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
 import { INTERVENANTS_MAX, lireIntervenants } from "@/lib/intervenants";
 import { poserTags } from "@/lib/poser-tags";
 import { lireTags } from "@/lib/tags";
+import { couleur } from "@/lib/couleurs";
 import type { EventFormat } from "@/lib/types";
 import {
   notifierEquipe,
@@ -515,6 +516,13 @@ export async function saveEvent(formData: FormData) {
     desc: texte(formData, "desc") || "Détails à venir.",
     pourQui: texte(formData, "pourQui") || null,
     etiquettes: lireTags(formData.getAll("etiquettes")),
+    ...(formData.has("couleurHaut")
+      ? {
+          couleurHaut: couleur(texte(formData, "couleurHaut")),
+          couleurPied: couleur(texte(formData, "couleurPied")),
+          couleurPied2: couleur(texte(formData, "couleurPied")) ? couleur(texte(formData, "couleurPied2")) : null,
+        }
+      : {}),
   };
   const retirerPhoto = texte(formData, "retirerPhoto") === "1";
 

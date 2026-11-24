@@ -242,6 +242,9 @@ export async function getEvent(id: string): Promise<CanchamEvent | null> {
     debut: e.debut,
     fin: e.fin,
     pourQui: e.pourQui,
+    couleurHaut: e.couleurHaut,
+    couleurPied: e.couleurPied,
+    couleurPied2: e.couleurPied2,
     programme: e.programme.map((etape) => ({
       heure: etape.heure,
       titre: etape.titre,

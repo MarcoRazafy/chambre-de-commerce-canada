@@ -83,6 +83,9 @@ export interface CanchamEvent {
   debut?: string | null;
   fin?: string | null;
   pourQui?: string | null;
+  couleurHaut?: string | null;
+  couleurPied?: string | null;
+  couleurPied2?: string | null;
   programme?: EtapeProgramme[];
   intervenants?: Intervenant[];
 }

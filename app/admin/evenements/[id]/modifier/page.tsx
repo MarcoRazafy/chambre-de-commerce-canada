@@ -5,6 +5,7 @@ import { Saillant } from "@/components/ui";
 import { getTousLesTags } from "@/lib/contacts-admin";
 import { prisma } from "@/lib/db";
 import { getEvent } from "@/lib/queries";
+import { couleursChambre } from "@/lib/evenements-publics";
 
 export default async function ModifierEvenement({
   params,
@@ -12,10 +13,11 @@ export default async function ModifierEvenement({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [e, tousTags, tags] = await Promise.all([
+  const [e, tousTags, tags, couleurs] = await Promise.all([
     getEvent(id),
     getTousLesTags(),
     prisma.event.findUnique({ where: { id }, select: { etiquettes: true } }),
+    couleursChambre(),
   ]);
   if (!e) notFound();
 
@@ -31,7 +33,7 @@ export default async function ModifierEvenement({
       >
         {e.titre}
       </EnTeteAdmin>
-      <FormulaireEvenement event={e} tousTags={tousTags} tags={tags?.etiquettes ?? []} />
+      <FormulaireEvenement event={e} tousTags={tousTags} tags={tags?.etiquettes ?? []} couleursChambre={couleurs} />
     </>
   );
 }

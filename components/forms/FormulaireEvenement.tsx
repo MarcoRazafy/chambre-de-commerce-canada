@@ -5,6 +5,8 @@ import { ArrowDown, ArrowUp, Check, Plus, Trash2, UserPlus } from "lucide-react"
 import { INPUT } from "@/components/champ-style";
 import { ChampPhoto, Field, SubmitButton } from "@/components/form-bits";
 import { ChoixDiffusion } from "@/components/forms/ChoixDiffusion";
+import { CouleursPagePublique } from "@/components/forms/CouleursPagePublique";
+import type { CouleursPage } from "@/lib/couleurs-evenement";
 import { ChoixTags } from "@/components/admin/ChoixTags";
 import { Card } from "@/components/ui";
 import { saveEvent } from "@/lib/actions/events";
@@ -65,10 +67,12 @@ export function FormulaireEvenement({
   event,
   tousTags,
   tags = [],
+  couleursChambre,
 }: {
   event?: CanchamEvent;
   tousTags: string[];
   tags?: string[];
+  couleursChambre: CouleursPage;
 }) {
   const [payant, setPayant] = useState(event?.payant ?? false);
   const [publique, setPublique] = useState(event?.public ?? true);
@@ -375,6 +379,15 @@ export function FormulaireEvenement({
           <Rubrique titre="Diffusion">
             <ChoixDiffusion publique={publique} onChange={setPublique} />
           </Rubrique>
+
+          {publique ? (
+            <Rubrique titre="Couleurs de la page publique">
+              <CouleursPagePublique
+                initiales={{ haut: event?.couleurHaut ?? null, pied: event?.couleurPied ?? null, pied2: event?.couleurPied2 ?? null }}
+                chambre={couleursChambre}
+              />
+            </Rubrique>
+          ) : null}
 
           <Rubrique
             titre="Participation"
