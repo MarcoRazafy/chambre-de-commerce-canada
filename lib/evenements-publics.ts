@@ -10,6 +10,7 @@ import { compteStripeActif } from "@/lib/encaissement-stripe";
 import type { ProfilChambre } from "@/lib/profil-chambre-defauts";
 import type { CouleursPage } from "@/lib/couleurs-evenement";
 import { cadreVisible, type CadreLogo } from "@/lib/cadre-logo";
+import type { Supplement } from "@/lib/supplements";
 import { couleur } from "@/lib/couleurs";
 
 const CHAMPS = { id: true, titre: true, date: true, lieu: true, format: true, desc: true, photo: true, debut: true, fin: true, payant: true, prixPublic: true, pourQui: true, couleurHaut: true, couleurPied: true, couleurPied2: true } as const;
@@ -70,17 +71,25 @@ export async function lienPagePublique(chambreId: string): Promise<string | null
   return base && c ? `${base}/c/${c.slug}/evenements` : null;
 }
 
-export async function ouvertureInscription(chambreId: string, id: string): Promise<{ restantes: number; termine: boolean; enLigne: boolean }> {
+export async function ouvertureInscription(chambreId: string, id: string): Promise<{ restantes: number; termine: boolean; enLigne: boolean; supplements: Supplement[] }> {
   return avecChambre(chambreId, async () => {
     const e = await prisma.event.findFirst({
       where: { id, public: true },
-      select: { cap: true, date: true, fin: true, prixPublic: true, _count: { select: { participants: true } } },
+      select: {
+        cap: true,
+        date: true,
+        fin: true,
+        prixPublic: true,
+        _count: { select: { participants: true } },
+        supplements: { orderBy: { ordre: "asc" }, select: { id: true, libelle: true, prix: true } },
+      },
     });
-    if (!e) return { restantes: 0, termine: true, enLigne: false };
+    if (!e) return { restantes: 0, termine: true, enLigne: false, supplements: [] };
     return {
       restantes: Math.max(0, e.cap - e._count.participants),
       termine: estTermine(e),
-      enLigne: e.prixPublic > 0 && Boolean(await compteStripeActif()),
+      enLigne: (e.prixPublic > 0 || e.supplements.length > 0) && Boolean(await compteStripeActif()),
+      supplements: e.supplements,
     };
   });
 }

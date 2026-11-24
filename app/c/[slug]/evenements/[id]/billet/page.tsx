@@ -41,9 +41,9 @@ export default async function BilletPublic({
     const [e, billets] = await Promise.all([getEvent(id), getBilletsPublics(id, code)]);
     if (!e || !billets.length) return null;
     const enAttente = billets.some((b) => b.statut === "a_valider");
-    const aRegler = e.prixPublic * billets.filter((b) => b.statut === "a_valider").length;
+    const aRegler = billets.filter((b) => b.statut === "a_valider").reduce((somme, b) => somme + (b.montant || e.prixPublic), 0);
     const [modes, reglement, ecarte, coordonnees] =
-      enAttente && e.prixPublic > 0
+      enAttente && aRegler > 0
         ? await Promise.all([
             compteStripeActif().then((c): ModeReglement[] => (c ? ["carte"] : [])),
             reglementPublicOuvert(e.id, base),
@@ -101,7 +101,7 @@ export default async function BilletPublic({
             </p>
           ) : null}
 
-          {e.prixPublic > 0 && enAttente ? (
+          {aRegler > 0 && enAttente ? (
             <PaiementPublic
               chambre={p.slug}
               eventId={e.id}
@@ -134,6 +134,7 @@ export default async function BilletPublic({
               {billets.map((b) => (
                 <div key={b.code}>
                   <div className="mb-1 text-[14px] font-semibold text-ink">{b.nom}</div>
+                  {b.supplements.length ? <div className="mb-2 text-[12.5px] text-muted">{b.supplements.join(" · ")}</div> : null}
                   <CodeAccueil
                     code={b.code}
                     {...matriceQr(b.code)}

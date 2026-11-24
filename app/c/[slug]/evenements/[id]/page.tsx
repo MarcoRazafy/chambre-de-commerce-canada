@@ -62,13 +62,20 @@ export default async function EvenementPublicPage({ params }: Params) {
             {horaire ? <p className="m-0 flex items-start gap-2.5"><Clock size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {horaire}</p> : null}
             {e.lieu ? <p className="m-0 flex items-start gap-2.5"><MapPin size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {e.lieu}</p> : null}
             <p className="m-0 flex items-start gap-2.5"><Ticket size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {e.prixPublic > 0 ? fmtMoney(e.prixPublic) : "Gratuit"}</p>
+            {ouverture.supplements.length ? (
+              <ul className="m-0 pl-[27px] list-none flex flex-col gap-1 text-[13px] text-muted">
+                {ouverture.supplements.map((x) => (
+                  <li key={x.id} className="flex justify-between gap-3"><span>{x.libelle}</span><span className="tabular-nums">+ {fmtMoney(x.prix)}</span></li>
+                ))}
+              </ul>
+            ) : null}
             {ouverture.termine ? (
               <p className="m-0 mt-2 rounded-[var(--radius-s)] bg-surface-2 px-3.5 py-3 text-center text-[13.5px] font-semibold text-muted">Événement terminé</p>
             ) : ouverture.restantes > 0 ? (
               <div className="mt-2">
                 <InscriptionPublique
                   chambre={p.slug}
-                  event={{ id: e.id, titre: e.titre, lieu: e.lieu, payant: e.prixPublic > 0, prix: e.prixPublic, restantes: ouverture.restantes, enLigne: ouverture.enLigne }}
+                  event={{ id: e.id, titre: e.titre, lieu: e.lieu, payant: e.prixPublic > 0, prix: e.prixPublic, restantes: ouverture.restantes, enLigne: ouverture.enLigne, supplements: ouverture.supplements }}
                 />
               </div>
             ) : (

@@ -30,6 +30,7 @@ import { INTERVENANTS_MAX, lireIntervenants } from "@/lib/intervenants";
 import { poserTags } from "@/lib/poser-tags";
 import { lireTags } from "@/lib/tags";
 import { couleur } from "@/lib/couleurs";
+import { libelleSupplement, lireSupplementsSaisis, supplementsChoisis, totalSupplements } from "@/lib/supplements";
 import { cheminBillet, cheminEvenementPublic, dansLaChambreDuFormulaire, lienBillet } from "@/lib/billet-public";
 import type { EventFormat } from "@/lib/types";
 import {
@@ -96,7 +97,10 @@ export async function registerForEvent(formData: FormData) {
   const [event, membre] = await Promise.all([
     prisma.event.findUnique({
       where: { id: eventId },
-      include: { _count: { select: { participants: true } } },
+      include: {
+        _count: { select: { participants: true } },
+        supplements: { orderBy: { ordre: "asc" }, select: { id: true, libelle: true, prix: true } },
+      },
     }),
     prisma.member.findUnique({
       where: { id: user.memberId },
@@ -143,6 +147,10 @@ export async function registerForEvent(formData: FormData) {
 
   const code = await codeAcces(eventId);
   const n = representants.length;
+  const extras = supplementsChoisis(event.supplements, formData.getAll("supplement"));
+  const parPersonne = (event.payant ? event.prix : 0) + totalSupplements(extras);
+  const payant = parPersonne > 0;
+  const total = parPersonne * n;
 
   const ecritures: Prisma.PrismaPromise<unknown>[] = [
     prisma.registration.create({
@@ -155,21 +163,23 @@ export async function registerForEvent(formData: FormData) {
         entreprise: membre.nom,
         email,
         telephone,
-        statut: event.payant ? ("a_valider" as const) : ("confirme" as const),
+        statut: payant ? ("a_valider" as const) : ("confirme" as const),
         code: codeRepresentant(code, i),
+        supplements: extras.map(libelleSupplement),
+        montant: parPersonne,
       })),
     }),
   ];
 
-  if (event.payant) {
+  if (payant) {
     const date = jourBase();
     ecritures.push(
       prisma.invoice.create({
         data: {
           numero: await numeroFacture(date),
           date,
-          objet: `Participation — ${event.titre}${n > 1 ? ` (${n} personnes)` : ""}`,
-          montant: event.prix * n,
+          objet: `Participation — ${event.titre}${extras.length ? ` + ${extras.map((x) => x.libelle).join(", ")}` : ""}${n > 1 ? ` (${n} personnes)` : ""}`,
+          montant: total,
           statut: "envoyee",
           memberId: user.memberId,
           eventId,
@@ -181,7 +191,7 @@ export async function registerForEvent(formData: FormData) {
 
   const ecrit = await prisma.$transaction(ecritures);
   await poserTags([user.memberId], event.etiquettes);
-  const facture = event.payant
+  const facture = payant
     ? (ecrit[ecrit.length - 1] as { id: string })
     : null;
 
@@ -190,15 +200,15 @@ export async function registerForEvent(formData: FormData) {
     code: codeRepresentant(code, i),
   }));
   const lien = await urlPublique(fiche);
-  if (event.payant) {
-    envoyerAttente(event, participants, email, lien, fmtMoney(event.prix * n));
+  if (payant) {
+    envoyerAttente(event, participants, email, lien, fmtMoney(total));
   } else {
     envoyerBillets(event, participants, email, lien);
   }
   after(() =>
     notifierEquipe({
       titre: `Inscription : ${event.titre}`,
-      corps: `${membre.nom} · ${n} représentant${n > 1 ? "s" : ""}${event.payant ? ` · ${fmtMoney(event.prix * n)} à régler` : ""}`,
+      corps: `${membre.nom} · ${n} représentant${n > 1 ? "s" : ""}${payant ? ` · ${fmtMoney(total)} à régler` : ""}`,
       url: `/admin/evenements/${eventId}`,
     }),
   );
@@ -214,7 +224,7 @@ export async function registerForEvent(formData: FormData) {
 
   redirectWithFlash(
     fiche,
-    event.payant
+    payant
       ? `Inscription enregistrée · ${n} représentant${n > 1 ? "s" : ""} · facture générée · billets envoyés dès validation du règlement`
       : `Inscription confirmée · ${n} représentant${n > 1 ? "s" : ""} · billets envoyés à ${email}`,
   );
@@ -244,7 +254,10 @@ async function inscrireVisiteur(formData: FormData, slug: string) {
 
   const event = await prisma.event.findUnique({
     where: { id: eventId },
-    include: { _count: { select: { participants: true } } },
+    include: {
+      _count: { select: { participants: true } },
+      supplements: { orderBy: { ordre: "asc" }, select: { id: true, libelle: true, prix: true } },
+    },
   });
   if (!event?.public) {
     redirectWithErreur(`/c/${slug}/evenements`, "Événement introuvable.");
@@ -308,7 +321,9 @@ async function inscrireVisiteur(formData: FormData, slug: string) {
 
   const code = await codeAcces(eventId);
   const n = noms.length;
-  const aRegler = event.prixPublic > 0 ? fmtMoney(event.prixPublic * n) : null;
+  const extras = supplementsChoisis(event.supplements, formData.getAll("supplement"));
+  const parPersonne = event.prixPublic + totalSupplements(extras);
+  const aRegler = parPersonne > 0 ? fmtMoney(parPersonne * n) : null;
   await prisma.$transaction([
     prisma.attendee.createMany({
       data: noms.map((nom, i) => ({
@@ -319,6 +334,8 @@ async function inscrireVisiteur(formData: FormData, slug: string) {
         telephone,
         statut: aRegler ? ("a_valider" as const) : ("confirme" as const),
         code: codeRepresentant(code, i),
+        supplements: extras.map(libelleSupplement),
+        montant: parPersonne,
       })),
     }),
     prisma.auditLog.create({
@@ -489,6 +506,9 @@ export async function saveEvent(formData: FormData) {
     retirees: noms.map((_, i) => texte(formData, `intervenantRetirer-${i}`) === "1"),
   });
 
+  const supplements = lireSupplementsSaisis(formData);
+  if (typeof supplements === "string") redirectWithErreur(retour, supplements);
+
   const heures = formData.getAll("etapeHeure").map(String);
   const titres = formData.getAll("etapeTitre").map(String);
   const details = formData.getAll("etapeDetail").map(String);
@@ -549,6 +569,12 @@ export async function saveEvent(formData: FormData) {
     if (intervenants.length) {
       await tx.eventIntervenant.createMany({
         data: intervenants.map((p) => ({ ...p, eventId: ev.id })),
+      });
+    }
+    await tx.supplementEvenement.deleteMany({ where: { eventId: ev.id } });
+    if (supplements.length) {
+      await tx.supplementEvenement.createMany({
+        data: supplements.map((x) => ({ ...x, eventId: ev.id })),
       });
     }
     return ev;

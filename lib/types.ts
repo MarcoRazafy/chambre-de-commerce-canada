@@ -86,6 +86,7 @@ export interface CanchamEvent {
   couleurHaut?: string | null;
   couleurPied?: string | null;
   couleurPied2?: string | null;
+  supplements?: { id: string; libelle: string; prix: number }[];
   programme?: EtapeProgramme[];
   intervenants?: Intervenant[];
 }

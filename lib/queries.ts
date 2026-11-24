@@ -208,6 +208,8 @@ export async function getBilletsPublics(eventId: string, code: string) {
         email: true,
         code: true,
         statut: true,
+        montant: true,
+        supplements: true,
       },
     }),
   ]);
@@ -222,6 +224,7 @@ export async function getEvent(id: string): Promise<CanchamEvent | null> {
       _count: { select: { participants: true } },
       programme: { orderBy: { ordre: "asc" } },
       intervenants: { orderBy: { ordre: "asc" } },
+      supplements: { orderBy: { ordre: "asc" } },
     },
   });
   if (!e) return null;
@@ -245,6 +248,7 @@ export async function getEvent(id: string): Promise<CanchamEvent | null> {
     couleurHaut: e.couleurHaut,
     couleurPied: e.couleurPied,
     couleurPied2: e.couleurPied2,
+    supplements: e.supplements.map((s) => ({ id: s.id, libelle: s.libelle, prix: s.prix })),
     programme: e.programme.map((etape) => ({
       heure: etape.heure,
       titre: etape.titre,

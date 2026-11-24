@@ -178,7 +178,7 @@ async function inscriptionAPayer(formData: FormData, slug: string) {
     prisma.attendee.findMany({
       where: { eventId, statut: "a_valider", ...lignesDe(code) },
       orderBy: { createdAt: "asc" },
-      select: { nom: true, email: true },
+      select: { nom: true, email: true, montant: true },
     }),
     prisma.registration.findUnique({ where: { code }, select: { id: true } }),
   ]);
@@ -194,7 +194,7 @@ async function inscriptionAPayer(formData: FormData, slug: string) {
     page,
     event,
     lignes,
-    montant: event.prixPublic * lignes.length,
+    montant: lignes.reduce((somme, l) => somme + (l.montant || event.prixPublic), 0),
   };
 }
 

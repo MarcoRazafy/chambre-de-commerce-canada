@@ -206,6 +206,7 @@ export interface Participant {
   email: string;
   telephone: string | null;
   statut: "a_valider" | "confirme" | "present" | "absent";
+  supplements: string[];
 }
 
 export async function getParticipants(eventId: string): Promise<Participant[]> {
@@ -219,6 +220,7 @@ export async function getParticipants(eventId: string): Promise<Participant[]> {
       email: true,
       telephone: true,
       statut: true,
+      supplements: true,
     },
   });
 }

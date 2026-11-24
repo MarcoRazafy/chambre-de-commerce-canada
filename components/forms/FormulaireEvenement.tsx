@@ -6,6 +6,7 @@ import { INPUT } from "@/components/champ-style";
 import { ChampPhoto, Field, SubmitButton } from "@/components/form-bits";
 import { ChoixDiffusion } from "@/components/forms/ChoixDiffusion";
 import { CouleursPagePublique } from "@/components/forms/CouleursPagePublique";
+import { AutresPaiements } from "@/components/forms/AutresPaiements";
 import type { CouleursPage } from "@/lib/couleurs-evenement";
 import { ChoixTags } from "@/components/admin/ChoixTags";
 import { Card } from "@/components/ui";
@@ -455,6 +456,7 @@ export function FormulaireEvenement({
                 ) : null}
               </>
             ) : null}
+            <AutresPaiements initiaux={event?.supplements ?? []} />
           </Rubrique>
 
           <SubmitButton pendingLabel="Enregistrement…" className="w-full">

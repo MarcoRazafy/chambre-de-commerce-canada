@@ -510,6 +510,7 @@ model Event {
   participants      Attendee[]
   programme         EventAgenda[]
   intervenants      EventIntervenant[]
+  supplements       SupplementEvenement[]
   factures          Invoice[]
 
   @@index([date])
@@ -583,6 +584,8 @@ model Attendee {
   statut     AttendeeStatus @default(confirme)
   code       String?        @unique
   presentLe  DateTime?
+  supplements String[]      @default([])
+  montant     Int           @default(0)
 
   eventId String
   event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
@@ -591,6 +594,18 @@ model Attendee {
 
   @@index([eventId])
   @@map("attendees")
+}
+
+model SupplementEvenement {
+  id      String @id @default(cuid())
+  eventId String
+  event   Event  @relation(fields: [eventId], references: [id], onDelete: Cascade)
+  libelle String
+  prix    Int
+  ordre   Int    @default(0)
+
+  @@index([eventId])
+  @@map("supplements_evenements")
 }
 
 model Rappel {

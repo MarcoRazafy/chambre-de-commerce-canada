@@ -400,6 +400,9 @@ export default async function EvenementAdmin({
                       {p.email && p.email !== "—" ? ` · ${p.email}` : ""}
                       {p.telephone ? ` · ${p.telephone}` : ""}
                     </span>
+                    {p.supplements.length ? (
+                      <span className="block text-[12px] text-accent truncate">+ {p.supplements.join(" · ")}</span>
+                    ) : null}
                   </span>
                   <Pill tone={PASTILLES[p.statut].ton}>
                     {PASTILLES[p.statut].libelle}

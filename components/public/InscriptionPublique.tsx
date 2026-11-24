@@ -1,6 +1,9 @@
 "use client";
 
+import { useState } from "react";
 import { ArrowRight, Check } from "lucide-react";
+import { ChoixSupplements } from "@/components/forms/ChoixSupplements";
+import type { Supplement } from "@/lib/supplements";
 import { Modal } from "@/components/Modal";
 import { INPUT } from "@/components/champ-style";
 import { CancelButton, Field, ModalBody, ModalFooter, SubmitButton } from "@/components/form-bits";
@@ -21,8 +24,11 @@ export function InscriptionPublique({
     prix: number;
     restantes: number;
     enLigne: boolean;
+    supplements: Supplement[];
   };
 }) {
+  const [parPersonne, setParPersonne] = useState(event.prix);
+  const payant = parPersonne > 0;
   return (
     <Modal
       title="Inscription à l’événement"
@@ -75,9 +81,11 @@ export function InscriptionPublique({
 
             <ChampsCoordonnees />
 
-            {event.payant ? (
+            <ChoixSupplements supplements={event.supplements} base={event.prix} onTotal={setParPersonne} />
+
+            {payant ? (
               <p className="text-[13px] text-warn bg-warn-soft rounded-[var(--radius-s)] px-3.5 py-3 m-0">
-                <b>Événement payant · {fmtMoney(event.prix)} par personne</b>
+                <b>À régler · {fmtMoney(parPersonne)} par personne</b>
                 <br />
                 {event.enLigne
                   ? "À l’étape suivante, vous choisissez comment régler."
@@ -88,7 +96,7 @@ export function InscriptionPublique({
           <ModalFooter>
             <CancelButton onClick={fermer} />
             <SubmitButton pendingLabel="Inscription…">
-              {event.payant && event.enLigne ? (
+              {payant && event.enLigne ? (
                 <>
                   Suivant <ArrowRight size={14} />
                 </>

@@ -26,6 +26,7 @@ import {
   validerInscription,
 } from "@/lib/actions/events";
 import { fmtMoney } from "@/lib/format";
+import { ChoixSupplements } from "@/components/forms/ChoixSupplements";
 import type { ModeReglement } from "@/lib/modes-reglement";
 import type { CanchamEvent } from "@/lib/types";
 
@@ -55,7 +56,9 @@ export function RegisterButton({
   libelle?: string;
 }) {
   const restantes = event.cap - event.inscrits;
-  const paiementEnLigne = event.payant && modesPaiement.length > 0;
+  const [parPersonne, setParPersonne] = useState(event.payant ? event.prix : 0);
+  const payant = parPersonne > 0;
+  const paiementEnLigne = payant && modesPaiement.length > 0;
   return (
     <Modal
       title="Inscription à l’événement"
@@ -97,9 +100,14 @@ export function RegisterButton({
               email={coordonnees.email}
               telephone={coordonnees.telephone}
             />
-            {event.payant ? (
+            <ChoixSupplements
+              supplements={event.supplements ?? []}
+              base={event.payant ? event.prix : 0}
+              onTotal={setParPersonne}
+            />
+            {payant ? (
               <p className="text-[13px] text-warn bg-warn-soft rounded-[var(--radius-s)] px-3.5 py-3 m-0">
-                <b>Événement payant · {fmtMoney(event.prix)} par personne</b>
+                <b>À régler · {fmtMoney(parPersonne)} par personne</b>
                 <br />
                 {paiementEnLigne
                   ? "Une facture est générée à l’inscription. Vous choisirez votre moyen de paiement à l’écran suivant."
