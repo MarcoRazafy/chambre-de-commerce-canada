@@ -6,6 +6,7 @@ import { Compteur, EnTeteAdmin, Panneau, Vide } from "@/components/admin/ui";
 import { INPUT } from "@/components/champ-style";
 import { LogoChambre } from "@/components/gm/LogoChambre";
 import { ConfirmerPaiementChambre } from "@/components/gm/ConfirmerPaiementChambre";
+import { ImporterRessources } from "@/components/gm/ImporterRessources";
 import { Field, SubmitButton } from "@/components/form-bits";
 import { Pill, Td, Th } from "@/components/ui";
 import { changerOffreChambre, entrerDansChambre, envoyerLienConnexion, modifierAdresseChambre, reactiverChambre, supprimerChambre, suspendreChambre } from "@/lib/actions/gm";
@@ -299,6 +300,10 @@ export default async function FicheChambreGM({ params }: { params: Promise<{ id:
                 </form>
               </details>
             )}
+          </Panneau>
+
+          <Panneau titre="Importer des ressources" teinte="bleu">
+            <ImporterRessources chambreId={c.id} />
           </Panneau>
 
           <Panneau titre="Historique" teinte="vert" lien={journalTotal > journal.length ? { href: `/gm/chambres/${encodeURIComponent(c.id)}/historique`, libelle: "Tout voir" } : undefined}>

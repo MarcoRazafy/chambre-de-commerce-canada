@@ -15,6 +15,8 @@ import { lireRelances } from "@/lib/retards";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { estFonction, FONCTIONS } from "@/lib/fonctions-plateforme";
 import { exigerGM } from "@/lib/gm";
+import { archiveRecue, oublierImport } from "@/lib/import-envois";
+import { ArchiveIllisible, importerArchive, type BilanImport } from "@/lib/import-ressources";
 import { slugValide } from "@/lib/hote-chambre";
 import { lienEntree } from "@/lib/visite-gm";
 import { avecChambre } from "@/lib/chambre-courante";
@@ -298,4 +300,31 @@ export async function entrerDansChambre(formData: FormData) {
   const adresse = await adresseOuSite(c.id, "equipe");
   if (!adresse) redirectWithErreur(fiche(c.id), "Cette Chambre n’a pas encore d’adresse.");
   redirect(`${adresse}/auth/entree-gm?${new URLSearchParams({ jeton: lienEntree({ c: c.id, u: compte.id, g: gm.id, n: gm.nom }) })}`);
+}
+
+export async function importerRessources(
+  chambreId: unknown,
+  jeton: unknown,
+): Promise<{ ok: true; bilan: BilanImport } | { ok: false; erreur: string }> {
+  const gm = await exigerGM();
+  if (typeof chambreId !== "string" || typeof jeton !== "string") return { ok: false, erreur: "Demande invalide." };
+  const c = await db.chambre.findUnique({ where: { id: chambreId.slice(0, 100) }, select: { id: true, nom: true } });
+  if (!c) return { ok: false, erreur: "Chambre introuvable." };
+  const archive = await archiveRecue(gm.id, jeton);
+  if (!archive) return { ok: false, erreur: "L’archive n’est pas arrivée : recommencez." };
+
+  try {
+    const bilan = await importerArchive(archive, c.id);
+    const quoi = `${bilan.ressources} ressource${bilan.ressources > 1 ? "s" : ""} et ${bilan.dossiers} dossier${bilan.dossiers > 1 ? "s" : ""}`;
+    await noter(c.id, gm.nom, "ressources_importees", `Ressources importées : ${quoi}.`);
+    console.info(`[gm] ${quoi} importés dans ${c.nom} (${c.id}) par ${gm.nom}`);
+    revalidatePath("/", "layout");
+    return { ok: true, bilan };
+  } catch (e) {
+    if (e instanceof ArchiveIllisible) return { ok: false, erreur: e.message };
+    console.error("[gm] import de ressources", c.id, e);
+    return { ok: false, erreur: "L’import n’a pas abouti : rien n’a été ajouté." };
+  } finally {
+    await oublierImport(jeton);
+  }
 }
