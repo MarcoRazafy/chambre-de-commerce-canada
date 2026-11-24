@@ -1,5 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
+import { LogoOfficiel } from "@/components/public/Marque";
 
 export function Marque({ className = "w-2 h-6" }: { className?: string }) {
   return (
@@ -12,7 +12,7 @@ export function Marque({ className = "w-2 h-6" }: { className?: string }) {
 
 export const PIED_PLATEFORME = <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;
 
-export function MarqueSite({ clair = false, avecNom = false }: { clair?: boolean; avecNom?: boolean }) {
+export function MarqueSite({ clair = false }: { clair?: boolean }) {
   return (
     <Link
       href="/"
@@ -21,21 +21,7 @@ export function MarqueSite({ clair = false, avecNom = false }: { clair?: boolean
         clair ? "text-white focus-visible:outline-white" : "text-ink focus-visible:outline-marque-nuit"
       }`}
     >
-      <Image
-        src={clair ? "/marque/logo-blanc.png" : "/marque/logo-couleur.png"}
-        alt="IMPACT 261"
-        width={1600}
-        height={647}
-        priority={clair}
-        className="h-11 w-auto"
-        sizes="140px"
-      />
-      {avecNom ? (
-        <>
-          <span aria-hidden className={`hidden sm:block w-px h-6 ${clair ? "bg-white/25" : "bg-line-champ"}`} />
-          <span className="hidden sm:inline text-[16px] font-semibold whitespace-nowrap">L’Alliée Virtuelle</span>
-        </>
-      ) : null}
+      <LogoOfficiel version={clair ? "blanc" : "couleur"} priority={clair} className="text-[18px]" />
     </Link>
   );
 }

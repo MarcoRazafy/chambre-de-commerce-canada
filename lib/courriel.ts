@@ -280,7 +280,7 @@ function baseImages(): string {
 
 const MARQUE_PROVISOIRE = "/marque/logo-courriel.png";
 export function enTete(): string {
-  return `<img src="${echapper(`${baseImages()}${MARQUE_PROVISOIRE}`)}" width="220" height="89" alt="" style="display:block;border:0;outline:none;text-decoration:none;width:220px;height:auto;color:#ffffff;font-size:16px;font-weight:bold">`;
+  return `<img src="${echapper(`${baseImages()}${MARQUE_PROVISOIRE}`)}" width="92" height="80" alt="" style="display:block;border:0;outline:none;text-decoration:none;width:92px;height:auto;color:#ffffff;font-size:16px;font-weight:bold">`;
 }
 
 const IMG_PROVISOIRE = /<img src="[^"]*\/marque\/logo-courriel\.png"[^>]*>/;

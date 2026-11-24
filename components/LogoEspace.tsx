@@ -5,12 +5,12 @@ export function LogoEspace({ logo, nom, centre = false }: { logo: string | null;
     return (
       <Image
         src="/marque/logo-blanc.png"
-        alt="IMPACT 261"
-        width={1600}
-        height={647}
+        alt="L’Alliée Virtuelle"
+        width={1000}
+        height={871}
         priority
-        sizes="170px"
-        className="w-[170px] max-w-full h-auto"
+        sizes="120px"
+        className={centre ? "block mx-auto h-24 w-auto" : "block h-20 w-auto"}
       />
     );
   }

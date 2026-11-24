@@ -41,7 +41,7 @@ export function TunnelMvola(p: PropsTunnel) {
         <div className="flex items-center gap-4">
           <span className="flex h-16 items-center rounded-[10px] bg-white px-3">
             <Image
-              src={p.logo ?? "/marque/logo-couleur.png"}
+              src={p.logo ?? "/marque/sigle.png"}
               alt=""
               width={400}
               height={160}

@@ -31,7 +31,7 @@ export function CadreAuth({
   const panneau = Boolean(illustration || accroche);
   const logo = marque ?? (
     <LienSite className="inline-block">
-      <LogoOfficiel className="w-[170px] h-auto" priority />
+      <LogoOfficiel className="text-[19px]" priority />
     </LienSite>
   );
   const mention = pied ?? <>© {new Date().getFullYear()} L’Alliée Virtuelle</>;

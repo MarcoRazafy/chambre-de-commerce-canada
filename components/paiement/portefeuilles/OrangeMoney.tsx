@@ -43,7 +43,7 @@ export function TunnelOrangeMoney(p: PropsTunnel) {
           <span className="text-white/75"> · Règlement CanCham</span>
         </p>
         <Image
-          src={p.logo ?? "/marque/logo-couleur.png"}
+          src={p.logo ?? "/marque/sigle.png"}
           alt=""
           width={400}
           height={160}

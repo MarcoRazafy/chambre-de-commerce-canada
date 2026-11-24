@@ -25,13 +25,13 @@ export function CertificatAdhesion({
           <div className="marque flex h-full w-full bg-white p-[1.2cqw]">
             <div className="flex h-full w-full flex-col items-center border border-[#0f1d2c]/20 px-[5cqw] py-[2.6cqw] text-center text-[#0f1d2c]">
               <Image
-                src="/marque/sigle.png"
-                alt="IMPACT 261"
-                width={889}
-                height={1000}
+                src="/marque/logo-couleur.png"
+                alt="L’Alliée Virtuelle"
+                width={1000}
+                height={871}
                 sizes="260px"
                 draggable={false}
-                className="h-auto w-[13.5cqw]"
+                className="h-auto w-[14cqw]"
               />
 
               <h1

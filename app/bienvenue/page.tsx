@@ -89,7 +89,7 @@ export default async function BienvenuePage({
       <input type="hidden" name="etape" value={numero} />
 
       <header className="flex items-center justify-between gap-4 px-5 sm:px-8 h-[72px] shrink-0">
-        <LogoOfficiel className="w-[150px] sm:w-[200px] h-auto" priority />
+        <LogoOfficiel className="text-[17px] sm:text-[20px]" priority />
         <Link
           href="/membre/profil"
           className="text-[14px] font-semibold text-muted no-underline hover:text-ink"

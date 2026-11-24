@@ -119,7 +119,7 @@ export async function EnTetePublique() {
             className="order-1 shrink-0"
           >
             <LogoOfficiel
-              className="w-[150px] sm:w-[200px] md:w-[230px] h-auto"
+              className="text-[17px] sm:text-[20px] md:text-[22px]"
               priority
             />
           </Link>
@@ -194,7 +194,7 @@ export function PiedPublique() {
             aria-label="Accueil CanCham Connect"
             className="inline-block"
           >
-            <LogoOfficiel version="blanc" className="w-[210px] h-auto" />
+            <LogoOfficiel version="blanc" className="text-[20px]" />
           </Link>
           <p className="m-0 mt-4 text-[13.5px] leading-relaxed text-white/70 max-w-[34ch]">
             Chambre de Commerce et de Coopération Canada–Madagascar. Le pont

@@ -66,7 +66,7 @@ export function EcranPassage({
       aria-live="polite"
       className="ecran-passage fixed inset-0 z-[300] flex flex-col items-center justify-center gap-6 bg-white px-6 text-center"
     >
-      <LogoOfficiel className="w-[220px] h-auto ecran-passage-logo" priority />
+      <LogoOfficiel className="text-[24px] ecran-passage-logo" priority />
       <div
         aria-hidden
         className="relative w-[200px] h-1 rounded-full bg-line overflow-hidden"

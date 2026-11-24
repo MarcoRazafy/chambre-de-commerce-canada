@@ -70,7 +70,7 @@ describe("lettre de la newsletter", () => {
     expect(html).toContain('<p style="margin:0 0 12px;text-align:justify">J</p>');
   });
 
-  it("logo remplaçable (IMPACT 261 par défaut) et pied de page entièrement modifiable", () => {
+  it("logo remplaçable (L’Alliée Virtuelle par défaut) et pied de page entièrement modifiable", () => {
     const d = docVide();
     expect(versHtml(d, O)).toContain("/marque/logo-couleur.png");
     const logo = { ...d.sections[0], image: "/televersements/mon-logo.png", largeur: 120 } as (typeof d.sections)[number];
