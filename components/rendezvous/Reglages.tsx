@@ -443,7 +443,7 @@ export function ReglerPersonne({
   );
 }
 
-export function BoutonCopierLien({ lien, libelle }: { lien: string; libelle: string }) {
+export function BoutonCopierLien({ lien, libelle, seulIcone = false }: { lien: string; libelle: string; seulIcone?: boolean }) {
   const [copie, setCopie] = useState(false);
   return (
     <button
@@ -457,9 +457,12 @@ export function BoutonCopierLien({ lien, libelle }: { lien: string; libelle: str
           window.prompt("Copiez le lien :", lien);
         }
       }}
-      className="btn-contour btn-contour-sm text-ink"
+      className={`btn-contour btn-contour-sm text-ink ${seulIcone ? "px-[11px]!" : ""}`}
+      aria-label={seulIcone ? (copie ? "Lien copié" : libelle) : undefined}
+      title={seulIcone ? (copie ? "Lien copié" : libelle) : undefined}
     >
-      {copie ? <Check size={14} className="text-success-strong" /> : <Link2 size={14} />} {copie ? "Lien copié" : libelle}
+      {copie ? <Check size={14} className="text-success-strong" /> : <Link2 size={14} />}
+      {seulIcone ? null : copie ? " Lien copié" : ` ${libelle}`}
     </button>
   );
 }

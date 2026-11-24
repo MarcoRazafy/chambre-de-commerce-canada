@@ -25,12 +25,11 @@ import { lienPagePublique } from "@/lib/evenements-publics";
 export default async function AdminEvenements({
   searchParams,
 }: {
-  searchParams: Promise<{ periode?: string; q?: string; vue?: string }>;
+  searchParams: Promise<{ periode?: string; q?: string }>;
 }) {
   const p = await searchParams;
   const periode = lirePeriode(p.periode);
-  const publique = p.vue === "publique";
-  const lienPublic = publique ? await lienPagePublique(await chambreCourante()) : null;
+  const lienPublic = await lienPagePublique(await chambreCourante());
   const q = (p.q ?? "").trim().slice(0, 100);
 
   const events = await getEvents();
@@ -72,7 +71,7 @@ export default async function AdminEvenements({
       />
 
       <Onglets
-        actif={publique ? "publique" : periode}
+        actif={periode}
         onglets={[
           {
             cle: "a_venir",
@@ -86,9 +85,18 @@ export default async function AdminEvenements({
             href: `/admin/evenements${avec({ periode: "passes", q })}`,
             compte: passes.length,
           },
-          { cle: "publique", libelle: "Vue publique", href: "/admin/evenements?vue=publique", compte: events.filter((e) => e.public).length },
         ]}
-        fin={publique ? undefined : (
+        suite={
+          lienPublic ? (
+            <>
+              <a href={lienPublic} target="_blank" rel="noopener noreferrer" className="btn-action btn-action-sm no-underline">
+                <ExternalLink size={14} /> Ouvrir la page publique
+              </a>
+              <BoutonCopierLien lien={lienPublic} libelle="Copier le lien de la page publique" seulIcone />
+            </>
+          ) : null
+        }
+        fin={
           <FiltresAuto action="/admin/evenements" className="relative w-full sm:w-[300px]">
             {periode === "passes" ? <input type="hidden" name="periode" value="passes" /> : null}
             <Search
@@ -104,36 +112,10 @@ export default async function AdminEvenements({
               className="w-full border border-line bg-surface text-ink rounded-[var(--radius-s)] pl-[34px] pr-3 py-[8px] text-[13.6px]"
             />
           </FiltresAuto>
-        )}
+        }
       />
 
-      {publique ? (
-        <Card className="p-6 flex flex-col gap-4">
-          <h2 className="m-0 text-[18px]">Page publique des événements</h2>
-          {lienPublic ? (
-            <>
-              <div className="flex flex-wrap gap-2">
-                <a href={lienPublic} target="_blank" rel="noopener noreferrer" className="btn-action btn-action-sm no-underline"><ExternalLink size={14} /> Ouvrir la page publique</a>
-                <BoutonCopierLien lien={lienPublic} libelle="Copier le lien" />
-              </div>
-              {events.filter((e) => e.public).length ? (
-                <ul className="m-0 p-0 list-none divide-y divide-line border-t border-line">
-                  {events.filter((e) => e.public).map((e) => (
-                    <li key={e.id} className="flex items-center justify-between gap-3 py-2.5 text-[13.5px]">
-                      <span className="min-w-0 truncate"><b className="text-ink">{e.titre}</b> <span className="text-muted">· {parseISO(e.date).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" })}</span></span>
-                      <a href={`${lienPublic}/${e.id}`} target="_blank" rel="noopener noreferrer" className="shrink-0 inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline">Voir <ExternalLink size={13} /></a>
-                    </li>
-                  ))}
-                </ul>
-              ) : (
-                <p className="m-0 text-[13.5px] text-muted">Aucun événement public pour l’instant.</p>
-              )}
-            </>
-          ) : (
-            <p className="m-0 text-[13.5px] text-muted">L’adresse publique n’est pas encore disponible.</p>
-          )}
-        </Card>
-      ) : liste.length ? (
+      {liste.length ? (
         <div className="cascade grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {liste.map((e) => {
             const d = parseISO(e.date);

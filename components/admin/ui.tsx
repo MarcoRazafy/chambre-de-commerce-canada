@@ -149,14 +149,16 @@ export function LienFleche({
 export function Onglets({
   onglets,
   actif,
+  suite,
   fin,
 }: {
   onglets: { cle: string; libelle: string; href: string; compte?: number }[];
   actif: string;
+  suite?: ReactNode;
   fin?: ReactNode;
 }) {
   const liens = (
-    <div className={`flex gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${fin ? "min-w-0" : "border-b border-line mb-5"}`}>
+    <div className={`flex gap-1 overflow-x-auto overflow-y-hidden [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${fin || suite ? "min-w-0" : "border-b border-line mb-5"}`}>
       {onglets.map((o) => {
         const courant = o.cle === actif;
         return (
@@ -187,11 +189,18 @@ export function Onglets({
       })}
     </div>
   );
-  if (!fin) return liens;
+  if (!fin && !suite) return liens;
   return (
     <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-2 border-b border-line mb-5">
-      {liens}
-      <div className="w-full sm:w-auto pb-2">{fin}</div>
+      {suite ? (
+        <div className="flex flex-wrap items-end gap-x-2 gap-y-2 min-w-0">
+          {liens}
+          <div className="flex items-center gap-2 pb-2">{suite}</div>
+        </div>
+      ) : (
+        liens
+      )}
+      {fin ? <div className="w-full sm:w-auto pb-2">{fin}</div> : null}
     </div>
   );
 }
