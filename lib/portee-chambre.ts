@@ -2,7 +2,7 @@ export const DIRECTES = new Set([
   "Member", "User", "Event", "News", "Resource", "DossierRessource", "Offer", "CanchamService", "Invoice",
   "Paiement", "CoordonneesPaiement", "MessageThread", "AuditLog", "Abonne", "TypeRendezvous", "Rendezvous",
   "MiseEnRelation", "Lettre", "Tag", "FacturePlateforme", "RegleTag", "ProfilChambre", "FormuleAdhesion",
-  "FilSupportIT",
+  "FilSupportIT", "RappelMembre",
 ]);
 
 export const COMMUNES = new Set(["Offre", "ReglagesPlateforme"]);

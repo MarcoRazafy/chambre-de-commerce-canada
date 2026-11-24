@@ -19,7 +19,6 @@ import {
 import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExpediteur, urlPublique } from "@/lib/courriel";
 import { avecPreuve, domaineDeLaPlateforme, domaineDUneAutreChambre, oublierPreuve } from "@/lib/domaine-proprietaire";
 import { BLANC, contraste, CONTRASTE_MIN, couleur, nuanceLisible } from "@/lib/couleurs";
-import { lireRelances } from "@/lib/retards";
 import { prisma } from "@/lib/db";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
@@ -235,17 +234,6 @@ export async function enregistrerCouleurs(formData: FormData) {
     }
   }
   await enregistrerChamps("couleurs", data, "Couleurs enregistrées");
-}
-
-export async function enregistrerRelancesMembres(formData: FormData) {
-  const ici = `${PAGE}?onglet=courriels`;
-  await exigerAdministrateur(ici);
-  const actives = formData.get("actives") === "1";
-  const jours = actives ? lireRelances(texte(formData, "jours", 80)) : [];
-  if (actives && (!jours || !jours.length)) redirectWithErreur(ici, "Indiquez les jours de relance, par exemple « 7, 15, 30 » (de 1 à 365).");
-  await prisma.profilChambre.upsert({ where: { chambreId: await chambreCourante() }, create: { relancesMembres: jours ?? [] }, update: { relancesMembres: jours ?? [] } });
-  revalidatePath("/admin/parametres");
-  redirectWithFlash(ici, jours?.length ? `Relances automatiques : ${jours.join(", ")} jours après la facture` : "Relances automatiques coupées");
 }
 
 const ONGLET_PAIEMENTS = `${PAGE}?onglet=paiements`;

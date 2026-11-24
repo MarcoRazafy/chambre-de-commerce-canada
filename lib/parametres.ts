@@ -22,7 +22,7 @@ export async function parametresPourCourriel() {
   }
 }
 
-function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
+export function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>) {
   const p = completerProfil(brut);
   const neutre = sansDefauts(brut);
 

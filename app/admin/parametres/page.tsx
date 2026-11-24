@@ -9,7 +9,6 @@ import {
   enregistrerAlertes,
   enregistrerExpediteur,
   enregistrerCouleurs,
-  enregistrerRelancesMembres,
   enregistrerReseaux,
   envoyerTestExpediteur,
 } from "@/lib/actions/parametres";
@@ -150,24 +149,6 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
             </Panneau>
           </form>
 
-          <form action={enregistrerRelancesMembres}>
-            <Panneau titre="Relances des factures" sousTitre="Un courriel au membre quand une facture reste impayée, les jours choisis après sa date" teinte="rouge">
-              <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
-                {verrou}
-                <label className="flex items-center gap-2.5 text-[14px] text-ink cursor-pointer w-fit">
-                  <input type="checkbox" name="actives" value="1" defaultChecked={(brut?.relancesMembres ?? []).length > 0} className="size-4 accent-[var(--accent)]" />
-                  Relancer automatiquement les factures impayées
-                </label>
-                <Field label="Jours après la date de la facture">
-                  <input name="jours" maxLength={80} defaultValue={(brut?.relancesMembres ?? []).join(", ")} placeholder="7, 15, 30" className={`${INPUT} sm:max-w-[240px]`} />
-                </Field>
-                {(brut?.relancesMembres ?? []).length ? null : (
-                  <p className="m-0 text-[12.5px] text-muted">À l’activation, chaque facture déjà en retard reçoit une relance.</p>
-                )}
-                {enregistrer}
-              </fieldset>
-            </Panneau>
-          </form>
         </div>
       ) : null}
 

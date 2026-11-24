@@ -544,25 +544,3 @@ export function courrielAbonnementPaye(a: string, d: { nom: string; numero: stri
     }),
   };
 }
-
-export function courrielRelanceFacture(
-  a: string,
-  d: { nom: string; chambre: string; numero: string; objet: string; montant: string; jours: number; enLigne: boolean; lien: string },
-): Courriel {
-  return {
-    a,
-    sujet: `Facture ${d.numero} en attente de règlement`,
-    ...gabarit({
-      titre: "Facture en attente",
-      paragraphes: [
-        `Bonjour ${prenom(d.nom)},`,
-        `La facture ${d.numero} de ${d.chambre} (« ${d.objet} », ${d.montant}) attend son règlement depuis ${d.jours} jour${d.jours > 1 ? "s" : ""}.`,
-        d.enLigne
-          ? "Vous pouvez la régler en ligne depuis votre espace membre, ou auprès de l’équipe de la Chambre."
-          : "Vous pouvez la régler auprès de l’équipe de la Chambre. Votre espace membre indique vos factures.",
-      ],
-      bouton: { libelle: d.enLigne ? "Régler la facture" : "Voir la facture", url: d.lien },
-      apres: ["Si vous avez déjà réglé, ne tenez pas compte de ce message : l’enregistrement peut prendre quelques jours."],
-    }),
-  };
-}

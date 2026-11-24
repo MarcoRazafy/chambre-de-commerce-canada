@@ -237,6 +237,7 @@ model Chambre {
   rendezvous          Rendezvous[]
   misesEnRelation     MiseEnRelation[]
   lettres             Lettre[]
+  rappelsMembres      RappelMembre[]
   tags                Tag[]
   facturesPlateforme  FacturePlateforme[]
   reglesTags          RegleTag[]
@@ -326,6 +327,7 @@ model Member {
   formuleId    String?
   formule      FormuleAdhesion? @relation(fields: [formuleId], references: [id], onDelete: SetNull)
   adhesion     DateTime         @db.Date
+  rappelsFin   String[]         @default([])
   retardDepuis DateTime?        @db.Date
 
   activite String
@@ -1247,6 +1249,24 @@ model Lettre {
 
   @@index([chambreId])
   @@map("lettres")
+}
+
+model RappelMembre {
+  id String @id @default(cuid())
+
+  chambreId   String   @default("principale")
+  chambre     Chambre  @relation(fields: [chambreId], references: [id])
+  declencheur String   @default("facture")
+  jours       Int
+  sujet       String
+  contenu     String
+  actif       Boolean  @default(true)
+  envoyes     Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([chambreId])
+  @@map("rappels_membres")
 }
 
 model EnvoiLettre {

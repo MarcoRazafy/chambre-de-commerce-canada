@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   Users,
   type LucideIcon,
+  BellRing,
 } from "lucide-react";
 
 export const NAV_ICONS: Record<string, LucideIcon> = {
@@ -52,6 +53,7 @@ export const NAV_ICONS: Record<string, LucideIcon> = {
   lock: Lock,
   maillage: Handshake,
   newsletter: Mail,
+  rappel: BellRing,
   abonnes: MailCheck,
   abonnement: Star,
   tag: Tag,

@@ -5,7 +5,7 @@ import { prismaSysteme } from "@/lib/db";
 import { assurerFactureDuMois } from "@/lib/factures-plateforme";
 import { envoyerLettresDues } from "@/lib/newsletter";
 import { envoyerRappelsDus } from "@/lib/rappels-envoi";
-import { relancesMembresDues } from "@/lib/relances-membres";
+import { envoyerRappelsMembresDus } from "@/lib/rappels-membres";
 
 function autorise(recu: string | null): boolean {
   if (!recu) return false;
@@ -28,7 +28,7 @@ export async function POST(req: Request) {
         const r = await envoyerRappelsDus();
         rappels.envoyes += r.envoyes;
         rappels.echecs += r.echecs;
-        await relancesMembresDues();
+        await envoyerRappelsMembresDus();
         if (!demarrage) {
           await assurerFactureDuMois();
           await prelevementsDus(id);

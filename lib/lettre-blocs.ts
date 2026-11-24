@@ -81,8 +81,11 @@ const align = (v: unknown, defaut: Align): Align => (v === "left" || v === "cent
 let compteur = 0;
 export const nouvelId = () => `s${Date.now().toString(36)}${(compteur++).toString(36)}`;
 
+export const LIEN_VARIABLE = "{lien}";
+
 export function urlSure(v: unknown): string {
   const u = chaine(v, 2000).trim();
+  if (u.toLowerCase() === LIEN_VARIABLE) return LIEN_VARIABLE;
   if (/^(https?:\/\/|mailto:|tel:)/i.test(u) || /^\/televersements\/[\w.\-/]+$/.test(u)) return u;
   if (/^[\w-]+(\.[\w-]+)+(\/\S*)?$/.test(u)) return `https://${u}`;
   return "";
@@ -291,6 +294,7 @@ export function lireDoc(contenu: string, reseaux: Partial<Record<Reseau, string>
 
 const remplacer = (t: string, vars: Variables) =>
   t.replace(/\{([^{}<>\s][^{}<>]{0,30})\}/g, (tout, k: string) => vars[k.trim().toLowerCase()] ?? tout);
+export const avecVariables = remplacer;
 
 export type OptionsRendu = {
   base: string;
@@ -308,8 +312,13 @@ export function styleFond(f: Fond, image = "", abs: (u: string) => string = (u) 
   return f ? `background-color:${hex(f)};` : "";
 }
 
+const urlRendue = (u: string, vars: Variables) => (u === LIEN_VARIABLE ? (vars.lien ?? "") : u);
+
 export function versHtml(doc: DocLettre, o: OptionsRendu): string {
-  const abs = (u: string) => (u.startsWith("/") ? `${o.base}${u}` : u);
+  const abs = (brut: string) => {
+    const u = urlRendue(brut, o.vars);
+    return u.startsWith("/") ? `${o.base}${u}` : u;
+  };
   const lien = `color:${hex("rouge")};text-decoration:none`;
   const riche = (html: string) =>
     remplacer(nettoyerHtml(html), o.vars)
@@ -410,9 +419,9 @@ export function versTexte(doc: DocLettre, o: Pick<OptionsRendu, "vars" | "mentio
       case "colonnes":
         return s.colonnes.flat().flatMap(lignesDe);
       case "bouton":
-        return s.url ? [`${r(s.libelle)} : ${s.url}`, ""] : [];
+        return urlRendue(s.url, o.vars) ? [`${r(s.libelle)} : ${urlRendue(s.url, o.vars)}`, ""] : [];
       case "appel":
-        return [r(s.titre), s.url ? `${r(s.bouton)} : ${s.url}` : "", ""];
+        return [r(s.titre), urlRendue(s.url, o.vars) ? `${r(s.bouton)} : ${urlRendue(s.url, o.vars)}` : "", ""];
       case "pied":
         return ["—", r(s.texte), r(s.adresse), [r(s.email), r(s.telephone)].filter(Boolean).join(" · "), r(s.copyright), ""];
       case "separateur":
