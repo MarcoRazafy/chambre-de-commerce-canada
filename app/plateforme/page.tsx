@@ -132,12 +132,6 @@ export default async function AccueilPlateforme() {
             <div className="entree entree-4 mt-5">
               <Rassurances sombre points={["Standard, Premium ou VIP", "Toutes les fonctions incluses"]} />
             </div>
-            <p className="entree entree-4 mt-5 mb-0 text-[14px] text-white/70">
-              Vous êtes une entreprise ?{" "}
-              <Link href="/devenir-membre" className="font-medium text-white underline underline-offset-4 decoration-white/40 hover:decoration-white rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white">
-                Devenir membre d’une Chambre
-              </Link>
-            </p>
           </div>
           <div className="illustration illustration-visible illustration-flotte w-full max-w-[620px] justify-self-end">
             <VisiteEspace />
