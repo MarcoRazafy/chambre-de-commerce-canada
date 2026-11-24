@@ -1,6 +1,6 @@
 import { CheckCircle2, LogIn } from "lucide-react";
 import { Pill } from "@/components/ui";
-import { connecterStripe } from "@/lib/actions/parametres";
+import { ConnexionStripe } from "@/components/admin/ConnexionPasserelles";
 
 function LogoStripe() {
   return (
@@ -49,9 +49,7 @@ export function PasserelleStripe({
             <LogIn size={14} aria-hidden /> Se connecter
           </a>
         ) : gere && disponible ? (
-          <form action={connecterStripe}>
-            <button type="submit" className="btn-action btn-action-sm">{enCours ? "Terminer l’inscription" : "Connecter"}</button>
-          </form>
+          <ConnexionStripe enCours={enCours} />
         ) : null}
       </div>
     </div>

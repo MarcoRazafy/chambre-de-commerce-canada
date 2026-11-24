@@ -1,7 +1,7 @@
 import { CheckCircle2, LogIn } from "lucide-react";
-import { INPUT } from "@/components/champ-style";
 import { Pill } from "@/components/ui";
-import { connecterPaypal, retirerPaypal } from "@/lib/actions/parametres";
+import { ConnexionPaypal } from "@/components/admin/ConnexionPasserelles";
+import { retirerPaypal } from "@/lib/actions/parametres";
 
 function LogoPaypal() {
   return (
@@ -41,10 +41,9 @@ export function PasserellePaypal({ adresse, gere }: { adresse: string; gere: boo
           ) : null}
         </div>
       ) : gere ? (
-        <form action={connecterPaypal} className="mt-auto flex flex-col gap-2.5">
-          <input type="email" name="paypal" required maxLength={200} autoComplete="email" placeholder="Adresse e-mail du compte PayPal" aria-label="Adresse e-mail du compte PayPal" className={INPUT} />
-          <button type="submit" className="btn-action btn-action-sm w-fit">Connecter</button>
-        </form>
+        <div className="mt-auto">
+          <ConnexionPaypal />
+        </div>
       ) : null}
     </div>
   );
