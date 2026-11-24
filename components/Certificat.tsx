@@ -1,5 +1,6 @@
-import Image from "next/image";
 import { ProtectionDocument } from "@/components/ProtectionDocument";
+import { LogoRogne } from "@/components/LogoRogne";
+import type { CadreLogo } from "@/lib/cadre-logo";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { fmtDate } from "@/lib/format";
 import { libelleFormule } from "@/lib/membership";
@@ -13,10 +14,16 @@ export function CertificatAdhesion({
   membre: m,
   fin,
   site = COORDONNEES.site,
+  logo,
+  chambre,
+  cadreLogo,
 }: {
   membre: Pick<Member, "nom" | "formule">;
   fin?: string | null;
   site?: string;
+  logo: string;
+  chambre: string;
+  cadreLogo: CadreLogo | null;
 }) {
   return (
     <ProtectionDocument className="mx-auto w-full max-w-[1000px] print:max-w-none">
@@ -24,15 +31,7 @@ export function CertificatAdhesion({
         <div className="certificat flex h-full w-full bg-[linear-gradient(100deg,#ad0707_0%,#7a4a1f_52%,#007140_100%)] p-[1.1cqw] print:bg-none print:p-0">
           <div className="marque flex h-full w-full bg-white p-[1.2cqw]">
             <div className="flex h-full w-full flex-col items-center border border-[#0f1d2c]/20 px-[5cqw] py-[2.6cqw] text-center text-[#0f1d2c]">
-              <Image
-                src="/marque/logo-couleur.png"
-                alt="L’Alliée Virtuelle"
-                width={1000}
-                height={871}
-                sizes="260px"
-                draggable={false}
-                className="h-auto w-[14cqw]"
-              />
+              <LogoRogne src={logo} alt={chambre} cadre={cadreLogo} hauteur="7cqw" aspectMax={4.5} draggable={false} />
 
               <h1
                 className={`${TITRE_CHARTE} m-0 mt-[1.9cqw] text-[5.4cqw] leading-none text-[#ad0707]`}
@@ -90,27 +89,7 @@ export function CertificatAdhesion({
 
                 <SceauMembre className="mx-auto w-[9.5cqw]" />
 
-                <div className="text-right">
-                  <Image
-                    src="/marque/signature-presidente.png"
-                    alt="Signature de la présidente du Conseil d’Administration"
-                    width={395}
-                    height={292}
-                    sizes="220px"
-                    draggable={false}
-                    className="ml-auto -mb-[1cqw] h-auto w-[13cqw]"
-                  />
-                  <span
-                    aria-hidden
-                    className="ml-auto block h-px w-[21cqw] max-w-full bg-[#0f1d2c]/60"
-                  />
-                  <div className="mt-[0.7cqw] text-[1.5cqw] font-semibold leading-snug">
-                    Ando Lalaina RATOVOMANANA
-                  </div>
-                  <div className="text-[1.25cqw] leading-snug text-[#4a5a6b]">
-                    Présidente du Conseil d’Administration
-                  </div>
-                </div>
+                <div aria-hidden />
               </div>
 
               <div className="mt-[1.5cqw] text-[1.15cqw] text-[#4a5a6b]">

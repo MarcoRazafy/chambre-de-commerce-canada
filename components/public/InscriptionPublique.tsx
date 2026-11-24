@@ -9,8 +9,10 @@ import { inscriptionPublique } from "@/lib/actions/events";
 import { fmtMoney } from "@/lib/format";
 
 export function InscriptionPublique({
+  chambre,
   event,
 }: {
+  chambre: string;
   event: {
     id: string;
     titre: string;
@@ -32,6 +34,7 @@ export function InscriptionPublique({
     >
       {(fermer) => (
         <form action={inscriptionPublique}>
+          <input type="hidden" name="chambre" value={chambre} />
           <input type="hidden" name="eventId" value={event.id} />
           <ModalBody>
             <div>
@@ -78,7 +81,7 @@ export function InscriptionPublique({
                 <br />
                 {event.enLigne
                   ? "À l’étape suivante, vous choisissez comment régler."
-                  : "À régler auprès de l’équipe CanCham avant l’événement."}
+                  : "À régler auprès de l’équipe de la Chambre avant l’événement."}
               </p>
             ) : null}
           </ModalBody>

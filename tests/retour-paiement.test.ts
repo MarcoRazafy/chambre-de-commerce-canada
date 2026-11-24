@@ -16,6 +16,13 @@ describe("adresse du relais", () => {
     expect(vers).toBe("/membre/cotisations/retour?ref=CC-2026-ABC123");
   });
 
+  it("accepte le billet de la page publique d'une Chambre, refuse un chemin détourné", () => {
+    const chemin = "/c/ucan/evenements/e1/billet?code=CC-E1-PUB-AAAA&ref=CC-2026-XYZ";
+    expect(destinationDuRetour(chemin)).toBe(chemin);
+    expect(destinationDuRetour("/c/ucan/evenements/e1/../../../admin/billet?x=1")).toBe("/membre/cotisations");
+    expect(destinationDuRetour("/c/UCAN!/evenements/e1/billet?code=X")).toBe("/membre/cotisations");
+  });
+
   it("garde les paramètres d'un billet public", () => {
     const chemin = "/evenements/e1/billet?code=CC-E1-PUB-AAAA&ref=CC-2026-XYZ";
     const vers = new URL(

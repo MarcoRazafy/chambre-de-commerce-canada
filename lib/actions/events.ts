@@ -30,6 +30,7 @@ import { INTERVENANTS_MAX, lireIntervenants } from "@/lib/intervenants";
 import { poserTags } from "@/lib/poser-tags";
 import { lireTags } from "@/lib/tags";
 import { couleur } from "@/lib/couleurs";
+import { cheminBillet, cheminEvenementPublic, dansLaChambreDuFormulaire, lienBillet } from "@/lib/billet-public";
 import type { EventFormat } from "@/lib/types";
 import {
   notifierEquipe,
@@ -222,8 +223,12 @@ export async function registerForEvent(formData: FormData) {
 const INSCRIPTIONS_PUBLIQUES_PAR_HEURE = 10;
 
 export async function inscriptionPublique(formData: FormData) {
+  return dansLaChambreDuFormulaire(formData, (slug) => inscrireVisiteur(formData, slug));
+}
+
+async function inscrireVisiteur(formData: FormData, slug: string) {
   const eventId = texte(formData, "eventId");
-  const fiche = `/evenements/${eventId}`;
+  const fiche = cheminEvenementPublic(slug, eventId);
 
   const attente = tentative(
     `inscription-publique:${await origineAppelante()}`,
@@ -242,7 +247,7 @@ export async function inscriptionPublique(formData: FormData) {
     include: { _count: { select: { participants: true } } },
   });
   if (!event?.public) {
-    redirectWithErreur("/", "Événement introuvable.");
+    redirectWithErreur(`/c/${slug}/evenements`, "Événement introuvable.");
   }
   if (estTermine(event)) {
     redirectWithErreur(fiche, "Cet événement est terminé.");
@@ -327,9 +332,7 @@ export async function inscriptionPublique(formData: FormData) {
     }),
   ]);
 
-  const lien = await urlPublique(
-    `/evenements/${eventId}/billet?${new URLSearchParams({ code })}`,
-  );
+  const lien = await urlPublique(cheminBillet(slug, eventId, { code }));
   const participants = noms.map((nom, i) => ({
     nom,
     code: codeRepresentant(code, i),
@@ -348,7 +351,7 @@ export async function inscriptionPublique(formData: FormData) {
   );
 
   revalideTout();
-  redirect(`/evenements/${eventId}/billet?${new URLSearchParams({ code })}`);
+  redirect(cheminBillet(slug, eventId, { code }));
 }
 
 export async function cancelRegistration(formData: FormData) {
@@ -659,11 +662,10 @@ export async function validerInscription(formData: FormData) {
         select: { id: true, memberId: true },
       })
     : null;
-  const lien = await urlPublique(
+  const lien =
     inscriptionMembre || !racine
-      ? `/membre/evenements/${eventId}`
-      : `/evenements/${eventId}/billet?${new URLSearchParams({ code: racine })}`,
-  );
+      ? await urlPublique(`/membre/evenements/${eventId}`)
+      : await lienBillet(eventId, racine);
   const participants = groupe.flatMap((g) =>
     g.code ? [{ nom: g.nom, code: g.code }] : [],
   );

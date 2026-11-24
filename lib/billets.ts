@@ -4,6 +4,7 @@ import { estCodeInscription } from "@/lib/codes-accueil";
 import { after } from "next/server";
 import { plageHoraire } from "@/lib/agenda";
 import { envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { lienBillet } from "@/lib/billet-public";
 import { prisma } from "@/lib/db";
 import { toISODate } from "@/lib/enums";
 import { fmtDate } from "@/lib/format";
@@ -180,9 +181,7 @@ export async function delivrerBilletsPublics(
       event,
       participants,
       email,
-      await urlPublique(
-        `/evenements/${eventId}/billet?${new URLSearchParams({ code })}`,
-      ),
+      await lienBillet(eventId, code),
     );
   }
   after(() =>

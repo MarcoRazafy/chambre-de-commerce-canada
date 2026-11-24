@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { after } from "next/server";
 import { lignesDe } from "@/lib/billets";
+import { cheminBillet, cheminEvenementPublic, dansLaChambreDuFormulaire } from "@/lib/billet-public";
 import {
   codeInscription,
   estCodeInscription,
@@ -28,9 +29,7 @@ import {
 } from "@/lib/reglements";
 import { getCurrentUser } from "@/lib/session";
 import {
-  canalVanillaPay,
   mobileMoneyEnLigne,
-  MONTANT_MINIMUM_EN_LIGNE,
   vanillaPayActif,
 } from "@/lib/vanillapay";
 
@@ -151,16 +150,13 @@ export async function payerParPortefeuille(formData: FormData) {
 
 const PAIEMENTS_PUBLICS_PAR_HEURE = 10;
 
-async function inscriptionAPayer(formData: FormData) {
+async function inscriptionAPayer(formData: FormData, slug: string) {
   const eventId = texte(formData, "eventId");
   const code = codeInscription(extraireCode(texte(formData, "code")));
-  if (!eventId || !estCodeInscription(code)) {
-    redirectWithErreur(
-      eventId ? `/evenements/${encodeURIComponent(eventId)}` : "/",
-      "Inscription introuvable.",
-    );
+  if (!/^[A-Za-z0-9_-]{1,64}$/.test(eventId) || !estCodeInscription(code)) {
+    redirectWithErreur(`/c/${slug}/evenements`, "Inscription introuvable.");
   }
-  const page = `/evenements/${eventId}/billet?${new URLSearchParams({ code })}`;
+  const page = cheminBillet(slug, eventId, { code });
 
   const attente = tentative(
     `paiement-public:${await origineAppelante()}`,
@@ -187,7 +183,7 @@ async function inscriptionAPayer(formData: FormData) {
     prisma.registration.findUnique({ where: { code }, select: { id: true } }),
   ]);
   if (!event?.public || inscriptionMembre) {
-    redirectWithErreur(`/evenements/${eventId}`, "Inscription introuvable.");
+    redirectWithErreur(cheminEvenementPublic(slug, eventId), "Inscription introuvable.");
   }
   if (!lignes.length) {
     redirectWithFlash(page, "Cette inscription est déjà réglée.");
@@ -229,7 +225,7 @@ async function reglementPublic(
     data: {
       reference: referenceReglement(),
       montant,
-      devise: "MGA",
+      devise: "CAD",
       mode,
       detail,
     },
@@ -241,18 +237,15 @@ const DEJA_ANNONCE =
   "Votre paiement est déjà annoncé : l’équipe le traite. Écrivez-lui pour changer de moyen.";
 
 export async function choisirPaiementPublic(formData: FormData) {
+  return dansLaChambreDuFormulaire(formData, (slug) => choisirPourVisiteur(formData, slug));
+}
+
+async function choisirPourVisiteur(formData: FormData, slug: string) {
   const mode = texte(formData, "mode");
-  if (
-    mode === "carte" ||
-    (estModeReglement(mode) &&
-      estPortefeuilleConnu(mode) &&
-      mobileMoneyEnLigne())
-  ) {
-    return payerInscriptionPublique(formData, mode);
-  }
+  if (mode === "carte") return payerPourVisiteur(formData, slug);
 
   const { eventId, code, page, lignes, montant } =
-    await inscriptionAPayer(formData);
+    await inscriptionAPayer(formData, slug);
   if (
     !estModeReglement(mode) ||
     !(await modesPublics(montant)).includes(mode)
@@ -267,13 +260,17 @@ export async function choisirPaiementPublic(formData: FormData) {
     email: lignes[0].email,
   });
   if (!p) redirectWithFlash(page, DEJA_ANNONCE);
-  revalidatePath(`/evenements/${eventId}/billet`);
+  revalidatePath(cheminEvenementPublic(slug, eventId));
   redirect(page);
 }
 
 export async function annoncerPaiementPublic(formData: FormData) {
+  return dansLaChambreDuFormulaire(formData, (slug) => annoncerPourVisiteur(formData, slug));
+}
+
+async function annoncerPourVisiteur(formData: FormData, slug: string) {
   const { eventId, code, page, event, lignes, montant } =
-    await inscriptionAPayer(formData);
+    await inscriptionAPayer(formData, slug);
 
   const p = await reglementPublicOuvert(eventId, code);
   if (!p || p.mode === "carte") {
@@ -316,29 +313,22 @@ export async function annoncerPaiementPublic(formData: FormData) {
   );
 }
 
-export async function payerInscriptionPublique(
-  formData: FormData,
-  mode: ModeReglement = "carte",
-) {
-  const { eventId, code, page, lignes, montant } =
-    await inscriptionAPayer(formData);
+export async function payerInscriptionPublique(formData: FormData) {
+  return dansLaChambreDuFormulaire(formData, (slug) => payerPourVisiteur(formData, slug));
+}
 
-  const canal = canalVanillaPay(mode);
-  const parStripe = mode === "carte" && Boolean(await compteStripeActif());
-  if (
-    !parStripe &&
-    (!canal ||
-      !vanillaPayActif() ||
-      montant < MONTANT_MINIMUM_EN_LIGNE ||
-      (canal === "mobile_money" && !mobileMoneyEnLigne()))
-  ) {
+async function payerPourVisiteur(formData: FormData, slug: string) {
+  const { eventId, code, page, lignes, montant } =
+    await inscriptionAPayer(formData, slug);
+
+  if (!(await compteStripeActif())) {
     redirectWithErreur(
       page,
       "Le paiement en ligne n’est pas disponible pour cette inscription : réglez-la auprès de l’équipe de la Chambre.",
     );
   }
 
-  const p = await reglementPublic(eventId, code, mode, montant, {
+  const p = await reglementPublic(eventId, code, "carte", montant, {
     inscription: code,
     eventId,
     titulaire: lignes[0].nom,
@@ -347,16 +337,15 @@ export async function payerInscriptionPublique(
   if (!p) redirectWithFlash(page, DEJA_ANNONCE);
 
   const ouverture = await ouvrirChezLePrestataire(
-    { id: p.id, montant, numeroFacture: null, portefeuille: mode },
-    canal ?? "international",
+    { id: p.id, montant, numeroFacture: null, portefeuille: "carte" },
+    "international",
     {
       inscription: code,
       eventId,
       titulaire: lignes[0].nom,
       email: lignes[0].email,
     },
-    (reference) =>
-      `/evenements/${eventId}/billet?${new URLSearchParams({ code, ref: reference })}`,
+    (reference) => cheminBillet(slug, eventId, { code, ref: reference }),
   );
   if ("raison" in ouverture) redirectWithErreur(page, ouverture.raison);
 

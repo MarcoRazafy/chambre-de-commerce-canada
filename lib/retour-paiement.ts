@@ -5,6 +5,7 @@ export const REPLI_RETOUR = "/membre/cotisations";
 const PAGES_DE_RETOUR = [
   /^\/membre\/cotisations\/retour\?/,
   /^\/evenements\/[A-Za-z0-9_-]+\/billet\?/,
+  /^\/c\/[a-z0-9-]+\/evenements\/[A-Za-z0-9_-]+\/billet\?/,
 ];
 
 const HOTES_LOCAUX: Record<string, string> = {

@@ -51,6 +51,7 @@ import { getCurrentUser } from "@/lib/session";
 import { affichageSite } from "@/lib/liens";
 import { positionObjet } from "@/lib/cadrage";
 import { getProfilChambre } from "@/lib/profil-chambre";
+import { cadreVisible } from "@/lib/cadre-logo";
 import { renouvellementCotisation } from "@/lib/agenda";
 import { fmtDate } from "@/lib/format";
 import { ADHESION_PENDING } from "@/lib/membership";
@@ -111,7 +112,7 @@ export default async function ProfilPage({
             />
             {!pending ? (
               <BoutonCertificat>
-                <CertificatAdhesion membre={m} fin={renouvellement} site={chambre.site} />
+                <CertificatAdhesion membre={m} fin={renouvellement} site={chambre.site} logo={chambre.logo} chambre={chambre.nom} cadreLogo={await cadreVisible(chambre.logo)} />
               </BoutonCertificat>
             ) : null}
           </div>

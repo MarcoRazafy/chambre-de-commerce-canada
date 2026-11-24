@@ -6,8 +6,11 @@ import type { EvenementPublic } from "@/lib/evenements-publics";
 import { dateLongue } from "@/lib/evenements-publics";
 import type { ProfilChambre } from "@/lib/profil-chambre-defauts";
 import type { StylePage } from "@/lib/couleurs-evenement";
+import { LogoOfficiel } from "@/components/public/Marque";
+import { LogoRogne } from "@/components/LogoRogne";
+import type { CadreLogo } from "@/lib/cadre-logo";
 
-export function CadreEvenementsPublics({ slug, profil, style, children }: { slug: string; profil: ProfilChambre; style: StylePage; children: ReactNode }) {
+export function CadreEvenementsPublics({ slug, profil, cadreLogo, style, children }: { slug: string; profil: ProfilChambre; cadreLogo: CadreLogo | null; style: StylePage; children: ReactNode }) {
   const site = profil.site ? (profil.site.startsWith("http") ? profil.site : `https://${profil.site}`) : null;
   const pied = style.piedSombre
     ? { titre: "text-white", texte: "text-white/80", lien: "text-white/80 hover:text-white", discret: "text-white/65" }
@@ -17,9 +20,7 @@ export function CadreEvenementsPublics({ slug, profil, style, children }: { slug
       <header className="sticky top-0 z-20 shadow-[0_1px_0_rgba(15,29,44,0.08)]" style={{ background: style.fondHaut }}>
         <div className="max-w-[1200px] mx-auto px-5 sm:px-8 h-[76px] flex items-center justify-between gap-4">
           <Link href={`/c/${slug}/evenements`} className="flex items-center min-w-0 no-underline" aria-label={`${profil.nom}, nos évènements`}>
-            <span className={`flex items-center rounded-[10px] ${style.hautSombre ? "px-3 py-1.5" : ""}`} style={style.hautSombre ? { background: profil.logoFond ?? "#ffffff" } : undefined}>
-              <Image src={profil.logo} alt={profil.nom} width={400} height={160} priority sizes="200px" className={`${style.hautSombre ? "h-10" : "h-12"} w-auto max-w-[200px] object-contain object-left`} />
-            </span>
+            <LogoRogne src={profil.logo} alt={profil.nom} cadre={cadreLogo} hauteur="44px" aspectMax={5.5} priority />
           </Link>
           <Link href={`/auth/inscription?chambre=${slug}`} className={`btn-action btn-action-sm no-underline shrink-0 ${style.boutonClair ? "bg-white! bg-none! text-ink!" : ""}`}>Devenir membre</Link>
         </div>
@@ -38,7 +39,10 @@ export function CadreEvenementsPublics({ slug, profil, style, children }: { slug
               {site ? <li className="flex items-center gap-2"><Globe size={15} className="shrink-0" aria-hidden /> <a href={site} target="_blank" rel="noopener noreferrer" className={`no-underline break-all ${pied.lien}`}>{profil.site.replace(/^https?:\/\//, "").replace(/\/$/, "")}</a></li> : null}
             </ul>
           </div>
-          <p className={`m-0 text-[12.5px] ${pied.discret}`}>© {new Date().getFullYear()} {profil.nom}</p>
+          <div className="flex flex-col items-start sm:items-end gap-2">
+            <LogoOfficiel version={style.piedSombre ? "blanc" : "couleur"} className="text-[18px]" />
+            <p className={`m-0 text-[12.5px] ${pied.discret}`}>© {new Date().getFullYear()} L’Alliée Virtuelle</p>
+          </div>
         </div>
       </footer>
     </div>

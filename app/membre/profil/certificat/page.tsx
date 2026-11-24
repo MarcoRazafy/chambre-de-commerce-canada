@@ -5,7 +5,13 @@ import { getInvoices, getMember } from "@/lib/queries";
 import { getCurrentUser } from "@/lib/session";
 import { ADHESION_PENDING } from "@/lib/membership";
 import { getProfilChambre } from "@/lib/profil-chambre";
+import { cadreVisible } from "@/lib/cadre-logo";
 import { renouvellementCotisation } from "@/lib/agenda";
+
+async function infosChambre() {
+  const p = await getProfilChambre();
+  return { site: p.site, logo: p.logo, chambre: p.nom, cadreLogo: await cadreVisible(p.logo) };
+}
 
 export default async function CertificatPage() {
   const user = await getCurrentUser("membre");
@@ -30,7 +36,7 @@ export default async function CertificatPage() {
         {"@media print { @page { size: A4 landscape; margin: 0 } }"}
       </style>
 
-      <CertificatAdhesion membre={m} fin={fin} site={(await getProfilChambre()).site} />
+      <CertificatAdhesion membre={m} fin={fin} {...await infosChambre()} />
     </>
   );
 }

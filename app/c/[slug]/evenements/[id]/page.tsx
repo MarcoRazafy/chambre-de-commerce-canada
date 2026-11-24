@@ -4,7 +4,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, CalendarDays, Clock, MapPin, Ticket } from "lucide-react";
 import { CadreEvenementsPublics } from "@/components/public/CadreEvenementsPublics";
-import { couleursEvenement, dateLongue, evenementPublic, pagePublique } from "@/lib/evenements-publics";
+import { couleursEvenement, dateLongue, evenementPublic, ouvertureInscription, pagePublique } from "@/lib/evenements-publics";
+import { InscriptionPublique } from "@/components/public/InscriptionPublique";
 import { stylePagePublique } from "@/lib/couleurs-evenement";
 import { fmtMoney } from "@/lib/format";
 
@@ -28,12 +29,13 @@ export default async function EvenementPublicPage({ params }: Params) {
   if (!p) notFound();
   const e = await evenementPublic(p.chambreId, id);
   if (!e) notFound();
+  const ouverture = await ouvertureInscription(p.chambreId, e.id);
   const autres = p.aVenir.filter((x) => x.id !== e.id).slice(0, 3);
   const paragraphes = e.desc.split(/\n{2,}|\r\n\r\n/).map((x) => x.trim()).filter(Boolean);
   const horaire = e.debut ? `${e.debut}${e.fin ? ` – ${e.fin}` : ""}` : null;
 
   return (
-    <CadreEvenementsPublics slug={p.slug} profil={p.profil} style={stylePagePublique(couleursEvenement(e), p.couleurs)}>
+    <CadreEvenementsPublics slug={p.slug} profil={p.profil} cadreLogo={p.cadreLogo} style={stylePagePublique(couleursEvenement(e), p.couleurs)}>
       <div className="max-w-[1100px] mx-auto px-5 sm:px-8 pt-8 pb-20 grid gap-10 lg:grid-cols-[minmax(0,1fr)_320px] items-start">
         <article className="min-w-0">
           <Link href={`/c/${p.slug}/evenements`} className="inline-flex items-center gap-1.5 text-[13.5px] text-muted no-underline hover:text-ink">
@@ -59,9 +61,23 @@ export default async function EvenementPublicPage({ params }: Params) {
             <p className="m-0 flex items-start gap-2.5"><CalendarDays size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {dateLongue(e.date)}</p>
             {horaire ? <p className="m-0 flex items-start gap-2.5"><Clock size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {horaire}</p> : null}
             {e.lieu ? <p className="m-0 flex items-start gap-2.5"><MapPin size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {e.lieu}</p> : null}
-            <p className="m-0 flex items-start gap-2.5"><Ticket size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {e.payant && e.prixPublic ? fmtMoney(e.prixPublic) : "Gratuit"}</p>
-            <Link href={`/auth?suite=${encodeURIComponent(`/membre/evenements/${e.id}`)}`} className="btn-action w-full no-underline mt-2">Je suis membre : m’inscrire</Link>
-            <Link href={`/auth/inscription?chambre=${p.slug}`} className="btn-contour w-full no-underline text-ink">Devenir membre</Link>
+            <p className="m-0 flex items-start gap-2.5"><Ticket size={17} className="shrink-0 mt-0.5 text-muted" aria-hidden /> {e.prixPublic > 0 ? fmtMoney(e.prixPublic) : "Gratuit"}</p>
+            {ouverture.termine ? (
+              <p className="m-0 mt-2 rounded-[var(--radius-s)] bg-surface-2 px-3.5 py-3 text-center text-[13.5px] font-semibold text-muted">Événement terminé</p>
+            ) : ouverture.restantes > 0 ? (
+              <div className="mt-2">
+                <InscriptionPublique
+                  chambre={p.slug}
+                  event={{ id: e.id, titre: e.titre, lieu: e.lieu, payant: e.prixPublic > 0, prix: e.prixPublic, restantes: ouverture.restantes, enLigne: ouverture.enLigne }}
+                />
+              </div>
+            ) : (
+              <p className="m-0 mt-2 rounded-[var(--radius-s)] bg-surface-2 px-3.5 py-3 text-center text-[13.5px] font-semibold text-muted">Événement complet</p>
+            )}
+            {ouverture.termine ? null : (
+              <Link href={`/auth?suite=${encodeURIComponent(`/membre/evenements/${e.id}`)}`} className="btn-contour w-full no-underline text-ink">Je suis membre : m’inscrire</Link>
+            )}
+            <Link href={`/auth/inscription?chambre=${p.slug}`} className="self-center text-[13px] font-semibold text-muted no-underline hover:text-accent">Devenir membre</Link>
           </div>
           {autres.length ? (
             <div>

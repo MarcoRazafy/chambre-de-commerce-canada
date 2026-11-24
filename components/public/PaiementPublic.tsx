@@ -19,6 +19,7 @@ import {
 } from "@/lib/modes-reglement";
 
 export function PaiementPublic({
+  chambre,
   eventId,
   code,
   montant,
@@ -29,6 +30,7 @@ export function PaiementPublic({
   marchand,
   page,
 }: {
+  chambre: string;
   eventId: string;
   code: string;
   montant: number;
@@ -45,6 +47,7 @@ export function PaiementPublic({
 }) {
   const cles = (
     <>
+      <input type="hidden" name="chambre" value={chambre} />
       <input type="hidden" name="eventId" value={eventId} />
       <input type="hidden" name="code" value={code} />
     </>
@@ -94,13 +97,13 @@ export function PaiementPublic({
               <p className="m-0 mt-3 text-[12.5px] text-muted">
                 Par carte, la page de paiement affiche le marchand{" "}
                 <b className="text-ink">{marchand}</b> : il encaisse pour le
-                compte de la CanCham.
+                compte de la Chambre.
               </p>
             ) : null}
           </form>
         ) : (
           <p className="m-0 mt-3 text-[13.5px] text-muted">
-            Le règlement se fait auprès de l’équipe CanCham, avant l’événement.
+            Le règlement se fait auprès de l’équipe de la Chambre, avant l’événement.
           </p>
         )}
       </section>

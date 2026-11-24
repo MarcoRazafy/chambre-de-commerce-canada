@@ -5,7 +5,8 @@ import { compteStripeActif } from "@/lib/encaissement-stripe";
 import { redirect } from "next/navigation";
 import { delivrerBillets, delivrerBilletsPublics } from "@/lib/billets";
 import { inscriptionPublique } from "@/lib/paiements";
-import { envoyerCourriel, urlPublique } from "@/lib/courriel";
+import { lienBillet } from "@/lib/billet-public";
+import { envoyerCourriel } from "@/lib/courriel";
 import { courrielReglementEcarte } from "@/lib/modeles-courriels";
 import { ouvrirChezLePrestataire } from "@/lib/paiement-en-ligne";
 import { vanillaPayActif } from "@/lib/vanillapay";
@@ -515,9 +516,7 @@ export async function refuserReglement(formData: FormData) {
         where: { id: publique.eventId },
         select: { titre: true },
       }),
-      urlPublique(
-        `/evenements/${publique.eventId}/billet?${new URLSearchParams({ code: publique.code })}`,
-      ),
+      lienBillet(publique.eventId, publique.code),
     ]);
     const reference = p.reference;
     after(() =>
