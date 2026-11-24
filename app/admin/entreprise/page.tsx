@@ -1,7 +1,6 @@
 import Image from "next/image";
-import { ExternalLink, Globe, LogIn, Lock, Mail, MapPin, Phone, Save } from "lucide-react";
+import { ExternalLink, Globe, Lock, Mail, MapPin, Phone, Save, UserPlus } from "lucide-react";
 import { BoutonCopierLien } from "@/components/rendezvous/Reglages";
-import { adresseOuSite } from "@/lib/adresse-chambre";
 import { chambreCourante } from "@/lib/chambre-courante";
 import { FondLogo } from "@/components/admin/FondLogo";
 import { IconesImageChambre } from "@/components/admin/IconesImageChambre";
@@ -15,6 +14,7 @@ import { estAdministrateur } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { getCurrentUser } from "@/lib/session";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
+import { liensMembres } from "@/lib/liens-membres";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
 
 export default async function MonEntreprise() {
@@ -28,8 +28,7 @@ export default async function MonEntreprise() {
   ]);
   const gere = estAdministrateur(moi);
   const p = completerProfil(brut);
-  const base = await adresseOuSite(await chambreCourante(), "equipe");
-  const connexion = base ? `${base}/auth` : null;
+  const adhesion = (await liensMembres(await chambreCourante()))?.adhesion ?? null;
   const v = (k: keyof NonNullable<typeof brut>) => (brut?.[k] as string | null | undefined) ?? "";
   const rue = v("adresseRue") || (v("codePostal") || v("ville") || v("province") || v("pays") ? "" : v("adresse"));
 
@@ -64,12 +63,12 @@ export default async function MonEntreprise() {
               {p.site ? <span className="inline-flex items-center gap-1.5 break-all"><Globe size={14} className="shrink-0" aria-hidden />{p.site.replace(/^https?:\/\//, "").replace(/\/$/, "")}</span> : null}
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-4">
-              {connexion ? (
+              {adhesion ? (
                 <>
-                  <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink mr-1"><LogIn size={14} className="shrink-0" aria-hidden />Lien de connexion</span>
-                  <a href={connexion} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted break-all mr-1 hover:text-ink">{connexion}</a>
-                  <BoutonCopierLien lien={connexion} libelle="Copier le lien" />
-                  <a href={connexion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
+                  <span className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-ink mr-1"><UserPlus size={14} className="shrink-0" aria-hidden />Lien d’adhésion</span>
+                  <a href={adhesion} target="_blank" rel="noopener noreferrer" className="text-[13px] text-muted break-all mr-1 hover:text-ink">{adhesion}</a>
+                  <BoutonCopierLien lien={adhesion} libelle="Copier le lien" />
+                  <a href={adhesion} target="_blank" rel="noopener noreferrer" className="btn-contour btn-contour-sm text-ink no-underline hover:bg-surface-2">
                     <ExternalLink size={14} aria-hidden /> Ouvrir
                   </a>
                 </>
