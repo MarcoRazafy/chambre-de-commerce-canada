@@ -1012,6 +1012,7 @@ export async function getInvoices(memberId?: string): Promise<Invoice[]> {
     statut: f.statut,
     membreId: f.memberId,
     membre: nomFacture(f),
+    relanceeLe: f.relanceeLe ? toISODate(f.relanceeLe) : null,
   }));
 }
 

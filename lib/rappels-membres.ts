@@ -23,7 +23,7 @@ import { fmtMontant } from "@/lib/membership";
 import { calculer } from "@/lib/parametres";
 import { getProfilChambreBrut, logoPourCourriel } from "@/lib/profil-chambre";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
-import { choisirRappel, type Declencheur } from "@/lib/rappels-membres-base";
+import { choisirRappel, lettreDeRelance, type Declencheur } from "@/lib/rappels-membres-base";
 import { joursDepuis } from "@/lib/retards";
 
 const LETTRES_PAR_DEFAUT: Record<Declencheur, { sujet: string; texte: string; bouton: string }> = {
@@ -183,6 +183,34 @@ async function rappelsAdhesions(rappels: Rappel[], chambre: string, maintenant: 
     await prisma.member.update({ where: { id: m.id }, data: { rappelsFin: faits } });
   }
   return envoyes;
+}
+
+export async function courrielRelanceFacture(factureId: string): Promise<{ email: string | null; envoye: boolean }> {
+  const f = await prisma.invoice.findUnique({
+    where: { id: factureId },
+    select: { id: true, numero: true, objet: true, montant: true, devise: true, date: true, memberId: true, member: { select: { nom: true } } },
+  });
+  const c = f?.memberId ? await contact(f.memberId) : null;
+  if (!f || !c?.email) return { email: null, envoye: false };
+  const brut = await getProfilChambreBrut();
+  const rappels = await prisma.rappelMembre.findMany({
+    where: { declencheur: "facture" },
+    select: { jours: true, sujet: true, contenu: true },
+  });
+  const age = joursDepuis(f.date, new Date());
+  const lettre = lettreDeRelance(rappels, age) ?? (() => {
+    const { reseaux, mentions } = calculer(brut);
+    const { sujet, doc } = lettreParDefaut("facture", reseaux, mentions);
+    return { sujet, contenu: JSON.stringify(doc) };
+  })();
+  const courriel = await courrielRappel(lettre, c.email, variablesDe(c.nom, c.email, f.member?.nom ?? "", completerProfil(brut).nom, {
+    facture: f.numero,
+    objet: f.objet,
+    montant: fmtMontant(f.montant, f.devise),
+    jours: String(age),
+    lien: await urlPublique(`/membre/cotisations?regler=${f.id}`),
+  }));
+  return { email: c.email, envoye: Boolean(courriel && (await envoyerCourriel(courriel))) };
 }
 
 export async function envoyerRappelsMembresDus(maintenant = new Date()): Promise<number> {

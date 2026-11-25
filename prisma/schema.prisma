@@ -904,6 +904,7 @@ model Invoice {
   statut    InvoiceStatus @default(envoyee)
   payeeLe   DateTime?     @db.Date
   relances  Int[]         @default([])
+  relanceeLe DateTime?
 
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)

@@ -40,3 +40,10 @@ export function choisirRappel<R extends { jours: number }>(
   const rappel = restants.reduce((a, b) => ((declencheur === "facture" ? b.jours > a.jours : b.jours < a.jours) ? b : a));
   return { rappel, atteints };
 }
+
+export function lettreDeRelance<R extends { jours: number }>(rappels: R[], age: number): R | null {
+  if (!rappels.length) return null;
+  const atteints = rappels.filter((r) => r.jours <= age);
+  const liste = atteints.length ? atteints : rappels;
+  return liste.reduce((a, b) => (atteints.length ? b.jours > a.jours : b.jours < a.jours) ? b : a);
+}

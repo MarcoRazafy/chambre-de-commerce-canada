@@ -270,6 +270,7 @@ export interface Invoice {
   statut: InvoiceStatus;
   membreId: string | null;
   membre: string;
+  relanceeLe?: string | null;
 }
 
 export interface Message {

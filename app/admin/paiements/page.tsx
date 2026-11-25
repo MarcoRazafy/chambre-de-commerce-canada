@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { FiltresAuto } from "@/components/FiltresAuto";
 import {
+  BellRing,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -11,6 +12,8 @@ import {
 } from "lucide-react";
 import { Compteur, EnTeteAdmin, Onglets, Vide } from "@/components/admin/ui";
 import { NouvelleFactureButton } from "@/components/forms/FactureForms";
+import { SubmitButton } from "@/components/form-bits";
+import { relancerFacture } from "@/lib/actions/factures";
 import { Card, Saillant, StatusPill, Pill } from "@/components/ui";
 import {
   filtrerFacturesHorsStatut,
@@ -23,6 +26,7 @@ import { fmtDate } from "@/lib/format";
 import { fmtMontant } from "@/lib/membership";
 import { getInvoices, getMemberStats, getMembers } from "@/lib/queries";
 import { getAnneesFactures, getFinancesAnnee } from "@/lib/queries-admin";
+import type { Invoice } from "@/lib/types";
 
 export default async function AdminPaiements({
   searchParams,
@@ -48,6 +52,7 @@ export default async function AdminPaiements({
   const lien = (changes: Parameters<typeof parametresFactures>[1]) =>
     `/admin/paiements${parametresFactures(filtres, changes)}`;
   const periode = filtres.annee ? `en ${filtres.annee}` : "au total";
+  const retour = lien({});
 
   const montants = (m: { MGA: number; CAD: number }) =>
     m.MGA ? (
@@ -276,15 +281,19 @@ export default async function AdminPaiements({
                     </td>
                     <td className="px-5 py-3.5">
                       <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f) ? <Pill tone="bad">En retard</Pill> : null}</span>
+                      <Relancee facture={f} />
                     </td>
                     <td className="px-5 py-3.5 text-right">
-                      <Link
-                        href={`/admin/paiements/${f.id}`}
-                        className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
-                      >
-                        {f.statut === "envoyee" ? "Encaisser" : "Voir"}
-                        <ChevronRight size={15} />
-                      </Link>
+                      <span className="inline-flex items-center justify-end gap-4">
+                        {relancable(f) ? <BoutonRelancer id={f.id} retour={retour} /> : null}
+                        <Link
+                          href={`/admin/paiements/${f.id}`}
+                          className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
+                        >
+                          {f.statut === "envoyee" ? "Encaisser" : "Voir"}
+                          <ChevronRight size={15} />
+                        </Link>
+                      </span>
                     </td>
                   </tr>
                 ))}
@@ -295,11 +304,11 @@ export default async function AdminPaiements({
           <ul className="md:hidden list-none m-0 p-0 flex flex-col gap-3">
             {liste.map((f) => (
               <li key={f.id}>
-                <Link
-                  href={`/admin/paiements/${f.id}`}
-                  className="block no-underline"
-                >
-                  <Card className="carte-filet filet-bleu p-4">
+                <Card className="carte-filet filet-bleu p-4">
+                  <Link
+                    href={`/admin/paiements/${f.id}`}
+                    className="block no-underline"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <span className="min-w-0">
                         <span className="block font-semibold text-[14.5px] text-ink truncate">
@@ -326,8 +335,14 @@ export default async function AdminPaiements({
                       </span>
                       <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f) ? <Pill tone="bad">En retard</Pill> : null}</span>
                     </div>
-                  </Card>
-                </Link>
+                  </Link>
+                  {relancable(f) ? (
+                    <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-3">
+                      <Relancee facture={f} />
+                      <BoutonRelancer id={f.id} retour={retour} />
+                    </div>
+                  ) : null}
+                </Card>
               </li>
             ))}
           </ul>
@@ -339,5 +354,27 @@ export default async function AdminPaiements({
         canadiens n’aurait pas de sens.
       </p>
     </>
+  );
+}
+
+const relancable = (f: Invoice) => f.statut === "envoyee" && Boolean(f.membreId);
+
+function Relancee({ facture }: { facture: Invoice }) {
+  return facture.statut === "envoyee" && facture.relanceeLe ? (
+    <span className="block text-[11.5px] text-faint mt-1">
+      Relancée le {fmtDate(facture.relanceeLe, { day: "numeric", month: "short" })}
+    </span>
+  ) : <span />;
+}
+
+function BoutonRelancer({ id, retour }: { id: string; retour: string }) {
+  return (
+    <form action={relancerFacture}>
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="retour" value={retour} />
+      <SubmitButton variant="line" sm pendingLabel="Relance…">
+        <BellRing size={13} /> Relancer
+      </SubmitButton>
+    </form>
   );
 }

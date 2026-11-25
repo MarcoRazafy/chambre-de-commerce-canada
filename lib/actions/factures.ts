@@ -12,6 +12,9 @@ import { jourBase, jourSaisi } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 import { after } from "next/server";
 import { notifierMembre } from "@/lib/push";
+import { exigerEquipe } from "@/lib/autorisations";
+import { courrielsActifs } from "@/lib/courriel";
+import { courrielRelanceFacture } from "@/lib/rappels-membres";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -292,4 +295,49 @@ export async function modifierDateReglement(formData: FormData) {
       ? `Règlement du ${lisible(jour)} · le renouvellement ne bouge pas : la cotisation ${devant.numero} du ${lisible(devant.date.toISOString().slice(0, 10))} reste la plus récente`
       : `Règlement du ${lisible(jour)} · renouvellement le ${lisible(ajouterAns(jour, 1))}`,
   );
+}
+
+export async function relancerFacture(formData: FormData) {
+  const moi = await exigerEquipe();
+  const id = texte(formData, "id");
+  const r = texte(formData, "retour");
+  const retour = r.startsWith("/admin/") && !r.startsWith("//") ? r : "/admin/paiements";
+  const f = await prisma.invoice.findUnique({
+    where: { id },
+    select: { numero: true, objet: true, montant: true, devise: true, statut: true, memberId: true, member: { select: { nom: true } } },
+  });
+  if (!f) redirectWithErreur(retour, "Facture introuvable.");
+  if (f.statut !== "envoyee") redirectWithErreur(retour, `La facture ${f.numero} est déjà réglée.`);
+  if (!f.memberId || !f.member) redirectWithErreur(retour, `La facture ${f.numero} n’est rattachée à aucun membre.`);
+
+  await prisma.invoice.update({ where: { id }, data: { relanceeLe: new Date() } });
+  const { email, envoye } = await courrielRelanceFacture(id);
+  const somme = fmtMontant(f.montant, f.devise);
+  after(() =>
+    notifierMembre(f.memberId!, {
+      titre: `Facture ${f.numero} à régler`,
+      corps: `${f.objet} · ${somme}`,
+      url: `/membre/cotisations?regler=${id}`,
+    }),
+  );
+  await prisma.auditLog.create({
+    data: {
+      action: "relance_envoyee",
+      entite: "Member",
+      entiteId: f.memberId,
+      acteur: moi.nom,
+      detail: `Facture ${f.numero} relancée${envoye ? ` : courriel envoyé à ${email}` : ""}.`,
+    },
+  });
+
+  revalidatePath("/admin/paiements");
+  revalidatePath("/membre/cotisations");
+  const courriel = envoye
+    ? ` · courriel envoyé à ${email}`
+    : !email
+      ? " · aucun contact à qui écrire"
+      : courrielsActifs()
+        ? " · le courriel n’est pas parti"
+        : "";
+  redirectWithFlash(retour, `Facture ${f.numero} relancée : elle s’affiche dans l’espace de ${f.member.nom}${courriel}`);
 }

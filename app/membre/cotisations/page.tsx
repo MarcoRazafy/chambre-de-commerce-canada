@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   AlarmClock,
+  BellRing,
   CheckCircle2,
   ChevronRight,
   Clock,
@@ -87,6 +88,18 @@ export default async function CotisationsPage({
   );
   const aRegler = delAnnee.filter((f) => f.statut === "envoyee");
   const enRetardListe = delAnnee.filter((f) => factureEnRetard(f));
+  const factureCotisation = cotisation
+    ? factures.find((f) => f.statut === "envoyee" && /^cotisation/i.test(f.objet))
+    : undefined;
+  const relancees = factures.filter(
+    (f) => f.statut === "envoyee" && f.relanceeLe && f.id !== factureCotisation?.id,
+  );
+  const fenetre = (f: Invoice) => ({
+    id: f.id,
+    numero: f.numero,
+    objet: f.objet,
+    montant: fmtMontant(f.montant, f.devise),
+  });
 
   return (
     <>
@@ -166,6 +179,37 @@ export default async function CotisationsPage({
             </div>
             <StatusPill status={m.statut} />
           </div>
+
+          {relancees.length ? (
+            <ul className="list-none m-0 p-0 mt-5 flex flex-col gap-2.5">
+              {relancees.map((f) => (
+                <li
+                  key={f.id}
+                  className="flex items-center gap-3 flex-wrap rounded-[var(--radius-s)] border border-bad/25 bg-bad-soft px-4 py-3"
+                >
+                  <BellRing size={18} className="text-bad shrink-0" />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[14px] font-semibold text-ink">
+                      Facture {f.numero} à régler · {fmtMontant(f.montant, f.devise)}
+                    </span>
+                    <span className="block text-[12.5px] text-muted">{f.objet}</span>
+                  </span>
+                  <FenetreMoyens
+                    facture={fenetre(f)}
+                    modes={modes}
+                    bientot={bientot}
+                    ouverteAuDepart={regler === f.id}
+                    declencheur={
+                      <>
+                        Régler <ChevronRight size={15} />
+                      </>
+                    }
+                    classeDeclencheur="btn-action btn-action-sm"
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : null}
 
           {cotisation ? (
             <BlocCotisation cotisation={cotisation} modes={modes} />
@@ -317,10 +361,10 @@ export default async function CotisationsPage({
                 <span className={`order-6 md:w-[90px] shrink-0 md:text-right ${f.statut === "envoyee" ? "basis-full md:basis-auto pt-1 md:pt-0" : "hidden md:block"}`}>
                   {f.statut === "envoyee" ? (
                     <FenetreMoyens
-                      facture={{ id: f.id, numero: f.numero, objet: f.objet, montant: fmtMontant(f.montant, f.devise) }}
+                      facture={fenetre(f)}
                       modes={modes}
                       bientot={bientot}
-                      ouverteAuDepart={regler === f.id}
+                      ouverteAuDepart={regler === f.id && !relancees.some((r) => r.id === f.id)}
                       declencheur={
                         <>
                           Régler <ChevronRight size={15} />

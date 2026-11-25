@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { choisirRappel } from "@/lib/rappels-membres-base";
+import { choisirRappel, lettreDeRelance } from "@/lib/rappels-membres-base";
 
 type R = { id: string; declencheur: string; jours: number; sujet: string; contenu: string; actif: boolean };
 let rappels: R[] = [];
@@ -71,6 +71,16 @@ describe("choix du rappel à envoyer", () => {
     expect(choisirRappel(liste, 5, "adhesion", () => false)?.rappel).toEqual({ jours: 7 });
     expect(choisirRappel(liste, 90, "adhesion", () => false)).toBeNull();
     expect(choisirRappel(liste, -1, "adhesion", () => false)).toBeNull();
+  });
+});
+
+describe("lettre d’une relance manuelle", () => {
+  const liste = [{ jours: 7 }, { jours: 30 }, { jours: 60 }];
+  it("la lettre du dernier seuil atteint, sinon la plus proche, sinon aucune", () => {
+    expect(lettreDeRelance(liste, 40)).toEqual({ jours: 30 });
+    expect(lettreDeRelance(liste, 90)).toEqual({ jours: 60 });
+    expect(lettreDeRelance(liste, 2)).toEqual({ jours: 7 });
+    expect(lettreDeRelance([], 10)).toBeNull();
   });
 });
 
