@@ -6,7 +6,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { Suspense, useState, type ReactNode } from "react";
 import { ChevronRight, Menu, MessageSquare, Search, Settings } from "lucide-react";
 import { BoutonDeconnexion } from "@/components/BoutonDeconnexion";
-import { BoutonInstaller } from "@/components/Application";
 import { LogoEspace } from "@/components/LogoEspace";
 import { MenuNotifications } from "@/components/MenuNotifications";
 import { MenuProfil } from "@/components/admin/MenuProfil";
@@ -181,7 +180,6 @@ export function CoquilleAdmin({
           </Suspense>
 
           <div className="flex items-center gap-2 shrink-0">
-            <BoutonInstaller />
             {messagerie ? (
             <Link
               href="/admin/messagerie"
