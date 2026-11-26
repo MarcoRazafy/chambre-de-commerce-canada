@@ -88,12 +88,7 @@ export default async function CotisationsPage({
   );
   const aRegler = delAnnee.filter((f) => f.statut === "envoyee");
   const enRetardListe = delAnnee.filter((f) => factureEnRetard(f));
-  const factureCotisation = cotisation
-    ? factures.find((f) => f.statut === "envoyee" && /^cotisation/i.test(f.objet))
-    : undefined;
-  const relancees = factures.filter(
-    (f) => f.statut === "envoyee" && f.relanceeLe && f.id !== factureCotisation?.id,
-  );
+  const relancees = factures.filter((f) => f.statut === "envoyee" && f.relanceeLe);
   const fenetre = (f: Invoice) => ({
     id: f.id,
     numero: f.numero,
