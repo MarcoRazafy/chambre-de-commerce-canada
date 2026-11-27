@@ -9,6 +9,8 @@ import { SelecteurTags } from "@/components/newsletter/SelecteurTags";
 import { docBlanc, docDepuisTexte, lireDoc } from "@/lib/lettre-blocs";
 import { getParametres } from "@/lib/parametres";
 import { getProfilChambre } from "@/lib/profil-chambre";
+import { getFuseau } from "@/lib/fuseau-chambre";
+import { mentionFuseau } from "@/lib/fuseau";
 
 const CHAMP = "w-full rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 
@@ -27,6 +29,7 @@ export async function EditeurLettre({
   evenement?: { id: string; titre: string } | null;
   retour?: string;
 }) {
+  const fuseau = await getFuseau();
   const contenu = lettre?.contenu ?? "";
   const { reseaux, mentions } = await getParametres();
   const initial = lireDoc(contenu, reseaux) ?? (contenu.trim() ? docDepuisTexte(lettre?.sujet ?? "", contenu, reseaux, mentions) : docBlanc());
@@ -68,8 +71,8 @@ export async function EditeurLettre({
             <div className="pt-4 border-t border-line flex flex-col gap-2">
               <button type="submit" name="intention" value="envoyer" className="btn-action btn-action-sm"><Send size={14} /> Envoyer maintenant</button>
               <div className="flex gap-2">
-                <input type="datetime-local" name="programmeeLe" defaultValue={programmationParDefaut()} aria-label="Date et heure d’envoi (heure de Madagascar)" className={`${CHAMP} flex-1 min-w-0`} />
-                <button type="submit" name="intention" value="programmer" className="btn-contour btn-contour-sm text-ink shrink-0" title={`Envoi automatique à la date choisie (heure de Madagascar, jusqu’à ${DELAI_MAX_JOURS} jours à l’avance)`}><CalendarClock size={14} /> Programmer</button>
+                <input type="datetime-local" name="programmeeLe" defaultValue={programmationParDefaut(new Date(), fuseau)} aria-label={`Date et heure d’envoi (${mentionFuseau(fuseau)})`} className={`${CHAMP} flex-1 min-w-0`} />
+                <button type="submit" name="intention" value="programmer" className="btn-contour btn-contour-sm text-ink shrink-0" title={`Envoi automatique à la date choisie (${mentionFuseau(fuseau)}, jusqu’à ${DELAI_MAX_JOURS} jours à l’avance)`}><CalendarClock size={14} /> Programmer</button>
               </div>
             </div>
             <button type="submit" name="intention" value="enregistrer" className="btn-contour btn-contour-sm text-ink"><Save size={14} /> Enregistrer le brouillon</button>

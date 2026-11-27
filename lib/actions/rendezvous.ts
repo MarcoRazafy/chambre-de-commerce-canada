@@ -22,7 +22,6 @@ import {
   chevauche,
   COULEURS_TYPE,
   creneauxLibres,
-  FUSEAU_CHAMBRE,
   finCreneau,
   JOURS_SEMAINE,
   libelleLieu,
@@ -31,6 +30,9 @@ import {
 } from "@/lib/rendezvous";
 import { getCurrentUser } from "@/lib/session";
 import { notifier, notifierEquipe } from "@/lib/push";
+import { getFuseau } from "@/lib/fuseau-chambre";
+import { instantDans } from "@/lib/fuseau";
+import { mentionFuseau } from "@/lib/fuseau";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const nombre = (fd: FormData, k: string) => Number(texte(fd, k));
@@ -92,13 +94,13 @@ const SELECTION = {
   hote: { select: { nom: true, email: true } },
 } as const;
 
-function ics(r: RendezvousAnnonce, annule = false) {
+function ics(r: RendezvousAnnonce, fuseau: string, annule = false) {
   const jour = toISODate(r.jour);
   const lieu = libelleLieu(r.lieu);
   return invitationIcs({
     uid: r.id,
-    debut: new Date(`${jour}T${r.debut}:00${FUSEAU_CHAMBRE}`),
-    fin: new Date(`${jour}T${r.fin}:00${FUSEAU_CHAMBRE}`),
+    debut: new Date(instantDans(jour, r.debut, fuseau)),
+    fin: new Date(instantDans(jour, r.fin, fuseau)),
     titre: r.type.titre,
     description: [r.hote ? `Avec ${r.hote.nom}` : "Avec l’équipe de la Chambre", r.motif].filter(Boolean).join("\n"),
     lieu: r.lienVisio ?? lieu.libelle,
@@ -113,6 +115,7 @@ async function annonce(r: RendezvousAnnonce) {
     type: r.type.titre,
     jour: jourLong(jour),
     horaire: plageHoraire(r.debut, r.fin) ?? r.debut,
+    fuseau: mentionFuseau(await getFuseau()),
     personne: r.user.nom,
     entreprise: r.member?.nom ?? null,
     motif: r.motif,
@@ -165,7 +168,8 @@ export async function reserverRendezvous(formData: FormData) {
     plages,
     duree: type.duree,
     occupes: pris,
-    maintenant: maintenant(),
+    maintenant: maintenant(await getFuseau()),
+    fuseau: await getFuseau(),
   });
   if (!libres.includes(debut)) {
     redirectWithErreur(
@@ -202,7 +206,7 @@ export async function reserverRendezvous(formData: FormData) {
   }
 
   const details = await annonce(rendezvous);
-  const invitation = ics(rendezvous);
+  const invitation = ics(rendezvous, await getFuseau());
   const destinatairesEquipe = [...new Set([await courrielEquipe(), rendezvous.hote?.email].filter((x): x is string => !!x))];
   after(async () => {
     await notifierEquipe({
@@ -258,7 +262,7 @@ export async function confirmerRendezvous(formData: FormData) {
       corps: `${details.type} · ${details.jour}, ${details.horaire}`,
       url: MEMBRE,
     });
-    await envoyerCourriel(courrielRendezvousConfirme(r.user.email, { ...details, ics: ics(r) }));
+    await envoyerCourriel(courrielRendezvousConfirme(r.user.email, { ...details, ics: ics(r, await getFuseau()) }));
   });
   await prisma.auditLog.create({
     data: {
@@ -313,7 +317,7 @@ export async function annulerRendezvous(formData: FormData) {
       await envoyerCourriel(
         courrielRendezvousAnnule(a, {
           ...details,
-          ics: ics(rendezvous, true),
+          ics: ics(rendezvous, await getFuseau(), true),
           par: parLeMembre ? user.nom : "l’équipe de la Chambre",
           lien: await urlPublique(parLeMembre ? EQUIPE : MEMBRE),
         }),

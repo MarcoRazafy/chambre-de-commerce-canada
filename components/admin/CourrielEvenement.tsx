@@ -20,6 +20,8 @@ import {
   versSaisie,
 } from "@/lib/rappels";
 import { DatesRappel } from "@/components/admin/DatesRappel";
+import { getFuseau } from "@/lib/fuseau-chambre";
+import { mentionFuseau } from "@/lib/fuseau";
 
 const CHAMP = "rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.6px] outline-none focus:border-accent";
 
@@ -40,7 +42,8 @@ export async function CourrielEvenement({
     prisma.rappelEnvoye.groupBy({ by: ["type"], where: { eventId }, _count: { _all: true } }),
   ]);
   if (!e) return null;
-  const debut = debutEvenement(toISODate(e.date), e.debut);
+  const fuseau = await getFuseau();
+  const debut = debutEvenement(toISODate(e.date), e.debut, fuseau);
   const ouvert = rappel === "nouveau" ? null : rappels.find((r) => r.id === rappel) ?? null;
   const formulaire = !passe && (rappel === "nouveau" || ouvert);
   const base = `/admin/evenements/${e.id}?vue=rappel`;
@@ -74,7 +77,7 @@ export async function CourrielEvenement({
                   <div className="min-w-0 flex-1">
                     <div className="text-[14px] font-semibold text-ink">{r.titre || r.sujet || "Rappel"}</div>
                     <div className="text-[12.5px] text-muted">
-                      {moments.length ? moments.map((m) => fmtDateHeure(new Date(m))).join(" · ") : "Aucune date"}
+                      {moments.length ? moments.map((m) => fmtDateHeure(new Date(m), fuseau)).join(" · ") : "Aucune date"}
                       {nb ? ` · ${nb} envoi${nb > 1 ? "s" : ""}` : !restants.length && !passe ? " · heures passées" : ""}
                     </div>
                   </div>
@@ -114,11 +117,11 @@ async function FormulaireRappel({
   retour: string;
   debut: number;
 }) {
-  const { reseaux, mentions } = await getParametres();
+  const [{ reseaux, mentions }, fuseau] = await Promise.all([getParametres(), getFuseau()]);
   const doc =
     (rappel?.message && lireDoc(rappel.message, reseaux)) ||
     (rappel?.message ? docDepuisTexte(titre, rappel.message, reseaux, mentions) : rappelParDefaut(reseaux, mentions));
-  const dates = rappel ? momentsEnvoi(rappel, debut).map(versSaisie) : [];
+  const dates = rappel ? momentsEnvoi(rappel, debut).map((t) => versSaisie(t, fuseau)) : [];
 
   return (
     <Panneau titre={rappel ? "Modifier le rappel" : "Nouveau rappel"} teinte="vert">
@@ -132,8 +135,8 @@ async function FormulaireRappel({
         </label>
 
         <div>
-          <span className="block text-[12.5px] font-semibold text-muted mb-1.5">Envoi (heure de Madagascar)</span>
-          <DatesRappel initiales={dates} suggestion={versSaisie(debut - 86_400_000)} max={DATES_MAX} limite={versSaisie(debut - 60_000)} />
+          <span className="block text-[12.5px] font-semibold text-muted mb-1.5">Envoi ({mentionFuseau(fuseau)})</span>
+          <DatesRappel initiales={dates} suggestion={versSaisie(debut - 86_400_000, fuseau)} max={DATES_MAX} limite={versSaisie(debut - 60_000)} />
         </div>
 
         <label className="block">

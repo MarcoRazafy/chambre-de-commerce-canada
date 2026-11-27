@@ -148,7 +148,7 @@ export function TexteRiche({
   const lier = () => {
     const lien = lienSur(adresse);
     if (!lien) {
-      setRefus("Adresse non reconnue. Exemple : https://cancham.mg");
+      setRefus("Adresse non reconnue. Exemple : https://www.entreprise.com");
       return;
     }
     if (memoire.current?.collapsed ?? true) {

@@ -1,4 +1,4 @@
-import { FUSEAU_CHAMBRE } from "@/lib/rendezvous";
+import { FUSEAU_CANCHAM, instantDans, saisieDans } from "@/lib/fuseau";
 
 export type EtatLettre = "brouillon" | "programmee" | "envoyee";
 
@@ -18,9 +18,10 @@ export const DELAI_MAX_JOURS = 90;
 export function lireProgrammation(
   saisie: string,
   maintenant = new Date(),
+  fuseau = FUSEAU_CANCHAM,
 ): { date: Date } | { erreur: string } {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(saisie)) return { erreur: "Choisissez la date et l’heure de l’envoi." };
-  const date = new Date(`${saisie}:00${FUSEAU_CHAMBRE}`);
+  const date = new Date(instantDans(saisie.slice(0, 10), saisie.slice(11, 16), fuseau));
   if (Number.isNaN(date.getTime())) return { erreur: "Date d’envoi invalide." };
   if (date.getTime() < maintenant.getTime() + DELAI_MIN_MINUTES * 60_000) {
     return { erreur: `Choisissez une heure au moins ${DELAI_MIN_MINUTES} minutes plus tard ; pour partir tout de suite, utilisez « Envoyer maintenant ».` };
@@ -31,21 +32,21 @@ export function lireProgrammation(
   return { date };
 }
 
-export function programmationParDefaut(maintenant = new Date()): string {
-  const demain = new Date(maintenant.getTime() + 86_400_000 + 3 * 3_600_000);
-  return `${demain.toISOString().slice(0, 10)}T09:00`;
+export function programmationParDefaut(maintenant = new Date(), fuseau = FUSEAU_CANCHAM): string {
+  return `${saisieDans(maintenant.getTime() + 86_400_000, fuseau).slice(0, 10)}T09:00`;
 }
 
-const FORMAT_DATE_HEURE = new Intl.DateTimeFormat("fr-FR", {
-  timeZone: "Indian/Antananarivo",
-  day: "numeric",
-  month: "short",
-  year: "numeric",
-  hour: "2-digit",
-  minute: "2-digit",
-});
-export function fmtDateHeure(d: Date): string {
-  return FORMAT_DATE_HEURE.format(d).replace(":", " h ");
+export function fmtDateHeure(d: Date, fuseau = FUSEAU_CANCHAM): string {
+  return new Intl.DateTimeFormat("fr-FR", {
+    timeZone: fuseau,
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
+    .format(d)
+    .replace(":", " h ");
 }
 
 export type SuiviLettre = { envoyes: number; livres: number; ouverts: number; clics: number; erreurs: number };

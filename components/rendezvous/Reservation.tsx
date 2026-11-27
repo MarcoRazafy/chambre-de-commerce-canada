@@ -11,15 +11,16 @@ import {
   grilleMois,
   HORIZON_JOURS,
   libelleLieu,
-  MENTION_FUSEAU,
   moisDe,
   moisVoisin,
 } from "@/lib/rendezvous";
 import type { JourProposable, TypeRendezvous } from "@/lib/rendezvous-donnees";
+import { getFuseau } from "@/lib/fuseau-chambre";
+import { mentionFuseau } from "@/lib/fuseau";
 
 const JOURS = ["L", "M", "M", "J", "V", "S", "D"];
 
-export function Reservation({
+export async function Reservation({
   types,
   type,
   jours,
@@ -40,6 +41,7 @@ export function Reservation({
   base: string;
   apercu?: boolean;
 }) {
+  const mention = mentionFuseau(await getFuseau());
   const lien = (c: { type?: string; mois?: string; jour?: string; h?: string }) => {
     const q = new URLSearchParams(Object.entries(c).filter(([, v]) => v) as [string, string][]);
     const s = q.toString();
@@ -113,7 +115,7 @@ export function Reservation({
                 {fmtJour(jour!, { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
               </div>
               <div className="text-[13.5px] text-muted tabular-nums">
-                {fmtHeure(heure!)} – {fmtHeure(finCreneau(heure!, type.duree))} · {MENTION_FUSEAU}
+                {fmtHeure(heure!)} – {fmtHeure(finCreneau(heure!, type.duree))} · {mention}
               </div>
             </div>
             <Field label="Ce dont vous souhaitez parler" hint="Facultatif, mais la personne prépare mieux la rencontre.">
@@ -183,7 +185,7 @@ export function Reservation({
                   {jour && duJour.length ? (
                     <>
                       <div className="text-[12.5px] text-muted mb-2 first-letter:uppercase">
-                        {fmtJour(jour, { weekday: "long", day: "numeric", month: "long" })} · {MENTION_FUSEAU}
+                        {fmtJour(jour, { weekday: "long", day: "numeric", month: "long" })} · {mention}
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         {duJour.map((c) => (

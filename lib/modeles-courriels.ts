@@ -358,6 +358,7 @@ interface RendezvousCourriel {
   type: string;
   jour: string;
   horaire: string;
+  fuseau?: string;
   personne: string;
   entreprise: string | null;
   motif: string | null;
@@ -392,7 +393,7 @@ export function courrielRendezvousPris(
         d.aConfirmer
           ? `Votre demande de rendez-vous « ${d.type} » ${avec} est enregistrée. L’équipe la confirme rapidement : vous recevrez un second courriel.`
           : `Votre rendez-vous « ${d.type} » ${avec} est confirmé.`,
-        `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
+        `Quand : ${d.jour}, ${d.horaire} (${d.fuseau ?? "heure locale"})`,
         ...ouLigne(d),
         ...(d.motif ? [`Ce que vous souhaitez aborder : ${d.motif}`] : []),
         ...(d.ics && !d.aConfirmer ? ["L’invitation jointe (rendez-vous.ics) l’ajoute à votre agenda : Google Agenda, Outlook ou iPhone."] : []),
@@ -418,7 +419,7 @@ export function courrielRendezvousConfirme(
       paragraphes: [
         `Bonjour ${prenom(d.personne)},`,
         `L’équipe de la Chambre confirme votre rendez-vous « ${d.type} »${d.avec ? ` avec ${d.avec}` : ""}.`,
-        `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
+        `Quand : ${d.jour}, ${d.horaire} (${d.fuseau ?? "heure locale"})`,
         ...ouLigne(d),
         ...(d.ics ? ["L’invitation jointe (rendez-vous.ics) l’ajoute à votre agenda."] : []),
       ],
@@ -439,7 +440,7 @@ export function courrielRendezvousEquipe(
       titre: d.aConfirmer ? "Un membre demande un rendez-vous" : "Un membre a réservé un créneau",
       paragraphes: [
         `${d.personne}${d.entreprise ? ` · ${d.entreprise}` : ""} ${d.aConfirmer ? "demande" : "vient de réserver"} « ${d.type} »${d.avec ? `, avec ${d.avec}` : ""}.`,
-        `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
+        `Quand : ${d.jour}, ${d.horaire} (${d.fuseau ?? "heure locale"})`,
         ...ouLigne(d),
         ...(d.motif
           ? [`Motif indiqué : ${d.motif}`]

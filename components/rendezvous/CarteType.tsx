@@ -16,7 +16,7 @@ export function QuiRecoit({ hote, taille = 28 }: { hote: TypeRendezvous["hote"];
   const nom = hote?.nom ?? "L’équipe de la Chambre";
   return (
     <div className="flex items-center gap-2.5 min-w-0">
-      <Pastille src={hote?.photo} alt="" initiales={hote ? initialesDe(hote.nom) : "CC"} taille={taille} />
+      <Pastille src={hote?.photo} alt="" initiales={hote ? initialesDe(hote.nom) : "ÉQ"} taille={taille} />
       <div className="min-w-0">
         <div className="text-[13px] font-semibold text-ink truncate">{nom}</div>
         <div className="text-[12px] text-muted truncate">{hote?.specialite || hote?.fonction || "Toute l’équipe de la Chambre"}</div>

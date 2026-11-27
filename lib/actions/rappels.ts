@@ -9,6 +9,7 @@ import { lireDoc } from "@/lib/lettre-blocs";
 import { toISODate } from "@/lib/enums";
 import { DATES_MAX, debutEvenement, lireDateEnvoi, SUJET_DEFAUT } from "@/lib/rappels";
 import { envoyerTestRappel } from "@/lib/rappels-envoi";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const pageCourriel = (eventId: string, rappel?: string) => `/admin/evenements/${eventId}?vue=rappel${rappel ? `&rappel=${rappel}` : ""}`;
@@ -21,9 +22,10 @@ export async function enregistrerRappel(formData: FormData) {
   if (!e) redirectWithErreur("/admin/evenements", "Événement introuvable.");
   const retour = pageCourriel(eventId, id || "nouveau");
 
-  const debut = debutEvenement(toISODate(e.date), e.debut);
+  const fuseau = await getFuseau();
+  const debut = debutEvenement(toISODate(e.date), e.debut, fuseau);
   const saisies = formData.getAll("dates").map(String).filter(Boolean);
-  const dates = [...new Set(saisies.map(lireDateEnvoi))].filter((t): t is number => t !== null).sort((a, b) => a - b);
+  const dates = [...new Set(saisies.map((x) => lireDateEnvoi(x, fuseau)))].filter((t): t is number => t !== null).sort((a, b) => a - b);
   if (!dates.length) redirectWithErreur(retour, "Ajoutez au moins une date d’envoi.");
   if (dates.some((t) => t >= debut)) redirectWithErreur(retour, "Chaque date d’envoi doit être avant le début de l’événement.");
   if (dates.length > DATES_MAX) redirectWithErreur(retour, `${DATES_MAX} dates d’envoi au plus par rappel.`);

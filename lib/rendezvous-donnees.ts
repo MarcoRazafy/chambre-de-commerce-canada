@@ -14,6 +14,7 @@ import {
   type Plage,
   type StatutRendezvous,
 } from "@/lib/rendezvous";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 export interface Hote {
   id: string;
@@ -176,11 +177,12 @@ export async function getCreneaux(type: {
   if (!jours.length) return [];
 
   const pris = await occupesPour(type.hote?.id ?? null, jours[0], jours[jours.length - 1]);
-  const instant = maintenant();
+  const fuseau = await getFuseau();
+  const instant = maintenant(fuseau);
   return jours
     .map((jour) => ({
       jour,
-      creneaux: creneauxLibres({ jour, plages, duree: type.duree, occupes: pris.get(jour) ?? [], maintenant: instant }),
+      creneaux: creneauxLibres({ jour, plages, duree: type.duree, occupes: pris.get(jour) ?? [], maintenant: instant, fuseau }),
     }))
     .filter((j) => j.creneaux.length > 0);
 }

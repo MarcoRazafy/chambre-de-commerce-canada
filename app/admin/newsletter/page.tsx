@@ -6,6 +6,7 @@ import { annulerProgrammation, supprimerLettre } from "@/lib/actions/newsletter"
 import { prisma } from "@/lib/db";
 import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, moyenne, suiviDe, taux, type EtatLettre } from "@/lib/lettres";
 import { AUDIENCE_DEFAUT, destinataires } from "@/lib/newsletter";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const ORDRE: Record<EtatLettre, number> = { programmee: 0, brouillon: 1, envoyee: 2 };
 const PASTILLE: Record<EtatLettre, [string, "info" | "muted" | "ok"]> = {
@@ -15,6 +16,7 @@ const PASTILLE: Record<EtatLettre, [string, "info" | "muted" | "ok"]> = {
 };
 
 export default async function AdminNewsletter() {
+  const fuseau = await getFuseau();
   const [brutes, audience] = await Promise.all([
     prisma.lettre.findMany({
       orderBy: { updatedAt: "desc" },
@@ -59,7 +61,7 @@ export default async function AdminNewsletter() {
         <Compteur
           icone={<CalendarClock size={20} />}
           libelle="Prochain envoi"
-          valeur={<span className="text-[19px]">{prochaine ? fmtDateHeure(prochaine.programmeeLe!) : "—"}</span>}
+          valeur={<span className="text-[19px]">{prochaine ? fmtDateHeure(prochaine.programmeeLe!, fuseau) : "—"}</span>}
           detail={prochaine ? prochaine.sujet : "Aucune lettre programmée"}
           teinte="rouge"
         />
@@ -86,7 +88,7 @@ export default async function AdminNewsletter() {
                   {l.etat === "brouillon" ? <div className="text-[12px] text-muted">Par {l.auteur}</div> : null}
                 </Td>
                 <Td><Pill tone={PASTILLE[l.etat][1]}>{PASTILLE[l.etat][0]}</Pill></Td>
-                <Td className="whitespace-nowrap tabular-nums">{l.etat !== "brouillon" && l.quand ? fmtDateHeure(l.quand) : "—"}</Td>
+                <Td className="whitespace-nowrap tabular-nums">{l.etat !== "brouillon" && l.quand ? fmtDateHeure(l.quand, fuseau) : "—"}</Td>
                 <Td className="text-right tabular-nums">{l.etat === "brouillon" ? "—" : l.etat === "programmee" ? l.destinataires : l.envoyes}</Td>
                 <Td className="text-right tabular-nums">{fmtTaux(l.ouverture)}</Td>
                 <Td className="text-right tabular-nums">{fmtTaux(l.clics)}</Td>

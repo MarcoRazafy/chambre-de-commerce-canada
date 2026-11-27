@@ -1,8 +1,6 @@
 import { ajouterJours, enMinutes, estHeure } from "@/lib/agenda";
+import { FUSEAU_CANCHAM, instantDans } from "@/lib/fuseau";
 
-export const FUSEAU_CHAMBRE = "+03:00";
-
-export const MENTION_FUSEAU = "heure de Madagascar (UTC+3)";
 
 export const DELAI_PREVENANCE_H = 4;
 
@@ -56,12 +54,14 @@ export function creneauxLibres({
   duree,
   occupes = [],
   maintenant,
+  fuseau = FUSEAU_CANCHAM,
 }: {
   jour: string;
   plages: Plage[];
   duree: number;
   occupes?: Occupe[];
   maintenant?: number;
+  fuseau?: string;
 }): string[] {
   if (duree <= 0) return [];
   const duJour = plages.filter(
@@ -81,7 +81,7 @@ export function creneauxLibres({
       const creneau = { debut, fin: versHeure(m + duree) };
       if (occupes.some((o) => chevauche(creneau, o))) continue;
       if (limite !== null) {
-        const quand = Date.parse(`${jour}T${debut}:00${FUSEAU_CHAMBRE}`);
+        const quand = instantDans(jour, debut, fuseau);
         if (quand < limite) continue;
       }
       creneaux.push(debut);

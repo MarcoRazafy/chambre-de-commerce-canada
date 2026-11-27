@@ -15,6 +15,7 @@ import {
   lireAudience,
   type Audience,
 } from "@/lib/newsletter";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const SANS_COURRIELS = "L’envoi de courriels n’est pas configuré (variables SMTP de Brevo) : rien n’est parti.";
@@ -33,6 +34,7 @@ function audienceDe(fd: FormData): Audience {
 const pluriel = (n: number, mot: string) => `${n} ${mot}${n > 1 ? "s" : ""}`;
 
 export async function enregistrerLettre(formData: FormData) {
+  const fuseau = await getFuseau();
   const moi = await exigerEquipe();
   const id = texte(formData, "id");
   const intention = texte(formData, "intention");
@@ -53,7 +55,7 @@ export async function enregistrerLettre(formData: FormData) {
     if (avant.statut === "programmee") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est programmée : annulez la programmation pour la modifier.");
     if (avant.statut === "envoi") redirectWithErreur(`/admin/newsletter/${id}`, "Cette lettre est en cours d’envoi.");
   }
-  const programmation = intention === "programmer" ? lireProgrammation(texte(formData, "programmeeLe")) : null;
+  const programmation = intention === "programmer" ? lireProgrammation(texte(formData, "programmeeLe"), new Date(), fuseau) : null;
 
   const lettre = id
     ? await prisma.lettre.update({ where: { id }, data: { sujet, contenu, audience } })
@@ -87,14 +89,14 @@ export async function enregistrerLettre(formData: FormData) {
         entite: "Lettre",
         entiteId: lettre.id,
         acteur: moi.nom,
-        detail: quand ? `« ${sujet} » · le ${fmtDateHeure(quand)} · ${liste.length} destinataires prévus.` : `« ${sujet} » · ${partis} sur ${liste.length} destinataires.`,
+        detail: quand ? `« ${sujet} » · le ${fmtDateHeure(quand, fuseau)} · ${liste.length} destinataires prévus.` : `« ${sujet} » · ${partis} sur ${liste.length} destinataires.`,
       },
     });
     revalidatePath("/admin/newsletter");
     redirectWithFlash(
       retour ?? "/admin/newsletter",
       quand
-        ? `Lettre programmée le ${fmtDateHeure(quand)} · ${pluriel(liste.length, "destinataire")} aujourd’hui`
+        ? `Lettre programmée le ${fmtDateHeure(quand, fuseau)} · ${pluriel(liste.length, "destinataire")} aujourd’hui`
         : `Lettre envoyée à ${pluriel(partis, "destinataire")}`,
     );
   }

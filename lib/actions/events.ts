@@ -39,6 +39,7 @@ import {
   notifierTousLesMembres,
 } from "@/lib/push";
 import { prefixeNumeros } from "@/lib/prefixe-numeros";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const revalideTout = () => revalidatePath("/", "layout");
@@ -264,7 +265,7 @@ async function inscrireVisiteur(formData: FormData, slug: string) {
   if (!event?.public) {
     redirectWithErreur(`/c/${slug}/evenements`, "Événement introuvable.");
   }
-  if (estTermine(event)) {
+  if (estTermine(event, await getFuseau())) {
     redirectWithErreur(fiche, "Cet événement est terminé.");
   }
 
@@ -882,7 +883,7 @@ export async function pointerParCode(
   if (!event) {
     return { etat: "erreur", code, message: "Événement introuvable." };
   }
-  if (estTermine(event)) {
+  if (estTermine(event, await getFuseau())) {
     return {
       etat: "erreur",
       code,

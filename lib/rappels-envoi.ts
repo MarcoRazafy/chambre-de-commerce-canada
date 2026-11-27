@@ -19,6 +19,7 @@ import {
   remplir,
   SUJET_DEFAUT,
 } from "@/lib/rappels";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 type Inscrit = { nom: string; entreprise: string; email: string; code: string | null; statut: string };
 type EvenementRappel = EvenementCourriel;
@@ -65,6 +66,7 @@ export async function courrielRappel(e: EvenementRappel, rappel: Rappel, email: 
 const evenementRappel = { id: true, titre: true, date: true, debut: true, fin: true, lieu: true } as const;
 
 export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envoyes: number; echecs: number }> {
+  const fuseau = await getFuseau();
   if (!courrielsActifs()) return { envoyes: 0, echecs: 0 };
   const jour = (decalage: number) => new Date(`${new Date(maintenant + decalage * 86_400_000).toISOString().slice(0, 10)}T00:00:00Z`);
   const rappels = await prisma.rappelEvenement.findMany({
@@ -75,7 +77,7 @@ export async function envoyerRappelsDus(maintenant = Date.now()): Promise<{ envo
   let envoyes = 0, echecs = 0;
   for (const r of rappels) {
     const e = r.event;
-    const debut = debutEvenement(toISODate(e.date), e.debut);
+    const debut = debutEvenement(toISODate(e.date), e.debut, fuseau);
     const dus = momentsEnvoi(r, debut).filter((m) => estDuA(m, debut, maintenant));
     if (!dus.length) continue;
     const inscrits = await prisma.attendee.findMany({

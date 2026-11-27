@@ -163,7 +163,7 @@ export default async function RendezvousEquipePage({
                       </Td>
                       <Td className="whitespace-nowrap">
                         <span className="inline-flex items-center gap-1.5 text-[13px]">
-                          <Pastille alt="" initiales={r.hote ? initialesDe(r.hote.nom) : "CC"} taille={24} />
+                          <Pastille alt="" initiales={r.hote ? initialesDe(r.hote.nom) : "ÉQ"} taille={24} />
                           {r.hote?.nom ?? "L’équipe"}
                         </span>
                       </Td>

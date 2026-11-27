@@ -43,6 +43,7 @@ import { getEvent, getMembers } from "@/lib/queries";
 import { getParticipants } from "@/lib/queries-admin";
 import { estTermine, maintenant, marquerAbsentsPasses } from "@/lib/presences";
 import { plat } from "@/lib/texte";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const ONGLETS = [
   { cle: "tous", libelle: "Tous" },
@@ -102,7 +103,8 @@ export default async function EvenementAdmin({
     ? (sp.onglet as (typeof ONGLETS)[number]["cle"])
     : "tous";
   const recherche = sp.q?.trim() ?? "";
-  const passe = estTermine({ date: e.date, fin: e.fin ?? null });
+  const fuseau = await getFuseau();
+  const passe = estTermine({ date: e.date, fin: e.fin ?? null }, fuseau);
 
   const trouves = recherche
     ? participants.filter((p) =>
@@ -307,7 +309,7 @@ export default async function EvenementAdmin({
       />
 
       {vueRappel ? (
-        <CourrielEvenement eventId={e.id} passe={passe} maintenant={maintenant()} rappel={sp.rappel} />
+        <CourrielEvenement eventId={e.id} passe={passe} maintenant={maintenant(fuseau)} rappel={sp.rappel} />
       ) : vueCourriel ? (
         <CourrielsInscrits eventId={e.id} passe={passe} ecrire={sp.ecrire === "1"} lettreId={sp.lettre} />
       ) : vueListe ? (

@@ -1,6 +1,6 @@
 import { docVide, sectionVide, type DocLettre, type Reseau, type Section, type PiedRegle } from "@/lib/lettre-blocs";
 
-import { FUSEAU_CHAMBRE } from "@/lib/rendezvous";
+import { FUSEAU_CANCHAM, instantDans, saisieDans } from "@/lib/fuseau";
 
 const MINUTE = 60_000;
 
@@ -9,14 +9,14 @@ export const echeance = (avant: number, debut: number) => debut - avant * MINUTE
 export const DATES_MAX = 10;
 const RETARD_MAX = 12 * 60 * MINUTE;
 
-export function lireDateEnvoi(saisie: string): number | null {
+export function lireDateEnvoi(saisie: string, fuseau = FUSEAU_CANCHAM): number | null {
   if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(saisie)) return null;
-  const t = Date.parse(`${saisie}:00${FUSEAU_CHAMBRE}`);
+  const t = instantDans(saisie.slice(0, 10), saisie.slice(11, 16), fuseau);
   return Number.isNaN(t) ? null : t;
 }
 
-export function versSaisie(t: number): string {
-  return new Date(t + 3 * 60 * MINUTE).toISOString().slice(0, 16);
+export function versSaisie(t: number, fuseau = FUSEAU_CANCHAM): string {
+  return saisieDans(t, fuseau);
 }
 
 export function momentsEnvoi(r: { dates: Date[]; avant: number }, debut: number): number[] {
@@ -30,8 +30,8 @@ export function estDuA(moment: number, debut: number, maintenant: number): boole
 
 export const cleEnvoi = (rappelId: string, moment: number) => `${rappelId}@${new Date(moment).toISOString()}`;
 
-export function debutEvenement(jour: string, debut: string | null | undefined): number {
-  return Date.parse(`${jour}T${debut && /^\d{2}:\d{2}$/.test(debut) ? debut : "09:00"}:00${FUSEAU_CHAMBRE}`);
+export function debutEvenement(jour: string, debut: string | null | undefined, fuseau = FUSEAU_CANCHAM): number {
+  return instantDans(jour, debut && /^\d{2}:\d{2}$/.test(debut) ? debut : "09:00", fuseau);
 }
 
 export const SUJET_DEFAUT = "Rappel : {événement}";

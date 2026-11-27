@@ -12,6 +12,7 @@ import type { CouleursPage } from "@/lib/couleurs-evenement";
 import { cadreVisible, type CadreLogo } from "@/lib/cadre-logo";
 import type { Supplement } from "@/lib/supplements";
 import { couleur } from "@/lib/couleurs";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const CHAMPS = { id: true, titre: true, date: true, lieu: true, format: true, desc: true, photo: true, debut: true, fin: true, payant: true, prixPublic: true, pourQui: true, couleurHaut: true, couleurPied: true, couleurPied2: true } as const;
 
@@ -87,7 +88,7 @@ export async function ouvertureInscription(chambreId: string, id: string): Promi
     if (!e) return { restantes: 0, termine: true, enLigne: false, supplements: [] };
     return {
       restantes: Math.max(0, e.cap - e._count.participants),
-      termine: estTermine(e),
+      termine: estTermine(e, await getFuseau()),
       enLigne: (e.prixPublic > 0 || e.supplements.length > 0) && Boolean(await compteStripeActif()),
       supplements: e.supplements,
     };

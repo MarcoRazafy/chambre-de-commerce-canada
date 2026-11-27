@@ -33,7 +33,6 @@ const ANNONCE_MS = 2000;
 function heure(iso: string): string {
   return new Date(iso)
     .toLocaleTimeString("fr-FR", {
-      timeZone: "Indian/Antananarivo",
       hour: "2-digit",
       minute: "2-digit",
     })

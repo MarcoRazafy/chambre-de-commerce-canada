@@ -80,7 +80,7 @@ export function FormulaireNouvelEquipier() {
             name="email"
             required
             autoComplete="off"
-            placeholder="prenom@cancham.mg"
+            placeholder="prenom@entreprise.com"
             className={INPUT}
           />
         </Field>

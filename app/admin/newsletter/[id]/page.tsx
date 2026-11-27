@@ -10,8 +10,10 @@ import { lireDoc } from "@/lib/lettre-blocs";
 import { prisma } from "@/lib/db";
 import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
 import { destinataires, lireAudience } from "@/lib/newsletter";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 export default async function Lettre({ params }: { params: Promise<{ id: string }> }) {
+  const fuseau = await getFuseau();
   const { id } = await params;
   const l = await prisma.lettre.findUnique({
     where: { id },
@@ -72,8 +74,8 @@ export default async function Lettre({ params }: { params: Promise<{ id: string 
         }
       >
         {programmee
-          ? `Programmée pour le ${fmtDateHeure(quand!)} · ${l.destinataires} destinataire${l.destinataires > 1 ? "s" : ""} aujourd’hui (liste relue à l’envoi). Pour la modifier, annulez l’envoi : elle redevient un brouillon.`
-          : `Envoyée le ${quand ? fmtDateHeure(quand) : "—"} à ${l.envoyes} destinataire${l.envoyes > 1 ? "s" : ""} sur ${l.destinataires}.`}
+          ? `Programmée pour le ${fmtDateHeure(quand!, fuseau)} · ${l.destinataires} destinataire${l.destinataires > 1 ? "s" : ""} aujourd’hui (liste relue à l’envoi). Pour la modifier, annulez l’envoi : elle redevient un brouillon.`
+          : `Envoyée le ${quand ? fmtDateHeure(quand, fuseau) : "—"} à ${l.envoyes} destinataire${l.envoyes > 1 ? "s" : ""} sur ${l.destinataires}.`}
       </EnTeteAdmin>
 
       {!programmee ? (

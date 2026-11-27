@@ -66,6 +66,7 @@ let rappels: Record<string, unknown>[] = [];
 let inscrits: { nom: string; entreprise: string; email: string; code: string | null; statut: string }[] = [];
 let courrielsOk = true;
 
+vi.mock("@/lib/fuseau-chambre", () => ({ getFuseau: async () => "Indian/Antananarivo" }));
 vi.mock("@/lib/db", () => ({
   prisma: {
     rappelEvenement: { findMany: async () => rappels },

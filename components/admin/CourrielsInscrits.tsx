@@ -7,6 +7,7 @@ import { quandEvenement } from "@/lib/billets";
 import { prisma } from "@/lib/db";
 import { dateEnvoi, etatLettre, fmtDateHeure, fmtTaux, suiviDe, taux } from "@/lib/lettres";
 import { AUDIENCE_DEFAUT, destinataires, lireAudience } from "@/lib/newsletter";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 const PASTILLE = { brouillon: ["Brouillon", "muted"], programmee: ["Programmée", "info"], envoyee: ["Envoyée", "ok"] } as const;
 
@@ -21,6 +22,7 @@ export async function CourrielsInscrits({
   ecrire: boolean;
   lettreId?: string;
 }) {
+  const fuseau = await getFuseau();
   const [e, lettres] = await Promise.all([
     prisma.event.findUnique({ where: { id: eventId }, select: { id: true, titre: true, date: true, debut: true, fin: true, lieu: true } }),
     prisma.lettre.findMany({
@@ -89,7 +91,7 @@ export async function CourrielsInscrits({
                   <div className="text-[12px] text-muted">
                     {etat === "brouillon"
                       ? `Par ${l.auteur}`
-                      : `${date ? fmtDateHeure(date) : ""} · ${nb} destinataire${nb > 1 ? "s" : ""}${etat === "envoyee" && s.envoyes ? ` · ouverture ${fmtTaux(taux(s.ouverts, s.envoyes))}` : ""}`}
+                      : `${date ? fmtDateHeure(date, fuseau) : ""} · ${nb} destinataire${nb > 1 ? "s" : ""}${etat === "envoyee" && s.envoyes ? ` · ouverture ${fmtTaux(taux(s.ouverts, s.envoyes))}` : ""}`}
                   </div>
                 </li>
               );

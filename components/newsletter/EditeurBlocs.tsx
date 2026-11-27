@@ -68,7 +68,7 @@ import {
   type PiedRegle,
 } from "@/lib/lettre-blocs";
 
-const COORDONNEES_APERCU = { adresse: "Antananarivo, Madagascar", email: "info@cancham.mg", telephone: "+261 34 50 280 53", confidentialite: "" };
+const COORDONNEES_APERCU = { adresse: "", email: "", telephone: "", confidentialite: "" };
 const VariablesProposees = createContext<readonly { cle: string; libelle: string }[]>(VARIABLES);
 const LogoDefaut = createContext("/marque/logo-couleur.png");
 const DansColonne = createContext(false);

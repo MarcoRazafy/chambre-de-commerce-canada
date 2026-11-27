@@ -1,11 +1,11 @@
 import "server-only";
 
 import { COORDONNEES } from "@/lib/coordonnees";
-import { RESEAUX, type Reseau } from "@/lib/lettre-blocs";
+import { PIED_CANCHAM, RESEAUX, type Reseau } from "@/lib/lettre-blocs";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { completerProfil, sansDefauts } from "@/lib/profil-chambre-defauts";
 
-export type Mentions = { confidentialite: string; copyright: string; adresse: string; email: string; telephone: string };
+export type Mentions = { texte: string; confidentialite: string; copyright: string; adresse: string; email: string; telephone: string };
 
 const valide = (e: string) => /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(e);
 
@@ -32,6 +32,7 @@ export function calculer(brut: Awaited<ReturnType<typeof getProfilChambreBrut>>)
     : { facebook: COORDONNEES.reseaux.facebook, linkedin: COORDONNEES.reseaux.linkedin };
 
   const mentions: Mentions = {
+    texte: neutre ? "" : PIED_CANCHAM,
     confidentialite: brut?.confidentialite.trim() || (neutre ? "" : COORDONNEES.legal.confidentialite),
     copyright: brut?.copyright.trim() || `© ${new Date().getFullYear()} ${p.nom}. Tous droits réservés.`,
     adresse: p.adresse,

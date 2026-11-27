@@ -145,9 +145,9 @@ export const PIED_DEFAUT = {
   copyright: `© ${new Date().getFullYear()} Chambre de Commerce et de Coopération Canada–Madagascar. Tous droits réservés.`,
 };
 
-const PIED = "La Chambre de Commerce et de Coopération Canada–Madagascar rassemble les entreprises des deux pays et facilite leurs échanges.";
+export const PIED_CANCHAM = "La Chambre de Commerce et de Coopération Canada–Madagascar rassemble les entreprises des deux pays et facilite leurs échanges.";
 
-export type PiedRegle = Partial<typeof PIED_DEFAUT>;
+export type PiedRegle = Partial<typeof PIED_DEFAUT & { texte: string }>;
 
 export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, string>> = {}, pied: PiedRegle = {}): Section {
   const id = nouvelId();
@@ -155,7 +155,7 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
     case "logo":
       return { id, type, fond: "", align: "center", image: "", largeur: 150 };
     case "bandeau":
-      return { id, type, fond: "degrade", align: "left", image: "", titre: "La lettre de la Chambre", sousTitre: "Canada – Madagascar", taille: 34, couleur: "blanc" };
+      return { id, type, fond: "degrade", align: "left", image: "", titre: "La lettre de la Chambre", sousTitre: "", taille: 34, couleur: "blanc" };
     case "titre":
       return { id, type, fond: "", align: "left", texte: "Un titre de rubrique", taille: 22, couleur: "encre" };
     case "texte":
@@ -171,7 +171,7 @@ export function sectionVide(type: TypeSection, reseaux: Partial<Record<Reseau, s
     case "reseaux":
       return { id, type, fond: "brume", align: "center", couleurIcone: "rouge", liens: { facebook: "", youtube: "", linkedin: "", instagram: "", tiktok: "", ...reseaux } };
     case "pied":
-      return { id, type, fond: "brume", align: "center", texte: PIED, ...PIED_DEFAUT, ...pied, couleur: "ardoise", taille: 12 };
+      return { id, type, fond: "brume", align: "center", texte: PIED_CANCHAM, ...PIED_DEFAUT, ...pied, couleur: "ardoise", taille: 12 };
     case "separateur":
       return { id, type, fond: "", align: "center", couleur: "ciel" };
     case "espace":
