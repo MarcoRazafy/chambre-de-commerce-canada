@@ -15,6 +15,9 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/fuseau-chambre", () => ({ getFuseau: async () => "America/Toronto" }));
+vi.mock("@/lib/delais-chambre", () => ({ getDelais: async () => ({ reglement: 30, blocage: 30 }) }));
+
 const { constaterRetardsCotisation } = await import("@/lib/retards-cotisation");
 
 beforeEach(() => { appels.length = 0; journal.length = 0; trouves = []; });

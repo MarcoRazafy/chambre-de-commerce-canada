@@ -21,6 +21,7 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/lib/fuseau-chambre", () => ({ getFuseau: async () => "America/Toronto" }));
 const { relancerFactureMembre } = await import("@/lib/relance-facture");
 
 beforeEach(() => {

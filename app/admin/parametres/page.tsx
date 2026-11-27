@@ -7,6 +7,7 @@ import { Field, SubmitButton } from "@/components/form-bits";
 import { Saillant } from "@/components/ui";
 import {
   enregistrerAlertes,
+  enregistrerDelais,
   enregistrerExpediteur,
   enregistrerCouleurs,
   enregistrerReseaux,
@@ -30,6 +31,8 @@ import { stripeConfigure } from "@/lib/stripe";
 import { ReglageCouleurs } from "@/components/admin/ReglageCouleurs";
 import { PasserelleStripe } from "@/components/admin/PasserelleStripe";
 import { PasserellePaypal } from "@/components/admin/PasserellePaypal";
+import { getDelais } from "@/lib/delais-chambre";
+import { DELAI_MAX } from "@/lib/delais";
 
 const ONGLETS = [
   { cle: "courriels", libelle: "Courriels" },
@@ -51,7 +54,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
   if (sp.onglet === "formules") redirect("/admin/entreprise#formules");
   const onglets = ONGLETS;
   const onglet = onglets.find((o) => o.cle === sp.onglet)?.cle ?? "courriels";
-  const [moi, brut, reglages] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut(), getParametres()]);
+  const [moi, brut, reglages, delais] = await Promise.all([getCurrentUser("admin"), getProfilChambreBrut(), getParametres(), getDelais()]);
   const gere = estAdministrateur(moi);
 
   const compte = onglet === "paiements"
@@ -194,6 +197,7 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
       ) : null}
 
       {onglet === "paiements" ? (
+        <div className="flex flex-col gap-5">
         <Panneau titre="Paiements en ligne" sousTitre="Les cotisations payées en ligne arrivent sur le compte de la Chambre" teinte="bleu">
           <div className="flex flex-col gap-4">
             {verrou}
@@ -203,6 +207,23 @@ export default async function Parametres({ searchParams }: { searchParams: Promi
             </div>
           </div>
         </Panneau>
+          <form action={enregistrerDelais}>
+            <Panneau titre="Délais de paiement" sousTitre="Quand une facture passe en retard, et quand l’accès d’un membre en retard se restreint" teinte="rouge">
+              <fieldset disabled={!gere} className="m-0 p-0 border-0 min-w-0 flex flex-col gap-4">
+                {verrou}
+                <div className="grid gap-4 sm:grid-cols-2 sm:max-w-[560px]">
+                  <Field label="Délai de règlement (jours)">
+                    <input name="delaiReglement" type="number" min={1} max={DELAI_MAX} required defaultValue={delais.reglement} className={INPUT} />
+                  </Field>
+                  <Field label="Restriction après (jours de retard)">
+                    <input name="delaiBlocage" type="number" min={1} max={DELAI_MAX} required defaultValue={delais.blocage} className={INPUT} />
+                  </Field>
+                </div>
+                {enregistrer}
+              </fieldset>
+            </Panneau>
+          </form>
+        </div>
       ) : null}
 
     </>

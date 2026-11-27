@@ -1,6 +1,6 @@
 import type { CSSProperties } from "react";
 import Image from "next/image";
-import { TITRE_GRAS } from "@/components/public/CadreVitrine";
+import { TITRE_GRAS } from "@/components/public/styles-titres";
 import Link from "next/link";
 import { ArrowRight, Clock, MapPin } from "lucide-react";
 import { plageHoraire } from "@/lib/agenda";

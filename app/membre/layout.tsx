@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { PAGES_TOUJOURS_OUVERTES } from "@/lib/membership";
+import { PAGES_TOUJOURS_OUVERTES, blocageDe } from "@/lib/membership";
 import { Coquille } from "@/components/membre/Coquille";
 import { StyleCouleursChambre } from "@/components/StyleCouleursChambre";
 import { BulleSupport } from "@/components/support/BulleSupport";
@@ -70,6 +70,7 @@ export default async function MembreLayout({
                 : "attente"
             }
             jours={joursDeRetard(membre)}
+            blocage={blocageDe(membre)}
           />
         ) : null
       }

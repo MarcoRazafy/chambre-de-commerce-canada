@@ -1,0 +1,3 @@
+ALTER TABLE "profil_chambre" ADD COLUMN "delaiReglement" INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE "profil_chambre" ADD COLUMN "delaiBlocage" INTEGER NOT NULL DEFAULT 30;
+ALTER TABLE "profil_chambre" ADD COLUMN "fuseau" TEXT NOT NULL DEFAULT '';

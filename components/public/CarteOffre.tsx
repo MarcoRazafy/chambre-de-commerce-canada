@@ -1,7 +1,7 @@
 import Image from "next/image";
 import { Tag } from "lucide-react";
 import { ModaleOffre } from "@/components/ModaleOffre";
-import { TITRE_GRAS } from "@/components/public/CadreVitrine";
+import { TITRE_GRAS } from "@/components/public/styles-titres";
 import { positionObjet } from "@/lib/cadrage";
 import type { Offer } from "@/lib/types";
 

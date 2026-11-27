@@ -31,7 +31,7 @@ import {
   libelleFormule,
   joursDeRetard,
   retardBloque,
-  RETARD_BLOCAGE_JOURS,
+  blocageDe,
   type Devise,
 } from "@/lib/membership";
 import { getInvoices, getMember } from "@/lib/queries";
@@ -42,6 +42,7 @@ import { FenetreMoyens } from "@/components/paiement/FenetreMoyens";
 import { getCurrentUser } from "@/lib/session";
 import { MODES, MODES_EN_LIGNE } from "@/lib/modes-reglement";
 import type { Invoice } from "@/lib/types";
+import { getDelais } from "@/lib/delais-chambre";
 
 export default async function CotisationsPage({
   searchParams,
@@ -61,11 +62,12 @@ export default async function CotisationsPage({
   const m = await getMember(user.memberId!);
   if (!m) notFound();
 
-  const [factures, modes, cotisation, bientot] = await Promise.all([
+  const [factures, modes, cotisation, bientot, delais] = await Promise.all([
     getInvoices(m.id),
     modesMembres(),
     cotisationDue(m),
     modesBientot(),
+    getDelais(),
   ]);
   const enAttente = ADHESION_PENDING.includes(m.statut);
   const renouvellement = renouvellementCotisation({
@@ -80,7 +82,7 @@ export default async function CotisationsPage({
   const annees = [...new Set(factures.map((f) => Number(f.date.slice(0, 4))))].sort((a, b) => b - a);
   const plusieursDevises = new Set(factures.map((f) => f.devise)).size > 1;
   const retenues = filtrerFacturesHorsStatut(factures, filtres);
-  const liste = filtrerFactures(factures, filtres);
+  const liste = filtrerFactures(factures, filtres, delais.reglement);
   const lien = (changes: Parameters<typeof parametresFactures>[1]) =>
     `/membre/cotisations${parametresFactures(filtres, changes)}`;
   const periode = filtres.annee ? `en ${filtres.annee}` : "au total";
@@ -88,7 +90,7 @@ export default async function CotisationsPage({
     (f) => !filtres.annee || f.date.startsWith(String(filtres.annee)),
   );
   const aRegler = delAnnee.filter((f) => f.statut === "envoyee");
-  const enRetardListe = delAnnee.filter((f) => factureEnRetard(f));
+  const enRetardListe = delAnnee.filter((f) => factureEnRetard(f, delais.reglement));
   const relancees = factures.filter((f) => f.statut === "envoyee" && f.relanceeLe);
   const enLigne = listeFrancaise(
     modes
@@ -170,7 +172,7 @@ export default async function CotisationsPage({
                   : bloque
                     ? `Accès restreint : ${jours} jours de retard`
                     : enRetard
-                      ? `Cotisation en retard : ${jours}/${RETARD_BLOCAGE_JOURS} jours`
+                      ? `Cotisation en retard : ${jours}/${blocageDe(m)} jours`
                       : "Votre adhésion est à jour"}
               </h2>
               <p className="text-[13.5px] text-muted m-0 mt-1">
@@ -257,7 +259,7 @@ export default async function CotisationsPage({
         onglets={[
           { cle: "toutes", libelle: "Toutes", href: lien({ statut: null }), compte: retenues.length },
           { cle: "envoyee", libelle: "À régler", href: lien({ statut: "envoyee" }), compte: retenues.filter((f) => f.statut === "envoyee").length },
-          { cle: "retard", libelle: "En retard", href: lien({ statut: "retard" }), compte: retenues.filter((f) => factureEnRetard(f)).length },
+          { cle: "retard", libelle: "En retard", href: lien({ statut: "retard" }), compte: retenues.filter((f) => factureEnRetard(f, delais.reglement)).length },
           { cle: "payee", libelle: "Payées", href: lien({ statut: "payee" }), compte: retenues.filter((f) => f.statut === "payee").length },
         ]}
       />
@@ -357,7 +359,7 @@ export default async function CotisationsPage({
                 </span>
                 <span className="order-5 md:w-[170px] shrink-0 inline-flex flex-wrap gap-1">
                   <StatusPill status={f.statut} />
-                  {factureEnRetard(f) ? <Pill tone="bad">En retard</Pill> : null}
+                  {factureEnRetard(f, delais.reglement) ? <Pill tone="bad">En retard</Pill> : null}
                 </span>
                 <span className={`order-6 md:w-[90px] shrink-0 md:text-right ${f.statut === "envoyee" ? "basis-full md:basis-auto pt-1 md:pt-0" : "hidden md:block"}`}>
                   {f.statut === "envoyee" ? (

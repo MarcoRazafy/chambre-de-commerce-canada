@@ -195,8 +195,8 @@ export function plageHoraire(
   return fin ? `${fmtHeure(debut)} – ${fmtHeure(fin)}` : fmtHeure(debut);
 }
 
-export const echeanceFacture = (dateISO: string) =>
-  ajouterJours(dateISO, DELAI_REGLEMENT_JOURS);
+export const echeanceFacture = (dateISO: string, delai = DELAI_REGLEMENT_JOURS) =>
+  ajouterJours(dateISO, delai);
 
 export function ajouterAns(iso: string, n: number): string {
   const [annee, mois, jour] = iso.split("-").map(Number);
@@ -232,8 +232,8 @@ export function renouvellementCotisation({
   return aJour && adhesion ? ajouterAns(adhesion, 1) : null;
 }
 
-export const dateRestriction = (retardDepuis: string) =>
-  ajouterJours(retardDepuis, RETARD_BLOCAGE_JOURS + 1);
+export const dateRestriction = (retardDepuis: string, blocage = RETARD_BLOCAGE_JOURS) =>
+  ajouterJours(retardDepuis, blocage + 1);
 
 const ORDRE_TYPES: Record<TypeElement, number> = {
   echeance: 0,

@@ -18,11 +18,13 @@ export function BandeauCotisation({
   modes,
   situation,
   jours,
+  blocage = RETARD_BLOCAGE_JOURS,
 }: {
   cotisation: CotisationDue;
   modes: ModeReglement[];
   situation: SituationCotisation;
   jours: number;
+  blocage?: number;
 }) {
   const { somme, formule } = cotisation;
   const payable = cotisation.enLigne && modes.length > 0 && somme !== null;
@@ -42,7 +44,7 @@ export function BandeauCotisation({
       : situation === "bloque"
         ? `Votre cotisation a ${jours} jours de retard. Réglez-la pour rouvrir toutes les sections de votre espace.`
         : situation === "retard"
-          ? `Régularisez avant ${RETARD_BLOCAGE_JOURS} jours de retard : ${jours} sur ${RETARD_BLOCAGE_JOURS} sont écoulés.`
+          ? `Régularisez avant ${blocage} jours de retard : ${jours} sur ${blocage} sont écoulés.`
           : `Votre adhésion est validée. Réglez votre cotisation annuelle${formule ? ` (${formule})` : ""} pour ouvrir l’annuaire, les événements, la messagerie et le reste de votre espace.`;
 
   return (

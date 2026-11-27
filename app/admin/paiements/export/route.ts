@@ -2,6 +2,7 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { reponseCsv, versCsv } from "@/lib/csv";
 import { filtrerFactures, lireFiltresFactures } from "@/lib/filtres-factures";
 import { getInvoices } from "@/lib/queries";
+import { getDelais } from "@/lib/delais-chambre";
 
 export async function GET(requete: Request) {
   await exigerEquipe();
@@ -9,6 +10,7 @@ export async function GET(requete: Request) {
   const factures = filtrerFactures(
     await getInvoices(),
     lireFiltresFactures(params),
+    (await getDelais()).reglement,
   );
 
   const csv = versCsv(

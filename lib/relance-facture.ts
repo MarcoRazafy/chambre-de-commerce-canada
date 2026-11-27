@@ -6,9 +6,9 @@ import { prisma } from "@/lib/db";
 import { fmtMontant } from "@/lib/membership";
 import { notifierMembre } from "@/lib/push";
 import { courrielRelanceFacture } from "@/lib/rappels-membres";
+import { jourDans } from "@/lib/fuseau";
+import { getFuseau } from "@/lib/fuseau-chambre";
 import { joursDepuis } from "@/lib/retards";
-
-const memeJour = (a: Date, b: Date) => a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
 
 export async function relancerFactureMembre(
   id: string,
@@ -23,7 +23,8 @@ export async function relancerFactureMembre(
   if (!f.memberId || !f.member) return { ok: false, erreur: `La facture ${f.numero} n’est rattachée à aucun membre.` };
   const memberId = f.memberId;
   const maintenant = new Date();
-  if (f.relanceeLe && memeJour(f.relanceeLe, maintenant)) {
+  const fuseau = await getFuseau();
+  if (f.relanceeLe && jourDans(f.relanceeLe, fuseau) === jourDans(maintenant, fuseau)) {
     return { ok: false, erreur: `La facture ${f.numero} a déjà été relancée aujourd’hui : le membre l’a reçue.` };
   }
 

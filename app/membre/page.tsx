@@ -23,7 +23,7 @@ import {
   isOverdueWarning,
   joursDeRetard,
   retardBloque,
-  RETARD_BLOCAGE_JOURS,
+  blocageDe,
 } from "@/lib/membership";
 import {
   getContacts,
@@ -106,6 +106,7 @@ export default async function VueDEnsemble() {
         bloque={bloque}
         enRetard={enRetard}
         jours={joursDeRetard(me)}
+        blocage={blocageDe(me)}
       />
 
       {ouverte("offres") ? (
@@ -312,11 +313,13 @@ function BandeauAdhesion({
   bloque,
   enRetard,
   jours,
+  blocage,
 }: {
   enAttente: boolean;
   bloque: boolean;
   enRetard: boolean;
   jours: number;
+  blocage: number;
 }) {
   if (!enAttente && !bloque && !enRetard) return null;
 
@@ -340,7 +343,7 @@ function BandeauAdhesion({
         ? {
             icone: <Clock size={22} />,
             titre: "Cotisation en retard",
-            texte: `Régularisez avant ${RETARD_BLOCAGE_JOURS} jours de retard (${jours}/${RETARD_BLOCAGE_JOURS} écoulés).`,
+            texte: `Régularisez avant ${blocage} jours de retard (${jours}/${blocage} écoulés).`,
             pastille: "À régulariser",
           }
         : {

@@ -1,16 +1,15 @@
-import type { Devise } from "@/lib/membership";
+import { DELAI_REGLEMENT_JOURS, type Devise } from "@/lib/membership";
 import type { Invoice, InvoiceStatus } from "@/lib/types";
 import { plat } from "@/lib/texte";
 
-export const DELAI_REGLEMENT_JOURS = 30;
-export function enRetard(f: Pick<Invoice, "statut" | "date">, aujourdhui = new Date()): boolean {
+export function enRetard(f: Pick<Invoice, "statut" | "date">, delai = DELAI_REGLEMENT_JOURS, aujourdhui = new Date()): boolean {
   if (f.statut !== "envoyee") return false;
-  const limite = new Date(aujourdhui.getTime() - DELAI_REGLEMENT_JOURS * 86_400_000).toISOString().slice(0, 10);
+  const limite = new Date(aujourdhui.getTime() - delai * 86_400_000).toISOString().slice(0, 10);
   return f.date.slice(0, 10) < limite;
 }
 
-const retient = (x: Invoice, statut: FiltresFactures["statut"]) =>
-  statut === "toutes" || (statut === "retard" ? enRetard(x) : x.statut === statut);
+const retient = (x: Invoice, statut: FiltresFactures["statut"], delai: number) =>
+  statut === "toutes" || (statut === "retard" ? enRetard(x, delai) : x.statut === statut);
 
 export interface FiltresFactures {
   statut: InvoiceStatus | "toutes" | "retard";
@@ -54,8 +53,9 @@ export function filtrerFacturesHorsStatut(
 export function filtrerFactures(
   factures: Invoice[],
   f: FiltresFactures,
+  delai = DELAI_REGLEMENT_JOURS,
 ): Invoice[] {
-  return filtrerFacturesHorsStatut(factures, f).filter((x) => retient(x, f.statut));
+  return filtrerFacturesHorsStatut(factures, f).filter((x) => retient(x, f.statut, delai));
 }
 
 export function parametresFactures(

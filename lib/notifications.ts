@@ -1,5 +1,6 @@
 import "server-only";
 
+import { getDelais } from "@/lib/delais-chambre";
 import { prisma } from "@/lib/db";
 import { nomFacture } from "@/lib/factures";
 import { getUnreadTotal } from "@/lib/queries";
@@ -8,10 +9,8 @@ import { ajouterJours, echeanceFacture, fmtHeure } from "@/lib/agenda";
 import { aujourdhuiISO, fmtDate, jourBase } from "@/lib/format";
 import {
   ADHESION_PENDING,
-  DELAI_REGLEMENT_JOURS,
   joursDeRetard,
   retardBloque,
-  RETARD_BLOCAGE_JOURS,
 } from "@/lib/membership";
 import type { Space } from "@/lib/types";
 
@@ -277,6 +276,7 @@ async function notificationsMembre(
   userId: string,
 ): Promise<Notification[]> {
   if (!memberId) return [];
+  const delais = await getDelais();
 
   const aujourdhui = aujourdhuiISO();
 
@@ -317,7 +317,7 @@ async function notificationsMembre(
         memberId,
         statut: "envoyee",
         date: {
-          lte: jourBase(ajouterJours(aujourdhui, 7 - DELAI_REGLEMENT_JOURS)),
+          lte: jourBase(ajouterJours(aujourdhui, 7 - delais.reglement)),
         },
       },
       orderBy: { date: "asc" },
@@ -331,7 +331,7 @@ async function notificationsMembre(
   liste.push(...rappels, ...rendezvous);
 
   for (const f of factures) {
-    const echeance = echeanceFacture(toISODate(f.date));
+    const echeance = echeanceFacture(toISODate(f.date), delais.reglement);
     const depassee = echeance < aujourdhui;
     liste.push({
       id: `echeance-${f.id}-${echeance}`,
@@ -349,6 +349,7 @@ async function notificationsMembre(
 
   if (membre) {
     const vue = {
+      blocageJours: delais.blocage,
       statut: membre.statut,
       retardDepuis: membre.retardDepuis ? toISODate(membre.retardDepuis) : null,
     } as Parameters<typeof joursDeRetard>[0];
@@ -367,7 +368,7 @@ async function notificationsMembre(
         id: "retard",
         titre: retardBloque(vue)
           ? `Accès restreint — ${joursDeRetard(vue)} jours de retard`
-          : `Cotisation en retard — ${joursDeRetard(vue)}/${RETARD_BLOCAGE_JOURS} jours écoulés`,
+          : `Cotisation en retard — ${joursDeRetard(vue)}/${delais.blocage} jours écoulés`,
         temps: "À régulariser",
         href: "/membre/cotisations",
         ton: "bad",

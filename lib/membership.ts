@@ -57,9 +57,11 @@ export function joursDeRetard(m: Member | null | undefined): number {
   return Math.max(0, Math.floor(diff / 86_400_000));
 }
 
+export const blocageDe = (m: Member | null | undefined) => m?.blocageJours ?? RETARD_BLOCAGE_JOURS;
+
 export function retardBloque(m: Member | null | undefined): boolean {
   return (
-    !!m && m.statut === "en_retard" && joursDeRetard(m) > RETARD_BLOCAGE_JOURS
+    !!m && m.statut === "en_retard" && joursDeRetard(m) > blocageDe(m)
   );
 }
 

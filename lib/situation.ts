@@ -1,6 +1,6 @@
 import { fmtDate } from "@/lib/format";
 import {
-  RETARD_BLOCAGE_JOURS,
+  blocageDe,
   fmtCotisation,
   joursDeRetard,
   libelleFormule,
@@ -42,7 +42,7 @@ export function situation(m: Member): Situation {
       return {
         detail: bloque
           ? `${jours} jours de retard · accès bloqué`
-          : `${jours} jour${jours > 1 ? "s" : ""} de retard · blocage dans ${RETARD_BLOCAGE_JOURS - jours + 1} j`,
+          : `${jours} jour${jours > 1 ? "s" : ""} de retard · blocage dans ${blocageDe(m) - jours + 1} j`,
         action: "Relancer",
         urgent: bloque,
       };

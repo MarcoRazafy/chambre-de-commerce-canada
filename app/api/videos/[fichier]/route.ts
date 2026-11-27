@@ -4,6 +4,7 @@ import { isAccessLocked } from "@/lib/membership";
 import { utilisateurConnecte } from "@/lib/session";
 import { typeVideo } from "@/lib/video-presentation";
 import { cheminVideo } from "@/lib/videos";
+import { getDelais } from "@/lib/delais-chambre";
 
 const ENTETES = {
   "Cache-Control": "private, max-age=3600",
@@ -46,6 +47,7 @@ export async function GET(
     const restreint =
       !moi ||
       isAccessLocked({
+        blocageJours: (await getDelais()).blocage,
         statut: moi.statut,
         retardDepuis: moi.retardDepuis
           ? moi.retardDepuis.toISOString().slice(0, 10)

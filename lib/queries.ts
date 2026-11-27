@@ -1,3 +1,6 @@
+import { jourDans } from "@/lib/fuseau";
+import { getFuseau } from "@/lib/fuseau-chambre";
+import { getDelais } from "@/lib/delais-chambre";
 import { getProfilChambre } from "@/lib/profil-chambre";
 import type { ProfilChambre } from "@/lib/profil-chambre-defauts";
 import type { EmplacementOffre } from "@/lib/offres";
@@ -5,9 +8,7 @@ import "server-only";
 
 import {
   ADHESION_PENDING,
-  DELAI_REGLEMENT_JOURS,
   fmtMontant,
-  RETARD_BLOCAGE_JOURS,
   type Formule,
   HORS_ANNUAIRE,
 } from "@/lib/membership";
@@ -103,8 +104,9 @@ type MembreRow = {
   }[];
 };
 
-function versMembre(m: MembreRow): Member {
+function versMembre(m: MembreRow, blocageJours?: number): Member {
   return {
+    blocageJours,
     id: m.id,
     type: m.type,
     nom: m.nom,
@@ -145,7 +147,8 @@ export async function getMembers(): Promise<Member[]> {
     include: membreInclude,
     orderBy: { nom: "asc" },
   });
-  return rows.map(versMembre);
+  const { blocage } = await getDelais();
+  return rows.map((r) => versMembre(r, blocage));
 }
 
 export async function getMembresAnnuaire(): Promise<Member[]> {
@@ -154,7 +157,8 @@ export async function getMembresAnnuaire(): Promise<Member[]> {
     include: membreInclude,
     orderBy: { nom: "asc" },
   });
-  return rows.map(versMembre);
+  const { blocage } = await getDelais();
+  return rows.map((r) => versMembre(r, blocage));
 }
 
 export async function getMember(id: string): Promise<Member | null> {
@@ -162,7 +166,7 @@ export async function getMember(id: string): Promise<Member | null> {
     where: { id },
     include: membreInclude,
   });
-  return row ? versMembre(row) : null;
+  return row ? versMembre(row, (await getDelais()).blocage) : null;
 }
 
 export async function getEvents(): Promise<CanchamEvent[]> {
@@ -1005,6 +1009,7 @@ export async function getInvoices(memberId?: string): Promise<Invoice[]> {
     include: { member: { select: { nom: true } } },
     orderBy: { date: "desc" },
   });
+  const fuseau = await getFuseau();
   return rows.map((f) => ({
     id: f.id,
     numero: f.numero,
@@ -1015,7 +1020,7 @@ export async function getInvoices(memberId?: string): Promise<Invoice[]> {
     statut: f.statut,
     membreId: f.memberId,
     membre: nomFacture(f),
-    relanceeLe: f.relanceeLe ? toISODate(f.relanceeLe) : null,
+    relanceeLe: f.relanceeLe ? jourDans(f.relanceeLe, fuseau) : null,
   }));
 }
 
@@ -1051,6 +1056,7 @@ export async function getAgenda(
   du: string,
   au: string,
 ): Promise<ElementAgenda[]> {
+  const delais = await getDelais();
   const aujourdhui = aujourdhuiISO();
   const periode = { gte: jourBase(du), lte: jourBase(au) };
 
@@ -1077,8 +1083,8 @@ export async function getAgenda(
               memberId,
               statut: "envoyee",
               date: {
-                gte: jourBase(ajouterJours(du, -DELAI_REGLEMENT_JOURS)),
-                lte: jourBase(ajouterJours(au, -DELAI_REGLEMENT_JOURS)),
+                gte: jourBase(ajouterJours(du, -delais.reglement)),
+                lte: jourBase(ajouterJours(au, -delais.reglement)),
               },
             },
             select: {
@@ -1143,7 +1149,7 @@ export async function getAgenda(
   }
 
   for (const f of factures) {
-    const jour = echeanceFacture(toISODate(f.date));
+    const jour = echeanceFacture(toISODate(f.date), delais.reglement);
     elements.push({
       id: `facture-${f.id}`,
       type: "echeance",
@@ -1182,7 +1188,7 @@ export async function getAgenda(
   }
 
   if (membre?.statut === "en_retard" && membre.retardDepuis) {
-    const jour = dateRestriction(toISODate(membre.retardDepuis));
+    const jour = dateRestriction(toISODate(membre.retardDepuis), delais.blocage);
     if (jour >= du && jour <= au) {
       elements.push({
         id: "restriction",
@@ -1191,7 +1197,7 @@ export async function getAgenda(
         jour,
         debut: null,
         fin: null,
-        detail: `Au-delà de ${RETARD_BLOCAGE_JOURS} jours de retard`,
+        detail: `Au-delà de ${delais.blocage} jours de retard`,
         href: "/membre/cotisations",
         urgent: true,
       });
@@ -1236,6 +1242,7 @@ export async function getAgendaEquipe(
   du: string,
   au: string,
 ): Promise<ElementAgenda[]> {
+  const delais = await getDelais();
   const aujourdhui = aujourdhuiISO();
   const periode = { gte: jourBase(du), lte: jourBase(au) };
   const avant = (jours: number) => ({
@@ -1260,7 +1267,7 @@ export async function getAgendaEquipe(
         },
       }),
       prisma.invoice.findMany({
-        where: { statut: "envoyee", date: avant(DELAI_REGLEMENT_JOURS) },
+        where: { statut: "envoyee", date: avant(delais.reglement) },
         select: {
           id: true,
           numero: true,
@@ -1275,7 +1282,7 @@ export async function getAgendaEquipe(
       prisma.member.findMany({
         where: {
           statut: "en_retard",
-          retardDepuis: avant(RETARD_BLOCAGE_JOURS + 1),
+          retardDepuis: avant(delais.blocage + 1),
         },
         select: { id: true, nom: true, retardDepuis: true },
       }),
@@ -1312,7 +1319,7 @@ export async function getAgendaEquipe(
   }
 
   for (const f of factures) {
-    const jour = echeanceFacture(toISODate(f.date));
+    const jour = echeanceFacture(toISODate(f.date), delais.reglement);
     elements.push({
       id: `facture-${f.id}`,
       type: "echeance",
@@ -1344,10 +1351,10 @@ export async function getAgendaEquipe(
       id: `restriction-${m.id}`,
       type: "echeance",
       titre: `Accès restreint : ${m.nom}`,
-      jour: dateRestriction(toISODate(m.retardDepuis!)),
+      jour: dateRestriction(toISODate(m.retardDepuis!), delais.blocage),
       debut: null,
       fin: null,
-      detail: `Cotisation non réglée après ${RETARD_BLOCAGE_JOURS} jours de retard`,
+      detail: `Cotisation non réglée après ${delais.blocage} jours de retard`,
       href: `/admin/membres/${m.id}`,
       urgent: true,
     });

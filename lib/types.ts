@@ -37,6 +37,7 @@ export interface Produit {
 }
 
 export interface Member {
+  blocageJours?: number;
   id: string;
   type: MemberType;
   nom: string;

@@ -2,7 +2,7 @@ import type { CSSProperties } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { Newspaper } from "lucide-react";
-import { TITRE_GRAS } from "@/components/public/CadreVitrine";
+import { TITRE_GRAS } from "@/components/public/styles-titres";
 import { fmtDate } from "@/lib/format";
 import { dureeLecture } from "@/lib/texte";
 import type { ActualitePublique } from "@/lib/queries";

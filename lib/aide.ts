@@ -1,6 +1,5 @@
 import {
   PHOTOS_PAR_PRODUIT,
-  RETARD_BLOCAGE_JOURS,
   fmtCotisation,
   libelleFormule,
   type Formule,
@@ -47,7 +46,7 @@ export const THEMES: Theme[] = [
       {
         id: "acces-restreint",
         question: "Pourquoi mon accès est-il restreint ?",
-        reponse: `L’accès est restreint dans deux cas. Soit votre adhésion n’est pas encore active (candidature à valider ou cotisation à régler) : l’espace s’ouvre dès que le paiement est enregistré. Soit votre cotisation a plus de ${RETARD_BLOCAGE_JOURS} jours de retard.\n\nTant que le retard ne dépasse pas ${RETARD_BLOCAGE_JOURS} jours, tout reste accessible et un bandeau vous le signale. Au-delà, seules « Mon entreprise », « Cotisations & factures », ce centre d’aide et la page de contact restent ouvertes, le temps de régulariser.`,
+        reponse: `L’accès est restreint dans deux cas. Soit votre adhésion n’est pas encore active (candidature à valider ou cotisation à régler) : l’espace s’ouvre dès que le paiement est enregistré. Soit votre cotisation dépasse le délai de retard fixé par votre Chambre.\n\nTant que ce délai n’est pas dépassé, tout reste accessible et un bandeau vous le signale. Au-delà, seules « Mon entreprise », « Cotisations & factures », ce centre d’aide et la page de contact restent ouvertes, le temps de régulariser.`,
         liens: [
           { href: "/membre/cotisations", libelle: "Mes cotisations" },
           { href: "/membre/contact", libelle: "Contacter l’équipe" },

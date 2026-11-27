@@ -53,7 +53,7 @@ import { fmtDate } from "@/lib/format";
 import { affichageSite } from "@/lib/liens";
 import { positionObjet } from "@/lib/cadrage";
 import {
-  RETARD_BLOCAGE_JOURS,
+  blocageDe,
   cotisationAnnuelle,
   fmtCotisation,
   fmtMontant,
@@ -450,12 +450,12 @@ export default async function AdminMembreDetail({
             {m.statut === "en_retard" ? (
               <div className="mt-3">
                 <Jauge
-                  valeur={Math.min(jours, RETARD_BLOCAGE_JOURS)}
-                  max={RETARD_BLOCAGE_JOURS}
+                  valeur={Math.min(jours, blocageDe(m))}
+                  max={blocageDe(m)}
                   teinte="rouge"
                 />
                 <p className="m-0 mt-1.5 text-[11.5px] text-faint">
-                  L’accès se restreint seul après {RETARD_BLOCAGE_JOURS} jours
+                  L’accès se restreint seul après {blocageDe(m)} jours
                   de retard.
                 </p>
               </div>

@@ -2,7 +2,6 @@
 
 import { useEffect, useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
 
 const EN_APPLICATION = "(display-mode: standalone)";
 
@@ -64,25 +63,4 @@ export function LienSite({
       {children}
     </Link>
   );
-}
-
-export function RenvoiApplication() {
-  const dansApplication = useDansApplication();
-  const chemin = usePathname();
-  const router = useRouter();
-
-  useEffect(() => {
-    if (!dansApplication) return;
-    const evenement = chemin.match(/^\/evenements\/([^/]+)/);
-    const actualite = chemin.match(/^\/actualites\/([^/]+)/);
-    router.replace(
-      evenement
-        ? `/membre/evenements/${evenement[1]}`
-        : actualite
-          ? `/membre/actualites/${actualite[1]}`
-          : "/auth",
-    );
-  }, [dansApplication, chemin, router]);
-
-  return null;
 }

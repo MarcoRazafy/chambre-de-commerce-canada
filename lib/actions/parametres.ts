@@ -20,6 +20,7 @@ import { adresseServeur, courrielsActifs, envoyerCourriel, gabarit, oublierExped
 import { avecPreuve, domaineDeLaPlateforme, domaineDUneAutreChambre, oublierPreuve } from "@/lib/domaine-proprietaire";
 import { BLANC, contraste, CONTRASTE_MIN, couleur, nuanceLisible } from "@/lib/couleurs";
 import { prisma } from "@/lib/db";
+import { DELAI_MAX } from "@/lib/delais";
 import { RESEAUX, urlSure } from "@/lib/lettre-blocs";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { chambreCourante, oublierAdresses } from "@/lib/chambre-courante";
@@ -252,4 +253,22 @@ export async function retirerPaypal() {
   await prisma.coordonneesPaiement.updateMany({ where: { chambreId: await chambreCourante() }, data: { paypal: "" } });
   revalidatePath("/", "layout");
   redirectWithFlash(ONGLET_PAIEMENTS, "PayPal retiré");
+}
+
+export async function enregistrerDelais(formData: FormData) {
+  const retour = `${PAGE}?onglet=paiements`;
+  await exigerAdministrateur(retour);
+  const lire = (k: string) => Number(texte(formData, k));
+  const delaiReglement = lire("delaiReglement");
+  const delaiBlocage = lire("delaiBlocage");
+  for (const [n, nom] of [[delaiReglement, "de règlement"], [delaiBlocage, "avant restriction"]] as const) {
+    if (!Number.isInteger(n) || n < 1 || n > DELAI_MAX) redirectWithErreur(retour, `Le délai ${nom} doit être un nombre de jours entre 1 et ${DELAI_MAX}.`);
+  }
+  await prisma.profilChambre.upsert({
+    where: { chambreId: await chambreCourante() },
+    create: { delaiReglement, delaiBlocage },
+    update: { delaiReglement, delaiBlocage },
+  });
+  revalidatePath("/", "layout");
+  redirectWithFlash(retour, `Délais enregistrés : ${delaiReglement} jours pour régler, restriction après ${delaiBlocage} jours de retard`);
 }

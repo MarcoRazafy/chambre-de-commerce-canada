@@ -28,6 +28,9 @@ import { getInvoices, getMemberStats, getMembers } from "@/lib/queries";
 import { getAnneesFactures, getFinancesAnnee } from "@/lib/queries-admin";
 import type { Invoice } from "@/lib/types";
 import { usageAriary } from "@/lib/usage-ariary";
+import { getDelais } from "@/lib/delais-chambre";
+import { jourDans } from "@/lib/fuseau";
+import { getFuseau } from "@/lib/fuseau-chambre";
 
 export default async function AdminPaiements({
   searchParams,
@@ -40,18 +43,20 @@ export default async function AdminPaiements({
   }>;
 }) {
   const filtres = lireFiltresFactures(await searchParams);
-  const [factures, annees, finances, stats, membres, ariary] = await Promise.all([
+  const [factures, annees, finances, stats, membres, ariary, delais] = await Promise.all([
     getInvoices(),
     getAnneesFactures(),
     getFinancesAnnee(filtres.annee),
     getMemberStats(),
     getMembers(),
     usageAriary(),
+    getDelais(),
   ]);
+  const aujourdhui = jourDans(new Date(), await getFuseau());
   const plusieursDevises = factures.some((f) => f.devise === "MGA");
 
   const retenues = filtrerFacturesHorsStatut(factures, filtres);
-  const liste = filtrerFactures(factures, filtres);
+  const liste = filtrerFactures(factures, filtres, delais.reglement);
   const lien = (changes: Parameters<typeof parametresFactures>[1]) =>
     `/admin/paiements${parametresFactures(filtres, changes)}`;
   const periode = filtres.annee ? `en ${filtres.annee}` : "au total";
@@ -151,7 +156,7 @@ export default async function AdminPaiements({
             cle: "retard",
             libelle: "En retard",
             href: lien({ statut: "retard" }),
-            compte: retenues.filter((f) => enRetard(f)).length,
+            compte: retenues.filter((f) => enRetard(f, delais.reglement)).length,
           },
           {
             cle: "payee",
@@ -286,12 +291,12 @@ export default async function AdminPaiements({
                       {fmtMontant(f.montant, f.devise)}
                     </td>
                     <td className="px-5 py-3.5">
-                      <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f) ? <Pill tone="bad">En retard</Pill> : null}</span>
+                      <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f, delais.reglement) ? <Pill tone="bad">En retard</Pill> : null}</span>
                       <Relancee facture={f} />
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <span className="inline-flex items-center justify-end gap-4">
-                        {relancable(f) ? <BoutonRelancer id={f.id} retour={retour} faite={relanceeAujourdhui(f)} /> : null}
+                        {relancable(f) ? <BoutonRelancer id={f.id} retour={retour} faite={f.relanceeLe === aujourdhui} /> : null}
                         <Link
                           href={`/admin/paiements/${f.id}`}
                           className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
@@ -339,13 +344,13 @@ export default async function AdminPaiements({
                         {f.numero} ·{" "}
                         {fmtDate(f.date, { day: "numeric", month: "short" })}
                       </span>
-                      <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f) ? <Pill tone="bad">En retard</Pill> : null}</span>
+                      <span className="inline-flex flex-wrap gap-1"><StatusPill status={f.statut} />{enRetard(f, delais.reglement) ? <Pill tone="bad">En retard</Pill> : null}</span>
                     </div>
                   </Link>
                   {relancable(f) ? (
                     <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-3">
                       <Relancee facture={f} />
-                      <BoutonRelancer id={f.id} retour={retour} faite={relanceeAujourdhui(f)} />
+                      <BoutonRelancer id={f.id} retour={retour} faite={f.relanceeLe === aujourdhui} />
                     </div>
                   ) : null}
                 </Card>
@@ -375,7 +380,6 @@ function Relancee({ facture }: { facture: Invoice }) {
   ) : <span />;
 }
 
-const relanceeAujourdhui = (f: Invoice) => f.relanceeLe === new Date().toISOString().slice(0, 10);
 
 function BoutonRelancer({ id, retour, faite }: { id: string; retour: string; faite: boolean }) {
   return (

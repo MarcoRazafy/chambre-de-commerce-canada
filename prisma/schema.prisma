@@ -1413,6 +1413,9 @@ model ProfilChambre {
   logoFacture        String?
   mentionFacture     String  @default("")
   prefixeNumeros     String  @default("")
+  delaiReglement     Int     @default(30)
+  delaiBlocage       Int     @default(30)
+  fuseau             String  @default("")
 
   expediteurNom     String @default("")
   expediteurDomaine String @default("")

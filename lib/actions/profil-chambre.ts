@@ -5,6 +5,7 @@ import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
 import { nettoyerPrefixe } from "@/lib/prefixe-numeros-base";
+import { fuseauConnu } from "@/lib/fuseau";
 import { oublierExpediteur } from "@/lib/courriel";
 import { adresseSurUneLigne, couleurValide } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
@@ -48,6 +49,7 @@ async function sauverProfil(formData: FormData) {
 
   const data = {
     ...(formData.has("prefixeNumeros") ? { prefixeNumeros: prefixeSaisi } : {}),
+    ...(fuseauConnu(texte(formData, "fuseau", 60)) ? { fuseau: texte(formData, "fuseau", 60) } : {}),
     nom: texte(formData, "nom", 200),
     description: texte(formData, "description", 3000),
     adresseRue: texte(formData, "adresseRue", 300),
