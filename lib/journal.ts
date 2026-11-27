@@ -119,9 +119,14 @@ export const ACTIONS_JOURNAL: Record<string, ActionJournal> = {
     ton: "ok",
   },
   relance_envoyee: {
-    libelle: "Relance de cotisation",
+    libelle: "Relance envoyée",
     famille: "finance",
     ton: "info",
+  },
+  cotisation_en_retard: {
+    libelle: "Cotisation en retard",
+    famille: "finance",
+    ton: "bad",
   },
   acces_ouvert: {
     libelle: "Accès à une ressource ouvert",

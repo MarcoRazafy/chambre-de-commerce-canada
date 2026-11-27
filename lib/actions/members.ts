@@ -14,7 +14,9 @@ import {
   factureCotisationOuverte,
   OBJET_ADHESION,
   OBJET_RENOUVELLEMENT,
+  ouvrirFactureCotisation,
 } from "@/lib/cotisation";
+import { relancerFactureMembre } from "@/lib/relance-facture";
 import { jourBase, jourSaisi } from "@/lib/format";
 import { creerJeton } from "@/lib/jetons";
 import {
@@ -519,6 +521,14 @@ export async function sendReminder(formData: FormData) {
     select: { nom: true, formule: SELECT_FORMULE, retardDepuis: true },
   });
   if (!m) redirectWithErreur("/admin/membres", "Membre introuvable.");
+  const acteur = await acteurEquipe();
+  const facture = (await factureCotisationOuverte(id)) ?? (await ouvrirFactureCotisation(id, { acteur, motif: "émise pour la relance" }));
+  if (facture) {
+    const resultat = await relancerFactureMembre(facture.id, acteur);
+    if (!resultat.ok) redirectWithErreur(fiche, resultat.erreur);
+    revalideTout();
+    redirectWithFlash(fiche, resultat.message);
+  }
   const contact = await contactDe(id);
   if (!contact) {
     redirectWithErreur(

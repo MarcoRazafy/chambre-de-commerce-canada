@@ -74,7 +74,7 @@ export async function cotisationDue(m: {
   };
 }
 
-export async function ouvrirFactureCotisation(memberId: string) {
+export async function ouvrirFactureCotisation(memberId: string, par?: { acteur: string; motif: string }) {
   const m = await prisma.member.findUnique({
     where: { id: memberId },
     select: { nom: true, statut: true, formule: SELECT_FORMULE },
@@ -111,8 +111,8 @@ export async function ouvrirFactureCotisation(memberId: string) {
         action: "facture_emise",
         entite: "Invoice",
         entiteId: numero,
-        acteur: m.nom,
-        detail: `${fmtMontant(tarif.montant, tarif.devise)} à régler par ${m.nom} · ${objet} · émise au moment du règlement en ligne.`,
+        acteur: par?.acteur ?? m.nom,
+        detail: `${fmtMontant(tarif.montant, tarif.devise)} à régler par ${m.nom} · ${objet} · ${par?.motif ?? "émise au moment du règlement en ligne"}.`,
       },
     }),
   ]);

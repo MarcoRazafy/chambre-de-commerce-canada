@@ -6,6 +6,7 @@ import { assurerFactureDuMois } from "@/lib/factures-plateforme";
 import { envoyerLettresDues } from "@/lib/newsletter";
 import { envoyerRappelsDus } from "@/lib/rappels-envoi";
 import { envoyerRappelsMembresDus } from "@/lib/rappels-membres";
+import { constaterRetardsCotisation } from "@/lib/retards-cotisation";
 
 function autorise(recu: string | null): boolean {
   if (!recu) return false;
@@ -28,6 +29,7 @@ export async function POST(req: Request) {
         const r = await envoyerRappelsDus();
         rappels.envoyes += r.envoyes;
         rappels.echecs += r.echecs;
+        await constaterRetardsCotisation();
         await envoyerRappelsMembresDus();
         if (!demarrage) {
           await assurerFactureDuMois();
