@@ -25,6 +25,7 @@ import { getAccesMembres } from "@/lib/acces-membres";
 import { getMembers } from "@/lib/queries";
 import { getFormules } from "@/lib/formules";
 import { situation } from "@/lib/situation";
+import { usageAriary } from "@/lib/usage-ariary";
 
 export default async function AdminMembres({
   searchParams,
@@ -39,7 +40,7 @@ export default async function AdminMembres({
   const filtres = lireFiltres(await searchParams);
   const { statut, recherche, formule } = filtres;
 
-  const [membres, formules, liens] = await Promise.all([getMembers(), getFormules(), chambreCourante().then(liensMembres)]);
+  const [membres, formules, liens, ariary] = await Promise.all([getMembers(), getFormules(), chambreCourante().then(liensMembres), usageAriary()]);
   const retenus = filtrerHorsStatut(membres, filtres);
   const liste = retenus.filter((m) => dansOnglet(m.statut, statut));
   const acces = await getAccesMembres(liste.map((m) => m.id));
@@ -201,7 +202,7 @@ export default async function AdminMembres({
                       </td>
                       <td className="px-5 py-3.5 text-right">
                         {m.statut === "en_attente" ? (
-                          <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} formules={formules} retour={retourListe} compact /></div>
+                          <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} formules={formules} retour={retourListe} compact mobileMoney={ariary} /></div>
                         ) : (
                           <Link
                             href={`/admin/membres/${m.id}`}
@@ -266,7 +267,7 @@ export default async function AdminMembres({
                     </div>
                     {m.statut === "en_attente" ? (
                       <div className="mt-3 pt-3 border-t border-line flex justify-end">
-                        <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} formules={formules} retour={retourListe} compact /></div>
+                        <div className="inline-block text-left"><RegisterPaymentButton memberId={m.id} premier={!m.paiementNote} nom={m.nom} formule={m.formule} formules={formules} retour={retourListe} compact mobileMoney={ariary} /></div>
                       </div>
                     ) : null}
                   </Card>

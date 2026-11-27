@@ -31,7 +31,7 @@ describe("codes d'accueil", () => {
   });
 
   it("reconnaît un code d'inscription entier", () => {
-    for (const c of ["CC-VOPA-K7Q2PX", "CC-E2-4718", "CC-PUB1-CRWU3H"]) {
+    for (const c of ["CC-VOPA-K7Q2PX", "CC-E2-4718", "CC-PUB1-CRWU3H", "UMIH-VOPA-K7Q2PX"]) {
       expect(estCodeInscription(c)).toBe(true);
     }
   });
@@ -47,7 +47,8 @@ describe("codes d'accueil", () => {
       "CC-VOPA-K7Q2PX-2",
       "cc-vopa-k7q2px",
       "CC-VOPA-K7Q2PX%",
-      "XX-VOPA-K7Q2PX",
+      "X-VOPA-K7Q2PX",
+      "TROPLONG-VOPA-K7Q2PX",
     ]) {
       expect(estCodeInscription(c)).toBe(false);
     }

@@ -27,6 +27,7 @@ import { fmtMontant } from "@/lib/membership";
 import { getInvoices, getMemberStats, getMembers } from "@/lib/queries";
 import { getAnneesFactures, getFinancesAnnee } from "@/lib/queries-admin";
 import type { Invoice } from "@/lib/types";
+import { usageAriary } from "@/lib/usage-ariary";
 
 export default async function AdminPaiements({
   searchParams,
@@ -39,13 +40,15 @@ export default async function AdminPaiements({
   }>;
 }) {
   const filtres = lireFiltresFactures(await searchParams);
-  const [factures, annees, finances, stats, membres] = await Promise.all([
+  const [factures, annees, finances, stats, membres, ariary] = await Promise.all([
     getInvoices(),
     getAnneesFactures(),
     getFinancesAnnee(filtres.annee),
     getMemberStats(),
     getMembers(),
+    usageAriary(),
   ]);
+  const plusieursDevises = factures.some((f) => f.devise === "MGA");
 
   const retenues = filtrerFacturesHorsStatut(factures, filtres);
   const liste = filtrerFactures(factures, filtres);
@@ -84,6 +87,7 @@ export default async function AdminPaiements({
               <Download size={14} /> Exporter
             </a>
             <NouvelleFactureButton
+              mobileMoney={ariary}
               membres={membres
                 .filter((m) => m.statut !== "candidature")
                 .map((m) => ({
@@ -192,16 +196,18 @@ export default async function AdminPaiements({
             </option>
           ))}
         </select>
-        <select
-          name="devise"
-          defaultValue={filtres.devise ?? ""}
-          aria-label="Devise"
-          className="rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent"
-        >
-          <option value="">Toutes devises</option>
-          <option value="CAD">Dollars canadiens</option>
-          <option value="MGA">Ariary (anciennes factures)</option>
-        </select>
+        {plusieursDevises ? (
+          <select
+            name="devise"
+            defaultValue={filtres.devise ?? ""}
+            aria-label="Devise"
+            className="rounded-[var(--radius-s)] border border-line bg-surface text-ink px-3 py-2.5 text-[13.5px] outline-none focus:border-accent"
+          >
+            <option value="">Toutes devises</option>
+            <option value="CAD">Dollars canadiens</option>
+            <option value="MGA">Ariary (anciennes factures)</option>
+          </select>
+        ) : null}
         {filtres.recherche || filtres.annee || filtres.devise ? (
           <Link
             href={lien({ q: null, annee: null, devise: null })}
@@ -349,10 +355,12 @@ export default async function AdminPaiements({
         </>
       )}
 
-      <p className="text-[12px] text-faint mt-4">
-        Les totaux sont tenus par devise : additionner Ariary et dollars
-        canadiens n’aurait pas de sens.
-      </p>
+      {plusieursDevises ? (
+        <p className="text-[12px] text-faint mt-4">
+          Les totaux sont tenus par devise : additionner Ariary et dollars
+          canadiens n’aurait pas de sens.
+        </p>
+      ) : null}
     </>
   );
 }

@@ -49,6 +49,7 @@ import {
 } from "@/lib/membership";
 import type { Contact, Produit } from "@/lib/types";
 import { EntreeFichier } from "@/components/EnvoisSuivis";
+import { modesSaisie } from "@/lib/modes-saisie";
 
 const BTN_PRIMARY = "btn-action btn-action-sm";
 const BTN_LINE =
@@ -189,6 +190,7 @@ export function RegisterPaymentButton({
   retour,
   compact = false,
   formules = [],
+  mobileMoney = false,
 }: {
   memberId: string;
   premier: boolean;
@@ -197,6 +199,7 @@ export function RegisterPaymentButton({
   retour?: string;
   compact?: boolean;
   formules?: Formule[];
+  mobileMoney?: boolean;
 }) {
   const aujourdhui = new Date().toISOString().slice(0, 10);
   const [choisie, setChoisie] = useState<Formule | null>(formule ?? formules[0] ?? null);
@@ -287,10 +290,9 @@ export function RegisterPaymentButton({
             ) : null}
             <Field label="Mode de paiement">
               <select name="mode" className={INPUT} defaultValue="Espèces">
-                <option>Espèces</option>
-                <option>Virement bancaire</option>
-                <option>Mobile Money</option>
-                <option>Chèque</option>
+                {modesSaisie(mobileMoney).map((m) => (
+                  <option key={m}>{m}</option>
+                ))}
               </select>
             </Field>
             <div className="grid gap-3.5 md:grid-cols-2">

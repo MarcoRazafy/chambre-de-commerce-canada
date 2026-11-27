@@ -11,15 +11,17 @@ import {
   supprimerFacture,
 } from "@/lib/actions/factures";
 import type { Devise } from "@/lib/membership";
+import { modesSaisie } from "@/lib/modes-saisie";
 
-const MODES = ["Espèces", "Virement bancaire", "Mobile Money", "Chèque"];
 
 const aujourdhui = () => new Date().toISOString().slice(0, 10);
 
 export function NouvelleFactureButton({
   membres,
+  mobileMoney = false,
 }: {
   membres: { id: string; nom: string; devise: Devise }[];
+  mobileMoney?: boolean;
 }) {
   const [devise, setDevise] = useState<Devise>(membres[0]?.devise ?? "CAD");
   const [payee, setPayee] = useState(false);
@@ -117,7 +119,7 @@ export function NouvelleFactureButton({
             {payee ? (
               <Field label="Mode de paiement">
                 <select name="mode" className={INPUT} defaultValue="Espèces">
-                  {MODES.map((m) => (
+                  {modesSaisie(mobileMoney).map((m) => (
                     <option key={m}>{m}</option>
                   ))}
                 </select>
@@ -141,11 +143,13 @@ export function MarquerPayeeButton({
   numero,
   montant,
   cotisation,
+  mobileMoney = false,
 }: {
   factureId: string;
   numero: string;
   montant: string;
   cotisation: boolean;
+  mobileMoney?: boolean;
 }) {
   return (
     <Modal
@@ -173,7 +177,7 @@ export function MarquerPayeeButton({
             <div className="grid gap-3.5 md:grid-cols-2">
               <Field label="Mode de paiement">
                 <select name="mode" className={INPUT} defaultValue="Espèces">
-                  {MODES.map((m) => (
+                  {modesSaisie(mobileMoney).map((m) => (
                     <option key={m}>{m}</option>
                   ))}
                 </select>

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { exigerEquipe } from "@/lib/autorisations";
 import { prisma } from "@/lib/db";
 import { redirectWithErreur, redirectWithFlash } from "@/lib/flash";
+import { nettoyerPrefixe } from "@/lib/prefixe-numeros-base";
 import { oublierExpediteur } from "@/lib/courriel";
 import { adresseSurUneLigne, couleurValide } from "@/lib/profil-chambre-defauts";
 import { enregistrerImage, ImageRefusee } from "@/lib/uploads";
@@ -42,7 +43,11 @@ async function sauverProfil(formData: FormData) {
   const cgv = lien("cgv", "des conditions générales de vente");
   const confidentialite = lien("confidentialite", "de la politique de confidentialité");
 
+  const prefixeSaisi = nettoyerPrefixe(texte(formData, "prefixeNumeros", 20));
+  if (prefixeSaisi.length === 1) redirectWithErreur(PAGE, "Le préfixe des numéros compte 2 à 5 lettres ou chiffres (ex. « UC »).");
+
   const data = {
+    ...(formData.has("prefixeNumeros") ? { prefixeNumeros: prefixeSaisi } : {}),
     nom: texte(formData, "nom", 200),
     description: texte(formData, "description", 3000),
     adresseRue: texte(formData, "adresseRue", 300),

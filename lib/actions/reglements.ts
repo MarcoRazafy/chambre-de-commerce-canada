@@ -30,6 +30,7 @@ import {
 import { after } from "next/server";
 import { notifierEquipe, notifierMembre } from "@/lib/push";
 import { chambreCourante } from "@/lib/chambre-courante";
+import { prefixeNumeros } from "@/lib/prefixe-numeros";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
@@ -117,7 +118,7 @@ async function ouvrirTunnel(
     ouvert ??
     (await prisma.paiement.create({
       data: {
-        reference: referenceReglement(),
+        reference: referenceReglement(await prefixeNumeros()),
         invoiceId: f.id,
         memberId: f.memberId,
         montant: f.montant,
@@ -193,7 +194,7 @@ export async function reglerAchat(formData: FormData) {
       })
     : await prisma.paiement.create({
         data: {
-          reference: referenceReglement(),
+          reference: referenceReglement(await prefixeNumeros()),
           memberId: user.memberId,
           montant: achat.prix,
           devise: "CAD",

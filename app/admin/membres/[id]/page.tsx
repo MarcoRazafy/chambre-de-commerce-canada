@@ -70,6 +70,7 @@ import { getContacts, getInvoices, getMember } from "@/lib/queries";
 import { getHistoriqueMembre, getNotesMembre } from "@/lib/queries-admin";
 import { situation } from "@/lib/situation";
 import { getFormules } from "@/lib/formules";
+import { usageAriary } from "@/lib/usage-ariary";
 
 const ONGLETS = ["profil", "factures", "activite"] as const;
 type Onglet = (typeof ONGLETS)[number];
@@ -556,6 +557,7 @@ export default async function AdminMembreDetail({
                 </p>
               ) : (
                 <RegisterPaymentButton
+                  mobileMoney={await usageAriary()}
                   memberId={m.id}
                   premier={!m.paiementNote}
                   nom={m.nom}

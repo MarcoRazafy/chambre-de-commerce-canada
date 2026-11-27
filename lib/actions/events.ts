@@ -38,6 +38,7 @@ import {
   notifierMembre,
   notifierTousLesMembres,
 } from "@/lib/push";
+import { prefixeNumeros } from "@/lib/prefixe-numeros";
 
 const texte = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 const revalideTout = () => revalidatePath("/", "layout");
@@ -45,12 +46,13 @@ const revalideTout = () => revalidatePath("/", "layout");
 const ALPHABET_CODE = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 
 async function codeAcces(eventId: string): Promise<string> {
+  const prefixe = await prefixeNumeros();
   for (;;) {
     const tirage = Array.from(
       { length: 6 },
       () => ALPHABET_CODE[randomInt(ALPHABET_CODE.length)],
     ).join("");
-    const code = `CC-${eventId.slice(-4).toUpperCase()}-${tirage}`;
+    const code = `${prefixe}-${eventId.slice(-4).toUpperCase()}-${tirage}`;
     const [inscription, ligne] = await Promise.all([
       prisma.registration.findUnique({ where: { code }, select: { id: true } }),
       prisma.attendee.findFirst({

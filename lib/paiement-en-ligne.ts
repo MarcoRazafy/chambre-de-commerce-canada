@@ -17,6 +17,7 @@ import {
   ouvrirPaiement,
   type ModePaiement,
 } from "@/lib/vanillapay";
+import { prefixeNumeros } from "@/lib/prefixe-numeros";
 
 function basePrestataire(): string {
   const domaine = process.env.DOMAINE_PRINCIPAL?.trim().toLowerCase();
@@ -82,7 +83,7 @@ export async function ouvrirChezLePrestataire(
     return { raison: "Le paiement en ligne n’est pas encore disponible : choisissez un autre moyen." };
   }
 
-  const reference = referenceReglement();
+  const reference = referenceReglement(await prefixeNumeros());
   await prisma.paiement.update({
     where: { id: p.id },
     data: {

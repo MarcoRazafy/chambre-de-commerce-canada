@@ -10,6 +10,7 @@ import {
 import { PrintButton } from "@/components/forms/PrintButton";
 import { fmtMontant } from "@/lib/membership";
 import { getFacture } from "@/lib/factures";
+import { usageAriary } from "@/lib/usage-ariary";
 
 export default async function FactureAdmin({
   params,
@@ -44,6 +45,7 @@ export default async function FactureAdmin({
           )}
           {f.statut === "envoyee" ? (
             <MarquerPayeeButton
+              mobileMoney={await usageAriary()}
               factureId={f.id}
               numero={f.numero}
               montant={fmtMontant(f.montant, f.devise)}

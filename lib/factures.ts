@@ -4,6 +4,7 @@ import { prisma } from "@/lib/db";
 import type { Prisma } from "@/lib/generated/prisma/client";
 import { toISODate } from "@/lib/enums";
 import type { Invoice } from "@/lib/types";
+import { prefixeNumeros } from "@/lib/prefixe-numeros";
 
 export function numeroSuivant(numeros: string[], prefixe: string): string {
   let plusGrand = 0;
@@ -17,7 +18,7 @@ export function numeroSuivant(numeros: string[], prefixe: string): string {
 }
 
 export async function numeroFacture(date: Date): Promise<string> {
-  const prefixe = `CC-${date.getUTCFullYear()}-`;
+  const prefixe = `${await prefixeNumeros()}-${date.getUTCFullYear()}-`;
   const deLAnnee = await prisma.invoice.findMany({
     where: { numero: { startsWith: prefixe } },
     select: { numero: true },

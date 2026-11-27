@@ -16,6 +16,7 @@ import { getCurrentUser } from "@/lib/session";
 import { getProfilChambreBrut } from "@/lib/profil-chambre";
 import { liensMembres } from "@/lib/liens-membres";
 import { completerProfil } from "@/lib/profil-chambre-defauts";
+import { prefixeNumeros } from "@/lib/prefixe-numeros";
 
 export default async function MonEntreprise() {
   const [brut, moi, formules] = await Promise.all([
@@ -29,6 +30,7 @@ export default async function MonEntreprise() {
   const gere = estAdministrateur(moi);
   const p = completerProfil(brut);
   const adhesion = (await liensMembres(await chambreCourante()))?.adhesion ?? null;
+  const prefixe = await prefixeNumeros();
   const v = (k: keyof NonNullable<typeof brut>) => (brut?.[k] as string | null | undefined) ?? "";
   const rue = v("adresseRue") || (v("codePostal") || v("ville") || v("province") || v("pays") ? "" : v("adresse"));
 
@@ -131,6 +133,9 @@ export default async function MonEntreprise() {
                 <input name="tvq" maxLength={40} defaultValue={v("tvq")} className={INPUT} />
               </Field>
             </div>
+            <Field label="Préfixe des numéros (factures, paiements, billets)">
+              <input name="prefixeNumeros" maxLength={5} defaultValue={v("prefixeNumeros")} placeholder={prefixe} className={`${INPUT} uppercase max-w-[160px]`} />
+            </Field>
             <Field label="Site web">
               <input name="site" maxLength={300} defaultValue={v("site")} placeholder="www.entreprise.com" className={INPUT} />
             </Field>

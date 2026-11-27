@@ -32,6 +32,7 @@ import {
   mobileMoneyEnLigne,
   vanillaPayActif,
 } from "@/lib/vanillapay";
+import { prefixeNumeros } from "@/lib/prefixe-numeros";
 
 const texte = (fd: FormData, k: string) =>
   String(fd.get(k) ?? "")
@@ -223,7 +224,7 @@ async function reglementPublic(
   }
   return prisma.paiement.create({
     data: {
-      reference: referenceReglement(),
+      reference: referenceReglement(await prefixeNumeros()),
       montant,
       devise: "CAD",
       mode,

@@ -1412,6 +1412,7 @@ model ProfilChambre {
   stat               String  @default("")
   logoFacture        String?
   mentionFacture     String  @default("")
+  prefixeNumeros     String  @default("")
 
   expediteurNom     String @default("")
   expediteurDomaine String @default("")

@@ -1,4 +1,3 @@
-import { COORDONNEES } from "@/lib/coordonnees";
 import {
   PHOTOS_PAR_PRODUIT,
   RETARD_BLOCAGE_JOURS,
@@ -185,8 +184,3 @@ export const THEMES: Theme[] = [
     ],
   },
 ];
-
-export const AIDE_CONTACT = {
-  telephone: COORDONNEES.telephone,
-  email: COORDONNEES.email,
-};

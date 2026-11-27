@@ -13,7 +13,12 @@ import { SubmitButton } from "@/components/form-bits";
 import { Banner, Card, Kicker, Saillant, ViewHead } from "@/components/ui";
 import { envoyerDemandeContact } from "@/lib/actions/messages";
 import { COORDONNEES, MOTIFS_CONTACT, chiffres } from "@/lib/coordonnees";
-import { getProfilChambre } from "@/lib/profil-chambre";
+import { getProfilChambreBrut } from "@/lib/profil-chambre";
+import { completerProfil, sansDefauts } from "@/lib/profil-chambre-defauts";
+import { calculer } from "@/lib/parametres";
+import { RESEAUX, type Reseau } from "@/lib/lettre-blocs";
+
+const NOMS_RESEAUX: Record<Reseau, string> = { facebook: "Facebook", linkedin: "LinkedIn", instagram: "Instagram", youtube: "YouTube", tiktok: "TikTok" };
 import { getCurrentUser } from "@/lib/session";
 
 const INPUT =
@@ -27,8 +32,11 @@ export default async function ContactPage({
   const { envoye } = await searchParams;
   const user = await getCurrentUser("membre");
 
-  const { telephone, email, adresse } = await getProfilChambre();
-  const { whatsapp, horaires, reseaux } = COORDONNEES;
+  const brut = await getProfilChambreBrut();
+  const { telephone, email, adresse } = completerProfil(brut);
+  const { reseaux } = calculer(brut);
+  const { whatsapp, horaires } = sansDefauts(brut) ? { whatsapp: null, horaires: null } : COORDONNEES;
+  const liens = RESEAUX.flatMap((r) => (reseaux[r] ? [{ href: reseaux[r], libelle: NOMS_RESEAUX[r] }] : []));
   const messageWhatsapp = encodeURIComponent(
     `Bonjour, je suis ${user.nom}, membre de la Chambre. `,
   );
@@ -199,30 +207,27 @@ export default async function ContactPage({
             </ul>
           </Card>
 
-          <Card className="carte-filet filet-fixe filet-vert p-6">
-            <Kicker>Réseaux</Kicker>
-            <p className="m-0 mt-1.5 mb-4 text-[13.2px] text-muted">
-              L’actualité de la chambre, au jour le jour.
-            </p>
-            <div className="flex flex-col gap-2">
-              <a
-                href={reseaux.linkedin}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-between gap-2 rounded-[var(--radius-s)] border border-line px-3.5 py-2.5 text-[13.4px] font-semibold text-ink no-underline hover:border-faint hover:bg-surface-2"
-              >
-                LinkedIn <ArrowRight size={14} className="text-faint" />
-              </a>
-              <a
-                href={reseaux.facebook}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center justify-between gap-2 rounded-[var(--radius-s)] border border-line px-3.5 py-2.5 text-[13.4px] font-semibold text-ink no-underline hover:border-faint hover:bg-surface-2"
-              >
-                Facebook <ArrowRight size={14} className="text-faint" />
-              </a>
-            </div>
-          </Card>
+          {liens.length ? (
+            <Card className="carte-filet filet-fixe filet-vert p-6">
+              <Kicker>Réseaux</Kicker>
+              <p className="m-0 mt-1.5 mb-4 text-[13.2px] text-muted">
+                L’actualité de la chambre, au jour le jour.
+              </p>
+              <div className="flex flex-col gap-2">
+                {liens.map((l) => (
+                  <a
+                    key={l.libelle}
+                    href={l.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-between gap-2 rounded-[var(--radius-s)] border border-line px-3.5 py-2.5 text-[13.4px] font-semibold text-ink no-underline hover:border-faint hover:bg-surface-2"
+                  >
+                    {l.libelle} <ArrowRight size={14} className="text-faint" />
+                  </a>
+                ))}
+              </div>
+            </Card>
+          ) : null}
         </div>
       </div>
     </>

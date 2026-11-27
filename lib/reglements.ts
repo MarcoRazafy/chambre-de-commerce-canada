@@ -61,11 +61,11 @@ export async function modesBientot(): Promise<ModeReglement[]> {
   return (await modesProposes()).includes("carte") ? [] : ["carte"];
 }
 
-export function referenceReglement(annee = new Date().getFullYear()): string {
+export function referenceReglement(prefixe: string, annee = new Date().getFullYear()): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let suffixe = "";
   for (const n of randomBytes(6)) suffixe += alphabet[n % alphabet.length];
-  return `CC-${annee}-${suffixe}`;
+  return `${prefixe}-${annee}-${suffixe}`;
 }
 
 export function enLettres(n: number): string {
