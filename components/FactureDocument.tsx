@@ -145,7 +145,7 @@ export function FactureDocument({ facture: f, emetteur: e }: { facture: FactureD
               ? f.reglement
                 ? `Règlement reçu : ${f.reglement}`
                 : "Règlement reçu par la chambre."
-              : `Règlement à l’ordre de la chambre, en espèces, par virement ou par Mobile Money. Rappelez le numéro ${f.numero} avec votre paiement.`}
+              : `Règlement à l’ordre de la chambre, en espèces ou par virement. Rappelez le numéro ${f.numero} avec votre paiement.`}
           </div>
         </div>
 

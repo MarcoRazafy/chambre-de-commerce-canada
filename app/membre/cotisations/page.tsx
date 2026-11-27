@@ -40,6 +40,7 @@ import { BlocCotisation } from "@/components/paiement/Cotisation";
 import { cotisationDue } from "@/lib/cotisation";
 import { FenetreMoyens } from "@/components/paiement/FenetreMoyens";
 import { getCurrentUser } from "@/lib/session";
+import { MODES, MODES_EN_LIGNE } from "@/lib/modes-reglement";
 import type { Invoice } from "@/lib/types";
 
 export default async function CotisationsPage({
@@ -89,6 +90,11 @@ export default async function CotisationsPage({
   const aRegler = delAnnee.filter((f) => f.statut === "envoyee");
   const enRetardListe = delAnnee.filter((f) => factureEnRetard(f));
   const relancees = factures.filter((f) => f.statut === "envoyee" && f.relanceeLe);
+  const enLigne = listeFrancaise(
+    modes
+      .filter((x) => x === "paypal" || MODES_EN_LIGNE.includes(x))
+      .map((x) => (x === "carte" ? "carte bancaire" : MODES[x].titre)),
+  );
   const fenetre = (f: Invoice) => ({
     id: f.id,
     numero: f.numero,
@@ -225,9 +231,9 @@ export default async function CotisationsPage({
           {cotisation ? null : (
             <p className="text-[12.5px] text-faint mt-5 mb-0 flex items-center gap-2">
               <CreditCard size={14} />
-              {modes.length
-                ? "Réglez en ligne par carte bancaire ou mobile money. L’équipe CanCham enregistre aussi les règlements reçus par virement ou en espèces."
-                : "Le paiement en ligne n’est pas branché : l’équipe CanCham enregistre les règlements reçus en espèces ou par virement."}
+              {enLigne.length
+                ? `Réglez en ligne par ${enLigne}. L’équipe de la Chambre enregistre aussi les règlements reçus par virement ou en espèces.`
+                : "L’équipe de la Chambre enregistre les règlements reçus en espèces ou par virement."}
             </p>
           )}
         </Card>
@@ -418,4 +424,8 @@ function Donnee({
       </div>
     </div>
   );
+}
+
+function listeFrancaise(mots: string[]): string {
+  return mots.length > 1 ? `${mots.slice(0, -1).join(", ")} ou ${mots[mots.length - 1]}` : (mots[0] ?? "");
 }

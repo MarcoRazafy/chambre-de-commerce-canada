@@ -50,7 +50,7 @@ export function TunnelAirtelMoney(p: PropsTunnel) {
         </div>
 
         <p className="relative m-0 mt-7 text-[14px] font-semibold">
-          Règlement CanCham
+          Règlement
         </p>
         <p className="relative m-0 mt-1 text-[44px] font-extrabold leading-none tracking-[-0.02em] tabular-nums">
           {p.montant.toLocaleString("fr-FR")}{" "}
@@ -73,7 +73,7 @@ export function TunnelAirtelMoney(p: PropsTunnel) {
             <Ticket
               lignes={[
                 ["Pour", p.objet],
-                ["Vers", p.titulaire || "CanCham Madagascar"],
+                ["Vers", p.titulaire || "La Chambre"],
               ]}
               pied={["Montant", somme]}
             />

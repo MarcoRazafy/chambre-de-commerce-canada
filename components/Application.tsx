@@ -118,8 +118,8 @@ export function BoutonInstaller() {
       <button
         type="button"
         onClick={installer}
-        title="Installer l’application CanCham"
-        aria-label="Installer l’application CanCham"
+        title="Installer l’application"
+        aria-label="Installer l’application"
         className="inline-flex h-9 shrink-0 cursor-pointer items-center gap-2 rounded-lg border border-white/20 bg-white/10 px-2.5 text-[13px] font-semibold text-white transition-colors duration-200 hover:bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
       >
         <Download size={16} aria-hidden />
@@ -135,7 +135,7 @@ export function BoutonInstaller() {
           {() => (
             <ModalBody>
               <p className="m-0 text-[14px] text-muted">
-                L’application CanCham s’ajoute à vos applications, avec son
+                L’application s’ajoute à vos applications, avec son
                 icône : elle s’ouvre directement sur votre espace.
               </p>
               {consigne === "ios" ? (
@@ -155,7 +155,7 @@ export function BoutonInstaller() {
                     .
                   </Etape>
                   <Etape n={3}>
-                    Touchez <b>Ajouter</b> : l’icône CanCham rejoint vos
+                    Touchez <b>Ajouter</b> : l’icône rejoint vos
                     applications.
                   </Etape>
                 </ol>
@@ -198,7 +198,7 @@ export function LienSite({
   const dansApplication = useDansApplication();
   if (dansApplication) return <span className={className}>{children}</span>;
   return (
-    <Link href="/" aria-label="CanCham Connect" className={className}>
+    <Link href="/" aria-label="Accueil" className={className}>
       {children}
     </Link>
   );

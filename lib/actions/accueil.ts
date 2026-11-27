@@ -83,7 +83,7 @@ export async function deposerCandidature(formData: FormData) {
   if (!ville) erreur("Indiquez votre ville.");
   if (!motivation) {
     erreur(
-      "Dites-nous en quelques mots pourquoi vous souhaitez rejoindre CanCham.",
+      "Dites-nous en quelques mots pourquoi vous souhaitez rejoindre la Chambre.",
     );
   }
   if (

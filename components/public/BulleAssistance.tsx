@@ -75,7 +75,7 @@ export function BulleAssistance() {
       {ouvert ? (
         <section
           role="dialog"
-          aria-label="Assistance CanCham"
+          aria-label="Assistance"
           className="fixed z-50 bottom-[90px] right-4 sm:right-6 w-[min(360px,calc(100vw-2rem))] max-h-[min(560px,calc(100vh-130px))] flex flex-col rounded-[var(--radius-l)] border border-line bg-surface shadow-[0_24px_60px_-24px_rgba(0,0,0,0.6)] overflow-hidden"
         >
           <header className="flex items-start gap-3 px-4 py-3 border-b border-line bg-surface-2">
@@ -84,7 +84,7 @@ export function BulleAssistance() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-[14px] font-semibold text-ink">
-                Équipe CanCham
+                Équipe de la Chambre
               </span>
               <span className="block text-[12px] text-muted">
                 {fil

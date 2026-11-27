@@ -239,7 +239,7 @@ export async function enregistrerActualite(formData: FormData) {
   if (!id) {
     after(() =>
       notifierTousLesMembres({
-        titre: "Nouvelle actualité CanCham",
+        titre: "Nouvelle actualité",
         corps: n.titre,
         url: `/membre/actualites/${n.id}`,
       }),
@@ -543,7 +543,7 @@ export async function postComment(formData: FormData) {
           select: { nom: true },
         })
       )?.nom ?? "—")
-    : "Équipe CanCham";
+    : "Équipe de la Chambre";
 
   await prisma.comment.create({
     data: {
@@ -1078,7 +1078,7 @@ export async function enregistrerOffre(formData: FormData) {
   const prix = texte(formData, "prix").slice(0, 60) || null;
   const parCancham = memberId === OFFRE_CANCHAM;
   const membre = parCancham
-    ? { nom: "CanCham" }
+    ? { nom: "la Chambre" }
     : await prisma.member.findUnique({
         where: { id: memberId },
         select: { nom: true },

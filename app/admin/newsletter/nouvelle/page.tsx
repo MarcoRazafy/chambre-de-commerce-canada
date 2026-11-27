@@ -30,7 +30,7 @@ export default async function NouvelleLettre({ searchParams }: { searchParams: P
         <EditeurLettre
           lettre={{
             sujet: `Informations pratiques — ${e.titre}`,
-            contenu: `Bonjour,\n\nQuelques informations avant « ${e.titre} », le ${quandEvenement(e)}, ${e.lieu}.\n\n…\n\nÀ bientôt,\nL’équipe CanCham`,
+            contenu: `Bonjour,\n\nQuelques informations avant « ${e.titre} », le ${quandEvenement(e)}, ${e.lieu}.\n\n…\n\nÀ bientôt,\nL’équipe de la Chambre`,
           }}
           audience={audience}
           etiquettes={etiquettes}
@@ -50,7 +50,7 @@ export default async function NouvelleLettre({ searchParams }: { searchParams: P
       presentation,
       ...(intervenants.length ? [`${intervenants.length > 1 ? "Les intervenants" : "L’intervenant"} :\n${intervenants.join("\n")}`] : []),
       `Membres : inscrivez-vous depuis votre espace, rubrique Événements (${await urlPublique(`/membre/evenements/${e.id}`)}). Pour toute question, répondez simplement à ce courriel.`,
-      "À très bientôt,\nL’équipe CanCham",
+      "À très bientôt,\nL’équipe de la Chambre",
     ].join("\n\n");
     return (
       <>

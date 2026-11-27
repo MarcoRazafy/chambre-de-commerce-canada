@@ -241,7 +241,7 @@ export default async function EvenementDetailPage({
                   icon={<Clock size={18} />}
                   title="Inscription en attente de validation"
                 >
-                  {`${fmtMoney(e.prix * (reg.representants?.length ?? 1))} à régler auprès de l’équipe CanCham. Vos billets et vos QR codes partent par e-mail dès que le règlement est constaté.`}
+                  {`${fmtMoney(e.prix * (reg.representants?.length ?? 1))} à régler auprès de l’équipe de la Chambre. Vos billets et vos QR codes partent par e-mail dès que le règlement est constaté.`}
                 </Banner>
                 <ul className="list-none m-0 mt-3.5 p-0 flex flex-col gap-1 text-[13px] text-muted">
                   {(reg.representants ?? []).map((r) => (

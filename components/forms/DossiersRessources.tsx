@@ -100,7 +100,7 @@ function ChampsPresentation({ dossier: d }: { dossier?: DossierRessource }) {
               name="auteurRole"
               maxLength={160}
               defaultValue={d?.auteur?.role ?? ""}
-              placeholder="Ex. Directrice exécutive, CanCham"
+              placeholder="Ex. Directrice exécutive"
               className={INPUT}
             />
           </Field>

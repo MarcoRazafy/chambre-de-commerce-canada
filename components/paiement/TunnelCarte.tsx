@@ -61,7 +61,7 @@ export function TunnelCarte({
             Paiement pour
           </p>
           <p className="m-0 mt-0.5 text-[26px] font-bold leading-tight">
-            CanCham Madagascar
+            La Chambre
           </p>
           <p className="m-0 mt-1 text-[38px] font-extrabold leading-tight tracking-[-0.02em] tabular-nums">
             {somme}
@@ -117,7 +117,7 @@ export function TunnelCarte({
                   Numéro de carte, expiration et code de sécurité
                 </b>{" "}
                 se saisissent à l’étape suivante, sur la page sécurisée de
-                Vanilla Pay. La CanCham ne les voit jamais.
+                Vanilla Pay. La Chambre ne les voit jamais.
               </p>
             </div>
 
@@ -164,7 +164,7 @@ export function TunnelCarte({
                 <p className="m-0 mt-3 rounded-[10px] bg-surface-2 px-4 py-3 text-[13px] leading-snug text-muted">
                   Sur la page de paiement, le marchand affiché est{" "}
                   <b className="text-ink">{marchand}</b> : il encaisse pour le
-                  compte de la CanCham. C’est aussi ce nom qui figurera sur
+                  compte de la Chambre. C’est aussi ce nom qui figurera sur
                   votre relevé.
                 </p>
               ) : null

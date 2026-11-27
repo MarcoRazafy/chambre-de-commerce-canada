@@ -82,7 +82,7 @@ export function PaiementDirect({
         <p className="m-0 mt-3 text-[12.5px] leading-snug text-muted">
           Sur la page de paiement, le marchand affiché est{" "}
           <b className="text-ink">{p.marchand}</b> : il encaisse pour le compte
-          de la CanCham.
+          de la Chambre.
         </p>
       ) : null}
     </div>
@@ -139,7 +139,7 @@ export function MentionSecret({
       className={`m-0 flex items-start gap-2 text-[13px] leading-snug ${className}`}
     >
       <ShieldCheck size={16} aria-hidden className="mt-px shrink-0" />
-      La CanCham ne vous demandera jamais votre code secret {MODES[mode].titre}.
+      La Chambre ne vous demandera jamais votre code secret {MODES[mode].titre}.
     </p>
   );
 }

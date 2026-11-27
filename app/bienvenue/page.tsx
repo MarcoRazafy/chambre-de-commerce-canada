@@ -36,7 +36,7 @@ const TEXTES: Record<EtapeAccueil, { titre: string; intro: string }> = {
   vous: {
     titre: "Faisons connaissance",
     intro:
-      "Qui êtes-vous ? L’équipe CanCham saura qui contacter pour votre adhésion, et les autres membres aussi.",
+      "Qui êtes-vous ? L’équipe de la Chambre saura qui contacter pour votre adhésion, et les autres membres aussi.",
   },
   entreprise: {
     titre: "Parlez-nous de votre entreprise",
@@ -352,7 +352,7 @@ function EtapeFormule({ membre, formules }: { membre: Member; formules: Formule[
         <ChoixFormules formules={formules} actuelle={membre.formule?.id ?? null} />
       </fieldset>
       <ChampAuth
-        label="Motivation à rejoindre CanCham"
+        label="Motivation à rejoindre la Chambre"
         hint="Ce que vous attendez de la chambre : contacts au Canada, événements, accompagnement…"
       >
         <textarea

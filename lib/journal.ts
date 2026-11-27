@@ -319,17 +319,17 @@ export const ACTIONS_JOURNAL: Record<string, ActionJournal> = {
     ton: "bad",
   },
   service_ajoute: {
-    libelle: "Service CanCham ajouté",
+    libelle: "Service de la Chambre ajouté",
     famille: "contenu",
     ton: "ok",
   },
   service_modifie: {
-    libelle: "Service CanCham modifié",
+    libelle: "Service de la Chambre modifié",
     famille: "contenu",
     ton: "info",
   },
   service_supprime: {
-    libelle: "Service CanCham retiré",
+    libelle: "Service de la Chambre retiré",
     famille: "contenu",
     ton: "bad",
   },

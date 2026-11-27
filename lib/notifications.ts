@@ -401,8 +401,8 @@ async function notificationsMembre(
   if (offre)
     liste.push({
       id: "offre",
-      titre: `Offre de ${offre.member?.nom ?? "CanCham"} : ${offre.titre}`,
-      temps: offre.member ? "Offres membres" : "Offre CanCham",
+      titre: `Offre de ${offre.member?.nom ?? "la Chambre"} : ${offre.titre}`,
+      temps: offre.member ? "Offres membres" : "Offre de la Chambre",
       href: offre.memberId
         ? `/membre/annuaire/${offre.memberId}`
         : "/membre",

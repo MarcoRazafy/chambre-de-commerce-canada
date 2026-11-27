@@ -30,9 +30,11 @@ describe("courriels de cotisation", () => {
   it("annonce le paiement en ligne quand la cotisation s’y règle", () => {
     const { texte } = validation(true);
     expect(texte).toContain("500 000 Ar");
-    expect(texte).toContain("par carte bancaire ou mobile money");
+    expect(texte).toContain("en ligne depuis votre espace");
+    expect(texte).not.toContain("mobile money");
     expect(relance(true).texte).toContain("Régler ma cotisation");
-    expect(relance(true).texte).toContain("carte bancaire ou mobile money");
+    expect(relance(true).texte).toContain("en ligne depuis votre espace membre");
+    expect(relance(true).texte).not.toContain("mobile money");
   });
 
   it("renvoie vers l’équipe quand elle ne se règle pas en ligne", () => {

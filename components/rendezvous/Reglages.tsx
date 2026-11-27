@@ -226,7 +226,7 @@ function FormulaireType({
 
         <Field label="Personne qui reçoit" hint="Ses rendez-vous ne se chevauchent pas ; deux personnes peuvent recevoir à la même heure.">
           <select name="hoteId" defaultValue={type?.hote?.id ?? ""} className={INPUT}>
-            <option value="">L’équipe CanCham</option>
+            <option value="">L’équipe de la Chambre</option>
             {personnes.map((p) => (
               <option key={p.id} value={p.id}>
                 {p.nom}

@@ -254,7 +254,7 @@ export default async function AdminMembreDetail({
               {m.motivation ? (
                 <>
                   <div className="text-[12.3px] font-semibold text-muted mb-1.5">
-                    Motivation à rejoindre CanCham
+                    Motivation à rejoindre la Chambre
                   </div>
                   <p className="m-0 text-[13.6px] text-ink leading-relaxed whitespace-pre-line">
                     <TexteLie texte={m.motivation} />

@@ -151,7 +151,7 @@ export async function LectureRessourcePage({
                 {acces.aAcheter ? ` ${fmtMoney(r.prix)}.` : ""}
               </p>
               <p className="m-0 mt-1.5 text-[13px] text-muted">
-                Contactez l’équipe CanCham pour toute question sur l’accès à
+                Contactez l’équipe de la Chambre pour toute question sur l’accès à
                 cette ressource.
               </p>
             </Card>

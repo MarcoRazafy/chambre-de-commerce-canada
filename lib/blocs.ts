@@ -42,8 +42,8 @@ export const PLAFOND_BLOCS = 80;
 export const PLAFOND_TEXTE = 30000;
 
 export const PALETTE_TEXTE = [
-  { nom: "Rouge CanCham", valeur: "#ad0707" },
-  { nom: "Vert CanCham", valeur: "#007140" },
+  { nom: "Rouge", valeur: "#ad0707" },
+  { nom: "Vert", valeur: "#007140" },
   { nom: "Bleu nuit", valeur: "#0f1d2c" },
   { nom: "Bleu", valeur: "#163254" },
   { nom: "Rouge clair", valeur: "#d32020" },

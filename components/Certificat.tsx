@@ -40,8 +40,7 @@ export function CertificatAdhesion({
               </h1>
 
               <p className="m-0 mt-[2.1cqw] max-w-[68cqw] text-[1.7cqw] leading-relaxed text-[#243447]">
-                La Chambre de Commerce et de Coopération Canada-Madagascar
-                atteste que
+                {`${chambre} atteste que`}
               </p>
 
               <div className="mt-[1.7cqw] w-[64cqw] max-w-full">
@@ -57,7 +56,7 @@ export function CertificatAdhesion({
               </div>
 
               <p className="m-0 mt-[2.1cqw] max-w-[68cqw] text-[1.7cqw] leading-relaxed text-[#243447]">
-                est membre de la CanCham Madagascar
+                est membre de la Chambre
                 {m.formule ? (
                   <>
                     {" "}
@@ -87,7 +86,7 @@ export function CertificatAdhesion({
                   ) : null}
                 </div>
 
-                <SceauMembre className="mx-auto w-[9.5cqw]" />
+                <SceauMembre chambre={chambre} className="mx-auto w-[9.5cqw]" />
 
                 <div aria-hidden />
               </div>
@@ -104,7 +103,7 @@ export function CertificatAdhesion({
   );
 }
 
-function SceauMembre({ className }: { className?: string }) {
+function SceauMembre({ chambre, className }: { chambre: string; className?: string }) {
   const rayon = 39;
   const tour = 2 * Math.PI * rayon;
 
@@ -112,7 +111,7 @@ function SceauMembre({ className }: { className?: string }) {
     <svg
       viewBox="0 0 100 100"
       role="img"
-      aria-label="Sceau : membre officiel de la CanCham Madagascar"
+      aria-label={`Sceau : membre officiel de ${chambre}`}
       className={`h-auto ${className ?? ""}`}
     >
       <defs>
@@ -153,7 +152,7 @@ function SceauMembre({ className }: { className?: string }) {
           textLength={tour}
           lengthAdjust="spacing"
         >
-          MEMBRE OFFICIEL · CANCHAM MADAGASCAR ·
+          MEMBRE OFFICIEL · {chambre.length <= 26 ? chambre.toUpperCase() : "MEMBRE OFFICIEL"} ·
         </textPath>
       </text>
 

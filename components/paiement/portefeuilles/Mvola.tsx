@@ -109,7 +109,7 @@ export function TunnelMvola(p: PropsTunnel) {
           </Ligne>
           <Ligne libelle="Pour">{p.objet}</Ligne>
           <Ligne libelle="Vers" dernier>
-            {p.titulaire || "CanCham Madagascar"}
+            {p.titulaire || "La Chambre"}
           </Ligne>
         </dl>
 
@@ -154,7 +154,7 @@ export function TunnelMvola(p: PropsTunnel) {
                 <div className="border-l border-white/12 px-6 py-3.5">
                   <div className="text-[12px] text-white/60">Vers</div>
                   <div className="truncate text-[13.4px] font-semibold">
-                    {p.titulaire || "CanCham Madagascar"}
+                    {p.titulaire || "La Chambre"}
                   </div>
                 </div>
               </div>

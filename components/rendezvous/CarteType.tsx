@@ -13,7 +13,7 @@ export const ICONE_LIEU: Record<Lieu, ReactNode> = {
 };
 
 export function QuiRecoit({ hote, taille = 28 }: { hote: TypeRendezvous["hote"]; taille?: number }) {
-  const nom = hote?.nom ?? "L’équipe CanCham";
+  const nom = hote?.nom ?? "L’équipe de la Chambre";
   return (
     <div className="flex items-center gap-2.5 min-w-0">
       <Pastille src={hote?.photo} alt="" initiales={hote ? initialesDe(hote.nom) : "CC"} taille={taille} />

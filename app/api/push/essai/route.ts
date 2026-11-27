@@ -23,7 +23,7 @@ export async function POST() {
   }
 
   await notifier([personne.id], {
-    titre: "CanCham Connect",
+    titre: "L’Alliée Virtuelle",
     corps: `Les notifications fonctionnent sur cet appareil, ${personne.nom}.`,
     url: personne.role === "admin" ? "/admin" : "/membre",
     etiquette: "essai",

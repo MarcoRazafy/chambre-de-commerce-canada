@@ -28,7 +28,7 @@ export function invitationIcs(e: {
   const lignes = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//CanCham Madagascar//Rendez-vous//FR",
+    "PRODID:-//L’Alliée Virtuelle//Rendez-vous//FR",
     "CALSCALE:GREGORIAN",
     `METHOD:${e.annule ? "CANCEL" : "PUBLISH"}`,
     "BEGIN:VEVENT",

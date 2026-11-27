@@ -14,7 +14,7 @@ export default async function MonProfil() {
   return (
     <>
       <EnTeteAdmin
-        surtitre="Équipe CanCham"
+        surtitre="Équipe de la Chambre"
         titre={
           <>
             Mon <Saillant>profil</Saillant>

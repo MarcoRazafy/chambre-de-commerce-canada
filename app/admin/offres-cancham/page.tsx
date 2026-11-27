@@ -96,7 +96,7 @@ export default async function AdminServices() {
         surtitre="Programme"
         titre={
           <>
-            Services <Saillant ton="vert">CanCham</Saillant>
+            Services <Saillant ton="vert">de la Chambre</Saillant>
           </>
         }
         actions={<ServiceFormButton rendezvous={rendezvous} />}

@@ -678,7 +678,7 @@ function RenduSection({ s, maj, actif }: { s: Section; maj: (c: Partial<Section>
           <BoutonImage libelle="Changer le logo" onUrl={(image) => m({ image })} />
           <button type="button" onClick={() => { const u = demanderLien(s.image, "Adresse d’une image de logo (https://…)"); if (u !== null) m({ image: u }); }}
             className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer"><Link2 size={13} className="inline -mt-0.5" /> Lien</button>
-          {s.image ? <button type="button" onClick={() => m({ image: "" })} className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer">Logo IMPACT 261</button> : null}
+          {s.image ? <button type="button" onClick={() => m({ image: "" })} className="h-8 px-3 rounded-md border-0 bg-[#0f1d2c] text-white text-[12.5px] font-semibold cursor-pointer">Logo par défaut</button> : null}
         </Actions>,
       );
     case "bandeau":

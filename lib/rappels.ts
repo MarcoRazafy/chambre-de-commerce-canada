@@ -36,7 +36,7 @@ export function debutEvenement(jour: string, debut: string | null | undefined): 
 
 export const SUJET_DEFAUT = "Rappel : {événement}";
 export const MESSAGE_DEFAUT =
-  "Bonjour {prénom},\n\nPetit rappel : « {événement} » a lieu le {date}.\nLieu : {lieu}.\n\nNous avons hâte de vous y retrouver.\n\nÀ bientôt,\nL’équipe CanCham";
+  "Bonjour {prénom},\n\nPetit rappel : « {événement} » a lieu le {date}.\nLieu : {lieu}.\n\nNous avons hâte de vous y retrouver.\n\nÀ bientôt,\nL’équipe de la Chambre";
 export const VARIABLES = ["{prénom}", "{entreprise}", "{événement}", "{date}", "{lieu}"];
 
 export const VARIABLES_RAPPEL = [

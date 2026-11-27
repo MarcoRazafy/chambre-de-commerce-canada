@@ -682,7 +682,7 @@ export function SignaturePublication({ news }: { news: NewsItem }) {
       )}
       <div className="min-w-0">
         <div className="font-semibold text-[13.6px]">
-          {news.auteur ? news.auteur.membre : "CanCham Madagascar"}{" "}
+          {news.auteur ? news.auteur.membre : "La Chambre"}{" "}
           <Pill className="ml-1">
             {news.auteur ? "Publication d’un membre" : news.cat}
           </Pill>

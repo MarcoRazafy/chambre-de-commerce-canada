@@ -148,7 +148,7 @@ export function CoquilleAdmin({
               {user.nom}
             </span>
             <span className="block text-[11.5px] text-white/50 truncate">
-              {user.fonction} · Équipe CanCham
+              {user.fonction} · Équipe de la Chambre
             </span>
           </span>
           <ChevronRight size={16} className="text-white/45 shrink-0" />

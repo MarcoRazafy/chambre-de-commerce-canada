@@ -99,8 +99,8 @@ function ics(r: RendezvousAnnonce, annule = false) {
     uid: r.id,
     debut: new Date(`${jour}T${r.debut}:00${FUSEAU_CHAMBRE}`),
     fin: new Date(`${jour}T${r.fin}:00${FUSEAU_CHAMBRE}`),
-    titre: `${r.type.titre} — CanCham`,
-    description: [r.hote ? `Avec ${r.hote.nom}` : "Avec l’équipe CanCham", r.motif].filter(Boolean).join("\n"),
+    titre: r.type.titre,
+    description: [r.hote ? `Avec ${r.hote.nom}` : "Avec l’équipe de la Chambre", r.motif].filter(Boolean).join("\n"),
     lieu: r.lienVisio ?? lieu.libelle,
     url: r.lienVisio,
     annule,
@@ -314,7 +314,7 @@ export async function annulerRendezvous(formData: FormData) {
         courrielRendezvousAnnule(a, {
           ...details,
           ics: ics(rendezvous, true),
-          par: parLeMembre ? user.nom : "l’équipe CanCham",
+          par: parLeMembre ? user.nom : "l’équipe de la Chambre",
           lien: await urlPublique(parLeMembre ? EQUIPE : MEMBRE),
         }),
       );

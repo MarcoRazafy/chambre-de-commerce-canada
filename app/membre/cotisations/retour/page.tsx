@@ -96,7 +96,7 @@ export default async function RetourPaiementPage({
               : achat
                 ? achat.type === "ressource"
                   ? ` « ${achat.titre} » vous est ouverte.`
-                  : ` L’équipe CanCham a reçu votre demande pour « ${achat.titre} » : elle vous répond dans votre messagerie.`
+                  : ` L’équipe de la Chambre a reçu votre demande pour « ${achat.titre} » : elle vous répond dans votre messagerie.`
                 : p.invoice && estCotisation(p.invoice.objet)
                   ? " Votre adhésion est à jour, et votre certificat le dit déjà."
                   : " La facture apparaît réglée dans vos cotisations."}

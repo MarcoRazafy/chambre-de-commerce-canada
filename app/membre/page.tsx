@@ -272,7 +272,7 @@ export default async function VueDEnsemble() {
           icone={<Mail size={24} />}
           surtitre="Vos échanges"
           titre={`${nonLus} nouveau${nonLus > 1 ? "x" : ""} message${nonLus > 1 ? "s" : ""}`}
-          detail="Avec les membres et l’équipe CanCham."
+          detail="Avec les membres et l’équipe de la Chambre."
           lien="Ouvrir la messagerie"
           href="/membre/messagerie"
           teinte="bleu"
@@ -294,7 +294,7 @@ export default async function VueDEnsemble() {
         {service && ouverte("ressources") ? (
           <Raccourci
             icone={<Briefcase size={24} />}
-            surtitre="Services CanCham"
+            surtitre="Services de la Chambre"
             titre={service.titre}
             detail={service.desc}
             lien="Voir les services"

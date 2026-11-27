@@ -105,7 +105,7 @@ export async function supportMembre(userId: string): Promise<{
     messagesDe(fil.id, userId),
   ]);
   const nonLus = compte.get(fil.id) ?? 0;
-  const nom = fil.nom ?? "Équipe CanCham";
+  const nom = fil.nom ?? "Équipe de la Chambre";
   return {
     conversation: {
       id: fil.id,

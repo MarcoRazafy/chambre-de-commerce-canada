@@ -30,7 +30,7 @@ export default async function ContactPage({
   const { telephone, email, adresse } = await getProfilChambre();
   const { whatsapp, horaires, reseaux } = COORDONNEES;
   const messageWhatsapp = encodeURIComponent(
-    `Bonjour, je suis ${user.nom}, membre CanCham. `,
+    `Bonjour, je suis ${user.nom}, membre de la Chambre. `,
   );
 
   return (
@@ -184,7 +184,7 @@ export default async function ContactPage({
                 libelle="Adresse"
                 valeur={adresse}
                 href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-                  `CanCham ${adresse}`,
+                  adresse,
                 )}`}
                 externe
               />

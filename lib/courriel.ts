@@ -3,6 +3,7 @@ import "server-only";
 import { randomUUID } from "node:crypto";
 import { headers } from "next/headers";
 import nodemailer, { type Transporter } from "nodemailer";
+import { getProfilChambre } from "@/lib/profil-chambre";
 import { COORDONNEES } from "@/lib/coordonnees";
 import { adresseValidee, domaineDe, estWebmail } from "@/lib/brevo-domaines";
 import { adresseDeLaChambre } from "@/lib/adresse-chambre";
@@ -30,7 +31,7 @@ export interface PieceCourriel {
 const EXPEDITEUR =
   process.env.COURRIEL_EXPEDITEUR ||
   process.env.MAIL_FROM ||
-  "CanCham Connect <onboarding@resend.dev>";
+  "L’Alliée Virtuelle <onboarding@resend.dev>";
 
 export const COURRIEL_EQUIPE = process.env.COURRIEL_EQUIPE || COORDONNEES.email;
 
@@ -109,6 +110,7 @@ export async function envoyerCourrielSuivi(
   { suivi }: { suivi?: string } = {},
 ): Promise<string | null> {
   c = { ...c, html: await marquerEnTete(c) };
+  c = await marquerPied(c);
   const fournisseur = fournisseurCourriel();
   if (!fournisseur) {
     const jointes = c.pieces?.length
@@ -315,6 +317,27 @@ export function echapper(texte: string): string {
     .replace(/'/g, "&#39;");
 }
 
+const PIED_PAR_DEFAUT = "L’Alliée Virtuelle";
+const PIED_HTML = /<!--pied-->[\s\S]*?<!--\/pied-->/;
+async function marquerPied(c: Courriel): Promise<Courriel> {
+  const finTexte = `—\n${PIED_PAR_DEFAUT}`;
+  if (!PIED_HTML.test(c.html) && !c.texte.endsWith(finTexte)) return c;
+  let ligne = PIED_PAR_DEFAUT;
+  if (!c.dePlateforme) {
+    try {
+      await chambreCourante();
+      const p = await getProfilChambre();
+      ligne = [p.nom, p.email, p.telephone].map((x) => x.trim()).filter(Boolean).join(" · ") || PIED_PAR_DEFAUT;
+    } catch {
+    }
+  }
+  return {
+    ...c,
+    html: c.html.replace(PIED_HTML, echapper(ligne)),
+    texte: c.texte.endsWith(finTexte) ? `${c.texte.slice(0, -PIED_PAR_DEFAUT.length)}${ligne}` : c.texte,
+  };
+}
+
 export function gabarit({
   titre,
   paragraphes,
@@ -353,7 +376,7 @@ ${
 }
 ${apres.map((t) => p(t, 13, "#6b7a8a")).join("\n")}
 </td></tr>
-<tr><td style="padding:16px 28px;background:#f7f9fb;font-size:12px;color:#8a97a6">Chambre de Commerce et de Coopération Canada–Madagascar · ${echapper(COORDONNEES.email)} · ${echapper(COORDONNEES.telephone)}</td></tr>
+<tr><td style="padding:16px 28px;background:#f7f9fb;font-size:12px;color:#8a97a6"><!--pied-->${echapper(PIED_PAR_DEFAUT)}<!--/pied--></td></tr>
 </table></td></tr></table></body></html>`;
 
   const texte = [
@@ -363,7 +386,7 @@ ${apres.map((t) => p(t, 13, "#6b7a8a")).join("\n")}
     ...(bouton ? [`${bouton.libelle} : ${bouton.url}`, ""] : []),
     ...apres.flatMap((t) => [t, ""]),
     "—",
-    `CanCham · ${COORDONNEES.email} · ${COORDONNEES.telephone}`,
+    PIED_PAR_DEFAUT,
   ].join("\n");
 
   return { html, texte };

@@ -719,7 +719,7 @@ export function EditProfileButton({
               initial={[besoins, interets].filter(Boolean).join("\n")}
             />
             <Field
-              label="Motivation à rejoindre CanCham"
+              label="Motivation à rejoindre la Chambre"
               hint="Ce que vous attendez de la chambre. L’équipe la lit en examinant votre adhésion."
             >
               <textarea

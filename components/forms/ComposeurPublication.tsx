@@ -383,7 +383,7 @@ export function ComposeurPublication({
               )}
             </button>
             <p className="m-0 text-center text-[11.8px] text-faint">
-              Publiée au nom de votre entreprise. L’équipe CanCham peut la
+              Publiée au nom de votre entreprise. L’équipe de la Chambre peut la
               modifier ou la retirer.
             </p>
           </form>

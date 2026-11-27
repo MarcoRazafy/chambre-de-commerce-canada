@@ -103,7 +103,7 @@ export function joursOuverts(depuis: string, plages: Plage[]): string[] {
 export type Lieu = "visio" | "bureau" | "telephone";
 export const LIEUX: { cle: Lieu; libelle: string; detail: string }[] = [
   { cle: "visio", libelle: "Visio", detail: "En visio : le lien est dans la confirmation" },
-  { cle: "bureau", libelle: "Bureau de la CanCham", detail: "Dans les locaux de la CanCham" },
+  { cle: "bureau", libelle: "Bureau de la Chambre", detail: "Dans les locaux de la Chambre" },
   { cle: "telephone", libelle: "Téléphone", detail: "Par téléphone : la personne vous appelle" },
 ];
 export const lireLieu = (v: unknown): Lieu => (v === "visio" || v === "telephone" ? v : "bureau");

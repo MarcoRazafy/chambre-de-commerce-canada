@@ -259,7 +259,7 @@ async function Conversation({
                   groupe={fil.type === "groupe" || fil.equipe}
                   nomAuteur={
                     fil.equipe && space === "membre"
-                      ? "Équipe CanCham"
+                      ? "Équipe de la Chambre"
                       : undefined
                   }
                   equipeADroite={space === "admin" && fil.equipe}

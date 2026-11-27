@@ -57,7 +57,7 @@ export function IncidentErreur({
     >
       <p className="m-0">
         Un problème est survenu de notre côté. Réessayez dans un instant ; s’il
-        persiste, écrivez à l’équipe CanCham.
+        persiste, écrivez à l’équipe de la Chambre.
       </p>
       {error.digest ? (
         <p className="m-0 mt-3 text-[12px] text-faint">

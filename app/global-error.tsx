@@ -28,7 +28,7 @@ export default function ErreurGlobale({
           fontFamily: "system-ui, -apple-system, 'Segoe UI', Arial, sans-serif",
         }}
       >
-        <title>Incident — CanCham Connect</title>
+        <title>Incident — L’Alliée Virtuelle</title>
         <main style={{ maxWidth: 480, textAlign: "center" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
@@ -51,14 +51,14 @@ export default function ErreurGlobale({
               marginBottom: 8,
             }}
           >
-            CanCham Connect
+            L’Alliée Virtuelle
           </div>
           <h1 style={{ fontSize: 26, margin: "0 0 12px" }}>
             La plateforme est momentanément indisponible
           </h1>
           <p style={{ fontSize: 14.5, lineHeight: 1.6, color: "#4a5a6b" }}>
             Un problème est survenu de notre côté. Réessayez dans un instant ;
-            s’il persiste, écrivez à l’équipe CanCham.
+            s’il persiste, écrivez à l’équipe de la Chambre.
           </p>
           {error.digest ? (
             <p style={{ fontSize: 12, color: "#8a97a6" }}>

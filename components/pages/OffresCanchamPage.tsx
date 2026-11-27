@@ -26,7 +26,7 @@ export async function OffresCanchamPage() {
 
   return (
     <>
-      <ViewHead title={<>Offres {<Saillant ton="vert">CanCham</Saillant>}</>} />
+      <ViewHead title={<>Offres {<Saillant ton="vert">de la Chambre</Saillant>}</>} />
 
       <SectionTitle>Services gratuits</SectionTitle>
       <div className="cascade grid gap-4 mb-7 md:grid-cols-2 lg:grid-cols-3">

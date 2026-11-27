@@ -236,7 +236,7 @@ export function OffreButton({
                 <option value="" disabled>
                   Choisir…
                 </option>
-                <option value={OFFRE_CANCHAM}>CanCham Madagascar</option>
+                <option value={OFFRE_CANCHAM}>La Chambre</option>
                 <optgroup label="Membres">
                   {membres.map((m) => (
                     <option key={m.id} value={m.id}>

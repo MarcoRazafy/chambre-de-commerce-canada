@@ -57,7 +57,7 @@ export function CarteRendezvous({
             <span>{libelleLieu(rdv.lieu).libelle}</span>
           )}
           <span aria-hidden>·</span>
-          <span>avec {rdv.hote?.nom ?? "l’équipe CanCham"}</span>
+          <span>avec {rdv.hote?.nom ?? "l’équipe de la Chambre"}</span>
         </div>
 
         {cote === "equipe" ? (

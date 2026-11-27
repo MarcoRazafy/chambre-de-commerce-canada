@@ -52,7 +52,7 @@ export async function supprimerMonCompte(formData: FormData) {
         entite: "User",
         entiteId: user.id,
         acteur: user.nom,
-        detail: `${user.nom} (${compte.email}) a supprimé son compte · équipe CanCham.`,
+        detail: `${user.nom} (${compte.email}) a supprimé son compte · équipe de la Chambre.`,
       },
     }),
     prisma.user.delete({ where: { id: user.id } }),
@@ -62,6 +62,6 @@ export async function supprimerMonCompte(formData: FormData) {
   revalidatePath("/", "layout");
   redirectWithFlash(
     "/auth",
-    "Votre compte a été supprimé. Merci d’avoir fait partie du réseau CanCham.",
+    "Votre compte a été supprimé. Merci d’avoir fait partie du réseau.",
   );
 }

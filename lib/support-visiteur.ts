@@ -84,7 +84,7 @@ export async function conversationVisiteur(): Promise<FilVisiteur | null> {
     visiteur: fil.visiteur,
     messages: lignes.reverse().map((m) => ({
       id: m.id,
-      de: m.userId ? "Équipe CanCham" : m.auteur,
+      de: m.userId ? "Équipe de la Chambre" : m.auteur,
       equipe: m.userId !== null,
       texte: m.supprimeLe ? "" : m.texte,
       envoyeLe: m.sentAt.toISOString(),

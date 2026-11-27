@@ -68,7 +68,7 @@ export function FormulaireRemise({
               className="sr-only"
             />
             <span className="text-[15px] font-bold text-ink">
-              Au bureau de la CanCham
+              Au bureau de la Chambre
             </span>
             <span className="mt-0.5 whitespace-pre-line text-[13px] leading-snug text-muted">
               {adresseBureau}

@@ -16,7 +16,7 @@ export function ConfirmationRendezvous({ rdv, base }: { rdv: RendezvousPris; bas
       <h2 className="m-0 text-[19px]">{attente ? "Demande envoyée" : "Rendez-vous confirmé"}</h2>
       <p className="m-0 text-[14px] text-ink">
         <b>{rdv.type.titre}</b> · <span className="first-letter:uppercase">{fmtJour(rdv.jour, { weekday: "long", day: "numeric", month: "long" })}</span>,{" "}
-        <span className="tabular-nums">{fmtHeure(rdv.debut)} – {fmtHeure(rdv.fin)}</span> ({MENTION_FUSEAU}) avec {rdv.hote?.nom ?? "l’équipe CanCham"}.
+        <span className="tabular-nums">{fmtHeure(rdv.debut)} – {fmtHeure(rdv.fin)}</span> ({MENTION_FUSEAU}) avec {rdv.hote?.nom ?? "l’équipe de la Chambre"}.
       </p>
       <div className="w-full rounded-[var(--radius-m)] border border-line bg-surface-2 px-3.5 py-3 text-[13px] text-ink">
         {rdv.lieu === "visio" ? (

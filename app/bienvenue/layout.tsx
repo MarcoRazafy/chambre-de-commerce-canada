@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = { title: "Bienvenue · CanCham Connect" };
+export const metadata: Metadata = { title: "Bienvenue · L’Alliée Virtuelle" };
 
 export default function BienvenueLayout({
   children,

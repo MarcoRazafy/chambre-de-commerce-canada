@@ -23,7 +23,7 @@ export async function filEquipe(userId: string): Promise<string> {
     data: {
       type: "individuel",
       equipe: true,
-      nom: "Équipe CanCham",
+      nom: "Équipe de la Chambre",
       participants: {
         create: [
           { userId, luLe: new Date() },

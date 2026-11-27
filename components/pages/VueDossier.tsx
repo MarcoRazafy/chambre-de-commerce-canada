@@ -408,10 +408,10 @@ export async function VueDossier({
                 />
                 <div className="min-w-0">
                   <div className="text-[14px] font-semibold text-ink">
-                    L’équipe CanCham
+                    L’équipe de la Chambre
                   </div>
                   <div className="text-[12.3px] text-accent">
-                    Chambre de Commerce et de Coopération Canada–Madagascar
+                    Chambre de commerce
                   </div>
                 </div>
               </div>

@@ -12,12 +12,12 @@ export function courrielReinitialisation(
 ): Courriel {
   return {
     a,
-    sujet: "Réinitialiser votre mot de passe CanCham Connect",
+    sujet: "Réinitialiser votre mot de passe",
     ...gabarit({
       titre: "Réinitialiser votre mot de passe",
       paragraphes: [
         `Bonjour ${prenom(nom)},`,
-        "Vous avez demandé à changer le mot de passe de votre compte CanCham Connect. Ce lien est valable une heure et ne sert qu’une fois.",
+        "Vous avez demandé à changer le mot de passe de votre compte. Ce lien est valable une heure et ne sert qu’une fois.",
       ],
       bouton: { libelle: "Choisir un nouveau mot de passe", url: lien },
       apres: [
@@ -35,12 +35,12 @@ export function courrielInvitation(
 ): Courriel {
   return {
     a,
-    sujet: "Votre accès à CanCham Connect",
+    sujet: "Votre accès à votre espace membre",
     ...gabarit({
-      titre: "Votre accès à CanCham Connect",
+      titre: "Votre accès à votre espace membre",
       paragraphes: [
         `Bonjour ${prenom(nom)},`,
-        `Un accès à CanCham Connect, la plateforme des membres de la Chambre de Commerce et de Coopération Canada–Madagascar, a été ouvert à votre nom${
+        `Un accès à l’espace membre de votre Chambre, sur L’Alliée Virtuelle, a été ouvert à votre nom${
           entreprise ? ` pour ${entreprise}` : ""
         }.`,
         "Choisissez votre mot de passe pour vous connecter : annuaire des membres, événements, messagerie et ressources vous attendent.",
@@ -56,13 +56,13 @@ export function courrielInvitation(
 export function courrielDemandeRecue(a: string, nom: string): Courriel {
   return {
     a,
-    sujet: "Votre demande d’adhésion à CanCham est bien reçue",
+    sujet: "Votre demande d’adhésion est bien reçue",
     ...gabarit({
       titre: "Votre demande d’adhésion est bien reçue",
       paragraphes: [
         `Bonjour ${prenom(nom)},`,
-        "Merci de votre intérêt pour la Chambre de Commerce et de Coopération Canada–Madagascar. Votre demande d’adhésion est enregistrée, et l’équipe CanCham l’examine.",
-        "Dès qu’elle sera validée, vous recevrez un e-mail avec un lien pour créer votre mot de passe. Vous pourrez alors vous connecter à CanCham Connect et compléter votre fiche : logo, couverture, produits et services.",
+        "Merci de votre intérêt pour la Chambre. Votre demande d’adhésion est enregistrée, et l’équipe de la Chambre l’examine.",
+        "Dès qu’elle sera validée, vous recevrez un e-mail avec un lien pour créer votre mot de passe. Vous pourrez alors vous connecter à votre espace membre et compléter votre fiche : logo, couverture, produits et services.",
       ],
     }),
   };
@@ -103,9 +103,9 @@ export function courrielRelanceCotisation(
 ): Courriel {
   return {
     a,
-    sujet: `Cotisation CanCham — ${d.entreprise}`,
+    sujet: `Cotisation — ${d.entreprise}`,
     ...gabarit({
-      titre: "Votre cotisation CanCham",
+      titre: "Votre cotisation",
       paragraphes: [
         `Bonjour ${prenom(d.nom)},`,
         `La cotisation de ${d.entreprise}${
@@ -116,8 +116,8 @@ export function courrielRelanceCotisation(
             : ""
         }.`,
         d.enLigne
-          ? "Vous pouvez la régler en ligne depuis votre espace membre, par carte bancaire ou mobile money, ou auprès de l’équipe CanCham, en espèces ou par virement."
-          : "Vous pouvez la régler auprès de l’équipe CanCham, en espèces, par virement ou par chèque. Votre espace membre indique votre situation et vos factures.",
+          ? "Vous pouvez la régler en ligne depuis votre espace membre, ou auprès de l’équipe de la Chambre, en espèces ou par virement."
+          : "Vous pouvez la régler auprès de l’équipe de la Chambre, en espèces, par virement ou par chèque. Votre espace membre indique votre situation et vos factures.",
       ],
       bouton: {
         libelle: d.enLigne ? "Régler ma cotisation" : "Voir mes cotisations",
@@ -149,14 +149,14 @@ export function courrielDemandeApprouvee(
       titre: "Votre demande d’adhésion est validée",
       paragraphes: [
         `Bonjour ${prenom(d.nom)},`,
-        `L’équipe CanCham a validé la demande d’adhésion de ${d.entreprise}. Bienvenue dans la chambre !`,
+        `L’équipe de la Chambre a validé la demande d’adhésion de ${d.entreprise}. Bienvenue dans la chambre !`,
         d.creerMotDePasse
-          ? "Créez votre mot de passe pour vous connecter à CanCham Connect : quelques étapes vous permettent ensuite de compléter votre fiche — activité, logo, couverture, produits et services."
+          ? "Créez votre mot de passe pour vous connecter à votre espace membre : quelques étapes vous permettent ensuite de compléter votre fiche — activité, logo, couverture, produits et services."
           : "Connectez-vous dès maintenant avec votre adresse et votre mot de passe : quelques étapes vous permettent de compléter votre fiche — activité, logo, couverture, produits et services.",
         d.formule && d.montant
           ? `Votre espace s’ouvre ensuite entièrement dès le règlement de la cotisation annuelle (${d.formule}, ${d.montant}). ${
               d.enLigne
-                ? "Vous la réglez en ligne depuis votre espace, par carte bancaire ou mobile money, ou auprès de l’équipe, en espèces ou par virement."
+                ? "Vous la réglez en ligne depuis votre espace, ou auprès de l’équipe, en espèces ou par virement."
                 : "Elle se règle auprès de l’équipe, en espèces, par virement ou par chèque."
             }`
           : "Votre espace s’ouvre ensuite entièrement dès le règlement de la cotisation annuelle. Choisissez d’abord votre formule en complétant votre dossier : c’est elle qui en fixe le montant.",
@@ -180,19 +180,19 @@ export function courrielCompteEquipe(
 ): Courriel {
   return {
     a,
-    sujet: "Votre accès à l’équipe CanCham Connect",
+    sujet: "Votre accès au back-office",
     ...gabarit({
-      titre: "Bienvenue dans l’équipe CanCham Connect",
+      titre: "Bienvenue dans l’équipe",
       paragraphes: [
         "Bonjour,",
-        `Un accès au back-office de CanCham Connect vient d’être ouvert pour vous, en tant que « ${d.fonction} », avec le niveau ${d.niveau}.`,
+        `Un accès au back-office de la Chambre vient d’être ouvert pour vous, en tant que « ${d.fonction} », avec le niveau ${d.niveau}.`,
         `Votre identifiant : ${a}`,
         `Votre mot de passe provisoire : ${d.motDePasse}`,
         "Dès votre première connexion, ouvrez « Mon profil » pour indiquer votre nom et choisir votre propre mot de passe.",
       ],
       bouton: { libelle: "Me connecter", url: d.lien },
       apres: [
-        "Si vous n’attendiez pas cet accès, ignorez ce message et prévenez l’équipe CanCham.",
+        "Si vous n’attendiez pas cet accès, ignorez ce message et prévenez l’équipe de la Chambre.",
       ],
     }),
   };
@@ -265,13 +265,13 @@ export function courrielInscriptionEnAttente(
       titre: "Votre inscription attend d’être validée",
       paragraphes: [
         "Bonjour,",
-        `Votre inscription à « ${d.evenement} » est enregistrée. L’événement étant payant, elle attend la validation de l’équipe CanCham.`,
+        `Votre inscription à « ${d.evenement} » est enregistrée. L’événement étant payant, elle attend la validation de l’équipe de la Chambre.`,
         `Quand : ${d.quand}`,
         `Où : ${d.lieu}`,
         plusieurs
           ? `Inscrits : ${d.participants.map((p) => p.nom).join(", ")}`
           : `Inscrit : ${d.participants[0]?.nom ?? ""}`,
-        `À régler : ${d.aRegler}. Choisissez votre moyen de paiement depuis la page de votre inscription (bouton ci-dessous) — ou réglez auprès de l’équipe CanCham.`,
+        `À régler : ${d.aRegler}. Choisissez votre moyen de paiement depuis la page de votre inscription (bouton ci-dessous) — ou réglez auprès de l’équipe de la Chambre.`,
         `Dès que le règlement est constaté, vous recevez un second e-mail avec ${plusieurs ? "les QR codes d’entrée" : "votre QR code d’entrée"}. C’est lui qui vous ouvre l’accueil : sans lui, l’entrée n’est pas assurée.`,
       ],
       bouton: { libelle: "Voir mon inscription", url: d.lien },
@@ -293,7 +293,7 @@ export function courrielReglementEcarte(
       titre: "Nous n’avons pas retrouvé votre paiement",
       paragraphes: [
         "Bonjour,",
-        `Vous avez annoncé un paiement pour votre inscription à « ${d.evenement} » (référence ${d.reference}). L’équipe CanCham ne l’a pas retrouvé : votre inscription attend toujours son règlement.`,
+        `Vous avez annoncé un paiement pour votre inscription à « ${d.evenement} » (référence ${d.reference}). L’équipe de la Chambre ne l’a pas retrouvé : votre inscription attend toujours son règlement.`,
         "Depuis la page de votre inscription, vous pouvez choisir à nouveau un moyen de paiement.",
       ],
       bouton: { libelle: "Voir mon inscription", url: d.lien },
@@ -337,9 +337,9 @@ export function courrielReponseVisiteur(
 ): Courriel {
   return {
     a,
-    sujet: "L’équipe CanCham vous a répondu",
+    sujet: "L’équipe de la Chambre vous a répondu",
     ...gabarit({
-      titre: "L’équipe CanCham vous a répondu",
+      titre: "L’équipe de la Chambre vous a répondu",
       paragraphes: [
         `Bonjour ${prenom(d.nom)},`,
         "Voici la réponse de l’équipe à votre question :",
@@ -348,7 +348,7 @@ export function courrielReponseVisiteur(
       ],
       bouton: { libelle: "Poursuivre la conversation", url: d.lien },
       apres: [
-        "Vous pouvez aussi répondre directement à ce message : il arrive à l’équipe CanCham.",
+        "Vous pouvez aussi répondre directement à ce message : il arrive à l’équipe de la Chambre.",
       ],
     }),
   };
@@ -380,7 +380,7 @@ export function courrielRendezvousPris(
   a: string,
   d: RendezvousCourriel,
 ): Courriel {
-  const avec = d.avec ? `avec ${d.avec}` : "avec l’équipe CanCham";
+  const avec = d.avec ? `avec ${d.avec}` : "avec l’équipe de la Chambre";
   return {
     a,
     sujet: d.aConfirmer ? `Demande de rendez-vous enregistrée — ${d.jour}` : `Rendez-vous confirmé — ${d.jour}`,
@@ -417,7 +417,7 @@ export function courrielRendezvousConfirme(
       titre: "Votre rendez-vous est confirmé",
       paragraphes: [
         `Bonjour ${prenom(d.personne)},`,
-        `L’équipe CanCham confirme votre rendez-vous « ${d.type} »${d.avec ? ` avec ${d.avec}` : ""}.`,
+        `L’équipe de la Chambre confirme votre rendez-vous « ${d.type} »${d.avec ? ` avec ${d.avec}` : ""}.`,
         `Quand : ${d.jour}, ${d.horaire} (heure de Madagascar)`,
         ...ouLigne(d),
         ...(d.ics ? ["L’invitation jointe (rendez-vous.ics) l’ajoute à votre agenda."] : []),

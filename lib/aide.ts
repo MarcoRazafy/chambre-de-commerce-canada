@@ -58,7 +58,7 @@ export const THEMES: Theme[] = [
         id: "payer",
         question: "Comment régler ma cotisation ?",
         reponse:
-          "Le paiement en ligne n’est pas encore disponible. Vous réglez auprès de l’équipe CanCham, en espèces, par virement bancaire ou par chèque, et l’équipe enregistre le règlement.\n\nDès qu’il est enregistré, votre adhésion passe « À jour », l’accès complet s’ouvre et la facture apparaît dans « Cotisations & factures ».",
+          "Le paiement en ligne n’est pas encore disponible. Vous réglez auprès de l’équipe de la Chambre, en espèces, par virement bancaire ou par chèque, et l’équipe enregistre le règlement.\n\nDès qu’il est enregistré, votre adhésion passe « À jour », l’accès complet s’ouvre et la facture apparaît dans « Cotisations & factures ».",
         liens: [{ href: "/membre/cotisations", libelle: "Mes factures" }],
       },
       {
@@ -123,9 +123,9 @@ export const THEMES: Theme[] = [
       },
       {
         id: "reponse-equipe",
-        question: "Où arrive la réponse de l’équipe CanCham ?",
+        question: "Où arrive la réponse de l’équipe de la Chambre ?",
         reponse:
-          "Dans la bulle ronde qui flotte en bas de l’écran : elle ouvre la conversation avec l’équipe, sur n’importe quelle page, et la réponse y arrive sans recharger. Une pastille rouge signale un message non lu. Glissez la bulle où elle vous gêne le moins, elle garde sa place.\n\nC’est la même conversation que le fil « Équipe CanCham » de votre messagerie, où arrivent aussi les messages envoyés depuis la page de contact.",
+          "Dans la bulle ronde qui flotte en bas de l’écran : elle ouvre la conversation avec l’équipe, sur n’importe quelle page, et la réponse y arrive sans recharger. Une pastille rouge signale un message non lu. Glissez la bulle où elle vous gêne le moins, elle garde sa place.\n\nC’est la même conversation que le fil « Équipe de la Chambre » de votre messagerie, où arrivent aussi les messages envoyés depuis la page de contact.",
         liens: [{ href: "/membre/messagerie", libelle: "Ma messagerie" }],
       },
     ],

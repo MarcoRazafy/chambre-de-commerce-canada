@@ -112,7 +112,7 @@ export default async function RendezvousEquipePage({
           <FiltresAuto action="/admin/rendez-vous" className="flex gap-3 flex-wrap mb-4">
             <select name="hote" defaultValue={hote} aria-label="Personne qui reçoit" className={`${CHAMP} w-full sm:w-[300px]`}>
               <option value="">Toutes les personnes</option>
-              <option value="equipe">L’équipe CanCham</option>
+              <option value="equipe">L’équipe de la Chambre</option>
               {personnes.map((x) => (
                 <option key={x.id} value={x.id}>{x.nom}{x.specialite ? ` — ${x.specialite}` : ""}</option>
               ))}
@@ -302,7 +302,7 @@ export default async function RendezvousEquipePage({
             </tbody>
           </TableWrap>
           <p className="m-0 text-[12.5px] text-muted">
-            Les types sans personne désignée sont reçus par « l’équipe CanCham » et restent toujours proposés. Les comptes se gèrent dans{" "}
+            Les types sans personne désignée sont reçus par « l’équipe de la Chambre » et restent toujours proposés. Les comptes se gèrent dans{" "}
             <Link href="/admin/abonnement?onglet=equipe#onglets" className="text-accent">Équipe &amp; accès</Link>.
           </p>
         </div>

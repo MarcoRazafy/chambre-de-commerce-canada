@@ -598,7 +598,7 @@ export async function saveEvent(formData: FormData) {
   if (!id) {
     after(() =>
       notifierTousLesMembres({
-        titre: "Nouvel événement CanCham",
+        titre: "Nouvel événement",
         corps: `${e.titre} · ${fmtDate(toISODate(e.date), { day: "numeric", month: "long" })} · ${e.lieu}`,
         url: `/membre/evenements/${e.id}`,
       }),

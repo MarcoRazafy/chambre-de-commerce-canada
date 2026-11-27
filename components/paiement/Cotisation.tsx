@@ -11,7 +11,7 @@ import type { ModeReglement } from "@/lib/modes-reglement";
 export type SituationCotisation = "attente" | "retard" | "bloque";
 
 const HORS_LIGNE =
-  "Elle se règle auprès de l’équipe CanCham, par virement ou en espèces : votre accès s’ouvre à réception.";
+  "Elle se règle auprès de l’équipe de la Chambre, par virement ou en espèces : votre accès s’ouvre à réception.";
 
 export function BandeauCotisation({
   cotisation,

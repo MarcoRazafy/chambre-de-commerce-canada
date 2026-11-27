@@ -1,4 +1,5 @@
-import { COORDONNEES } from "@/lib/coordonnees";
+import { getProfilChambre } from "@/lib/profil-chambre";
+import type { ProfilChambre } from "@/lib/profil-chambre-defauts";
 import type { EmplacementOffre } from "@/lib/offres";
 import "server-only";
 
@@ -891,7 +892,8 @@ export async function getOffers(): Promise<Offer[]> {
     include: { member: { select: CHAMPS_MEMBRE_OFFRE } },
     orderBy: { createdAt: "desc" },
   });
-  return rows.map(versOffre);
+  const profil = await getProfilChambre();
+  return rows.map((o) => versOffre(o, profil));
 }
 
 export async function getDernieresOffres(
@@ -904,7 +906,8 @@ export async function getDernieresOffres(
     orderBy: { createdAt: "desc" },
     take: n,
   });
-  return rows.map(versOffre);
+  const profil = await getProfilChambre();
+  return rows.map((o) => versOffre(o, profil));
 }
 
 function versOffre(o: {
@@ -932,12 +935,12 @@ function versOffre(o: {
       tel: string | null;
     }[];
   } | null;
-}): Offer {
+}, profil: ProfilChambre): Offer {
   if (!o.member) {
     return {
       id: o.id,
       membreId: null,
-      membre: "CanCham Madagascar",
+      membre: profil.nom || "La Chambre",
       titre: o.titre,
       desc: o.desc,
       image: o.image,
@@ -945,15 +948,15 @@ function versOffre(o: {
       lien: o.lien,
       prix: o.prix,
       emplacement: o.emplacement,
-      membreSecteur: "Chambre de commerce et de coopération",
-      membreVille: "Antananarivo",
-      membreLogo: "/marque/sigle.png",
-      membreSite: COORDONNEES.site,
+      membreSecteur: "Chambre de commerce",
+      membreVille: profil.adresse,
+      membreLogo: profil.logo,
+      membreSite: profil.site,
       contact: {
-        nom: "Équipe CanCham",
-        fonction: "Chambre de Commerce et de Coopération Canada–Madagascar",
-        email: COORDONNEES.email,
-        tel: COORDONNEES.telephone,
+        nom: "Équipe de la Chambre",
+        fonction: profil.nom,
+        email: profil.email,
+        tel: profil.telephone,
       },
     };
   }
@@ -1134,7 +1137,7 @@ export async function getAgenda(
       jour: toISODate(r.jour),
       debut: r.debut,
       fin: r.fin,
-      detail: r.motif ?? "Avec l’équipe CanCham",
+      detail: r.motif ?? "Avec l’équipe de la Chambre",
       href: "/membre/rendez-vous",
     });
   }
@@ -1364,7 +1367,7 @@ const PERSONNE_FIL = {
   member: { select: { id: true, nom: true, siteweb: true } },
 } as const;
 
-const EQUIPE = "Équipe CanCham";
+const EQUIPE = "Équipe de la Chambre";
 
 export async function getThreads(user: {
   id: string;

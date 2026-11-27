@@ -40,7 +40,7 @@ export function TunnelOrangeMoney(p: PropsTunnel) {
         />
         <p className="m-0 min-w-0 flex-1 text-[15px]">
           <b>Paiement Orange Money</b>
-          <span className="text-white/75"> · Règlement CanCham</span>
+          <span className="text-white/75"> · Règlement</span>
         </p>
         <Image
           src={p.logo ?? "/marque/sigle.png"}
@@ -84,7 +84,7 @@ export function TunnelOrangeMoney(p: PropsTunnel) {
                 <div className="flex justify-between gap-4 py-1">
                   <dt className="text-[#595959]">Bénéficiaire</dt>
                   <dd className="m-0 font-bold">
-                    {p.titulaire || "CanCham Madagascar"}
+                    {p.titulaire || "La Chambre"}
                   </dd>
                 </div>
               </dl>

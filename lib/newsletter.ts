@@ -127,8 +127,8 @@ async function courrielLettre(sujet: string, contenu: string, d: Destinataire) {
       titre: sujet,
       paragraphes: contenu.split(/\n{2,}/).map((p) => p.trim()).filter(Boolean),
       apres: desabonnement
-        ? [`Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information de la CanCham. Pour ne plus la recevoir : ${desabonnement}`]
-        : [d.motif ?? "Vous recevez ce message en tant que membre de la CanCham."],
+        ? [`Vous recevez cette lettre car vous êtes abonné(e) à la lettre d’information de la Chambre. Pour ne plus la recevoir : ${desabonnement}`]
+        : [d.motif ?? "Vous recevez ce message en tant que membre de la Chambre."],
     }),
   };
 }

@@ -343,7 +343,7 @@ async function personnesValides(fd: FormData, userId: string) {
 }
 
 const GROUPES_RESERVES =
-  "Seule l’équipe CanCham peut créer un groupe ou y ajouter quelqu’un.";
+  "Seule l’équipe de la Chambre peut créer un groupe ou y ajouter quelqu’un.";
 
 export async function creerGroupe(formData: FormData) {
   const space = espace(formData);
@@ -616,7 +616,7 @@ export async function reserverService(formData: FormData) {
   revalidatePath("/", "layout");
   redirectWithFlash(
     retour,
-    `${payant ? "Demande de paiement" : "Demande de réservation"} envoyée à l’équipe CanCham · réponse dans votre messagerie`,
+    `${payant ? "Demande de paiement" : "Demande de réservation"} envoyée à l’équipe de la Chambre · réponse dans votre messagerie`,
   );
 }
 
