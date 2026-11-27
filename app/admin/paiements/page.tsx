@@ -285,7 +285,7 @@ export default async function AdminPaiements({
                     </td>
                     <td className="px-5 py-3.5 text-right">
                       <span className="inline-flex items-center justify-end gap-4">
-                        {relancable(f) ? <BoutonRelancer id={f.id} retour={retour} /> : null}
+                        {relancable(f) ? <BoutonRelancer id={f.id} retour={retour} faite={relanceeAujourdhui(f)} /> : null}
                         <Link
                           href={`/admin/paiements/${f.id}`}
                           className="inline-flex items-center gap-1 text-[13px] font-semibold text-accent no-underline hover:underline whitespace-nowrap"
@@ -339,7 +339,7 @@ export default async function AdminPaiements({
                   {relancable(f) ? (
                     <div className="mt-3 pt-3 border-t border-line flex items-center justify-between gap-3">
                       <Relancee facture={f} />
-                      <BoutonRelancer id={f.id} retour={retour} />
+                      <BoutonRelancer id={f.id} retour={retour} faite={relanceeAujourdhui(f)} />
                     </div>
                   ) : null}
                 </Card>
@@ -367,12 +367,14 @@ function Relancee({ facture }: { facture: Invoice }) {
   ) : <span />;
 }
 
-function BoutonRelancer({ id, retour }: { id: string; retour: string }) {
+const relanceeAujourdhui = (f: Invoice) => f.relanceeLe === new Date().toISOString().slice(0, 10);
+
+function BoutonRelancer({ id, retour, faite }: { id: string; retour: string; faite: boolean }) {
   return (
     <form action={relancerFacture}>
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="retour" value={retour} />
-      <SubmitButton variant="line" sm pendingLabel="Relance…">
+      <SubmitButton variant="line" sm pendingLabel="Relance…" disabled={faite} title={faite ? "Déjà relancée aujourd’hui" : undefined}>
         <BellRing size={13} /> Relancer
       </SubmitButton>
     </form>

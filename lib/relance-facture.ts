@@ -6,6 +6,9 @@ import { prisma } from "@/lib/db";
 import { fmtMontant } from "@/lib/membership";
 import { notifierMembre } from "@/lib/push";
 import { courrielRelanceFacture } from "@/lib/rappels-membres";
+import { joursDepuis } from "@/lib/retards";
+
+const memeJour = (a: Date, b: Date) => a.toISOString().slice(0, 10) === b.toISOString().slice(0, 10);
 
 export async function relancerFactureMembre(
   id: string,
@@ -13,14 +16,25 @@ export async function relancerFactureMembre(
 ): Promise<{ ok: true; message: string } | { ok: false; erreur: string }> {
   const f = await prisma.invoice.findUnique({
     where: { id },
-    select: { numero: true, objet: true, montant: true, devise: true, statut: true, memberId: true, member: { select: { nom: true } } },
+    select: { numero: true, objet: true, montant: true, devise: true, date: true, statut: true, relances: true, relanceeLe: true, memberId: true, member: { select: { nom: true } } },
   });
   if (!f) return { ok: false, erreur: "Facture introuvable." };
   if (f.statut !== "envoyee") return { ok: false, erreur: `La facture ${f.numero} est déjà réglée.` };
   if (!f.memberId || !f.member) return { ok: false, erreur: `La facture ${f.numero} n’est rattachée à aucun membre.` };
   const memberId = f.memberId;
+  const maintenant = new Date();
+  if (f.relanceeLe && memeJour(f.relanceeLe, maintenant)) {
+    return { ok: false, erreur: `La facture ${f.numero} a déjà été relancée aujourd’hui : le membre l’a reçue.` };
+  }
 
-  await prisma.invoice.update({ where: { id }, data: { relanceeLe: new Date() } });
+  const age = joursDepuis(f.date, maintenant);
+  const echus = (await prisma.rappelMembre.findMany({ where: { declencheur: "facture" }, select: { jours: true } }))
+    .map((r) => r.jours)
+    .filter((j) => j <= age);
+  await prisma.invoice.update({
+    where: { id },
+    data: { relanceeLe: maintenant, relances: [...new Set([...f.relances, ...echus])] },
+  });
   const { email, envoye } = await courrielRelanceFacture(id);
   const somme = fmtMontant(f.montant, f.devise);
   after(() =>
